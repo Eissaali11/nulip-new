@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Minus, Plus, FileText, TriangleAlert } from "lucide-react";
+import { Minus, Plus, FileText, TriangleAlert, Settings } from "lucide-react";
 import { InventoryItemWithStatus, Transaction } from "@shared/schema";
 import AddItemModal from "./add-item-modal";
 import WithdrawalModal from "./withdrawal-modal";
@@ -133,6 +134,17 @@ ${inventory.map(item =>
             <FileText className="h-4 w-4" />
             <span>تقرير المخزون</span>
           </Button>
+          
+          <Link href="/admin">
+            <Button
+              variant="outline"
+              className="w-full flex items-center justify-center space-x-2 space-x-reverse"
+              data-testid="button-admin-panel"
+            >
+              <Settings className="h-4 w-4" />
+              <span>لوحة الإدارة</span>
+            </Button>
+          </Link>
         </CardContent>
       </Card>
 
