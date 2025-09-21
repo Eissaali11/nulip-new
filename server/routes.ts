@@ -46,18 +46,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/login", async (req, res) => {
     try {
       const { username, password } = loginSchema.parse(req.body);
-      console.log('Login attempt for username:', username, 'password length:', password.length);
-      
-      // Debug: Show all usernames in database
-      const allUsers = await storage.getUsers();
-      console.log('All usernames in database:', allUsers.map(u => u.username));
       
       // Find user by username (get full user data with password)
       const user = await storage.getUserByUsername(username);
-      console.log('User found:', user ? 'yes' : 'no', user ? `(active: ${user.isActive})` : '');
       
       if (!user) {
-        console.log('User not found in database');
         return res.status(401).json({ 
           success: false, 
           message: "اسم المستخدم أو كلمة المرور غير صحيحة" 
@@ -65,14 +58,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       if (!user.isActive) {
-        console.log('User account is inactive');
         return res.status(401).json({ 
           success: false, 
           message: "الحساب غير نشط" 
         });
       }
       
-      console.log('Password check:', password === user.password ? 'match' : 'no match');
       if (user.password !== password) {
         return res.status(401).json({ 
           success: false, 
