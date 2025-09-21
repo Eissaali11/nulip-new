@@ -75,12 +75,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Add stock
   app.post("/api/inventory/:id/add", async (req, res) => {
     try {
-      const { quantity, reason } = z.object({
+      const { quantity, reason, userId } = z.object({
         quantity: z.number().positive(),
         reason: z.string().optional(),
+        userId: z.string().optional(),
       }).parse(req.body);
 
-      const item = await storage.addStock(req.params.id, quantity, reason);
+      const item = await storage.addStock(req.params.id, quantity, reason, userId);
       res.json(item);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -96,12 +97,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Withdraw stock
   app.post("/api/inventory/:id/withdraw", async (req, res) => {
     try {
-      const { quantity, reason } = z.object({
+      const { quantity, reason, userId } = z.object({
         quantity: z.number().positive(),
         reason: z.string().optional(),
+        userId: z.string().optional(),
       }).parse(req.body);
 
-      const item = await storage.withdrawStock(req.params.id, quantity, reason);
+      const item = await storage.withdrawStock(req.params.id, quantity, reason, userId);
       res.json(item);
     } catch (error) {
       if (error instanceof z.ZodError) {

@@ -320,6 +320,20 @@ export class MemStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<UserSafe> {
+    // Check for duplicate username
+    const existingUserByUsername = Array.from(this.users.values())
+      .find(user => user.username === insertUser.username);
+    if (existingUserByUsername) {
+      throw new Error("Username already exists");
+    }
+    
+    // Check for duplicate email
+    const existingUserByEmail = Array.from(this.users.values())
+      .find(user => user.email === insertUser.email);
+    if (existingUserByEmail) {
+      throw new Error("Email already exists");
+    }
+    
     const id = randomUUID();
     const user: User = {
       ...insertUser,
@@ -339,6 +353,24 @@ export class MemStorage implements IStorage {
     const existingUser = this.users.get(id);
     if (!existingUser) {
       throw new Error(`User with id ${id} not found`);
+    }
+    
+    // Check for duplicate username if username is being updated
+    if (updates.username && updates.username !== existingUser.username) {
+      const existingUserByUsername = Array.from(this.users.values())
+        .find(user => user.username === updates.username && user.id !== id);
+      if (existingUserByUsername) {
+        throw new Error("Username already exists");
+      }
+    }
+    
+    // Check for duplicate email if email is being updated
+    if (updates.email && updates.email !== existingUser.email) {
+      const existingUserByEmail = Array.from(this.users.values())
+        .find(user => user.email === updates.email && user.id !== id);
+      if (existingUserByEmail) {
+        throw new Error("Email already exists");
+      }
     }
     
     const updatedUser: User = {
