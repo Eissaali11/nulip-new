@@ -207,7 +207,7 @@ export class MemStorage implements IStorage {
 
     await this.createTransaction({
       itemId,
-      userId,
+      userId: userId || null,
       type: "add",
       quantity,
       reason,
@@ -232,7 +232,7 @@ export class MemStorage implements IStorage {
 
     await this.createTransaction({
       itemId,
-      userId,
+      userId: userId || null,
       type: "withdraw",
       quantity,
       reason,
@@ -265,6 +265,7 @@ export class MemStorage implements IStorage {
     const region: Region = {
       ...insertRegion,
       id,
+      description: insertRegion.description || null,
       isActive: insertRegion.isActive ?? true,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -338,6 +339,7 @@ export class MemStorage implements IStorage {
     const user: User = {
       ...insertUser,
       id,
+      regionId: insertUser.regionId || null,
       role: insertUser.role || "employee",
       isActive: insertUser.isActive ?? true,
       createdAt: new Date(),
@@ -401,4 +403,6 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+import { DatabaseStorage } from "./database-storage";
+
+export const storage = new DatabaseStorage();

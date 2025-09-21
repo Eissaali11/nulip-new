@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { sql, relations } from "drizzle-orm";
 import { pgTable, text, varchar, integer, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -120,3 +120,36 @@ export type AdminStats = {
   totalTransactions: number;
   recentTransactions: TransactionWithDetails[];
 };
+
+// Define relations for better queries
+export const regionsRelations = relations(regions, ({ many }) => ({
+  users: many(users),
+  inventoryItems: many(inventoryItems),
+}));
+
+export const usersRelations = relations(users, ({ one, many }) => ({
+  region: one(regions, {
+    fields: [users.regionId],
+    references: [regions.id],
+  }),
+  transactions: many(transactions),
+}));
+
+export const inventoryItemsRelations = relations(inventoryItems, ({ one, many }) => ({
+  region: one(regions, {
+    fields: [inventoryItems.regionId],
+    references: [regions.id],
+  }),
+  transactions: many(transactions),
+}));
+
+export const transactionsRelations = relations(transactions, ({ one }) => ({
+  item: one(inventoryItems, {
+    fields: [transactions.itemId],
+    references: [inventoryItems.id],
+  }),
+  user: one(users, {
+    fields: [transactions.userId],
+    references: [users.id],
+  }),
+}));
