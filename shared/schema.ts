@@ -121,6 +121,21 @@ export type AdminStats = {
   recentTransactions: TransactionWithDetails[];
 };
 
+// Authentication schemas
+export const loginSchema = z.object({
+  username: z.string().min(1, "اسم المستخدم مطلوب"),
+  password: z.string().min(1, "كلمة المرور مطلوبة"),
+});
+
+export type LoginRequest = z.infer<typeof loginSchema>;
+
+export type AuthResponse = {
+  user: UserSafe;
+  token?: string;
+  success: boolean;
+  message?: string;
+};
+
 // Define relations for better queries
 export const regionsRelations = relations(regions, ({ many }) => ({
   users: many(users),

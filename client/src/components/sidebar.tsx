@@ -5,11 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Minus, Plus, FileText, TriangleAlert, Settings } from "lucide-react";
+import { Minus, Plus, FileText, TriangleAlert, Settings, LogOut, User, Shield } from "lucide-react";
 import { InventoryItemWithStatus, Transaction } from "@shared/schema";
 import AddItemModal from "./add-item-modal";
 import WithdrawalModal from "./withdrawal-modal";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth";
 
 interface SidebarProps {
   inventory?: InventoryItemWithStatus[];
@@ -17,8 +18,10 @@ interface SidebarProps {
 
 export default function Sidebar({ inventory }: SidebarProps) {
   const { toast } = useToast();
+  const { user, logout } = useAuth();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   const { data: transactions, isLoading: transactionsLoading } = useQuery<Transaction[]>({
     queryKey: ["/api/transactions?limit=10"],
@@ -28,6 +31,25 @@ export default function Sidebar({ inventory }: SidebarProps) {
   const outOfStockItems = inventory?.filter(item => item.status === 'out') || [];
   const alertItems = [...lowStockItems, ...outOfStockItems];
   
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      toast({
+        title: "تم تسجيل الخروج بنجاح",
+        description: "شكراً لك على استخدام النظام",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "خطأ في تسجيل الخروج",
+        description: "حدث خطأ غير متوقع",
+      });
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
   const handleQuickWithdraw = () => {
     if (!inventory || inventory.length === 0) {
       toast({
@@ -100,6 +122,37 @@ ${inventory.map(item =>
 
   return (
     <div className="space-y-6">
+      {/* User Info Section */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center space-x-3 space-x-reverse">
+            <div className="p-2 bg-primary/10 rounded-full">
+              {user?.role === 'admin' ? (
+                <Shield className="h-5 w-5 text-primary" />
+              ) : (
+                <User className="h-5 w-5 text-primary" />
+              )}
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-sm">{user?.fullName}</p>
+              <p className="text-xs text-muted-foreground">
+                {user?.role === 'admin' ? 'مدير النظام' : 'فني'}
+              </p>
+            </div>
+            <Button 
+              data-testid="button-logout"
+              variant="ghost" 
+              size="sm"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Quick Actions */}
       <Card>
         <CardHeader>

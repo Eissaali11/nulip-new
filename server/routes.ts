@@ -1,10 +1,134 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertInventoryItemSchema, insertTransactionSchema, insertRegionSchema, insertUserSchema } from "@shared/schema";
+import { insertInventoryItemSchema, insertTransactionSchema, insertRegionSchema, insertUserSchema, loginSchema } from "@shared/schema";
 import { z } from "zod";
 
+// Simple session store for demo purposes (in production, use proper session store)
+const activeSessions = new Map<string, { userId: string; role: string; username: string; expiry: number }>();
+
+// Authentication middleware
+function requireAuth(req: Request, res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+  
+  if (!token) {
+    return res.status(401).json({ message: "Authentication required" });
+  }
+  
+  const session = activeSessions.get(token);
+  if (!session || session.expiry < Date.now()) {
+    if (session) activeSessions.delete(token);
+    return res.status(401).json({ message: "Session expired" });
+  }
+  
+  // Add user info to request
+  (req as any).user = { id: session.userId, role: session.role, username: session.username };
+  next();
+}
+
+// Admin-only middleware
+function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  const user = (req as any).user;
+  if (!user || user.role !== 'admin') {
+    return res.status(403).json({ message: "Admin access required" });
+  }
+  next();
+}
+
+// Generate session token
+function generateSessionToken(): string {
+  return Math.random().toString(36).substring(2) + Date.now().toString(36);
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Authentication routes
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { username, password } = loginSchema.parse(req.body);
+      
+      // Find user by username (get full user data with password)
+      const user = await storage.getUserByUsername(username);
+      
+      if (!user || !user.isActive) {
+        return res.status(401).json({ 
+          success: false, 
+          message: "اسم المستخدم أو كلمة المرور غير صحيحة" 
+        });
+      }
+      
+      if (user.password !== password) {
+        return res.status(401).json({ 
+          success: false, 
+          message: "اسم المستخدم أو كلمة المرور غير صحيحة" 
+        });
+      }
+      
+      // Create session
+      const token = generateSessionToken();
+      const expiry = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
+      
+      activeSessions.set(token, {
+        userId: user.id,
+        role: user.role,
+        username: user.username,
+        expiry
+      });
+      
+      // Return user without password
+      const { password: _, ...userSafe } = user;
+      
+      res.json({
+        success: true,
+        user: userSafe,
+        token,
+        message: "تم تسجيل الدخول بنجاح"
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "بيانات غير صحيحة", 
+          errors: error.errors 
+        });
+      }
+      res.status(500).json({ 
+        success: false, 
+        message: "خطأ في الخادم" 
+      });
+    }
+  });
+  
+  app.post("/api/auth/logout", requireAuth, async (req, res) => {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.substring(7);
+    
+    if (token) {
+      activeSessions.delete(token);
+    }
+    
+    res.json({ success: true, message: "تم تسجيل الخروج بنجاح" });
+  });
+  
+  app.get("/api/auth/me", requireAuth, async (req, res) => {
+    const userId = (req as any).user.id;
+    
+    try {
+      const users = await storage.getUsers();
+      const user = users.find(u => u.id === userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      const { password: _, ...userSafe } = user;
+      res.json({ user: userSafe });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch user info" });
+    }
+  });
+  
+
   // Get all inventory items
   app.get("/api/inventory", async (req, res) => {
     try {
@@ -29,7 +153,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create new inventory item
-  app.post("/api/inventory", async (req, res) => {
+  app.post("/api/inventory", requireAuth, async (req, res) => {
     try {
       const validatedData = insertInventoryItemSchema.parse(req.body);
       const item = await storage.createInventoryItem(validatedData);
@@ -43,7 +167,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update inventory item
-  app.patch("/api/inventory/:id", async (req, res) => {
+  app.patch("/api/inventory/:id", requireAuth, async (req, res) => {
     try {
       const updates = insertInventoryItemSchema.partial().parse(req.body);
       const item = await storage.updateInventoryItem(req.params.id, updates);
@@ -60,7 +184,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete inventory item
-  app.delete("/api/inventory/:id", async (req, res) => {
+  app.delete("/api/inventory/:id", requireAuth, requireAdmin, async (req, res) => {
     try {
       const deleted = await storage.deleteInventoryItem(req.params.id);
       if (!deleted) {
@@ -73,14 +197,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add stock
-  app.post("/api/inventory/:id/add", async (req, res) => {
+  app.post("/api/inventory/:id/add", requireAuth, async (req, res) => {
     try {
-      const { quantity, reason, userId } = z.object({
+      const { quantity, reason } = z.object({
         quantity: z.number().positive(),
         reason: z.string().optional(),
-        userId: z.string().optional(),
       }).parse(req.body);
-
+      
+      const userId = (req as any).user.id; // Get user from auth middleware
       const item = await storage.addStock(req.params.id, quantity, reason, userId);
       res.json(item);
     } catch (error) {
@@ -95,14 +219,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Withdraw stock
-  app.post("/api/inventory/:id/withdraw", async (req, res) => {
+  app.post("/api/inventory/:id/withdraw", requireAuth, async (req, res) => {
     try {
-      const { quantity, reason, userId } = z.object({
+      const { quantity, reason } = z.object({
         quantity: z.number().positive(),
         reason: z.string().optional(),
-        userId: z.string().optional(),
       }).parse(req.body);
-
+      
+      const userId = (req as any).user.id; // Get user from auth middleware
       const item = await storage.withdrawStock(req.params.id, quantity, reason, userId);
       res.json(item);
     } catch (error) {
@@ -140,7 +264,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Regions endpoints
-  app.get("/api/regions", async (req, res) => {
+  app.get("/api/regions", requireAuth, async (req, res) => {
     try {
       const regions = await storage.getRegions();
       res.json(regions);
@@ -161,7 +285,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/regions", async (req, res) => {
+  app.post("/api/regions", requireAuth, requireAdmin, async (req, res) => {
     try {
       const validatedData = insertRegionSchema.parse(req.body);
       const region = await storage.createRegion(validatedData);
@@ -174,7 +298,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/regions/:id", async (req, res) => {
+  app.patch("/api/regions/:id", requireAuth, requireAdmin, async (req, res) => {
     try {
       const updates = insertRegionSchema.partial().parse(req.body);
       const region = await storage.updateRegion(req.params.id, updates);
@@ -190,7 +314,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/regions/:id", async (req, res) => {
+  app.delete("/api/regions/:id", requireAuth, requireAdmin, async (req, res) => {
     try {
       const deleted = await storage.deleteRegion(req.params.id);
       if (!deleted) {
@@ -206,7 +330,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Users endpoints
-  app.get("/api/users", async (req, res) => {
+  app.get("/api/users", requireAuth, requireAdmin, async (req, res) => {
     try {
       const users = await storage.getUsers();
       res.json(users);
@@ -227,7 +351,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/users", async (req, res) => {
+  app.post("/api/users", requireAuth, requireAdmin, async (req, res) => {
     try {
       const validatedData = insertUserSchema.parse(req.body);
       const user = await storage.createUser(validatedData);
@@ -240,7 +364,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/users/:id", async (req, res) => {
+  app.patch("/api/users/:id", requireAuth, requireAdmin, async (req, res) => {
     try {
       const updates = insertUserSchema.partial().parse(req.body);
       const user = await storage.updateUser(req.params.id, updates);
