@@ -6,6 +6,7 @@ import { z } from "zod";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -90,6 +91,9 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>إضافة صنف جديد</DialogTitle>
+          <DialogDescription>
+            أدخل بيانات الصنف الجديد لإضافته إلى المخزون
+          </DialogDescription>
         </DialogHeader>
         
         <Form {...form}>

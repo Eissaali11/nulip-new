@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -5,12 +6,19 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Minus, Plus, FileText, TriangleAlert } from "lucide-react";
 import { InventoryItemWithStatus, Transaction } from "@shared/schema";
+import AddItemModal from "./add-item-modal";
+import WithdrawalModal from "./withdrawal-modal";
+import { useToast } from "@/hooks/use-toast";
 
 interface SidebarProps {
   inventory?: InventoryItemWithStatus[];
 }
 
 export default function Sidebar({ inventory }: SidebarProps) {
+  const { toast } = useToast();
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  
   const { data: transactions, isLoading: transactionsLoading } = useQuery<Transaction[]>({
     queryKey: ["/api/transactions?limit=10"],
   });
@@ -18,6 +26,26 @@ export default function Sidebar({ inventory }: SidebarProps) {
   const lowStockItems = inventory?.filter(item => item.status === 'low') || [];
   const outOfStockItems = inventory?.filter(item => item.status === 'out') || [];
   const alertItems = [...lowStockItems, ...outOfStockItems];
+  
+  const handleQuickWithdraw = () => {
+    const availableItems = inventory?.filter(item => item.quantity > 0) || [];
+    if (availableItems.length === 0) {
+      toast({
+        title: "لا توجد أصناف متوفرة",
+        description: "لا يمكن السحب لأنه لا توجد أصناف بكميات متوفرة",
+        variant: "destructive",
+      });
+      return;
+    }
+    setShowWithdrawModal(true);
+  };
+  
+  const handleGenerateReport = () => {
+    toast({
+      title: "تقرير المخزون",
+      description: "ميزة التقارير ستكون متاحة قريباً",
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -30,6 +58,7 @@ export default function Sidebar({ inventory }: SidebarProps) {
           <Button
             variant="destructive"
             className="w-full flex items-center justify-center space-x-2 space-x-reverse"
+            onClick={handleQuickWithdraw}
             data-testid="button-quick-withdraw"
           >
             <Minus className="h-4 w-4" />
@@ -38,6 +67,7 @@ export default function Sidebar({ inventory }: SidebarProps) {
           
           <Button
             className="w-full bg-success hover:bg-success/90 text-white flex items-center justify-center space-x-2 space-x-reverse"
+            onClick={() => setShowAddModal(true)}
             data-testid="button-quick-add-stock"
           >
             <Plus className="h-4 w-4" />
@@ -47,6 +77,7 @@ export default function Sidebar({ inventory }: SidebarProps) {
           <Button
             variant="secondary"
             className="w-full flex items-center justify-center space-x-2 space-x-reverse"
+            onClick={handleGenerateReport}
             data-testid="button-generate-report"
           >
             <FileText className="h-4 w-4" />
@@ -156,6 +187,15 @@ export default function Sidebar({ inventory }: SidebarProps) {
           )}
         </CardContent>
       </Card>
+      
+      {/* Modals */}
+      <AddItemModal open={showAddModal} onOpenChange={setShowAddModal} />
+      <WithdrawalModal 
+        open={showWithdrawModal} 
+        onOpenChange={setShowWithdrawModal}
+        selectedItem={null}
+        inventory={inventory}
+      />
     </div>
   );
 }

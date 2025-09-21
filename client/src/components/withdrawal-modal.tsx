@@ -6,6 +6,7 @@ import { z } from "zod";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -111,6 +112,9 @@ export default function WithdrawalModal({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>سحب من المخزون</DialogTitle>
+          <DialogDescription>
+            اختر الصنف والكمية المطلوب سحبها من المخزون
+          </DialogDescription>
         </DialogHeader>
         
         <Form {...form}>
