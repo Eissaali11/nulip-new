@@ -241,7 +241,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get transactions
-  app.get("/api/transactions", async (req, res) => {
+  app.get("/api/transactions", requireAuth, async (req, res) => {
     try {
       const {
         page,
@@ -290,7 +290,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Transaction statistics endpoint
-  app.get("/api/transactions/statistics", async (req, res) => {
+  app.get("/api/transactions/statistics", requireAuth, async (req, res) => {
     try {
       const { startDate, endDate, regionId } = req.query;
       

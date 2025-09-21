@@ -24,30 +24,30 @@ export function TransactionHistoryPage() {
   });
 
   // Fetch transactions with filters
-  const { data: transactionData, isLoading: transactionsLoading, refetch: refetchTransactions } = useQuery({
-    queryKey: ['/api/transactions', filters],
-    queryFn: () => {
-      const params = new URLSearchParams();
-      Object.entries(filters).forEach(([key, value]) => {
-        // Convert "all" values to empty for API and skip empty values
-        if (value && value !== "all" && value !== "all-users" && value !== "all-regions") {
-          params.append(key, value.toString());
-        }
-      });
-      return fetch(`/api/transactions?${params}`).then(res => res.json());
+  // Build query parameters for transactions
+  const transactionParams = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    // Convert "all" values to empty for API and skip empty values
+    if (value && value !== "all" && value !== "all-users" && value !== "all-regions") {
+      transactionParams.append(key, value.toString());
     }
   });
+  const transactionUrl = `/api/transactions${transactionParams.toString() ? `?${transactionParams}` : ''}`;
+  
+  const { data: transactionData, isLoading: transactionsLoading, refetch: refetchTransactions } = useQuery({
+    queryKey: [transactionUrl],
+  });
 
+  // Build query parameters for statistics
+  const statisticsParams = new URLSearchParams();
+  if (filters.startDate) statisticsParams.append('startDate', filters.startDate);
+  if (filters.endDate) statisticsParams.append('endDate', filters.endDate);
+  if (filters.regionId && filters.regionId !== "all-regions") statisticsParams.append('regionId', filters.regionId);
+  const statisticsUrl = `/api/transactions/statistics${statisticsParams.toString() ? `?${statisticsParams}` : ''}`;
+  
   // Fetch transaction statistics
   const { data: statisticsData, isLoading: statisticsLoading } = useQuery({
-    queryKey: ['/api/transactions/statistics', filters.startDate, filters.endDate, filters.regionId],
-    queryFn: () => {
-      const params = new URLSearchParams();
-      if (filters.startDate) params.append('startDate', filters.startDate);
-      if (filters.endDate) params.append('endDate', filters.endDate);
-      if (filters.regionId && filters.regionId !== "all-regions") params.append('regionId', filters.regionId);
-      return fetch(`/api/transactions/statistics?${params}`).then(res => res.json());
-    }
+    queryKey: [statisticsUrl],
   });
 
   // Fetch users and regions for filter dropdowns
@@ -428,7 +428,7 @@ export function TransactionHistoryPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {statisticsData.byRegion.slice(0, 5).map((region: any, index: number) => (
+                      {statisticsData?.byRegion?.slice(0, 5)?.map((region: any, index: number) => (
                         <div key={region.regionName} className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-xs font-medium">
