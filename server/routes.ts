@@ -114,15 +114,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const userId = (req as any).user.id;
     
     try {
-      const users = await storage.getUsers();
-      const user = users.find(u => u.id === userId);
+      const user = await storage.getUser(userId);
       
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
       
-      const { password: _, ...userSafe } = user;
-      res.json({ user: userSafe });
+      res.json({ user });
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch user info" });
     }
