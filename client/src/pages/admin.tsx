@@ -289,7 +289,7 @@ export default function AdminPage() {
         </div>
       )}
 
-      <Tabs defaultValue="regions" className="w-full">
+      <Tabs defaultValue="regions" className="w-full" key="admin-tabs">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="regions" data-testid="tab-regions">إدارة المناطق</TabsTrigger>
           <TabsTrigger value="users" data-testid="tab-users">إدارة الموظفين</TabsTrigger>
