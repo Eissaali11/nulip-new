@@ -28,22 +28,72 @@ export default function Sidebar({ inventory }: SidebarProps) {
   const alertItems = [...lowStockItems, ...outOfStockItems];
   
   const handleQuickWithdraw = () => {
-    const availableItems = inventory?.filter(item => item.quantity > 0) || [];
-    if (availableItems.length === 0) {
+    if (!inventory || inventory.length === 0) {
       toast({
-        title: "لا توجد أصناف متوفرة",
-        description: "لا يمكن السحب لأنه لا توجد أصناف بكميات متوفرة",
+        title: "لا توجد أصناف في المخزون",
+        description: "يجب إضافة أصناف أولاً قبل السحب",
         variant: "destructive",
       });
       return;
     }
+    
+    const availableItems = inventory.filter(item => item.quantity > 0);
+    if (availableItems.length === 0) {
+      toast({
+        title: "جميع الأصناف نافدة",
+        description: `يوجد ${inventory.length} صنف ولكن جميعها بكمية صفر`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setShowWithdrawModal(true);
   };
   
   const handleGenerateReport = () => {
+    if (!inventory || inventory.length === 0) {
+      toast({
+        title: "لا يمكن إنشاء التقرير",
+        description: "لا توجد أصناف في المخزون لإنشاء تقرير",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Create a simple report content
+    const totalItems = inventory.length;
+    const totalQuantity = inventory.reduce((sum, item) => sum + item.quantity, 0);
+    const lowStockCount = inventory.filter(item => item.status === 'low').length;
+    const outOfStockCount = inventory.filter(item => item.status === 'out').length;
+    
+    const reportContent = `
+تقرير المخزون - ${new Date().toLocaleDateString('ar-SA')}
+
+إجمالي الأصناف: ${totalItems}
+إجمالي الكميات: ${totalQuantity}
+أصناف منخفضة المخزون: ${lowStockCount}
+أصناف نافدة: ${outOfStockCount}
+
+تفاصيل الأصناف:
+${inventory.map(item => 
+  `- ${item.name}: ${item.quantity} ${item.unit} (${item.status === 'available' ? 'متوفر' : item.status === 'low' ? 'منخفض' : 'نافد'})`
+).join('\n')}
+    `.trim();
+
+    // Create and download the report
+    const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `تقرير_المخزون_${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
     toast({
-      title: "تقرير المخزون",
-      description: "ميزة التقارير ستكون متاحة قريباً",
+      title: "تم إنشاء التقرير",
+      description: "تم تحميل تقرير المخزون بنجاح",
     });
   };
 
