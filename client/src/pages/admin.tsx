@@ -289,11 +289,11 @@ export default function AdminPage() {
         </div>
       )}
 
-      <Tabs defaultValue="regions" className="w-full" key="admin-tabs">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="regions" data-testid="tab-regions">إدارة المناطق</TabsTrigger>
-          <TabsTrigger value="users" data-testid="tab-users">إدارة الموظفين</TabsTrigger>
-          <TabsTrigger value="transactions" data-testid="tab-transactions">العمليات الأخيرة</TabsTrigger>
+      <Tabs defaultValue="regions" className="w-full" key={`admin-tabs-${Date.now()}`}>
+        <TabsList className="grid w-full grid-cols-3 bg-muted p-1 h-10">
+          <TabsTrigger value="regions" data-testid="tab-regions" className="data-[state=active]:bg-background">إدارة المناطق</TabsTrigger>
+          <TabsTrigger value="users" data-testid="tab-users" className="data-[state=active]:bg-background">إدارة الموظفين</TabsTrigger>
+          <TabsTrigger value="transactions" data-testid="tab-transactions" className="data-[state=active]:bg-background">العمليات الأخيرة</TabsTrigger>
         </TabsList>
 
         {/* Regions Tab */}
