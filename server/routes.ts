@@ -243,13 +243,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get transactions
   app.get("/api/transactions", async (req, res) => {
     try {
-      const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
-      const transactions = limit 
-        ? await storage.getRecentTransactions(limit)
-        : await storage.getTransactions();
-      res.json(transactions);
+      const {
+        page,
+        limit,
+        type,
+        userId,
+        regionId,
+        startDate,
+        endDate,
+        search,
+        recent
+      } = req.query;
+
+      // If recent=true, use the old simple method
+      if (recent === 'true') {
+        const limitNum = limit ? parseInt(limit as string) : 10;
+        const transactions = await storage.getRecentTransactions(limitNum);
+        return res.json(transactions);
+      }
+
+      // Use the new enhanced method with filters
+      const filters = {
+        page: page ? parseInt(page as string) : undefined,
+        limit: limit ? parseInt(limit as string) : undefined,
+        type: type as string,
+        userId: userId as string,
+        regionId: regionId as string,
+        startDate: startDate as string,
+        endDate: endDate as string,
+        search: search as string,
+      };
+
+      // Remove undefined filters
+      Object.keys(filters).forEach(key => {
+        if (filters[key as keyof typeof filters] === undefined) {
+          delete filters[key as keyof typeof filters];
+        }
+      });
+
+      const result = await storage.getTransactions(filters);
+      res.json(result);
     } catch (error) {
+      console.error('Error fetching transactions:', error);
       res.status(500).json({ message: "Failed to fetch transactions" });
+    }
+  });
+
+  // Transaction statistics endpoint
+  app.get("/api/transactions/statistics", async (req, res) => {
+    try {
+      const { startDate, endDate, regionId } = req.query;
+      
+      const filters = {
+        startDate: startDate as string,
+        endDate: endDate as string,
+        regionId: regionId as string,
+      };
+
+      // Remove undefined filters
+      Object.keys(filters).forEach(key => {
+        if (filters[key as keyof typeof filters] === undefined) {
+          delete filters[key as keyof typeof filters];
+        }
+      });
+
+      const statistics = await storage.getTransactionStatistics(filters);
+      res.json(statistics);
+    } catch (error) {
+      console.error('Error fetching transaction statistics:', error);
+      res.status(500).json({ message: "Failed to fetch transaction statistics" });
     }
   });
 

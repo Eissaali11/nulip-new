@@ -20,7 +20,7 @@ import {
 } from "@shared/schema";
 import { IStorage } from "./storage";
 import { db } from "./db";
-import { eq, desc, gte, count, sql, and } from "drizzle-orm";
+import { eq, desc, gte, lte, count, sql, and, or, ilike } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 export class DatabaseStorage implements IStorage {
@@ -349,8 +349,26 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Transactions
-  async getTransactions(): Promise<TransactionWithDetails[]> {
-    const allTransactions = await db
+  async getTransactions(filters?: {
+    page?: number;
+    limit?: number;
+    type?: string;
+    userId?: string;
+    regionId?: string;
+    startDate?: string;
+    endDate?: string;
+    search?: string;
+  }): Promise<{
+    transactions: TransactionWithDetails[];
+    total: number;
+    page: number;
+    totalPages: number;
+  }> {
+    const page = filters?.page || 1;
+    const limit = filters?.limit || 10;
+    const offset = (page - 1) * limit;
+
+    let query = db
       .select({
         id: transactions.id,
         itemId: transactions.itemId,
@@ -366,15 +384,79 @@ export class DatabaseStorage implements IStorage {
       .from(transactions)
       .leftJoin(inventoryItems, eq(transactions.itemId, inventoryItems.id))
       .leftJoin(users, eq(transactions.userId, users.id))
-      .leftJoin(regions, eq(inventoryItems.regionId, regions.id))
-      .orderBy(desc(transactions.createdAt));
+      .leftJoin(regions, eq(inventoryItems.regionId, regions.id));
 
-    return allTransactions.map(transaction => ({
+    let countQuery = db
+      .select({ count: sql<number>`count(*)` })
+      .from(transactions)
+      .leftJoin(inventoryItems, eq(transactions.itemId, inventoryItems.id))
+      .leftJoin(users, eq(transactions.userId, users.id))
+      .leftJoin(regions, eq(inventoryItems.regionId, regions.id));
+
+    // Build where conditions
+    const conditions = [];
+
+    if (filters?.type) {
+      conditions.push(eq(transactions.type, filters.type));
+    }
+
+    if (filters?.userId) {
+      conditions.push(eq(transactions.userId, filters.userId));
+    }
+
+    if (filters?.regionId) {
+      conditions.push(eq(inventoryItems.regionId, filters.regionId));
+    }
+
+    if (filters?.startDate) {
+      conditions.push(gte(transactions.createdAt, new Date(filters.startDate)));
+    }
+
+    if (filters?.endDate) {
+      conditions.push(lte(transactions.createdAt, new Date(filters.endDate)));
+    }
+
+    if (filters?.search) {
+      const searchTerm = `%${filters.search}%`;
+      conditions.push(
+        or(
+          ilike(inventoryItems.name, searchTerm),
+          ilike(users.fullName, searchTerm),
+          ilike(transactions.reason, searchTerm)
+        )
+      );
+    }
+
+    // Apply conditions if any
+    if (conditions.length > 0) {
+      const whereCondition = conditions.length === 1 ? conditions[0] : and(...conditions);
+      query = query.where(whereCondition);
+      countQuery = countQuery.where(whereCondition);
+    }
+
+    // Get total count
+    const [{ count }] = await countQuery;
+    const total = Number(count);
+
+    // Get paginated results
+    const allTransactions = await query
+      .orderBy(desc(transactions.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    const processedTransactions = allTransactions.map(transaction => ({
       ...transaction,
       itemName: transaction.itemName || "صنف محذوف",
       userName: transaction.userName || "غير محدد",
       regionName: transaction.regionName || "غير محدد",
     }));
+
+    return {
+      transactions: processedTransactions,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async createTransaction(insertTransaction: InsertTransaction): Promise<Transaction> {
@@ -412,6 +494,115 @@ export class DatabaseStorage implements IStorage {
       userName: transaction.userName || "غير محدد",
       regionName: transaction.regionName || "غير محدد",
     }));
+  }
+
+  async getTransactionStatistics(filters?: {
+    startDate?: string;
+    endDate?: string;
+    regionId?: string;
+  }): Promise<{
+    totalTransactions: number;
+    totalAdditions: number;
+    totalWithdrawals: number;
+    totalAddedQuantity: number;
+    totalWithdrawnQuantity: number;
+    byRegion: Array<{ regionName: string; count: number }>;
+    byUser: Array<{ userName: string; count: number }>;
+    dailyTransactions: Array<{ date: string; count: number }>;
+  }> {
+    // Build base query
+    let baseQuery = db
+      .select({
+        transactionId: transactions.id,
+        type: transactions.type,
+        quantity: transactions.quantity,
+        createdAt: transactions.createdAt,
+        regionName: regions.name,
+        userName: users.fullName,
+      })
+      .from(transactions)
+      .leftJoin(inventoryItems, eq(transactions.itemId, inventoryItems.id))
+      .leftJoin(users, eq(transactions.userId, users.id))
+      .leftJoin(regions, eq(inventoryItems.regionId, regions.id));
+
+    // Apply filters
+    const conditions = [];
+    if (filters?.startDate) {
+      conditions.push(gte(transactions.createdAt, new Date(filters.startDate)));
+    }
+    if (filters?.endDate) {
+      conditions.push(lte(transactions.createdAt, new Date(filters.endDate)));
+    }
+    if (filters?.regionId) {
+      conditions.push(eq(inventoryItems.regionId, filters.regionId));
+    }
+
+    if (conditions.length > 0) {
+      baseQuery = baseQuery.where(conditions.length === 1 ? conditions[0] : and(...conditions));
+    }
+
+    const allTransactions = await baseQuery;
+
+    // Calculate statistics
+    const totalTransactions = allTransactions.length;
+    const totalAdditions = allTransactions.filter(t => t.type === 'add').length;
+    const totalWithdrawals = allTransactions.filter(t => t.type === 'withdraw').length;
+    const totalAddedQuantity = allTransactions
+      .filter(t => t.type === 'add')
+      .reduce((sum, t) => sum + t.quantity, 0);
+    const totalWithdrawnQuantity = allTransactions
+      .filter(t => t.type === 'withdraw')
+      .reduce((sum, t) => sum + t.quantity, 0);
+
+    // Group by region
+    const regionGroups = allTransactions.reduce((acc, t) => {
+      const regionName = t.regionName || "غير محدد";
+      acc[regionName] = (acc[regionName] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    const byRegion = Object.entries(regionGroups)
+      .map(([regionName, count]) => ({ regionName, count }))
+      .sort((a, b) => b.count - a.count);
+
+    // Group by user
+    const userGroups = allTransactions.reduce((acc, t) => {
+      const userName = t.userName || "غير محدد";
+      acc[userName] = (acc[userName] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    const byUser = Object.entries(userGroups)
+      .map(([userName, count]) => ({ userName, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10); // Top 10 users
+
+    // Group by day (last 7 days)
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const recentTransactions = allTransactions.filter(t => t.createdAt && t.createdAt >= sevenDaysAgo);
+    
+    const dailyGroups = recentTransactions.reduce((acc, t) => {
+      const date = t.createdAt!.toISOString().split('T')[0];
+      acc[date] = (acc[date] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    // Fill in missing days with 0
+    const dailyTransactions = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      dailyTransactions.push({ date, count: dailyGroups[date] || 0 });
+    }
+
+    return {
+      totalTransactions,
+      totalAdditions,
+      totalWithdrawals,
+      totalAddedQuantity,
+      totalWithdrawnQuantity,
+      byRegion,
+      byUser,
+      dailyTransactions,
+    };
   }
 
   // Dashboard

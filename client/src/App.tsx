@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import Dashboard from "@/pages/dashboard";
 import AdminPage from "@/pages/admin";
+import { TransactionHistoryPage } from "@/pages/transaction-history";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import { Loader2 } from "lucide-react";
@@ -17,6 +18,7 @@ function AuthenticatedRouter() {
   return (
     <Switch>
       <Route path="/" component={Dashboard} />
+      <Route path="/transactions" component={TransactionHistoryPage} />
       {user?.role === "admin" && (
         <Route path="/admin" component={AdminPage} />
       )}

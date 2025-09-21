@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Minus, Plus, FileText, TriangleAlert, Settings, LogOut, User, Shield } from "lucide-react";
+import { Minus, Plus, FileText, TriangleAlert, Settings, LogOut, User, Shield, History } from "lucide-react";
 import { InventoryItemWithStatus, Transaction } from "@shared/schema";
 import AddItemModal from "./add-item-modal";
 import WithdrawalModal from "./withdrawal-modal";
@@ -24,7 +24,7 @@ export default function Sidebar({ inventory }: SidebarProps) {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   const { data: transactions, isLoading: transactionsLoading } = useQuery<Transaction[]>({
-    queryKey: ["/api/transactions?limit=10"],
+    queryKey: ["/api/transactions?recent=true&limit=10"],
   });
 
   const lowStockItems = inventory?.filter(item => item.status === 'low') || [];
@@ -188,16 +188,29 @@ ${inventory.map(item =>
             <span>تقرير المخزون</span>
           </Button>
           
-          <Link href="/admin">
+          <Link href="/transactions">
             <Button
               variant="outline"
               className="w-full flex items-center justify-center space-x-2 space-x-reverse"
-              data-testid="button-admin-panel"
+              data-testid="button-transaction-history"
             >
-              <Settings className="h-4 w-4" />
-              <span>لوحة الإدارة</span>
+              <History className="h-4 w-4" />
+              <span>سجل المعاملات</span>
             </Button>
           </Link>
+          
+          {user?.role === 'admin' && (
+            <Link href="/admin">
+              <Button
+                variant="outline"
+                className="w-full flex items-center justify-center space-x-2 space-x-reverse"
+                data-testid="button-admin-panel"
+              >
+                <Settings className="h-4 w-4" />
+                <span>لوحة الإدارة</span>
+              </Button>
+            </Link>
+          )}
         </CardContent>
       </Card>
 
@@ -216,13 +229,13 @@ ${inventory.map(item =>
                 </div>
               ))}
             </div>
-          ) : !transactions || transactions.length === 0 ? (
+          ) : !transactions || !Array.isArray(transactions) || transactions.length === 0 ? (
             <div className="text-center py-4 text-muted-foreground">
               لا توجد عمليات حديثة
             </div>
           ) : (
             <div className="space-y-3">
-              {transactions.slice(0, 3).map((transaction) => {
+              {(Array.isArray(transactions) ? transactions : []).slice(0, 3).map((transaction) => {
                 const item = inventory?.find(i => i.id === transaction.itemId);
                 return (
                   <div key={transaction.id} className="p-3 bg-accent/30 rounded-lg" data-testid={`transaction-${transaction.id}`}>
