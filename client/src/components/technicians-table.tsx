@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { TechnicianInventory } from "@shared/schema";
 import AddTechnicianModal from "./add-technician-modal";
+import EditTechnicianModal from "./edit-technician-modal";
 import * as XLSX from 'xlsx';
 
 export default function TechniciansTable() {
@@ -15,6 +16,8 @@ export default function TechniciansTable() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedTechnician, setSelectedTechnician] = useState<TechnicianInventory | null>(null);
 
   const { data: technicians, isLoading } = useQuery<TechnicianInventory[]>({
     queryKey: ["/api/technicians"],
@@ -46,6 +49,11 @@ export default function TechniciansTable() {
       tech.technicianName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       tech.city.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleEdit = (tech: TechnicianInventory) => {
+    setSelectedTechnician(tech);
+    setShowEditModal(true);
+  };
 
   const handleDelete = (id: string) => {
     if (confirm("هل أنت متأكد من حذف بيانات هذا الفني؟")) {
@@ -277,6 +285,7 @@ export default function TechniciansTable() {
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                onClick={() => handleEdit(tech)}
                                 className="h-8 w-8 hover:bg-accent"
                                 title="تعديل"
                                 data-testid={`button-edit-${tech.id}`}
@@ -315,6 +324,11 @@ export default function TechniciansTable() {
       </Card>
 
       <AddTechnicianModal open={showAddModal} onOpenChange={setShowAddModal} />
+      <EditTechnicianModal 
+        open={showEditModal} 
+        onOpenChange={setShowEditModal}
+        technician={selectedTechnician}
+      />
     </>
   );
 }
