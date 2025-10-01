@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Search, Plus, Minus, Edit, Trash2 } from "lucide-react";
+import { Search, Plus, Minus, Edit, Trash2, FileSpreadsheet } from "lucide-react";
 import { InventoryItemWithStatus } from "@shared/schema";
 import AddItemModal from "./add-item-modal";
 import WithdrawalModal from "./withdrawal-modal";
@@ -14,6 +14,7 @@ import EditItemModal from "./edit-item-modal";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { exportInventoryToExcel } from "@/lib/exportToExcel";
 
 interface InventoryTableProps {
   inventory?: InventoryItemWithStatus[];
@@ -116,6 +117,15 @@ export default function InventoryTable({ inventory, isLoading }: InventoryTableP
     }
   };
 
+  const handleExport = () => {
+    if (inventory && inventory.length > 0) {
+      exportInventoryToExcel({ inventory });
+      toast({ title: "تم تصدير التقرير بنجاح", description: "تم حفظ ملف Excel في جهازك" });
+    } else {
+      toast({ title: "لا توجد بيانات للتصدير", variant: "destructive" });
+    }
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -157,6 +167,16 @@ export default function InventoryTable({ inventory, isLoading }: InventoryTableP
                 />
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               </div>
+              
+              <Button
+                onClick={handleExport}
+                variant="outline"
+                className="flex items-center space-x-2 space-x-reverse bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950 dark:hover:bg-emerald-900 border-emerald-200 dark:border-emerald-800"
+                data-testid="button-export-excel"
+              >
+                <FileSpreadsheet className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                <span className="text-emerald-700 dark:text-emerald-300">تصدير تقرير Excel</span>
+              </Button>
               
               <Button
                 onClick={() => setShowAddModal(true)}

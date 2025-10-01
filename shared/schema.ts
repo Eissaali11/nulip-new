@@ -34,6 +34,8 @@ export const inventoryItems = pgTable("inventory_items", {
   unit: text("unit").notNull(),
   quantity: integer("quantity").notNull().default(0),
   minThreshold: integer("min_threshold").notNull().default(5),
+  technicianName: text("technician_name"),
+  city: text("city"),
   regionId: varchar("region_id").references(() => regions.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
