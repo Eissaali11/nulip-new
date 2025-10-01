@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
-import logoPath from "@assets/WhatsApp Image 2025-10-01 at 18.33.50_0c78b604_1759337535480.jpg";
+import logoPath from "@assets/neoleap-logo.jpg";
 
 export default function Header() {
   return (
