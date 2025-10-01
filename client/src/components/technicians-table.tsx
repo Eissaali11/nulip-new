@@ -9,7 +9,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { TechnicianInventory } from "@shared/schema";
 import AddTechnicianModal from "./add-technician-modal";
 import EditTechnicianModal from "./edit-technician-modal";
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 export default function TechniciansTable() {
   const { toast } = useToast();
@@ -61,7 +61,7 @@ export default function TechniciansTable() {
     }
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     if (!filteredTechnicians || filteredTechnicians.length === 0) {
       toast({
         title: "لا توجد بيانات للتصدير",
@@ -71,7 +71,8 @@ export default function TechniciansTable() {
       return;
     }
 
-    const wb = XLSX.utils.book_new();
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('تقرير الفنيين');
     
     const currentDate = new Date().toLocaleDateString('ar-SA', {
       weekday: 'long',
@@ -90,19 +91,45 @@ export default function TechniciansTable() {
     const totalMobily = filteredTechnicians.reduce((sum, t) => sum + t.mobilySim, 0);
     const totalSTC = filteredTechnicians.reduce((sum, t) => sum + t.stcSim, 0);
     
-    // Build data array with better structure
-    const data: any[][] = [
-      ['نظام إدارة مخزون الفنيين'],
-      [],
-      [`تاريخ التقرير: ${currentDate}`],
-      [],
-      [],
-      ['#', 'اسم الفني', 'المدينة', 'أجهزة N950', 'أجهزة I900', 'أوراق رول', 'ملصقات مداء', 'شرائح موبايلي', 'شرائح STC', 'ملاحظات'],
-    ];
+    // Add title row
+    worksheet.mergeCells('A1:J1');
+    const titleCell = worksheet.getCell('A1');
+    titleCell.value = 'نظام إدارة مخزون الفنيين';
+    titleCell.font = { size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+    titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2563EB' } };
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    worksheet.getRow(1).height = 35;
+    
+    // Add date row
+    worksheet.mergeCells('A2:J2');
+    const dateCell = worksheet.getCell('A2');
+    dateCell.value = `تاريخ التقرير: ${currentDate}`;
+    dateCell.font = { size: 12, bold: true };
+    dateCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    dateCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF3F4F6' } };
+    worksheet.getRow(2).height = 25;
+    
+    // Add header row
+    const headerRow = worksheet.getRow(4);
+    headerRow.values = ['#', 'اسم الفني', 'المدينة', 'أجهزة N950', 'أجهزة I900', 'أوراق رول', 'ملصقات مداء', 'شرائح موبايلي', 'شرائح STC', 'ملاحظات'];
+    headerRow.font = { bold: true, size: 11, color: { argb: 'FFFFFFFF' } };
+    headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF475569' } };
+    headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    headerRow.height = 25;
+    
+    // Add borders to header
+    headerRow.eachCell((cell) => {
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
+      };
+    });
     
     // Add technician data
     filteredTechnicians.forEach((tech, index) => {
-      data.push([
+      const row = worksheet.addRow([
         index + 1,
         tech.technicianName,
         tech.city,
@@ -114,56 +141,110 @@ export default function TechniciansTable() {
         tech.stcSim,
         tech.notes || ''
       ]);
+      
+      row.alignment = { horizontal: 'center', vertical: 'middle' };
+      row.height = 22;
+      
+      // Alternate row colors
+      if (index % 2 === 0) {
+        row.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF9FAFB' } };
+      }
+      
+      // Add borders
+      row.eachCell((cell) => {
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+          left: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+          bottom: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+          right: { style: 'thin', color: { argb: 'FFE5E7EB' } }
+        };
+      });
+      
+      // Right align text columns
+      row.getCell(2).alignment = { horizontal: 'right', vertical: 'middle' };
+      row.getCell(3).alignment = { horizontal: 'right', vertical: 'middle' };
+      row.getCell(10).alignment = { horizontal: 'right', vertical: 'middle' };
     });
     
-    // Add spacing and totals section
-    data.push([]);
-    data.push([]);
-    data.push(['*** الإحصائيات الإجمالية ***']);
-    data.push([]);
-    data.push(['البيان', 'الإجمالي', '', 'البيان', 'الإجمالي', '', 'البيان', 'الإجمالي', '', '']);
-    data.push(['عدد الفنيين', filteredTechnicians.length, '', 'أجهزة N950', totalN950, '', 'أجهزة I900', totalI900, '', '']);
-    data.push(['أوراق رول', totalRoll, '', 'ملصقات مداء', totalStickers, '', 'شرائح موبايلي', totalMobily, '', '']);
-    data.push(['شرائح STC', totalSTC, '', '', '', '', '', '', '', '']);
+    // Add statistics section
+    const statsStartRow = worksheet.lastRow!.number + 2;
     
-    const ws = XLSX.utils.aoa_to_sheet(data);
+    // Stats title
+    worksheet.mergeCells(`A${statsStartRow}:J${statsStartRow}`);
+    const statsTitle = worksheet.getCell(`A${statsStartRow}`);
+    statsTitle.value = 'الإحصائيات الإجمالية';
+    statsTitle.font = { size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+    statsTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF059669' } };
+    statsTitle.alignment = { horizontal: 'center', vertical: 'middle' };
+    worksheet.getRow(statsStartRow).height = 30;
     
-    // Set column widths (wider for better readability)
-    ws['!cols'] = [
-      { wch: 6 },   // #
-      { wch: 30 },  // اسم الفني
-      { wch: 20 },  // المدينة
-      { wch: 15 },  // N950
-      { wch: 15 },  // I900
-      { wch: 15 },  // أوراق رول
-      { wch: 18 },  // ملصقات مداء
-      { wch: 18 },  // موبايلي
-      { wch: 15 },  // STC
-      { wch: 40 },  // ملاحظات
+    // Stats data
+    const statsData = [
+      ['عدد الفنيين', filteredTechnicians.length, 'أجهزة N950', totalN950, 'أجهزة I900', totalI900],
+      ['أوراق رول', totalRoll, 'ملصقات مداء', totalStickers, 'شرائح موبايلي', totalMobily],
+      ['شرائح STC', totalSTC, '', '', '', '']
     ];
     
-    // Set row heights
-    const rowHeights: any[] = [];
-    rowHeights[0] = { hpt: 35 };  // Title
-    rowHeights[2] = { hpt: 25 };  // Date
-    rowHeights[5] = { hpt: 30 };  // Headers
-    ws['!rows'] = rowHeights;
+    statsData.forEach((data, idx) => {
+      const row = worksheet.getRow(statsStartRow + idx + 1);
+      row.values = ['', ...data];
+      row.height = 25;
+      
+      // Style labels (odd cells)
+      [2, 4, 6].forEach(col => {
+        const cell = row.getCell(col);
+        cell.font = { bold: true };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0F2FE' } };
+        cell.alignment = { horizontal: 'right', vertical: 'middle' };
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+      });
+      
+      // Style values (even cells)
+      [3, 5, 7].forEach(col => {
+        const cell = row.getCell(col);
+        cell.font = { bold: true, color: { argb: 'FF1E40AF' } };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+      });
+    });
     
-    // Merge cells
-    ws['!merges'] = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 9 } },  // Title
-      { s: { r: 2, c: 0 }, e: { r: 2, c: 9 } },  // Date
-      { s: { r: data.length - 6, c: 0 }, e: { r: data.length - 6, c: 9 } },  // Stats title
+    // Set column widths
+    worksheet.columns = [
+      { width: 6 },   // #
+      { width: 25 },  // اسم الفني
+      { width: 18 },  // المدينة
+      { width: 14 },  // N950
+      { width: 14 },  // I900
+      { width: 14 },  // أوراق رول
+      { width: 16 },  // ملصقات مداء
+      { width: 16 },  // موبايلي
+      { width: 14 },  // STC
+      { width: 35 },  // ملاحظات
     ];
     
-    XLSX.utils.book_append_sheet(wb, ws, 'تقرير الفنيين');
-    
-    const fileName = `تقرير_الفنيين_${new Date().toISOString().split('T')[0]}.xlsx`;
-    XLSX.writeFile(wb, fileName);
+    // Write file
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `تقرير_الفنيين_${new Date().toISOString().split('T')[0]}.xlsx`;
+    link.click();
+    window.URL.revokeObjectURL(url);
     
     toast({
       title: "تم تصدير التقرير بنجاح",
-      description: `تم تصدير ${filteredTechnicians.length} سجل بشكل منظم`,
+      description: `تم تصدير ${filteredTechnicians.length} سجل بتنسيق احترافي`,
     });
   };
 
