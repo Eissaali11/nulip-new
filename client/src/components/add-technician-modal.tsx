@@ -1,0 +1,284 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { insertTechnicianInventorySchema } from "@shared/schema";
+
+const formSchema = insertTechnicianInventorySchema.extend({
+  n950Devices: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
+  i900Devices: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
+  rollPapers: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
+  mobilySim: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
+  stcSim: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
+});
+
+type FormData = z.infer<typeof formSchema>;
+
+interface AddTechnicianModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export default function AddTechnicianModal({ open, onOpenChange }: AddTechnicianModalProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      technicianName: "",
+      city: "",
+      n950Devices: 0,
+      i900Devices: 0,
+      rollPapers: 0,
+      mobilySim: 0,
+      stcSim: 0,
+      notes: "",
+    },
+  });
+
+  const addTechMutation = useMutation({
+    mutationFn: async (data: FormData) => {
+      const response = await apiRequest("POST", "/api/technicians", data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/technicians"] });
+      toast({
+        title: "تم إضافة بيانات الفني بنجاح",
+        description: "تم إضافة البيانات الجديدة للفني",
+      });
+      form.reset();
+      onOpenChange(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "خطأ في إضافة البيانات",
+        description: error.message || "حدث خطأ أثناء إضافة البيانات",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSubmit = (data: FormData) => {
+    addTechMutation.mutate(data);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>إضافة صنف جديد</DialogTitle>
+          <DialogDescription>
+            أدخل بيانات الصنف الجديد لإضافته إلى المخزون
+          </DialogDescription>
+        </DialogHeader>
+        
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="technicianName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>اسم الصنف</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="مثل: كرتون نيولاند N950"
+                        {...field}
+                        data-testid="input-technician-name"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="city"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>نوع الصنف</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="اختر النوع"
+                        {...field}
+                        data-testid="input-city"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="n950Devices"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>أجهزة N950</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="0"
+                        {...field}
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        data-testid="input-n950"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="i900Devices"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>أجهزة I900</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="0"
+                        {...field}
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        data-testid="input-i900"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="rollPapers"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>أوراق رول ملصقات مداء</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="0"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                      data-testid="input-roll-papers"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="mobilySim"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>شرائح موبايلي</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="0"
+                        {...field}
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        data-testid="input-mobily"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="stcSim"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>شرائح STC</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="0"
+                        {...field}
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        data-testid="input-stc"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>ملاحظات</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="أضف ملاحظات إضافية..."
+                      {...field}
+                      value={field.value || ""}
+                      data-testid="input-notes"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex items-center space-x-3 space-x-reverse pt-4">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => onOpenChange(false)}
+                className="flex-1"
+                data-testid="button-cancel"
+              >
+                إلغاء
+              </Button>
+              <Button
+                type="submit"
+                disabled={addTechMutation.isPending}
+                className="flex-1"
+                data-testid="button-submit"
+              >
+                {addTechMutation.isPending ? "جاري الإضافة..." : "إضافة الصنف"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}

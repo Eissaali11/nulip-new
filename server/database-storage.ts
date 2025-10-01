@@ -44,6 +44,8 @@ export class DatabaseStorage implements IStorage {
         unit: inventoryItems.unit,
         quantity: inventoryItems.quantity,
         minThreshold: inventoryItems.minThreshold,
+        technicianName: inventoryItems.technicianName,
+        city: inventoryItems.city,
         regionId: inventoryItems.regionId,
         createdAt: inventoryItems.createdAt,
         updatedAt: inventoryItems.updatedAt,
