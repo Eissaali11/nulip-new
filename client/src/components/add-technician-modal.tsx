@@ -88,17 +88,17 @@ export default function AddTechnicianModal({ open, onOpenChange }: AddTechnician
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle>إضافة بيانات فني</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-lg sm:text-xl">إضافة بيانات فني</DialogTitle>
+          <DialogDescription className="text-sm">
             أدخل بيانات الفني الجديد وتجهيزاته
           </DialogDescription>
         </DialogHeader>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <FormField
                 control={form.control}
                 name="technicianName"
@@ -136,7 +136,7 @@ export default function AddTechnicianModal({ open, onOpenChange }: AddTechnician
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <FormField
                 control={form.control}
                 name="n950Devices"
@@ -180,7 +180,7 @@ export default function AddTechnicianModal({ open, onOpenChange }: AddTechnician
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <FormField
                 control={form.control}
                 name="rollPaper"
@@ -224,7 +224,7 @@ export default function AddTechnicianModal({ open, onOpenChange }: AddTechnician
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <FormField
                 control={form.control}
                 name="mobilySim"
@@ -287,12 +287,12 @@ export default function AddTechnicianModal({ open, onOpenChange }: AddTechnician
               )}
             />
 
-            <div className="flex items-center space-x-3 space-x-reverse pt-4">
+            <div className="flex items-center space-x-2 sm:space-x-3 space-x-reverse pt-3 sm:pt-4">
               <Button
                 type="button"
                 variant="secondary"
                 onClick={() => onOpenChange(false)}
-                className="flex-1"
+                className="flex-1 text-sm sm:text-base"
                 data-testid="button-cancel"
               >
                 إلغاء
@@ -300,7 +300,7 @@ export default function AddTechnicianModal({ open, onOpenChange }: AddTechnician
               <Button
                 type="submit"
                 disabled={addTechMutation.isPending}
-                className="flex-1"
+                className="flex-1 text-sm sm:text-base"
                 data-testid="button-submit"
               >
                 {addTechMutation.isPending ? "جاري الإضافة..." : "إضافة البيانات"}
