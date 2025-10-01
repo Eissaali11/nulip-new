@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertInventoryItemSchema, insertTransactionSchema, insertRegionSchema, insertUserSchema, insertTechnicianInventorySchema, loginSchema } from "@shared/schema";
+import { insertInventoryItemSchema, insertTransactionSchema, insertRegionSchema, insertUserSchema, insertTechnicianInventorySchema, insertWithdrawnDeviceSchema, loginSchema } from "@shared/schema";
 import { z } from "zod";
 
 // Simple session store for demo purposes (in production, use proper session store)
@@ -534,6 +534,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Technician inventory deleted successfully" });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete technician inventory" });
+    }
+  });
+
+  // Withdrawn Devices Routes
+  app.get("/api/withdrawn-devices", requireAuth, async (req, res) => {
+    try {
+      const devices = await storage.getWithdrawnDevices();
+      res.json(devices);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch withdrawn devices" });
+    }
+  });
+
+  app.get("/api/withdrawn-devices/:id", requireAuth, async (req, res) => {
+    try {
+      const device = await storage.getWithdrawnDevice(req.params.id);
+      if (!device) {
+        return res.status(404).json({ message: "Withdrawn device not found" });
+      }
+      res.json(device);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch withdrawn device" });
+    }
+  });
+
+  app.post("/api/withdrawn-devices", requireAuth, async (req, res) => {
+    try {
+      const data = insertWithdrawnDeviceSchema.parse(req.body);
+      const device = await storage.createWithdrawnDevice(data);
+      res.status(201).json(device);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create withdrawn device" });
+    }
+  });
+
+  app.patch("/api/withdrawn-devices/:id", requireAuth, async (req, res) => {
+    try {
+      const updates = insertWithdrawnDeviceSchema.partial().parse(req.body);
+      const device = await storage.updateWithdrawnDevice(req.params.id, updates);
+      res.json(device);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      if (error instanceof Error && error.message.includes("not found")) {
+        return res.status(404).json({ message: "Withdrawn device not found" });
+      }
+      res.status(500).json({ message: "Failed to update withdrawn device" });
+    }
+  });
+
+  app.delete("/api/withdrawn-devices/:id", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const deleted = await storage.deleteWithdrawnDevice(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Withdrawn device not found" });
+      }
+      res.json({ message: "Withdrawn device deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete withdrawn device" });
     }
   });
 
