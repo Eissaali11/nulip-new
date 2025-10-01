@@ -13,8 +13,12 @@ export default function Header() {
     <header className="bg-card border-b border-border shadow-sm">
       <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-3">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center space-x-2 space-x-reverse min-w-0">
-            <div className="text-primary text-xl sm:text-2xl flex-shrink-0">📦</div>
+          <div className="flex items-center space-x-3 space-x-reverse min-w-0">
+            <img 
+              src="/attached_assets/neoleap-logo.jpg" 
+              alt="Neoleap" 
+              className="h-8 sm:h-10 md:h-12 w-auto object-contain flex-shrink-0"
+            />
             <h1 className="text-sm sm:text-lg md:text-xl font-bold text-foreground truncate">
               <span className="hidden sm:inline">نظام </span>إدارة المخزون
             </h1>
