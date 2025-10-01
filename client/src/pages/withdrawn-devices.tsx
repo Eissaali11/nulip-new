@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link } from "wouter";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, FileSpreadsheet, Trash2, Search, Edit, PackageX } from "lucide-react";
+import { Plus, FileSpreadsheet, Trash2, Search, Edit, PackageX, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { WithdrawnDevice } from "@shared/schema";
@@ -238,45 +239,60 @@ export default function WithdrawnDevicesPage() {
     <>
       <Card className="shadow-lg">
         <CardHeader className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950 border-b">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-3 bg-orange-100 dark:bg-orange-900 rounded-lg">
-                <PackageX className="h-6 w-6 text-orange-600 dark:text-orange-400" />
-              </div>
-              <div>
-                <h2 className="text-xl md:text-2xl font-bold text-foreground">الأجهزة المسحوبة</h2>
-                <p className="text-sm text-muted-foreground">إدارة الأجهزة المسحوبة من الخدمة</p>
-              </div>
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className="hover:bg-orange-100 dark:hover:bg-orange-900"
+              >
+                <Link href="/" data-testid="button-back-home">
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                  <span>العودة للرئيسية</span>
+                </Link>
+              </Button>
             </div>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
-              <div className="relative flex-1 sm:flex-initial">
-                <Input
-                  type="text"
-                  placeholder="ابحث عن جهاز..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-full sm:w-64 bg-white dark:bg-gray-900"
-                  data-testid="input-search"
-                />
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-orange-100 dark:bg-orange-900 rounded-lg">
+                  <PackageX className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                </div>
+                <div>
+                  <h2 className="text-xl md:text-2xl font-bold text-foreground">الأجهزة المسحوبة</h2>
+                  <p className="text-sm text-muted-foreground">إدارة الأجهزة المسحوبة من الخدمة</p>
+                </div>
               </div>
-              <Button
-                onClick={() => setShowAddModal(true)}
-                className="gap-2 bg-orange-600 hover:bg-orange-700 text-white"
-                data-testid="button-add"
-              >
-                <Plus className="h-4 w-4" />
-                <span>إضافة جهاز</span>
-              </Button>
-              <Button
-                onClick={handleExport}
-                variant="outline"
-                className="gap-2 border-emerald-300 dark:border-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950"
-                data-testid="button-export"
-              >
-                <FileSpreadsheet className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                <span className="text-emerald-700 dark:text-emerald-300">تصدير Excel</span>
-              </Button>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+                <div className="relative flex-1 sm:flex-initial">
+                  <Input
+                    type="text"
+                    placeholder="ابحث عن جهاز..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 w-full sm:w-64 bg-white dark:bg-gray-900"
+                    data-testid="input-search"
+                  />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                </div>
+                <Button
+                  onClick={() => setShowAddModal(true)}
+                  className="gap-2 bg-orange-600 hover:bg-orange-700 text-white"
+                  data-testid="button-add"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>إضافة جهاز</span>
+                </Button>
+                <Button
+                  onClick={handleExport}
+                  variant="outline"
+                  className="gap-2 border-emerald-300 dark:border-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950"
+                  data-testid="button-export"
+                >
+                  <FileSpreadsheet className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  <span className="text-emerald-700 dark:text-emerald-300">تصدير Excel</span>
+                </Button>
+              </div>
             </div>
           </div>
         </CardHeader>
