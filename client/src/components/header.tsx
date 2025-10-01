@@ -8,15 +8,21 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
+import logoPath from "@assets/WhatsApp Image 2025-10-01 at 18.33.50_0c78b604_1759337535480.jpg";
+
 export default function Header() {
   return (
     <header className="bg-card border-b border-border shadow-sm">
       <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-3">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center space-x-2 space-x-reverse min-w-0">
-            <div className="text-primary text-xl sm:text-2xl flex-shrink-0">📦</div>
-            <h1 className="text-sm sm:text-lg md:text-xl font-bold text-foreground truncate">
-              <span className="hidden sm:inline">نظام </span>إدارة المخزون
+          <div className="flex flex-col items-start space-y-1 sm:space-y-2 min-w-0">
+            <img 
+              src={logoPath} 
+              alt="Neoleap" 
+              className="h-6 sm:h-8 md:h-10 w-auto object-contain"
+            />
+            <h1 className="text-xs sm:text-sm md:text-base font-semibold text-foreground/80 truncate">
+              نظام إدارة المخزون
             </h1>
           </div>
           
