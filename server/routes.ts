@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertInventoryItemSchema, insertTransactionSchema, insertRegionSchema, insertUserSchema, loginSchema } from "@shared/schema";
+import { insertInventoryItemSchema, insertTransactionSchema, insertRegionSchema, insertUserSchema, insertTechnicianInventorySchema, loginSchema } from "@shared/schema";
 import { z } from "zod";
 
 // Simple session store for demo purposes (in production, use proper session store)
@@ -471,6 +471,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(stats);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch admin stats" });
+    }
+  });
+
+  // Technicians Inventory Routes
+  app.get("/api/technicians", requireAuth, async (req, res) => {
+    try {
+      const techs = await storage.getTechniciansInventory();
+      res.json(techs);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch technicians inventory" });
+    }
+  });
+
+  app.get("/api/technicians/:id", requireAuth, async (req, res) => {
+    try {
+      const tech = await storage.getTechnicianInventory(req.params.id);
+      if (!tech) {
+        return res.status(404).json({ message: "Technician inventory not found" });
+      }
+      res.json(tech);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch technician inventory" });
+    }
+  });
+
+  app.post("/api/technicians", requireAuth, async (req, res) => {
+    try {
+      const data = insertTechnicianInventorySchema.parse(req.body);
+      const tech = await storage.createTechnicianInventory(data);
+      res.status(201).json(tech);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create technician inventory" });
+    }
+  });
+
+  app.patch("/api/technicians/:id", requireAuth, async (req, res) => {
+    try {
+      const updates = insertTechnicianInventorySchema.partial().parse(req.body);
+      const tech = await storage.updateTechnicianInventory(req.params.id, updates);
+      res.json(tech);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      if (error instanceof Error && error.message.includes("not found")) {
+        return res.status(404).json({ message: "Technician inventory not found" });
+      }
+      res.status(500).json({ message: "Failed to update technician inventory" });
+    }
+  });
+
+  app.delete("/api/technicians/:id", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const deleted = await storage.deleteTechnicianInventory(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Technician inventory not found" });
+      }
+      res.json({ message: "Technician inventory deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete technician inventory" });
     }
   });
 
