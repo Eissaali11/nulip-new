@@ -66,6 +66,7 @@ export default function TechniciansTable() {
     const wb = XLSX.utils.book_new();
     
     const currentDate = new Date().toLocaleDateString('ar-SA', {
+      weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -73,10 +74,20 @@ export default function TechniciansTable() {
       minute: '2-digit'
     });
     
-    // Build data array
+    // Calculate totals
+    const totalN950 = filteredTechnicians.reduce((sum, t) => sum + t.n950Devices, 0);
+    const totalI900 = filteredTechnicians.reduce((sum, t) => sum + t.i900Devices, 0);
+    const totalRoll = filteredTechnicians.reduce((sum, t) => sum + t.rollPaper, 0);
+    const totalStickers = filteredTechnicians.reduce((sum, t) => sum + t.stickers, 0);
+    const totalMobily = filteredTechnicians.reduce((sum, t) => sum + t.mobilySim, 0);
+    const totalSTC = filteredTechnicians.reduce((sum, t) => sum + t.stcSim, 0);
+    
+    // Build data array with better structure
     const data: any[][] = [
       ['نظام إدارة مخزون الفنيين'],
+      [],
       [`تاريخ التقرير: ${currentDate}`],
+      [],
       [],
       ['#', 'اسم الفني', 'المدينة', 'أجهزة N950', 'أجهزة I900', 'أوراق رول', 'ملصقات مداء', 'شرائح موبايلي', 'شرائح STC', 'ملاحظات'],
     ];
@@ -93,152 +104,49 @@ export default function TechniciansTable() {
         tech.stickers,
         tech.mobilySim,
         tech.stcSim,
-        tech.notes || '-'
+        tech.notes || ''
       ]);
     });
     
-    // Add summary statistics in organized rows
-    const statsStartRow = data.length + 1;
+    // Add spacing and totals section
     data.push([]);
-    data.push(['الإحصائيات الإجمالية', '', '', '', '', '', '', '', '', '']);
-    data.push([
-      'إجمالي الفنيين',
-      filteredTechnicians.length,
-      'إجمالي N950',
-      filteredTechnicians.reduce((sum, t) => sum + t.n950Devices, 0),
-      'إجمالي I900',
-      filteredTechnicians.reduce((sum, t) => sum + t.i900Devices, 0),
-      'إجمالي أوراق رول',
-      filteredTechnicians.reduce((sum, t) => sum + t.rollPaper, 0),
-      '',
-      ''
-    ]);
-    data.push([
-      'إجمالي ملصقات',
-      filteredTechnicians.reduce((sum, t) => sum + t.stickers, 0),
-      'إجمالي موبايلي',
-      filteredTechnicians.reduce((sum, t) => sum + t.mobilySim, 0),
-      'إجمالي STC',
-      filteredTechnicians.reduce((sum, t) => sum + t.stcSim, 0),
-      '',
-      '',
-      '',
-      ''
-    ]);
+    data.push([]);
+    data.push(['*** الإحصائيات الإجمالية ***']);
+    data.push([]);
+    data.push(['البيان', 'الإجمالي', '', 'البيان', 'الإجمالي', '', 'البيان', 'الإجمالي', '', '']);
+    data.push(['عدد الفنيين', filteredTechnicians.length, '', 'أجهزة N950', totalN950, '', 'أجهزة I900', totalI900, '', '']);
+    data.push(['أوراق رول', totalRoll, '', 'ملصقات مداء', totalStickers, '', 'شرائح موبايلي', totalMobily, '', '']);
+    data.push(['شرائح STC', totalSTC, '', '', '', '', '', '', '', '']);
     
     const ws = XLSX.utils.aoa_to_sheet(data);
     
-    // Set column widths
+    // Set column widths (wider for better readability)
     ws['!cols'] = [
-      { wch: 8 },   // #
-      { wch: 25 },  // اسم الفني
-      { wch: 18 },  // المدينة
-      { wch: 14 },  // N950
-      { wch: 14 },  // I900
-      { wch: 14 },  // أوراق رول
-      { wch: 16 },  // ملصقات مداء
-      { wch: 16 },  // موبايلي
-      { wch: 14 },  // STC
-      { wch: 35 },  // ملاحظات
+      { wch: 6 },   // #
+      { wch: 30 },  // اسم الفني
+      { wch: 20 },  // المدينة
+      { wch: 15 },  // N950
+      { wch: 15 },  // I900
+      { wch: 15 },  // أوراق رول
+      { wch: 18 },  // ملصقات مداء
+      { wch: 18 },  // موبايلي
+      { wch: 15 },  // STC
+      { wch: 40 },  // ملاحظات
     ];
     
-    // Set row heights for better appearance
-    ws['!rows'] = [
-      { hpt: 30 },  // Title row
-      { hpt: 20 },  // Date row
-      { hpt: 10 },  // Empty row
-      { hpt: 25 },  // Header row
-    ];
+    // Set row heights
+    const rowHeights: any[] = [];
+    rowHeights[0] = { hpt: 35 };  // Title
+    rowHeights[2] = { hpt: 25 };  // Date
+    rowHeights[5] = { hpt: 30 };  // Headers
+    ws['!rows'] = rowHeights;
     
-    // Merge cells for title and headers
+    // Merge cells
     ws['!merges'] = [
       { s: { r: 0, c: 0 }, e: { r: 0, c: 9 } },  // Title
-      { s: { r: 1, c: 0 }, e: { r: 1, c: 9 } },  // Date
-      { s: { r: statsStartRow + 1, c: 0 }, e: { r: statsStartRow + 1, c: 9 } },  // Stats title
+      { s: { r: 2, c: 0 }, e: { r: 2, c: 9 } },  // Date
+      { s: { r: data.length - 6, c: 0 }, e: { r: data.length - 6, c: 9 } },  // Stats title
     ];
-    
-    // Apply cell styles
-    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
-    
-    for (let R = range.s.r; R <= range.e.r; ++R) {
-      for (let C = range.s.c; C <= range.e.c; ++C) {
-        const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
-        if (!ws[cellAddress]) continue;
-        
-        // Initialize cell style
-        if (!ws[cellAddress].s) ws[cellAddress].s = {};
-        
-        // Title row (0)
-        if (R === 0) {
-          ws[cellAddress].s = {
-            font: { bold: true, sz: 18, color: { rgb: "FFFFFF" } },
-            fill: { fgColor: { rgb: "1F4788" } },
-            alignment: { horizontal: "center", vertical: "center" }
-          };
-        }
-        
-        // Date row (1)
-        else if (R === 1) {
-          ws[cellAddress].s = {
-            font: { sz: 12, color: { rgb: "444444" } },
-            alignment: { horizontal: "center", vertical: "center" }
-          };
-        }
-        
-        // Header row (3)
-        else if (R === 3) {
-          ws[cellAddress].s = {
-            font: { bold: true, sz: 12, color: { rgb: "FFFFFF" } },
-            fill: { fgColor: { rgb: "2E7D32" } },
-            alignment: { horizontal: "center", vertical: "center" },
-            border: {
-              top: { style: "thin", color: { rgb: "000000" } },
-              bottom: { style: "thin", color: { rgb: "000000" } },
-              left: { style: "thin", color: { rgb: "000000" } },
-              right: { style: "thin", color: { rgb: "000000" } }
-            }
-          };
-        }
-        
-        // Data rows
-        else if (R > 3 && R < statsStartRow) {
-          ws[cellAddress].s = {
-            alignment: { horizontal: C === 0 ? "center" : (C === 1 || C === 2 || C === 9 ? "right" : "center"), vertical: "center" },
-            border: {
-              top: { style: "thin", color: { rgb: "DDDDDD" } },
-              bottom: { style: "thin", color: { rgb: "DDDDDD" } },
-              left: { style: "thin", color: { rgb: "DDDDDD" } },
-              right: { style: "thin", color: { rgb: "DDDDDD" } }
-            },
-            fill: { fgColor: { rgb: R % 2 === 0 ? "F5F5F5" : "FFFFFF" } }
-          };
-        }
-        
-        // Stats title row
-        else if (R === statsStartRow + 1) {
-          ws[cellAddress].s = {
-            font: { bold: true, sz: 14, color: { rgb: "FFFFFF" } },
-            fill: { fgColor: { rgb: "FF6F00" } },
-            alignment: { horizontal: "center", vertical: "center" }
-          };
-        }
-        
-        // Stats data rows
-        else if (R > statsStartRow + 1) {
-          ws[cellAddress].s = {
-            font: { bold: C % 2 === 0, sz: 11 },
-            fill: { fgColor: { rgb: "FFF3E0" } },
-            alignment: { horizontal: "center", vertical: "center" },
-            border: {
-              top: { style: "thin", color: { rgb: "FFB74D" } },
-              bottom: { style: "thin", color: { rgb: "FFB74D" } },
-              left: { style: "thin", color: { rgb: "FFB74D" } },
-              right: { style: "thin", color: { rgb: "FFB74D" } }
-            }
-          };
-        }
-      }
-    }
     
     XLSX.utils.book_append_sheet(wb, ws, 'تقرير الفنيين');
     
@@ -247,7 +155,7 @@ export default function TechniciansTable() {
     
     toast({
       title: "تم تصدير التقرير بنجاح",
-      description: `تم تصدير ${filteredTechnicians.length} سجل بتنسيق احترافي`,
+      description: `تم تصدير ${filteredTechnicians.length} سجل بشكل منظم`,
     });
   };
 
