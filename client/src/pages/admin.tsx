@@ -289,16 +289,11 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Debug: Simple Tabs Test */}
-      <div className="mb-4 p-4 border border-red-500 bg-red-50">
-        <p className="text-red-700 font-bold">اختبار التبويبات - يجب أن ترى هذا النص!</p>
-      </div>
-      
       <Tabs defaultValue="regions" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="regions">إدارة المناطق</TabsTrigger>
-          <TabsTrigger value="users">إدارة الموظفين</TabsTrigger>
-          <TabsTrigger value="transactions">العمليات الأخيرة</TabsTrigger>
+          <TabsTrigger value="regions" data-testid="tab-regions">إدارة المناطق</TabsTrigger>
+          <TabsTrigger value="users" data-testid="tab-users">إدارة الموظفين</TabsTrigger>
+          <TabsTrigger value="transactions" data-testid="tab-transactions">العمليات الأخيرة</TabsTrigger>
         </TabsList>
 
         {/* Regions Tab */}

@@ -4,10 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Plus, Minus, Edit } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Search, Plus, Minus, Edit, Trash2 } from "lucide-react";
 import { InventoryItemWithStatus } from "@shared/schema";
 import AddItemModal from "./add-item-modal";
 import WithdrawalModal from "./withdrawal-modal";
+import AddStockModal from "./add-stock-modal";
+import EditItemModal from "./edit-item-modal";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface InventoryTableProps {
   inventory?: InventoryItemWithStatus[];
@@ -15,9 +21,13 @@ interface InventoryTableProps {
 }
 
 export default function InventoryTable({ inventory, isLoading }: InventoryTableProps) {
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [showAddStockModal, setShowAddStockModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItemWithStatus | null>(null);
 
   const filteredInventory = inventory?.filter(item =>
@@ -63,9 +73,46 @@ export default function InventoryTable({ inventory, isLoading }: InventoryTableP
     }
   };
 
+  // Mutations
+  const deleteItemMutation = useMutation({
+    mutationFn: (id: string) => apiRequest("DELETE", `/api/inventory/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
+      setShowDeleteDialog(false);
+      setSelectedItem(null);
+      toast({ title: "تم حذف الصنف بنجاح" });
+    },
+    onError: () => {
+      toast({ title: "فشل في حذف الصنف", variant: "destructive" });
+    },
+  });
+
+  // Handlers
   const handleWithdraw = (item: InventoryItemWithStatus) => {
     setSelectedItem(item);
     setShowWithdrawModal(true);
+  };
+
+  const handleAddStock = (item: InventoryItemWithStatus) => {
+    setSelectedItem(item);
+    setShowAddStockModal(true);
+  };
+
+  const handleEdit = (item: InventoryItemWithStatus) => {
+    setSelectedItem(item);
+    setShowEditModal(true);
+  };
+
+  const handleDelete = (item: InventoryItemWithStatus) => {
+    setSelectedItem(item);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = () => {
+    if (selectedItem) {
+      deleteItemMutation.mutate(selectedItem.id);
+    }
   };
 
   if (isLoading) {
@@ -189,6 +236,7 @@ export default function InventoryTable({ inventory, isLoading }: InventoryTableP
                           <Button
                             variant="ghost"
                             size="icon"
+                            onClick={() => handleAddStock(item)}
                             className="hover:bg-success/10"
                             title="إضافة للمخزون"
                             data-testid={`button-add-stock-${item.id}`}
@@ -198,11 +246,22 @@ export default function InventoryTable({ inventory, isLoading }: InventoryTableP
                           <Button
                             variant="ghost"
                             size="icon"
+                            onClick={() => handleEdit(item)}
                             className="hover:bg-accent"
                             title="تعديل"
                             data-testid={`button-edit-${item.id}`}
                           >
                             <Edit className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(item)}
+                            className="hover:bg-destructive/10"
+                            title="حذف"
+                            data-testid={`button-delete-${item.id}`}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
                       </td>
@@ -222,6 +281,37 @@ export default function InventoryTable({ inventory, isLoading }: InventoryTableP
         selectedItem={selectedItem}
         inventory={inventory}
       />
+      <AddStockModal 
+        open={showAddStockModal} 
+        onOpenChange={setShowAddStockModal}
+        selectedItem={selectedItem}
+      />
+      <EditItemModal 
+        open={showEditModal} 
+        onOpenChange={setShowEditModal}
+        selectedItem={selectedItem}
+      />
+      
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>هل أنت متأكد من الحذف؟</AlertDialogTitle>
+            <AlertDialogDescription>
+              هذا الإجراء لا يمكن التراجع عنه. سيتم حذف "{selectedItem?.name}" من المخزون نهائياً.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row-reverse">
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-destructive hover:bg-destructive/90"
+              disabled={deleteItemMutation.isPending}
+            >
+              {deleteItemMutation.isPending ? "جاري الحذف..." : "نعم، احذف"}
+            </AlertDialogAction>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
