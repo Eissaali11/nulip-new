@@ -204,6 +204,8 @@ export default function InventoryTable({ inventory, isLoading }: InventoryTableP
                     <th className="text-right p-4 font-medium text-foreground">النوع</th>
                     <th className="text-right p-4 font-medium text-foreground">الكمية المتبقية</th>
                     <th className="text-right p-4 font-medium text-foreground">الوحدة</th>
+                    <th className="text-right p-4 font-medium text-foreground">اسم الفني</th>
+                    <th className="text-right p-4 font-medium text-foreground">المدينة</th>
                     <th className="text-right p-4 font-medium text-foreground">الحالة</th>
                     <th className="text-right p-4 font-medium text-foreground">الإجراءات</th>
                   </tr>
@@ -237,6 +239,12 @@ export default function InventoryTable({ inventory, isLoading }: InventoryTableP
                       </td>
                       <td className="p-4 text-muted-foreground" data-testid={`text-item-unit-${item.id}`}>
                         {item.unit}
+                      </td>
+                      <td className="p-4 text-muted-foreground" data-testid={`text-technician-${item.id}`}>
+                        {item.technicianName || '-'}
+                      </td>
+                      <td className="p-4 text-muted-foreground" data-testid={`text-city-${item.id}`}>
+                        {item.city || '-'}
                       </td>
                       <td className="p-4" data-testid={`text-item-status-${item.id}`}>
                         {getStatusBadge(item.status)}
