@@ -3,11 +3,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, FileSpreadsheet, Trash2, Search } from "lucide-react";
+import { Plus, FileSpreadsheet, Trash2, Search, Edit, PackageX } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { WithdrawnDevice } from "@shared/schema";
 import AddWithdrawnDeviceModal from "@/components/add-withdrawn-device-modal";
+import EditWithdrawnDeviceModal from "@/components/edit-withdrawn-device-modal";
 import ExcelJS from 'exceljs';
 
 export default function WithdrawnDevicesPage() {
@@ -15,6 +16,8 @@ export default function WithdrawnDevicesPage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedDevice, setSelectedDevice] = useState<WithdrawnDevice | null>(null);
 
   const { data: devices, isLoading } = useQuery<WithdrawnDevice[]>({
     queryKey: ["/api/withdrawn-devices"],
@@ -48,6 +51,11 @@ export default function WithdrawnDevicesPage() {
       device.terminalId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       device.serialNumber.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleEdit = (device: WithdrawnDevice) => {
+    setSelectedDevice(device);
+    setShowEditModal(true);
+  };
 
   const handleDelete = (id: string) => {
     if (confirm("هل أنت متأكد من حذف بيانات هذا الجهاز؟")) {
@@ -228,25 +236,33 @@ export default function WithdrawnDevicesPage() {
 
   return (
     <>
-      <Card>
-        <CardHeader>
+      <Card className="shadow-lg">
+        <CardHeader className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950 border-b">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <h2 className="text-xl md:text-2xl font-semibold text-foreground">الأجهزة المسحوبة</h2>
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-orange-100 dark:bg-orange-900 rounded-lg">
+                <PackageX className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+              </div>
+              <div>
+                <h2 className="text-xl md:text-2xl font-bold text-foreground">الأجهزة المسحوبة</h2>
+                <p className="text-sm text-muted-foreground">إدارة الأجهزة المسحوبة من الخدمة</p>
+              </div>
+            </div>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
               <div className="relative flex-1 sm:flex-initial">
                 <Input
                   type="text"
-                  placeholder="البحث..."
+                  placeholder="ابحث عن جهاز..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-full sm:w-64"
+                  className="pl-10 w-full sm:w-64 bg-white dark:bg-gray-900"
                   data-testid="input-search"
                 />
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               </div>
               <Button
                 onClick={() => setShowAddModal(true)}
-                className="gap-2"
+                className="gap-2 bg-orange-600 hover:bg-orange-700 text-white"
                 data-testid="button-add"
               >
                 <Plus className="h-4 w-4" />
@@ -255,11 +271,11 @@ export default function WithdrawnDevicesPage() {
               <Button
                 onClick={handleExport}
                 variant="outline"
-                className="gap-2"
+                className="gap-2 border-emerald-300 dark:border-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950"
                 data-testid="button-export"
               >
-                <FileSpreadsheet className="h-4 w-4" />
-                <span>تصدير Excel</span>
+                <FileSpreadsheet className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                <span className="text-emerald-700 dark:text-emerald-300">تصدير Excel</span>
               </Button>
             </div>
           </div>
@@ -267,24 +283,24 @@ export default function WithdrawnDevicesPage() {
 
         <CardContent>
           {filteredDevices && filteredDevices.length > 0 ? (
-            <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <div className="overflow-x-auto -mx-4 sm:mx-0 rounded-lg">
               <div className="inline-block min-w-full align-middle">
-                <table className="min-w-full divide-y divide-border">
-                  <thead className="bg-muted/50">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
                     <tr>
-                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center font-semibold">#</th>
-                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center font-semibold">المدينة</th>
-                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center font-semibold">اسم الفني</th>
-                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center font-semibold">رقم الجهاز</th>
-                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center font-semibold">الرقم التسلسلي</th>
-                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center font-semibold">البطارية</th>
-                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center font-semibold">كابل الشاحن</th>
-                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center font-semibold">رأس الشاحن</th>
-                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center font-semibold">وجود شريحة</th>
-                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center font-semibold">نوع الشريحة</th>
-                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center font-semibold">الضرر</th>
-                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center font-semibold">ملاحظات</th>
-                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center font-semibold">العمليات</th>
+                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">#</th>
+                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">المدينة</th>
+                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">اسم الفني</th>
+                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">رقم الجهاز</th>
+                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">الرقم التسلسلي</th>
+                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">البطارية</th>
+                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">كابل الشاحن</th>
+                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">رأس الشاحن</th>
+                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">وجود شريحة</th>
+                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">نوع الشريحة</th>
+                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">الضرر</th>
+                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">ملاحظات</th>
+                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">العمليات</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border bg-background">
@@ -306,10 +322,11 @@ export default function WithdrawnDevicesPage() {
                           {device.serialNumber}
                         </td>
                         <td className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-sm">
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-                            ${device.battery === 'جيدة' ? 'bg-green-100 text-green-800' : 
-                              device.battery === 'متوسطة' ? 'bg-yellow-100 text-yellow-800' : 
-                              'bg-red-100 text-red-800'}`}>
+                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold
+                            ${device.battery === 'جيدة' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 
+                              device.battery === 'متوسطة' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : 
+                              device.battery === 'سيئة' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                              'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'}`}>
                             {device.battery}
                           </span>
                         </td>
@@ -332,7 +349,17 @@ export default function WithdrawnDevicesPage() {
                           {device.notes || '-'}
                         </td>
                         <td className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4">
-                          <div className="flex items-center justify-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEdit(device)}
+                              className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950 dark:hover:text-blue-400"
+                              title="تعديل"
+                              data-testid={`button-edit-${device.id}`}
+                            >
+                              <Edit className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="icon"
@@ -366,6 +393,11 @@ export default function WithdrawnDevicesPage() {
       </Card>
 
       <AddWithdrawnDeviceModal open={showAddModal} onOpenChange={setShowAddModal} />
+      <EditWithdrawnDeviceModal 
+        open={showEditModal} 
+        onOpenChange={setShowEditModal}
+        device={selectedDevice}
+      />
     </>
   );
 }
