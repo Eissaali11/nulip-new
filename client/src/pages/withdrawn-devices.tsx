@@ -267,31 +267,33 @@ export default function WithdrawnDevicesPage() {
                 <div className="relative flex-1 sm:flex-initial">
                   <Input
                     type="text"
-                    placeholder="ابحث عن جهاز..."
+                    placeholder="ابحث..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 w-full sm:w-64 bg-white dark:bg-gray-900"
+                    className="pl-10 w-full sm:w-64 bg-white dark:bg-gray-900 text-sm"
                     data-testid="input-search"
                   />
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 </div>
-                <Button
-                  onClick={() => setShowAddModal(true)}
-                  className="gap-2 bg-orange-600 hover:bg-orange-700 text-white"
-                  data-testid="button-add"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>إضافة جهاز</span>
-                </Button>
-                <Button
-                  onClick={handleExport}
-                  variant="outline"
-                  className="gap-2 border-emerald-300 dark:border-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950"
-                  data-testid="button-export"
-                >
-                  <FileSpreadsheet className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                  <span className="text-emerald-700 dark:text-emerald-300">تصدير Excel</span>
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleExport}
+                    variant="outline"
+                    className="flex-1 sm:flex-initial gap-1.5 sm:gap-2 border-emerald-300 dark:border-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950 text-xs sm:text-sm"
+                    data-testid="button-export"
+                  >
+                    <FileSpreadsheet className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-600 dark:text-emerald-400" />
+                    <span className="text-emerald-700 dark:text-emerald-300">تصدير</span>
+                  </Button>
+                  <Button
+                    onClick={() => setShowAddModal(true)}
+                    className="flex-1 sm:flex-initial gap-1.5 sm:gap-2 bg-orange-600 hover:bg-orange-700 text-white text-xs sm:text-sm"
+                    data-testid="button-add"
+                  >
+                    <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    <span>إضافة</span>
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -304,41 +306,41 @@ export default function WithdrawnDevicesPage() {
                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                   <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
                     <tr>
-                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">#</th>
-                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">المدينة</th>
-                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">اسم الفني</th>
-                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">رقم الجهاز</th>
-                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">الرقم التسلسلي</th>
-                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">البطارية</th>
-                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">كابل الشاحن</th>
-                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">رأس الشاحن</th>
-                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">وجود شريحة</th>
-                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">نوع الشريحة</th>
-                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">الضرر</th>
-                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">ملاحظات</th>
-                      <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">العمليات</th>
+                      <th className="hidden sm:table-cell whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">#</th>
+                      <th className="hidden md:table-cell whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">المدينة</th>
+                      <th className="whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">الفني</th>
+                      <th className="whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">الجهاز</th>
+                      <th className="hidden lg:table-cell whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">التسلسلي</th>
+                      <th className="whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">البطارية</th>
+                      <th className="hidden xl:table-cell whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">كابل</th>
+                      <th className="hidden xl:table-cell whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">رأس</th>
+                      <th className="hidden lg:table-cell whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">شريحة</th>
+                      <th className="hidden xl:table-cell whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">نوع</th>
+                      <th className="hidden xl:table-cell whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">ضرر</th>
+                      <th className="hidden xl:table-cell whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">ملاحظات</th>
+                      <th className="whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border bg-background">
                     {filteredDevices.map((device, index) => (
                       <tr key={device.id} className="hover:bg-muted/30 transition-colors" data-testid={`row-device-${device.id}`}>
-                        <td className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-sm">
+                        <td className="hidden sm:table-cell whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm">
                           {index + 1}
                         </td>
-                        <td className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-sm">
+                        <td className="hidden md:table-cell whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm">
                           {device.city}
                         </td>
-                        <td className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-sm font-medium">
+                        <td className="whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm font-medium">
                           {device.technicianName}
                         </td>
-                        <td className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-sm">
+                        <td className="whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm">
                           {device.terminalId}
                         </td>
-                        <td className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-sm">
+                        <td className="hidden lg:table-cell whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm">
                           {device.serialNumber}
                         </td>
-                        <td className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-sm">
-                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold
+                        <td className="whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm">
+                          <span className={`inline-flex items-center px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[9px] sm:text-xs font-semibold
                             ${device.battery === 'جيدة' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 
                               device.battery === 'متوسطة' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : 
                               device.battery === 'سيئة' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
@@ -346,45 +348,45 @@ export default function WithdrawnDevicesPage() {
                             {device.battery}
                           </span>
                         </td>
-                        <td className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-sm">
+                        <td className="hidden xl:table-cell whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm">
                           {device.chargerCable}
                         </td>
-                        <td className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-sm">
+                        <td className="hidden xl:table-cell whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm">
                           {device.chargerHead}
                         </td>
-                        <td className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-sm">
+                        <td className="hidden lg:table-cell whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm">
                           {device.hasSim}
                         </td>
-                        <td className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-sm">
+                        <td className="hidden xl:table-cell whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm">
                           {device.simCardType || '-'}
                         </td>
-                        <td className="px-2 py-3 sm:px-4 sm:py-4 text-center text-sm max-w-xs">
+                        <td className="hidden xl:table-cell px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm max-w-xs truncate">
                           {device.damagePart || '-'}
                         </td>
-                        <td className="px-2 py-3 sm:px-4 sm:py-4 text-center text-sm max-w-xs">
+                        <td className="hidden xl:table-cell px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm max-w-xs truncate">
                           {device.notes || '-'}
                         </td>
-                        <td className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4">
-                          <div className="flex items-center justify-center gap-1">
+                        <td className="whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3">
+                          <div className="flex items-center justify-center gap-0.5 sm:gap-1">
                             <Button
                               variant="ghost"
                               size="icon"
                               onClick={() => handleEdit(device)}
-                              className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950 dark:hover:text-blue-400"
+                              className="h-7 w-7 sm:h-8 sm:w-8 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950 dark:hover:text-blue-400"
                               title="تعديل"
                               data-testid={`button-edit-${device.id}`}
                             >
-                              <Edit className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                              <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
                               onClick={() => handleDelete(device.id)}
-                              className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
+                              className="h-7 w-7 sm:h-8 sm:w-8 hover:bg-destructive/10 hover:text-destructive"
                               title="حذف"
                               data-testid={`button-delete-${device.id}`}
                             >
-                              <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                              <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                             </Button>
                           </div>
                         </td>

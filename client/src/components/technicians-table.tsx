@@ -319,81 +319,81 @@ export default function TechniciansTable() {
                   <table className="min-w-full divide-y divide-border">
                     <thead className="bg-muted">
                       <tr>
-                        <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-right text-xs sm:text-sm font-semibold text-foreground">اسم الفني</th>
-                        <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-right text-xs sm:text-sm font-semibold text-foreground">المدينة</th>
-                        <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs sm:text-sm font-semibold text-foreground">N950</th>
-                        <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs sm:text-sm font-semibold text-foreground">I900</th>
-                        <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs sm:text-sm font-semibold text-foreground">أوراق رول</th>
-                        <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs sm:text-sm font-semibold text-foreground">ملصقات</th>
-                        <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs sm:text-sm font-semibold text-foreground">موبايلي</th>
-                        <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs sm:text-sm font-semibold text-foreground">STC</th>
-                        <th className="hidden md:table-cell whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-right text-xs sm:text-sm font-semibold text-foreground">ملاحظات</th>
-                        <th className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs sm:text-sm font-semibold text-foreground">الإجراءات</th>
+                        <th className="whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-right text-[10px] sm:text-sm font-semibold text-foreground">الفني</th>
+                        <th className="hidden sm:table-cell whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-right text-xs sm:text-sm font-semibold text-foreground">المدينة</th>
+                        <th className="whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm font-semibold text-foreground">N950</th>
+                        <th className="whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm font-semibold text-foreground">I900</th>
+                        <th className="hidden lg:table-cell whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-center text-xs sm:text-sm font-semibold text-foreground">رول</th>
+                        <th className="hidden lg:table-cell whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-center text-xs sm:text-sm font-semibold text-foreground">ملصقات</th>
+                        <th className="hidden md:table-cell whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm font-semibold text-foreground">موبايلي</th>
+                        <th className="hidden md:table-cell whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm font-semibold text-foreground">STC</th>
+                        <th className="hidden xl:table-cell whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-right text-xs sm:text-sm font-semibold text-foreground">ملاحظات</th>
+                        <th className="whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm font-semibold text-foreground"></th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border bg-background">
                       {filteredTechnicians.map((tech) => (
                         <tr key={tech.id} className="hover:bg-accent/50 transition-colors">
-                          <td className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-xs sm:text-sm font-medium text-foreground" data-testid={`text-name-${tech.id}`}>
+                          <td className="whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-[10px] sm:text-sm font-medium text-foreground" data-testid={`text-name-${tech.id}`}>
                             {tech.technicianName}
                           </td>
-                          <td className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-xs sm:text-sm text-muted-foreground" data-testid={`text-city-${tech.id}`}>
+                          <td className="hidden sm:table-cell whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-xs sm:text-sm text-muted-foreground" data-testid={`text-city-${tech.id}`}>
                             {tech.city}
                           </td>
-                          <td className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs sm:text-sm" data-testid={`text-n950-${tech.id}`}>
-                            <span className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100 font-semibold">
+                          <td className="whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm" data-testid={`text-n950-${tech.id}`}>
+                            <span className="inline-flex items-center justify-center px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100 text-[10px] sm:text-sm font-semibold">
                               {tech.n950Devices}
                             </span>
                           </td>
-                          <td className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs sm:text-sm" data-testid={`text-i900-${tech.id}`}>
-                            <span className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-100 font-semibold">
+                          <td className="whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm" data-testid={`text-i900-${tech.id}`}>
+                            <span className="inline-flex items-center justify-center px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-100 text-[10px] sm:text-sm font-semibold">
                               {tech.i900Devices}
                             </span>
                           </td>
-                          <td className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs sm:text-sm" data-testid={`text-roll-${tech.id}`}>
+                          <td className="hidden lg:table-cell whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-center text-xs sm:text-sm" data-testid={`text-roll-${tech.id}`}>
                             <span className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100 font-semibold">
                               {tech.rollPaper}
                             </span>
                           </td>
-                          <td className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs sm:text-sm" data-testid={`text-stickers-${tech.id}`}>
+                          <td className="hidden lg:table-cell whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-center text-xs sm:text-sm" data-testid={`text-stickers-${tech.id}`}>
                             <span className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-100 font-semibold">
                               {tech.stickers}
                             </span>
                           </td>
-                          <td className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs sm:text-sm" data-testid={`text-mobily-${tech.id}`}>
-                            <span className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 font-semibold">
+                          <td className="hidden md:table-cell whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm" data-testid={`text-mobily-${tech.id}`}>
+                            <span className="inline-flex items-center justify-center px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 text-[10px] sm:text-sm font-semibold">
                               {tech.mobilySim}
                             </span>
                           </td>
-                          <td className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4 text-center text-xs sm:text-sm" data-testid={`text-stc-${tech.id}`}>
-                            <span className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-cyan-100 dark:bg-cyan-900 text-cyan-800 dark:text-cyan-100 font-semibold">
+                          <td className="hidden md:table-cell whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm" data-testid={`text-stc-${tech.id}`}>
+                            <span className="inline-flex items-center justify-center px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-cyan-100 dark:bg-cyan-900 text-cyan-800 dark:text-cyan-100 text-[10px] sm:text-sm font-semibold">
                               {tech.stcSim}
                             </span>
                           </td>
-                          <td className="hidden md:table-cell px-2 py-3 sm:px-4 sm:py-4 text-xs sm:text-sm text-muted-foreground max-w-xs truncate" data-testid={`text-notes-${tech.id}`}>
+                          <td className="hidden xl:table-cell px-2 py-2 sm:px-4 sm:py-3 text-xs sm:text-sm text-muted-foreground max-w-xs truncate" data-testid={`text-notes-${tech.id}`}>
                             {tech.notes || '-'}
                           </td>
-                          <td className="whitespace-nowrap px-2 py-3 sm:px-4 sm:py-4">
-                            <div className="flex items-center justify-center space-x-1 space-x-reverse">
+                          <td className="whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3">
+                            <div className="flex items-center justify-center space-x-0.5 sm:space-x-1 space-x-reverse">
                               <Button
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => handleEdit(tech)}
-                                className="h-8 w-8 hover:bg-accent"
+                                className="h-7 w-7 sm:h-8 sm:w-8 hover:bg-accent"
                                 title="تعديل"
                                 data-testid={`button-edit-${tech.id}`}
                               >
-                                <Edit className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
+                                <Edit className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
                               </Button>
                               <Button
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => handleDelete(tech.id)}
-                                className="h-8 w-8 hover:bg-destructive/10"
+                                className="h-7 w-7 sm:h-8 sm:w-8 hover:bg-destructive/10"
                                 title="حذف"
                                 data-testid={`button-delete-${tech.id}`}
                               >
-                                <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-destructive" />
+                                <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 text-destructive" />
                               </Button>
                             </div>
                           </td>
