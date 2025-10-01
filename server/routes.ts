@@ -41,7 +41,63 @@ function generateSessionToken(): string {
   return Math.random().toString(36).substring(2) + Date.now().toString(36);
 }
 
+// Initialize default data
+async function initializeDefaults() {
+  try {
+    // Check if any users exist
+    const users = await storage.getUsers();
+    
+    if (users.length === 0) {
+      console.log("🔧 No users found. Creating default data...");
+      
+      // Create default region first
+      const regions = await storage.getRegions();
+      let defaultRegionId: string;
+      
+      if (regions.length === 0) {
+        const defaultRegion = await storage.createRegion({
+          name: "المنطقة الرئيسية",
+          description: "المنطقة الافتراضية للنظام",
+          isActive: true,
+        });
+        defaultRegionId = defaultRegion.id;
+        console.log("✅ Created default region");
+      } else {
+        defaultRegionId = regions[0].id;
+      }
+      
+      // Create default admin user
+      await storage.createUser({
+        username: "admin",
+        email: "admin@company.com",
+        password: "admin123",
+        fullName: "مدير النظام",
+        role: "admin",
+        regionId: defaultRegionId,
+        isActive: true,
+      });
+      
+      // Create default employee user
+      await storage.createUser({
+        username: "employee1",
+        email: "employee1@company.com",
+        password: "emp123",
+        fullName: "موظف تجريبي",
+        role: "employee",
+        regionId: defaultRegionId,
+        isActive: true,
+      });
+      
+      console.log("✅ Created default users (admin/admin123, employee1/emp123)");
+    }
+  } catch (error) {
+    console.error("❌ Error initializing defaults:", error);
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Initialize default data on startup
+  await initializeDefaults();
   // Authentication routes
   app.post("/api/auth/login", async (req, res) => {
     try {
@@ -92,6 +148,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "تم تسجيل الدخول بنجاح"
       });
     } catch (error) {
+      console.error("Login error:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ 
           success: false, 
@@ -101,7 +158,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.status(500).json({ 
         success: false, 
-        message: "خطأ في الخادم" 
+        message: "خطأ في الخادم",
+        error: error instanceof Error ? error.message : "Unknown error"
       });
     }
   });
