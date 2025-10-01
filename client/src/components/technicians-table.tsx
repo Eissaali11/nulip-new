@@ -255,18 +255,18 @@ export default function TechniciansTable() {
 
   return (
     <>
-      <Card>
-        <CardHeader>
+      <Card className="shadow-lg">
+        <CardHeader className="border-b">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <h2 className="text-xl md:text-2xl font-semibold text-foreground">بيانات الفنيين</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-foreground">بيانات الفنيين</h2>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
               <div className="relative flex-1 sm:flex-initial">
                 <Input
                   type="text"
-                  placeholder="البحث..."
+                  placeholder="ابحث..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-full sm:w-64"
+                  className="pl-10 w-full sm:w-64 bg-white dark:bg-gray-900 text-sm"
                   data-testid="input-search"
                 />
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -276,38 +276,38 @@ export default function TechniciansTable() {
                 <Button
                   asChild
                   variant="outline"
-                  className="flex items-center justify-center space-x-2 space-x-reverse bg-orange-50 hover:bg-orange-100 dark:bg-orange-950 dark:hover:bg-orange-900 border-orange-200 dark:border-orange-800"
+                  className="flex-1 sm:flex-initial gap-1.5 sm:gap-2 border-orange-200 dark:border-orange-800 hover:bg-orange-50 dark:hover:bg-orange-950 text-xs sm:text-sm"
                 >
                   <Link href="/withdrawn-devices" data-testid="button-withdrawn-devices">
-                    <Smartphone className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-                    <span className="text-orange-700 dark:text-orange-300 text-sm sm:text-base">الأجهزة المسحوبة</span>
+                    <Smartphone className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-orange-600 dark:text-orange-400" />
+                    <span className="text-orange-700 dark:text-orange-300">الأجهزة</span>
                   </Link>
                 </Button>
                 
                 <Button
                   onClick={handleExport}
                   variant="outline"
-                  className="flex-1 sm:flex-initial flex items-center justify-center space-x-2 space-x-reverse bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950 dark:hover:bg-emerald-900 border-emerald-200 dark:border-emerald-800"
+                  className="flex-1 sm:flex-initial gap-1.5 sm:gap-2 border-emerald-300 dark:border-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950 text-xs sm:text-sm"
                   data-testid="button-export-excel"
                 >
-                  <FileSpreadsheet className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                  <span className="text-emerald-700 dark:text-emerald-300 text-sm sm:text-base">تصدير</span>
+                  <FileSpreadsheet className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-600 dark:text-emerald-400" />
+                  <span className="text-emerald-700 dark:text-emerald-300">تصدير</span>
                 </Button>
                 
                 <Button
                   onClick={() => setShowAddModal(true)}
-                  className="flex-1 sm:flex-initial flex items-center justify-center space-x-2 space-x-reverse"
+                  className="flex-1 sm:flex-initial gap-1.5 sm:gap-2 text-xs sm:text-sm"
                   data-testid="button-add-technician"
                 >
-                  <Plus className="h-4 w-4" />
-                  <span className="text-sm sm:text-base">إضافة فني</span>
+                  <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span>إضافة</span>
                 </Button>
               </div>
             </div>
           </div>
         </CardHeader>
         
-        <CardContent className="p-2 sm:p-6">
+        <CardContent>
           {!filteredTechnicians || filteredTechnicians.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               {searchTerm ? "لا توجد نتائج للبحث" : "لا توجد بيانات"}
@@ -318,20 +318,22 @@ export default function TechniciansTable() {
               <div className="block lg:hidden space-y-3">
                 {filteredTechnicians.map((tech) => (
                   <div key={tech.id} className="bg-card border border-border rounded-lg p-4 shadow-sm">
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <h3 className="font-semibold text-base text-foreground">{tech.technicianName}</h3>
-                        <p className="text-sm text-muted-foreground">{tech.city}</p>
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-sm text-foreground">{tech.technicianName}</h3>
+                          <span className="text-xs text-muted-foreground">• {tech.city}</span>
+                        </div>
                       </div>
                       <div className="flex items-center gap-1">
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => handleEdit(tech)}
-                          className="h-8 w-8 hover:bg-accent"
+                          className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950 dark:hover:text-blue-400"
                           data-testid={`button-edit-${tech.id}`}
                         >
-                          <Edit className="h-4 w-4 text-muted-foreground" />
+                          <Edit className="h-3.5 w-3.5" />
                         </Button>
                         <Button
                           variant="ghost"
@@ -340,54 +342,53 @@ export default function TechniciansTable() {
                           className="h-8 w-8 hover:bg-destructive/10"
                           data-testid={`button-delete-${tech.id}`}
                         >
-                          <Trash2 className="h-4 w-4 text-destructive" />
+                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
                         </Button>
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-3 mb-3">
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">أجهزة N950</p>
-                        <span className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100 text-sm font-semibold">
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <span className="text-muted-foreground">N950: </span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100 text-[10px] font-semibold">
                           {tech.n950Devices}
                         </span>
                       </div>
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">أجهزة I900</p>
-                        <span className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-100 text-sm font-semibold">
+                      <div>
+                        <span className="text-muted-foreground">I900: </span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-100 text-[10px] font-semibold">
                           {tech.i900Devices}
                         </span>
                       </div>
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">أوراق رول</p>
-                        <span className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100 text-sm font-semibold">
+                      <div>
+                        <span className="text-muted-foreground">رول: </span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100 text-[10px] font-semibold">
                           {tech.rollPaper}
                         </span>
                       </div>
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">ملصقات مداى</p>
-                        <span className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-100 text-sm font-semibold">
+                      <div>
+                        <span className="text-muted-foreground">ملصقات: </span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-100 text-[10px] font-semibold">
                           {tech.stickers}
                         </span>
                       </div>
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">شرائح موبايلي</p>
-                        <span className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 text-sm font-semibold">
+                      <div>
+                        <span className="text-muted-foreground">موبايلي: </span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 text-[10px] font-semibold">
                           {tech.mobilySim}
                         </span>
                       </div>
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">شرائح STC</p>
-                        <span className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-cyan-100 dark:bg-cyan-900 text-cyan-800 dark:text-cyan-100 text-sm font-semibold">
+                      <div>
+                        <span className="text-muted-foreground">STC: </span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-cyan-100 dark:bg-cyan-900 text-cyan-800 dark:text-cyan-100 text-[10px] font-semibold">
                           {tech.stcSim}
                         </span>
                       </div>
                     </div>
                     
                     {tech.notes && (
-                      <div className="pt-3 border-t border-border">
-                        <p className="text-xs text-muted-foreground mb-1">ملاحظات:</p>
-                        <p className="text-sm text-foreground">{tech.notes}</p>
+                      <div className="mt-3 pt-3 border-t border-border space-y-1 text-xs">
+                        <p><span className="text-muted-foreground">ملاحظات:</span> {tech.notes}</p>
                       </div>
                     )}
                   </div>
@@ -395,22 +396,21 @@ export default function TechniciansTable() {
               </div>
 
               {/* Desktop Table View */}
-              <div className="hidden lg:block overflow-x-auto -mx-2 sm:mx-0">
+              <div className="hidden lg:block overflow-x-auto -mx-4 sm:mx-0 rounded-lg">
                 <div className="inline-block min-w-full align-middle">
-                  <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
-                    <table className="min-w-full divide-y divide-border">
-                    <thead className="bg-muted">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
                       <tr>
-                        <th className="whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-right text-[10px] sm:text-sm font-semibold text-foreground">الفني</th>
-                        <th className="hidden sm:table-cell whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-right text-xs sm:text-sm font-semibold text-foreground">المدينة</th>
-                        <th className="whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm font-semibold text-foreground">N950</th>
-                        <th className="whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm font-semibold text-foreground">I900</th>
-                        <th className="hidden lg:table-cell whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-center text-xs sm:text-sm font-semibold text-foreground">رول</th>
-                        <th className="hidden lg:table-cell whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-center text-xs sm:text-sm font-semibold text-foreground">ملصقات</th>
-                        <th className="hidden md:table-cell whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm font-semibold text-foreground">موبايلي</th>
-                        <th className="hidden md:table-cell whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm font-semibold text-foreground">STC</th>
-                        <th className="hidden xl:table-cell whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-right text-xs sm:text-sm font-semibold text-foreground">ملاحظات</th>
-                        <th className="whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm font-semibold text-foreground"></th>
+                        <th className="whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-right text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">الفني</th>
+                        <th className="hidden md:table-cell whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-right text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">المدينة</th>
+                        <th className="whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">N950</th>
+                        <th className="whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">I900</th>
+                        <th className="hidden lg:table-cell whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">رول</th>
+                        <th className="hidden lg:table-cell whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">ملصقات</th>
+                        <th className="hidden xl:table-cell whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">موبايلي</th>
+                        <th className="hidden xl:table-cell whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">STC</th>
+                        <th className="hidden xl:table-cell whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-right text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">ملاحظات</th>
+                        <th className="whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300"></th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border bg-background">
@@ -419,7 +419,7 @@ export default function TechniciansTable() {
                           <td className="whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-[10px] sm:text-sm font-medium text-foreground" data-testid={`text-name-${tech.id}`}>
                             {tech.technicianName}
                           </td>
-                          <td className="hidden sm:table-cell whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-xs sm:text-sm text-muted-foreground" data-testid={`text-city-${tech.id}`}>
+                          <td className="hidden md:table-cell whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-[10px] sm:text-sm text-muted-foreground" data-testid={`text-city-${tech.id}`}>
                             {tech.city}
                           </td>
                           <td className="whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm" data-testid={`text-n950-${tech.id}`}>
@@ -442,12 +442,12 @@ export default function TechniciansTable() {
                               {tech.stickers}
                             </span>
                           </td>
-                          <td className="hidden md:table-cell whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm" data-testid={`text-mobily-${tech.id}`}>
+                          <td className="hidden xl:table-cell whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm" data-testid={`text-mobily-${tech.id}`}>
                             <span className="inline-flex items-center justify-center px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 text-[10px] sm:text-sm font-semibold">
                               {tech.mobilySim}
                             </span>
                           </td>
-                          <td className="hidden md:table-cell whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm" data-testid={`text-stc-${tech.id}`}>
+                          <td className="hidden xl:table-cell whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm" data-testid={`text-stc-${tech.id}`}>
                             <span className="inline-flex items-center justify-center px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-cyan-100 dark:bg-cyan-900 text-cyan-800 dark:text-cyan-100 text-[10px] sm:text-sm font-semibold">
                               {tech.stcSim}
                             </span>
@@ -485,7 +485,6 @@ export default function TechniciansTable() {
                   </table>
                 </div>
               </div>
-            </div>
             </>
           )}
           
