@@ -6,7 +6,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background text-foreground" dir="rtl">
       <Header />
       
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-2 sm:px-4 lg:px-6 py-3 sm:py-6">
         <TechniciansTable />
       </div>
     </div>
