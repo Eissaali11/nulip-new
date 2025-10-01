@@ -54,7 +54,7 @@ export const exportInventoryToExcel = ({
     [reportTitle],
     [`تاريخ التقرير: ${currentDate}`],
     [],
-    ['#', 'اسم الصنف', 'النوع', 'الكمية', 'الوحدة', 'الحد الأدنى', 'الحالة', 'المنطقة'],
+    ['#', 'اسم الصنف', 'النوع', 'الكمية', 'الوحدة', 'الحد الأدنى', 'اسم الفني', 'المدينة', 'الحالة', 'المنطقة'],
   ];
   
   inventory.forEach((item, index) => {
@@ -65,6 +65,8 @@ export const exportInventoryToExcel = ({
       item.quantity,
       item.unit,
       item.minThreshold,
+      item.technicianName || '-',
+      item.city || '-',
       getStatusNameArabic(item.status),
       item.regionName || 'غير محدد'
     ]);
@@ -88,6 +90,8 @@ export const exportInventoryToExcel = ({
     { wch: 12 },  // الكمية
     { wch: 15 },  // الوحدة
     { wch: 15 },  // الحد الأدنى
+    { wch: 20 },  // اسم الفني
+    { wch: 20 },  // المدينة
     { wch: 15 },  // الحالة
     { wch: 25 },  // المنطقة
   ];
@@ -95,9 +99,9 @@ export const exportInventoryToExcel = ({
   
   // دمج خلايا الرأس
   const merges = [
-    { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } },
-    { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } },
-    { s: { r: 2, c: 0 }, e: { r: 2, c: 7 } },
+    { s: { r: 0, c: 0 }, e: { r: 0, c: 9 } },
+    { s: { r: 1, c: 0 }, e: { r: 1, c: 9 } },
+    { s: { r: 2, c: 0 }, e: { r: 2, c: 9 } },
   ];
   ws['!merges'] = merges;
   
