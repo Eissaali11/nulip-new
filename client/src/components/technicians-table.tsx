@@ -273,16 +273,16 @@ export default function TechniciansTable() {
               </div>
               
               <div className="flex gap-2">
-                <Link href="/withdrawn-devices">
-                  <Button
-                    variant="outline"
-                    className="flex items-center justify-center space-x-2 space-x-reverse bg-orange-50 hover:bg-orange-100 dark:bg-orange-950 dark:hover:bg-orange-900 border-orange-200 dark:border-orange-800"
-                    data-testid="button-withdrawn-devices"
-                  >
+                <Button
+                  asChild
+                  variant="outline"
+                  className="flex items-center justify-center space-x-2 space-x-reverse bg-orange-50 hover:bg-orange-100 dark:bg-orange-950 dark:hover:bg-orange-900 border-orange-200 dark:border-orange-800"
+                >
+                  <Link href="/withdrawn-devices" data-testid="button-withdrawn-devices">
                     <Smartphone className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                     <span className="text-orange-700 dark:text-orange-300 text-sm sm:text-base">الأجهزة المسحوبة</span>
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
                 
                 <Button
                   onClick={handleExport}
