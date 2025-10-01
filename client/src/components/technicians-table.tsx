@@ -74,7 +74,7 @@ export default function TechniciansTable() {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('تقرير الفنيين');
     
-    const currentDate = new Date().toLocaleDateString('ar-SA', {
+    const currentDate = new Date().toLocaleDateString('ar-EG', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
