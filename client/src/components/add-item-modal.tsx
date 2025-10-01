@@ -55,6 +55,8 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
       unit: "",
       quantity: 0,
       minThreshold: 5,
+      technicianName: "",
+      city: "",
     },
   });
 
@@ -190,6 +192,42 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                       {...field}
                       onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                       data-testid="input-item-threshold"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="technicianName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>اسم الفني</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="مثل: محمد أحمد"
+                      {...field}
+                      data-testid="input-technician-name"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="city"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>المدينة</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="مثل: الرياض، جدة، الدمام"
+                      {...field}
+                      data-testid="input-city"
                     />
                   </FormControl>
                   <FormMessage />
