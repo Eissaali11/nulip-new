@@ -78,7 +78,7 @@ export default function TechniciansTable() {
       ['تقرير بيانات الفنيين'],
       [`تاريخ التقرير: ${currentDate}`],
       [],
-      ['#', 'اسم الفني', 'المدينة', 'أجهزة N950', 'أجهزة I900', 'أوراق رول ملصقات', 'شرائح موبايلي', 'شرائح STC', 'ملاحظات'],
+      ['#', 'اسم الفني', 'المدينة', 'أجهزة N950', 'أجهزة I900', 'أوراق رول', 'ملصقات مداء', 'شرائح موبايلي', 'شرائح STC', 'ملاحظات'],
     ];
     
     filteredTechnicians.forEach((tech, index) => {
@@ -88,7 +88,8 @@ export default function TechniciansTable() {
         tech.city,
         tech.n950Devices,
         tech.i900Devices,
-        tech.rollPapers,
+        tech.rollPaper,
+        tech.stickers,
         tech.mobilySim,
         tech.stcSim,
         tech.notes || '-'
@@ -100,7 +101,8 @@ export default function TechniciansTable() {
     data.push(['إجمالي الفنيين:', filteredTechnicians.length]);
     data.push(['إجمالي أجهزة N950:', filteredTechnicians.reduce((sum, t) => sum + t.n950Devices, 0)]);
     data.push(['إجمالي أجهزة I900:', filteredTechnicians.reduce((sum, t) => sum + t.i900Devices, 0)]);
-    data.push(['إجمالي الأوراق:', filteredTechnicians.reduce((sum, t) => sum + t.rollPapers, 0)]);
+    data.push(['إجمالي أوراق رول:', filteredTechnicians.reduce((sum, t) => sum + t.rollPaper, 0)]);
+    data.push(['إجمالي ملصقات مداء:', filteredTechnicians.reduce((sum, t) => sum + t.stickers, 0)]);
     data.push(['إجمالي شرائح موبايلي:', filteredTechnicians.reduce((sum, t) => sum + t.mobilySim, 0)]);
     data.push(['إجمالي شرائح STC:', filteredTechnicians.reduce((sum, t) => sum + t.stcSim, 0)]);
     
@@ -112,7 +114,8 @@ export default function TechniciansTable() {
       { wch: 20 },  // المدينة
       { wch: 15 },  // N950
       { wch: 15 },  // I900
-      { wch: 20 },  // أوراق
+      { wch: 15 },  // أوراق رول
+      { wch: 18 },  // ملصقات مداء
       { wch: 18 },  // موبايلي
       { wch: 15 },  // STC
       { wch: 30 },  // ملاحظات
@@ -120,9 +123,9 @@ export default function TechniciansTable() {
     ws['!cols'] = colWidths;
     
     const merges = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 8 } },
-      { s: { r: 1, c: 0 }, e: { r: 1, c: 8 } },
-      { s: { r: 2, c: 0 }, e: { r: 2, c: 8 } },
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 9 } },
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 9 } },
+      { s: { r: 2, c: 0 }, e: { r: 2, c: 9 } },
     ];
     ws['!merges'] = merges;
     
@@ -197,6 +200,7 @@ export default function TechniciansTable() {
                     <th className="text-right p-4 font-medium text-foreground">أجهزة N950</th>
                     <th className="text-right p-4 font-medium text-foreground">أجهزة I900</th>
                     <th className="text-right p-4 font-medium text-foreground">أوراق رول</th>
+                    <th className="text-right p-4 font-medium text-foreground">ملصقات مداء</th>
                     <th className="text-right p-4 font-medium text-foreground">شرائح موبايلي</th>
                     <th className="text-right p-4 font-medium text-foreground">شرائح STC</th>
                     <th className="text-right p-4 font-medium text-foreground">ملاحظات</th>
@@ -218,8 +222,11 @@ export default function TechniciansTable() {
                       <td className="p-4 text-center" data-testid={`text-i900-${tech.id}`}>
                         {tech.i900Devices}
                       </td>
-                      <td className="p-4 text-center" data-testid={`text-papers-${tech.id}`}>
-                        {tech.rollPapers}
+                      <td className="p-4 text-center" data-testid={`text-roll-${tech.id}`}>
+                        {tech.rollPaper}
+                      </td>
+                      <td className="p-4 text-center" data-testid={`text-stickers-${tech.id}`}>
+                        {tech.stickers}
                       </td>
                       <td className="p-4 text-center" data-testid={`text-mobily-${tech.id}`}>
                         {tech.mobilySim}

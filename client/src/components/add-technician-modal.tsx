@@ -27,7 +27,8 @@ import { insertTechnicianInventorySchema } from "@shared/schema";
 const formSchema = insertTechnicianInventorySchema.extend({
   n950Devices: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
   i900Devices: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
-  rollPapers: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
+  rollPaper: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
+  stickers: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
   mobilySim: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
   stcSim: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
 });
@@ -50,7 +51,8 @@ export default function AddTechnicianModal({ open, onOpenChange }: AddTechnician
       city: "",
       n950Devices: 0,
       i900Devices: 0,
-      rollPapers: 0,
+      rollPaper: 0,
+      stickers: 0,
       mobilySim: 0,
       stcSim: 0,
       notes: "",
@@ -178,26 +180,49 @@ export default function AddTechnicianModal({ open, onOpenChange }: AddTechnician
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="rollPapers"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>أوراق رول ملصقات مداء</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min="0"
-                      {...field}
-                      onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
-                      value={field.value || 0}
-                      data-testid="input-roll-papers"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="rollPaper"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>أوراق رول</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="0"
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                        value={field.value || 0}
+                        data-testid="input-roll-paper"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="stickers"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ملصقات مداء</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="0"
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                        value={field.value || 0}
+                        data-testid="input-stickers"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
               <FormField
