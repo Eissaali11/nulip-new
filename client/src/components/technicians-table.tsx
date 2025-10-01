@@ -313,10 +313,92 @@ export default function TechniciansTable() {
               {searchTerm ? "لا توجد نتائج للبحث" : "لا توجد بيانات"}
             </div>
           ) : (
-            <div className="overflow-x-auto -mx-2 sm:mx-0">
-              <div className="inline-block min-w-full align-middle">
-                <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
-                  <table className="min-w-full divide-y divide-border">
+            <>
+              {/* Mobile Card View */}
+              <div className="block lg:hidden space-y-3">
+                {filteredTechnicians.map((tech) => (
+                  <div key={tech.id} className="bg-card border border-border rounded-lg p-4 shadow-sm">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <h3 className="font-semibold text-base text-foreground">{tech.technicianName}</h3>
+                        <p className="text-sm text-muted-foreground">{tech.city}</p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(tech)}
+                          className="h-8 w-8 hover:bg-accent"
+                          data-testid={`button-edit-${tech.id}`}
+                        >
+                          <Edit className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(tech.id)}
+                          className="h-8 w-8 hover:bg-destructive/10"
+                          data-testid={`button-delete-${tech.id}`}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">أجهزة N950</p>
+                        <span className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100 text-sm font-semibold">
+                          {tech.n950Devices}
+                        </span>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">أجهزة I900</p>
+                        <span className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-100 text-sm font-semibold">
+                          {tech.i900Devices}
+                        </span>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">أوراق رول</p>
+                        <span className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100 text-sm font-semibold">
+                          {tech.rollPaper}
+                        </span>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">ملصقات مداى</p>
+                        <span className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-100 text-sm font-semibold">
+                          {tech.stickers}
+                        </span>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">شرائح موبايلي</p>
+                        <span className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 text-sm font-semibold">
+                          {tech.mobilySim}
+                        </span>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">شرائح STC</p>
+                        <span className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-cyan-100 dark:bg-cyan-900 text-cyan-800 dark:text-cyan-100 text-sm font-semibold">
+                          {tech.stcSim}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {tech.notes && (
+                      <div className="pt-3 border-t border-border">
+                        <p className="text-xs text-muted-foreground mb-1">ملاحظات:</p>
+                        <p className="text-sm text-foreground">{tech.notes}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="hidden lg:block overflow-x-auto -mx-2 sm:mx-0">
+                <div className="inline-block min-w-full align-middle">
+                  <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+                    <table className="min-w-full divide-y divide-border">
                     <thead className="bg-muted">
                       <tr>
                         <th className="whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-right text-[10px] sm:text-sm font-semibold text-foreground">الفني</th>
@@ -404,6 +486,7 @@ export default function TechniciansTable() {
                 </div>
               </div>
             </div>
+            </>
           )}
           
           {filteredTechnicians && filteredTechnicians.length > 0 && (

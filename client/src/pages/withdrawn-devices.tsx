@@ -301,9 +301,88 @@ export default function WithdrawnDevicesPage() {
 
         <CardContent>
           {filteredDevices && filteredDevices.length > 0 ? (
-            <div className="overflow-x-auto -mx-4 sm:mx-0 rounded-lg">
-              <div className="inline-block min-w-full align-middle">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <>
+              {/* Mobile Card View */}
+              <div className="block lg:hidden space-y-3">
+                {filteredDevices.map((device, index) => (
+                  <div key={device.id} className="bg-card border border-border rounded-lg p-4 shadow-sm">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-sm text-foreground">{device.technicianName}</h3>
+                          <span className="text-xs text-muted-foreground">• {device.city}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">جهاز: {device.terminalId}</p>
+                        <p className="text-xs text-muted-foreground">تسلسلي: {device.serialNumber}</p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(device)}
+                          className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950 dark:hover:text-blue-400"
+                          data-testid={`button-edit-${device.id}`}
+                        >
+                          <Edit className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(device.id)}
+                          className="h-8 w-8 hover:bg-destructive/10"
+                          data-testid={`button-delete-${device.id}`}
+                        >
+                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <span className="text-muted-foreground">البطارية: </span>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold
+                          ${device.battery === 'جيدة' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 
+                            device.battery === 'متوسطة' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : 
+                            device.battery === 'سيئة' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                            'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'}`}>
+                          {device.battery}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">كابل: </span>
+                        <span className="text-foreground">{device.chargerCable}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">رأس: </span>
+                        <span className="text-foreground">{device.chargerHead}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">شريحة: </span>
+                        <span className="text-foreground">{device.hasSim}</span>
+                      </div>
+                    </div>
+                    
+                    {(device.simCardType || device.damagePart || device.notes) && (
+                      <div className="mt-3 pt-3 border-t border-border space-y-1 text-xs">
+                        {device.simCardType && (
+                          <p><span className="text-muted-foreground">نوع الشريحة:</span> {device.simCardType}</p>
+                        )}
+                        {device.damagePart && (
+                          <p><span className="text-muted-foreground">الضرر:</span> {device.damagePart}</p>
+                        )}
+                        {device.notes && (
+                          <p><span className="text-muted-foreground">ملاحظات:</span> {device.notes}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="hidden lg:block overflow-x-auto -mx-4 sm:mx-0 rounded-lg">
+                <div className="inline-block min-w-full align-middle">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                   <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
                     <tr>
                       <th className="hidden sm:table-cell whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">#</th>
@@ -396,6 +475,7 @@ export default function WithdrawnDevicesPage() {
                 </table>
               </div>
             </div>
+            </>
           ) : (
             <div className="text-center py-12">
               <p className="text-muted-foreground text-lg mb-4">
