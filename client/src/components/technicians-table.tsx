@@ -5,13 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, FileSpreadsheet, Edit, Trash2, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 import { TechnicianInventory } from "@shared/schema";
 import AddTechnicianModal from "./add-technician-modal";
 import * as XLSX from 'xlsx';
 
 export default function TechniciansTable() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
 

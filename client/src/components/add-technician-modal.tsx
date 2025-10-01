@@ -88,9 +88,9 @@ export default function AddTechnicianModal({ open, onOpenChange }: AddTechnician
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>إضافة صنف جديد</DialogTitle>
+          <DialogTitle>إضافة بيانات فني</DialogTitle>
           <DialogDescription>
-            أدخل بيانات الصنف الجديد لإضافته إلى المخزون
+            أدخل بيانات الفني الجديد وتجهيزاته
           </DialogDescription>
         </DialogHeader>
         
@@ -102,10 +102,10 @@ export default function AddTechnicianModal({ open, onOpenChange }: AddTechnician
                 name="technicianName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>اسم الصنف</FormLabel>
+                    <FormLabel>اسم الفني</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="مثل: كرتون نيولاند N950"
+                        placeholder="أدخل اسم الفني"
                         {...field}
                         data-testid="input-technician-name"
                       />
@@ -120,10 +120,10 @@ export default function AddTechnicianModal({ open, onOpenChange }: AddTechnician
                 name="city"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>نوع الصنف</FormLabel>
+                    <FormLabel>المدينة</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="اختر النوع"
+                        placeholder="أدخل اسم المدينة"
                         {...field}
                         data-testid="input-city"
                       />
@@ -146,7 +146,8 @@ export default function AddTechnicianModal({ open, onOpenChange }: AddTechnician
                         type="number"
                         min="0"
                         {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                        value={field.value || 0}
                         data-testid="input-n950"
                       />
                     </FormControl>
@@ -166,7 +167,8 @@ export default function AddTechnicianModal({ open, onOpenChange }: AddTechnician
                         type="number"
                         min="0"
                         {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                        value={field.value || 0}
                         data-testid="input-i900"
                       />
                     </FormControl>
@@ -187,7 +189,8 @@ export default function AddTechnicianModal({ open, onOpenChange }: AddTechnician
                       type="number"
                       min="0"
                       {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                      onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                      value={field.value || 0}
                       data-testid="input-roll-papers"
                     />
                   </FormControl>
@@ -208,7 +211,8 @@ export default function AddTechnicianModal({ open, onOpenChange }: AddTechnician
                         type="number"
                         min="0"
                         {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                        value={field.value || 0}
                         data-testid="input-mobily"
                       />
                     </FormControl>
@@ -228,7 +232,8 @@ export default function AddTechnicianModal({ open, onOpenChange }: AddTechnician
                         type="number"
                         min="0"
                         {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                        value={field.value || 0}
                         data-testid="input-stc"
                       />
                     </FormControl>
@@ -273,7 +278,7 @@ export default function AddTechnicianModal({ open, onOpenChange }: AddTechnician
                 className="flex-1"
                 data-testid="button-submit"
               >
-                {addTechMutation.isPending ? "جاري الإضافة..." : "إضافة الصنف"}
+                {addTechMutation.isPending ? "جاري الإضافة..." : "إضافة البيانات"}
               </Button>
             </div>
           </form>
