@@ -111,7 +111,7 @@ export default function TechniciansTable() {
     
     // Add header row
     const headerRow = worksheet.getRow(4);
-    headerRow.values = ['#', 'اسم الفني', 'المدينة', 'أجهزة N950', 'أجهزة I900', 'أوراق رول', 'ملصقات مداء', 'شرائح موبايلي', 'شرائح STC', 'ملاحظات'];
+    headerRow.values = ['#', 'اسم الفني', 'المدينة', 'أجهزة N950', 'أجهزة I900', 'أوراق رول', 'ملصقات مداى', 'شرائح موبايلي', 'شرائح STC', 'ملاحظات'];
     headerRow.font = { bold: true, size: 11, color: { argb: 'FFFFFFFF' } };
     headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF475569' } };
     headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -181,7 +181,7 @@ export default function TechniciansTable() {
     // Stats data
     const statsData = [
       ['عدد الفنيين', filteredTechnicians.length, 'أجهزة N950', totalN950, 'أجهزة I900', totalI900],
-      ['أوراق رول', totalRoll, 'ملصقات مداء', totalStickers, 'شرائح موبايلي', totalMobily],
+      ['أوراق رول', totalRoll, 'ملصقات مداى', totalStickers, 'شرائح موبايلي', totalMobily],
       ['شرائح STC', totalSTC, '', '', '', '']
     ];
     
@@ -226,7 +226,7 @@ export default function TechniciansTable() {
       { width: 14 },  // N950
       { width: 14 },  // I900
       { width: 14 },  // أوراق رول
-      { width: 16 },  // ملصقات مداء
+      { width: 16 },  // ملصقات مداى
       { width: 16 },  // موبايلي
       { width: 14 },  // STC
       { width: 35 },  // ملاحظات

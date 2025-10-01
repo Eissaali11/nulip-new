@@ -227,7 +227,7 @@ export default function EditTechnicianModal({ open, onOpenChange, technician }: 
                 name="stickers"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ملصقات مداء</FormLabel>
+                    <FormLabel>ملصقات مداى</FormLabel>
                     <FormControl>
                       <Input
                         type="number"

@@ -207,7 +207,7 @@ export default function AddTechnicianModal({ open, onOpenChange }: AddTechnician
                 name="stickers"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ملصقات مداء</FormLabel>
+                    <FormLabel>ملصقات مداى</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
