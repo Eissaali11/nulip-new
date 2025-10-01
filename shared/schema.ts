@@ -41,6 +41,22 @@ export const inventoryItems = pgTable("inventory_items", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Technicians inventory table - new structure for tracking technician equipment
+export const techniciansInventory = pgTable("technicians_inventory", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  technicianName: text("technician_name").notNull(),
+  city: text("city").notNull(),
+  n950Devices: integer("n950_devices").notNull().default(0),
+  i900Devices: integer("i900_devices").notNull().default(0),
+  rollPapers: integer("roll_papers").notNull().default(0),
+  mobilySim: integer("mobily_sim").notNull().default(0),
+  stcSim: integer("stc_sim").notNull().default(0),
+  notes: text("notes"),
+  regionId: varchar("region_id").references(() => regions.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const transactions = pgTable("transactions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   itemId: varchar("item_id").notNull().references(() => inventoryItems.id),
@@ -71,6 +87,12 @@ export const insertInventoryItemSchema = createInsertSchema(inventoryItems).omit
   updatedAt: true,
 });
 
+export const insertTechnicianInventorySchema = createInsertSchema(techniciansInventory).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertTransactionSchema = createInsertSchema(transactions).omit({
   id: true,
   createdAt: true,
@@ -83,6 +105,8 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertInventoryItem = z.infer<typeof insertInventoryItemSchema>;
 export type InventoryItem = typeof inventoryItems.$inferSelect;
+export type InsertTechnicianInventory = z.infer<typeof insertTechnicianInventorySchema>;
+export type TechnicianInventory = typeof techniciansInventory.$inferSelect;
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 export type Transaction = typeof transactions.$inferSelect;
 

@@ -34,6 +34,8 @@ import { insertInventoryItemSchema } from "@shared/schema";
 const formSchema = insertInventoryItemSchema.extend({
   quantity: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
   minThreshold: z.number().min(0, "الحد الأدنى يجب أن يكون صفر أو أكثر"),
+  technicianName: z.string().optional().nullable(),
+  city: z.string().optional().nullable(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -209,6 +211,7 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                     <Input
                       placeholder="مثل: محمد أحمد"
                       {...field}
+                      value={field.value || ""}
                       data-testid="input-technician-name"
                     />
                   </FormControl>
@@ -227,6 +230,7 @@ export default function AddItemModal({ open, onOpenChange }: AddItemModalProps) 
                     <Input
                       placeholder="مثل: الرياض، جدة، الدمام"
                       {...field}
+                      value={field.value || ""}
                       data-testid="input-city"
                     />
                   </FormControl>
