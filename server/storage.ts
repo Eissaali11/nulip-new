@@ -1,4 +1,4 @@
-import { type InventoryItem, type InsertInventoryItem, type Transaction, type InsertTransaction, type InventoryItemWithStatus, type DashboardStats, type Region, type InsertRegion, type User, type InsertUser, type UserSafe, type RegionWithStats, type AdminStats, type TransactionWithDetails } from "@shared/schema";
+import { type InventoryItem, type InsertInventoryItem, type Transaction, type InsertTransaction, type InventoryItemWithStatus, type DashboardStats, type Region, type InsertRegion, type User, type InsertUser, type UserSafe, type RegionWithStats, type AdminStats, type TransactionWithDetails, type WithdrawnDevice, type InsertWithdrawnDevice } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -36,6 +36,13 @@ export interface IStorage {
   // Stock Operations
   addStock(itemId: string, quantity: number, reason?: string, userId?: string): Promise<InventoryItem>;
   withdrawStock(itemId: string, quantity: number, reason?: string, userId?: string): Promise<InventoryItem>;
+  
+  // Withdrawn Devices
+  getWithdrawnDevices(): Promise<WithdrawnDevice[]>;
+  getWithdrawnDevice(id: string): Promise<WithdrawnDevice | undefined>;
+  createWithdrawnDevice(device: InsertWithdrawnDevice): Promise<WithdrawnDevice>;
+  updateWithdrawnDevice(id: string, updates: Partial<InsertWithdrawnDevice>): Promise<WithdrawnDevice>;
+  deleteWithdrawnDevice(id: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {

@@ -68,6 +68,25 @@ export const transactions = pgTable("transactions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Withdrawn devices table - tracking devices pulled from service
+export const withdrawnDevices = pgTable("withdrawn_devices", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  city: text("city").notNull(),
+  technicianName: text("technician_name").notNull(),
+  terminalId: text("terminal_id").notNull(),
+  serialNumber: text("serial_number").notNull(),
+  battery: text("battery").notNull(), // "جيدة", "متوسطة", "سيئة"
+  chargerCable: text("charger_cable").notNull(), // "موجود", "غير موجود"
+  chargerHead: text("charger_head").notNull(), // "موجود", "غير موجود"
+  hasSim: text("has_sim").notNull(), // "نعم", "لا"
+  simCardType: text("sim_card_type"), // "Mobily", "STC", "غير محدد"
+  damagePart: text("damage_part"), // وصف الضرر
+  notes: text("notes"),
+  regionId: varchar("region_id").references(() => regions.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Schema for regions
 export const insertRegionSchema = createInsertSchema(regions).omit({
   id: true,
@@ -99,6 +118,12 @@ export const insertTransactionSchema = createInsertSchema(transactions).omit({
   createdAt: true,
 });
 
+export const insertWithdrawnDeviceSchema = createInsertSchema(withdrawnDevices).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type InsertRegion = z.infer<typeof insertRegionSchema>;
 export type Region = typeof regions.$inferSelect;
@@ -110,6 +135,8 @@ export type InsertTechnicianInventory = z.infer<typeof insertTechnicianInventory
 export type TechnicianInventory = typeof techniciansInventory.$inferSelect;
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 export type Transaction = typeof transactions.$inferSelect;
+export type InsertWithdrawnDevice = z.infer<typeof insertWithdrawnDeviceSchema>;
+export type WithdrawnDevice = typeof withdrawnDevices.$inferSelect;
 
 // Additional types for API responses
 export type InventoryItemWithStatus = InventoryItem & {

@@ -15,11 +15,14 @@ import {
   type TransactionWithDetails,
   type TechnicianInventory,
   type InsertTechnicianInventory,
+  type WithdrawnDevice,
+  type InsertWithdrawnDevice,
   regions,
   users,
   inventoryItems,
   techniciansInventory,
-  transactions
+  transactions,
+  withdrawnDevices
 } from "@shared/schema";
 import { IStorage } from "./storage";
 import { db } from "./db";
@@ -757,6 +760,54 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(techniciansInventory)
       .where(eq(techniciansInventory.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  // Withdrawn Devices Operations
+  async getWithdrawnDevices(): Promise<WithdrawnDevice[]> {
+    const devices = await db
+      .select()
+      .from(withdrawnDevices)
+      .orderBy(desc(withdrawnDevices.createdAt));
+    return devices;
+  }
+
+  async getWithdrawnDevice(id: string): Promise<WithdrawnDevice | undefined> {
+    const [device] = await db
+      .select()
+      .from(withdrawnDevices)
+      .where(eq(withdrawnDevices.id, id));
+    return device || undefined;
+  }
+
+  async createWithdrawnDevice(data: InsertWithdrawnDevice): Promise<WithdrawnDevice> {
+    const [device] = await db
+      .insert(withdrawnDevices)
+      .values(data)
+      .returning();
+    return device;
+  }
+
+  async updateWithdrawnDevice(id: string, updates: Partial<InsertWithdrawnDevice>): Promise<WithdrawnDevice> {
+    const [device] = await db
+      .update(withdrawnDevices)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(withdrawnDevices.id, id))
+      .returning();
+    
+    if (!device) {
+      throw new Error(`Withdrawn device with id ${id} not found`);
+    }
+    return device;
+  }
+
+  async deleteWithdrawnDevice(id: string): Promise<boolean> {
+    const result = await db
+      .delete(withdrawnDevices)
+      .where(eq(withdrawnDevices.id, id));
     return (result.rowCount || 0) > 0;
   }
 }
