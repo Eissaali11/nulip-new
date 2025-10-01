@@ -13,9 +13,12 @@ import {
   type RegionWithStats, 
   type AdminStats, 
   type TransactionWithDetails,
+  type TechnicianInventory,
+  type InsertTechnicianInventory,
   regions,
   users,
   inventoryItems,
+  techniciansInventory,
   transactions
 } from "@shared/schema";
 import { IStorage } from "./storage";
@@ -705,5 +708,53 @@ export class DatabaseStorage implements IStorage {
     });
 
     return updatedItem;
+  }
+
+  // Technicians Inventory Operations
+  async getTechniciansInventory(): Promise<TechnicianInventory[]> {
+    const techs = await db
+      .select()
+      .from(techniciansInventory)
+      .orderBy(desc(techniciansInventory.createdAt));
+    return techs;
+  }
+
+  async getTechnicianInventory(id: string): Promise<TechnicianInventory | undefined> {
+    const [tech] = await db
+      .select()
+      .from(techniciansInventory)
+      .where(eq(techniciansInventory.id, id));
+    return tech || undefined;
+  }
+
+  async createTechnicianInventory(data: InsertTechnicianInventory): Promise<TechnicianInventory> {
+    const [tech] = await db
+      .insert(techniciansInventory)
+      .values(data)
+      .returning();
+    return tech;
+  }
+
+  async updateTechnicianInventory(id: string, updates: Partial<InsertTechnicianInventory>): Promise<TechnicianInventory> {
+    const [tech] = await db
+      .update(techniciansInventory)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(techniciansInventory.id, id))
+      .returning();
+    
+    if (!tech) {
+      throw new Error(`Technician inventory with id ${id} not found`);
+    }
+    return tech;
+  }
+
+  async deleteTechnicianInventory(id: string): Promise<boolean> {
+    const result = await db
+      .delete(techniciansInventory)
+      .where(eq(techniciansInventory.id, id));
+    return (result.rowCount || 0) > 0;
   }
 }
