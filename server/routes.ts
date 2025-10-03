@@ -485,10 +485,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.createUser(validatedData);
       res.status(201).json(user);
     } catch (error) {
+      console.error('Error creating user:', error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid data", errors: error.errors });
       }
-      res.status(500).json({ message: "Failed to create user" });
+      if (error instanceof Error && (error.message.includes("already exists") || error.message.includes("duplicate"))) {
+        return res.status(409).json({ message: error.message });
+      }
+      res.status(500).json({ message: error instanceof Error ? error.message : "Failed to create user" });
     }
   });
 
