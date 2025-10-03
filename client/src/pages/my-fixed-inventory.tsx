@@ -3,13 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Package, Save, ArrowRight, ArrowLeft, Plus } from "lucide-react";
+import { Package, Save, ArrowRight, ArrowLeft, Plus, FileDown } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
 import { TransferToMovingModal } from "@/components/transfer-to-moving-modal";
 import { useLocation } from "wouter";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 
 interface FixedInventory {
   id?: string;
@@ -106,6 +108,109 @@ export default function MyFixedInventory() {
     return boxes + units;
   };
 
+  const exportToExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('المخزون الثابت');
+
+    // Set RTL
+    worksheet.views = [{ rightToLeft: true }];
+
+    // Add title
+    worksheet.mergeCells('A1:D1');
+    const titleCell = worksheet.getCell('A1');
+    titleCell.value = 'تقرير المخزون الثابت';
+    titleCell.font = { size: 16, bold: true };
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    
+    // Add date
+    worksheet.mergeCells('A2:D2');
+    const dateCell = worksheet.getCell('A2');
+    dateCell.value = `التاريخ: ${new Date().toLocaleDateString('ar-SA')}`;
+    dateCell.alignment = { horizontal: 'center' };
+
+    // Add headers
+    worksheet.addRow([]);
+    const headerRow = worksheet.addRow(['الصنف', 'كراتين', 'وحدات', 'الإجمالي']);
+    headerRow.font = { bold: true };
+    headerRow.alignment = { horizontal: 'center' };
+    headerRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFE0E0E0' }
+      };
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
+      };
+    });
+
+    // Add data
+    const data = [
+      ['أجهزة N950', inventory.n950Boxes, inventory.n950Units, getTotalForItem(inventory.n950Boxes, inventory.n950Units)],
+      ['أجهزة I900', inventory.i900Boxes, inventory.i900Units, getTotalForItem(inventory.i900Boxes, inventory.i900Units)],
+      ['أوراق رول', inventory.rollPaperBoxes, inventory.rollPaperUnits, getTotalForItem(inventory.rollPaperBoxes, inventory.rollPaperUnits)],
+      ['ملصقات مدى', inventory.stickersBoxes, inventory.stickersUnits, getTotalForItem(inventory.stickersBoxes, inventory.stickersUnits)],
+      ['شرائح موبايلي', inventory.mobilySimBoxes, inventory.mobilySimUnits, getTotalForItem(inventory.mobilySimBoxes, inventory.mobilySimUnits)],
+      ['شرائح STC', inventory.stcSimBoxes, inventory.stcSimUnits, getTotalForItem(inventory.stcSimBoxes, inventory.stcSimUnits)],
+    ];
+
+    data.forEach(row => {
+      const dataRow = worksheet.addRow(row);
+      dataRow.eachCell((cell) => {
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+        cell.alignment = { horizontal: 'center' };
+      });
+    });
+
+    // Add total
+    worksheet.addRow([]);
+    const grandTotal = 
+      getTotalForItem(inventory.n950Boxes, inventory.n950Units) +
+      getTotalForItem(inventory.i900Boxes, inventory.i900Units) +
+      getTotalForItem(inventory.rollPaperBoxes, inventory.rollPaperUnits) +
+      getTotalForItem(inventory.stickersBoxes, inventory.stickersUnits) +
+      getTotalForItem(inventory.mobilySimBoxes, inventory.mobilySimUnits) +
+      getTotalForItem(inventory.stcSimBoxes, inventory.stcSimUnits);
+
+    const totalRow = worksheet.addRow(['الإجمالي الكلي', '', '', grandTotal]);
+    totalRow.font = { bold: true };
+    totalRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD3D3D3' }
+      };
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
+      };
+      cell.alignment = { horizontal: 'center' };
+    });
+
+    // Set column widths
+    worksheet.columns = [
+      { width: 25 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 }
+    ];
+
+    // Generate file
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    saveAs(blob, `المخزون_الثابت_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto p-4 sm:p-6">
@@ -142,7 +247,7 @@ export default function MyFixedInventory() {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex flex-col sm:flex-row gap-2 flex-wrap">
           <Button 
             onClick={() => setShowTransferModal(true)}
             variant="outline"
@@ -160,6 +265,15 @@ export default function MyFixedInventory() {
           >
             <Save className="w-4 h-4 ml-2" />
             {saveMutation.isPending ? "جاري الحفظ..." : "حفظ التغييرات"}
+          </Button>
+          <Button 
+            onClick={exportToExcel}
+            variant="secondary"
+            className="flex-1 sm:flex-initial"
+            data-testid="button-export-excel"
+          >
+            <FileDown className="w-4 h-4 ml-2" />
+            تصدير Excel
           </Button>
         </div>
       </div>
