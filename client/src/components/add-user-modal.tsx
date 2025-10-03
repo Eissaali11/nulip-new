@@ -32,7 +32,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 
 const userFormSchema = insertUserSchema.extend({
-  city: z.string().min(1, "المدينة مطلوبة"),
+  city: z.string().optional(),
 });
 
 type UserFormData = z.infer<typeof userFormSchema>;
@@ -62,7 +62,12 @@ export function AddUserModal({
 
   const addUserMutation = useMutation({
     mutationFn: async (data: UserFormData) => {
-      return await apiRequest("POST", "/api/users", data);
+      const submitData = {
+        ...data,
+        city: data.city || undefined,
+        regionId: data.regionId || undefined,
+      };
+      return await apiRequest("POST", "/api/users", submitData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
@@ -178,7 +183,7 @@ export function AddUserModal({
                 name="city"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>المدينة</FormLabel>
+                    <FormLabel>المدينة (اختياري)</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
