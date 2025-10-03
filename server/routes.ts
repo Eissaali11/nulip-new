@@ -1,8 +1,9 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertInventoryItemSchema, insertTransactionSchema, insertRegionSchema, insertUserSchema, insertTechnicianInventorySchema, insertWithdrawnDeviceSchema, loginSchema } from "@shared/schema";
+import { insertInventoryItemSchema, insertTransactionSchema, insertRegionSchema, insertUserSchema, insertTechnicianInventorySchema, insertWithdrawnDeviceSchema, loginSchema, techniciansInventory } from "@shared/schema";
 import { z } from "zod";
+import { db } from "./db";
 
 // Simple session store for demo purposes (in production, use proper session store)
 const activeSessions = new Map<string, { userId: string; role: string; username: string; expiry: number }>();
@@ -742,21 +743,171 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/stock-transfer", requireAuth, async (req, res) => {
     try {
       const user = (req as any).user;
-      const { technicianId, itemType, packagingType, quantity, fromInventory, toInventory, reason, notes } = req.body;
+      const { technicianId, n950, i900, rollPaper, stickers, mobilySim, stcSim } = req.body;
       
-      const result = await storage.transferStock({
-        technicianId,
-        itemType,
-        packagingType,
-        quantity: parseInt(quantity),
-        fromInventory,
-        toInventory,
-        performedBy: user.id,
-        reason,
-        notes,
+      // Get current fixed inventory
+      const fixedInventory = await storage.getTechnicianFixedInventory(technicianId);
+      if (!fixedInventory) {
+        return res.status(404).json({ message: "Fixed inventory not found" });
+      }
+
+      // Get or create moving inventory (using technicianId as id)
+      let movingInventory = await storage.getTechnicianInventory(technicianId);
+      if (!movingInventory) {
+        // Get user info for technician name
+        const techUser = await storage.getUser(technicianId);
+        
+        // Create moving inventory with userId as the record id
+        const [created] = await db
+          .insert(techniciansInventory)
+          .values({
+            id: technicianId, // Use userId as id
+            technicianName: techUser?.fullName || 'Unknown',
+            city: 'N/A',
+            n950Devices: 0,
+            i900Devices: 0,
+            rollPaper: 0,
+            stickers: 0,
+            mobilySim: 0,
+            stcSim: 0,
+            createdBy: user.id,
+          })
+          .returning();
+        
+        movingInventory = created;
+      }
+
+      // Calculate total available in fixed inventory
+      const totalN950 = fixedInventory.n950Boxes + fixedInventory.n950Units;
+      const totalI900 = fixedInventory.i900Boxes + fixedInventory.i900Units;
+      const totalPaper = fixedInventory.rollPaperBoxes + fixedInventory.rollPaperUnits;
+      const totalStickers = fixedInventory.stickersBoxes + fixedInventory.stickersUnits;
+      const totalMobily = fixedInventory.mobilySimBoxes + fixedInventory.mobilySimUnits;
+      const totalStc = fixedInventory.stcSimBoxes + fixedInventory.stcSimUnits;
+
+      // Validate quantities
+      if (n950 > totalN950 || i900 > totalI900 || rollPaper > totalPaper || 
+          stickers > totalStickers || mobilySim > totalMobily || stcSim > totalStc) {
+        return res.status(400).json({ message: "Insufficient quantity in fixed inventory" });
+      }
+
+      // Update fixed inventory (decrease)
+      const newN950Units = totalN950 - n950;
+      const newI900Units = totalI900 - i900;
+      const newPaperUnits = totalPaper - rollPaper;
+      const newStickersUnits = totalStickers - stickers;
+      const newMobilyUnits = totalMobily - mobilySim;
+      const newStcUnits = totalStc - stcSim;
+
+      await storage.updateTechnicianFixedInventory(technicianId, {
+        n950Boxes: 0,
+        n950Units: newN950Units,
+        i900Boxes: 0,
+        i900Units: newI900Units,
+        rollPaperBoxes: 0,
+        rollPaperUnits: newPaperUnits,
+        stickersBoxes: 0,
+        stickersUnits: newStickersUnits,
+        mobilySimBoxes: 0,
+        mobilySimUnits: newMobilyUnits,
+        stcSimBoxes: 0,
+        stcSimUnits: newStcUnits,
       });
-      
-      res.json(result);
+
+      // Update moving inventory (increase)
+      await storage.updateTechnicianInventory(technicianId, {
+        n950Devices: movingInventory.n950Devices + n950,
+        i900Devices: movingInventory.i900Devices + i900,
+        rollPaper: movingInventory.rollPaper + rollPaper,
+        stickers: movingInventory.stickers + stickers,
+        mobilySim: movingInventory.mobilySim + mobilySim,
+        stcSim: movingInventory.stcSim + stcSim,
+      });
+
+      // Record stock movements
+      const movements = [];
+      if (n950 > 0) {
+        movements.push(storage.createStockMovement({
+          technicianId,
+          itemType: 'n950',
+          packagingType: 'unit',
+          quantity: n950,
+          fromInventory: 'fixed',
+          toInventory: 'moving',
+          performedBy: user.id,
+          reason: 'transfer',
+          notes: 'Transfer from fixed to moving inventory',
+        }));
+      }
+      if (i900 > 0) {
+        movements.push(storage.createStockMovement({
+          technicianId,
+          itemType: 'i900',
+          packagingType: 'unit',
+          quantity: i900,
+          fromInventory: 'fixed',
+          toInventory: 'moving',
+          performedBy: user.id,
+          reason: 'transfer',
+          notes: 'Transfer from fixed to moving inventory',
+        }));
+      }
+      if (rollPaper > 0) {
+        movements.push(storage.createStockMovement({
+          technicianId,
+          itemType: 'rollPaper',
+          packagingType: 'unit',
+          quantity: rollPaper,
+          fromInventory: 'fixed',
+          toInventory: 'moving',
+          performedBy: user.id,
+          reason: 'transfer',
+          notes: 'Transfer from fixed to moving inventory',
+        }));
+      }
+      if (stickers > 0) {
+        movements.push(storage.createStockMovement({
+          technicianId,
+          itemType: 'stickers',
+          packagingType: 'unit',
+          quantity: stickers,
+          fromInventory: 'fixed',
+          toInventory: 'moving',
+          performedBy: user.id,
+          reason: 'transfer',
+          notes: 'Transfer from fixed to moving inventory',
+        }));
+      }
+      if (mobilySim > 0) {
+        movements.push(storage.createStockMovement({
+          technicianId,
+          itemType: 'mobilySim',
+          packagingType: 'unit',
+          quantity: mobilySim,
+          fromInventory: 'fixed',
+          toInventory: 'moving',
+          performedBy: user.id,
+          reason: 'transfer',
+          notes: 'Transfer from fixed to moving inventory',
+        }));
+      }
+      if (stcSim > 0) {
+        movements.push(storage.createStockMovement({
+          technicianId,
+          itemType: 'stcSim',
+          packagingType: 'unit',
+          quantity: stcSim,
+          fromInventory: 'fixed',
+          toInventory: 'moving',
+          performedBy: user.id,
+          reason: 'transfer',
+          notes: 'Transfer from fixed to moving inventory',
+        }));
+      }
+
+      await Promise.all(movements);
+
+      res.json({ success: true, message: "Transfer completed successfully" });
     } catch (error) {
       if (error instanceof Error) {
         return res.status(400).json({ message: error.message });

@@ -11,6 +11,7 @@ import WithdrawnDevicesPage from "@/pages/withdrawn-devices";
 import UsersPage from "@/pages/users";
 import FixedInventoryDashboard from "@/pages/fixed-inventory-dashboard";
 import MyFixedInventory from "@/pages/my-fixed-inventory";
+import MyMovingInventory from "@/pages/my-moving-inventory";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import { Loader2 } from "lucide-react";
@@ -25,6 +26,7 @@ function AuthenticatedRouter() {
       <Route path="/transactions" component={TransactionHistoryPage} />
       <Route path="/withdrawn-devices" component={WithdrawnDevicesPage} />
       <Route path="/my-fixed-inventory" component={MyFixedInventory} />
+      <Route path="/my-moving-inventory" component={MyMovingInventory} />
       {user?.role === "admin" && (
         <>
           <Route path="/admin" component={AdminPage} />

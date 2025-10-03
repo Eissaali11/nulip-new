@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
+import { TransferToMovingModal } from "@/components/transfer-to-moving-modal";
 
 interface FixedInventory {
   id?: string;
@@ -46,6 +47,8 @@ export default function MyFixedInventory() {
     stcSimBoxes: 0,
     stcSimUnits: 0,
   });
+
+  const [showTransferModal, setShowTransferModal] = useState(false);
 
   const { data: existingInventory, isLoading } = useQuery({
     queryKey: [`/api/technician-fixed-inventory/${user?.id}`],
@@ -118,15 +121,26 @@ export default function MyFixedInventory() {
             أدخل كميات المخزون الثابت لديك (كرتون + مفرد)
           </p>
         </div>
-        <Button 
-          onClick={() => saveMutation.mutate()}
-          disabled={saveMutation.isPending}
-          className="w-full sm:w-auto"
-          data-testid="button-save-inventory"
-        >
-          <Save className="w-4 h-4 ml-2" />
-          حفظ التغييرات
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Button 
+            onClick={() => setShowTransferModal(true)}
+            variant="outline"
+            className="w-full sm:w-auto"
+            data-testid="button-transfer-to-moving"
+          >
+            <ArrowRight className="w-4 h-4 ml-2" />
+            نقل للمخزون المتحرك
+          </Button>
+          <Button 
+            onClick={() => saveMutation.mutate()}
+            disabled={saveMutation.isPending}
+            className="w-full sm:w-auto"
+            data-testid="button-save-inventory"
+          >
+            <Save className="w-4 h-4 ml-2" />
+            حفظ التغييرات
+          </Button>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -407,6 +421,16 @@ export default function MyFixedInventory() {
           حفظ التغييرات
         </Button>
       </div>
+
+      {/* Transfer Modal */}
+      {existingInventory && (
+        <TransferToMovingModal
+          open={showTransferModal}
+          onClose={() => setShowTransferModal(false)}
+          technicianId={user?.id || ''}
+          fixedInventory={inventory}
+        />
+      )}
     </div>
   );
 }

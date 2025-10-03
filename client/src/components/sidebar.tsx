@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Minus, Plus, FileText, TriangleAlert, Settings, LogOut, User, Shield, History, Smartphone, Package } from "lucide-react";
+import { Minus, Plus, FileText, TriangleAlert, Settings, LogOut, User, Shield, History, Smartphone, Package, TruckIcon } from "lucide-react";
 import { InventoryItemWithStatus, Transaction } from "@shared/schema";
 import AddItemModal from "./add-item-modal";
 import WithdrawalModal from "./withdrawal-modal";
@@ -218,6 +218,17 @@ ${inventory.map(item =>
             >
               <Package className="h-4 w-4" />
               <span>مخزوني الثابت</span>
+            </Button>
+          </Link>
+
+          <Link href="/my-moving-inventory">
+            <Button
+              variant="outline"
+              className="w-full flex items-center justify-center space-x-2 space-x-reverse"
+              data-testid="button-my-moving-inventory"
+            >
+              <TruckIcon className="h-4 w-4" />
+              <span>مخزوني المتحرك</span>
             </Button>
           </Link>
           
