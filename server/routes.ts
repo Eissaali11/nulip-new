@@ -730,15 +730,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Forbidden: You can only update your own inventory" });
       }
       
+      // Remove timestamp fields from request body as they're auto-managed by DB
+      const { createdAt, updatedAt, id, ...inventoryData } = req.body;
+      
       const existingInventory = await storage.getTechnicianFixedInventory(technicianId);
       
       if (existingInventory) {
-        const updated = await storage.updateTechnicianFixedInventory(technicianId, req.body);
+        const updated = await storage.updateTechnicianFixedInventory(technicianId, inventoryData);
         res.json(updated);
       } else {
         const created = await storage.createTechnicianFixedInventory({
           technicianId,
-          ...req.body,
+          ...inventoryData,
         });
         res.status(201).json(created);
       }
