@@ -48,12 +48,12 @@ export function UpdateMovingInventoryModal({
   const queryClient = useQueryClient();
 
   const [update, setUpdate] = useState<UpdateData>({
-    n950: 0,
-    i900: 0,
-    rollPaper: 0,
-    stickers: 0,
-    mobilySim: 0,
-    stcSim: 0,
+    n950: currentInventory.n950Devices,
+    i900: currentInventory.i900Devices,
+    rollPaper: currentInventory.rollPaper,
+    stickers: currentInventory.stickers,
+    mobilySim: currentInventory.mobilySim,
+    stcSim: currentInventory.stcSim,
   });
 
   const updateMutation = useMutation({
@@ -79,14 +79,6 @@ export function UpdateMovingInventoryModal({
         title: "تم التحديث بنجاح",
         description: "تم تحديث المخزون المتحرك",
       });
-      setUpdate({
-        n950: 0,
-        i900: 0,
-        rollPaper: 0,
-        stickers: 0,
-        mobilySim: 0,
-        stcSim: 0,
-      });
       onClose();
     },
     onError: () => {
@@ -99,17 +91,6 @@ export function UpdateMovingInventoryModal({
   });
 
   const handleUpdate = () => {
-    // Validate that at least one field has a value
-    if (update.n950 === 0 && update.i900 === 0 && update.rollPaper === 0 && 
-        update.stickers === 0 && update.mobilySim === 0 && update.stcSim === 0) {
-      toast({
-        variant: "destructive",
-        title: "لا توجد كميات للتحديث",
-        description: "يرجى إدخال كميات للتحديث",
-      });
-      return;
-    }
-
     updateMutation.mutate();
   };
 
