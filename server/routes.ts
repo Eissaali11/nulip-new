@@ -720,9 +720,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/technician-fixed-inventory/:technicianId", requireAuth, requireAdmin, async (req, res) => {
+  app.put("/api/technician-fixed-inventory/:technicianId", requireAuth, async (req, res) => {
     try {
+      const user = (req as any).user;
       const technicianId = req.params.technicianId;
+      
+      // Allow technician to update only their own inventory, or admin to update any
+      if (user.role !== 'admin' && user.id !== technicianId) {
+        return res.status(403).json({ message: "Forbidden: You can only update your own inventory" });
+      }
+      
       const existingInventory = await storage.getTechnicianFixedInventory(technicianId);
       
       if (existingInventory) {
