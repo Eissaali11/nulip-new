@@ -69,8 +69,8 @@ export function UpdateMovingInventoryModal({
       };
 
       return await apiRequest(
-        `/api/technicians/${technicianId}`,
         "PATCH",
+        `/api/technicians/${technicianId}`,
         newQuantities
       );
     },

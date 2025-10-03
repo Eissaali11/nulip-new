@@ -67,8 +67,8 @@ export function TransferToMovingModal({
   const transferMutation = useMutation({
     mutationFn: async () => {
       return await apiRequest(
-        `/api/stock-transfer`,
         "POST",
+        `/api/stock-transfer`,
         {
           technicianId,
           ...transfer,
