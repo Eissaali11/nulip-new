@@ -58,20 +58,19 @@ export function UpdateMovingInventoryModal({
 
   const updateMutation = useMutation({
     mutationFn: async () => {
-      // Calculate new quantities (decrease)
-      const newQuantities = {
-        n950Devices: currentInventory.n950Devices - update.n950,
-        i900Devices: currentInventory.i900Devices - update.i900,
-        rollPaper: currentInventory.rollPaper - update.rollPaper,
-        stickers: currentInventory.stickers - update.stickers,
-        mobilySim: currentInventory.mobilySim - update.mobilySim,
-        stcSim: currentInventory.stcSim - update.stcSim,
-      };
-
+      // Send consumed quantities to backend for processing
       return await apiRequest(
-        "PATCH",
-        `/api/technicians/${technicianId}`,
-        newQuantities
+        "POST",
+        `/api/consume-moving-inventory`,
+        {
+          technicianId,
+          n950: update.n950,
+          i900: update.i900,
+          rollPaper: update.rollPaper,
+          stickers: update.stickers,
+          mobilySim: update.mobilySim,
+          stcSim: update.stcSim,
+        }
       );
     },
     onSuccess: () => {
