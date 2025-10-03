@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { TruckIcon, MinusCircle } from "lucide-react";
+import { TruckIcon, MinusCircle, ArrowRight } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useState } from "react";
 import { UpdateMovingInventoryModal } from "@/components/update-moving-inventory-modal";
+import { useLocation } from "wouter";
 
 interface MovingInventory {
   id: string;
@@ -35,6 +36,7 @@ interface FixedInventory {
 
 export default function MyMovingInventory() {
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
   const [showUpdateModal, setShowUpdateModal] = useState(false);
 
   const { data: inventory, isLoading } = useQuery<MovingInventory>({
@@ -90,14 +92,25 @@ export default function MyMovingInventory() {
     <div className="container mx-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold flex items-center gap-2" data-testid="text-page-title">
-            <TruckIcon className="h-6 w-6 sm:h-8 sm:w-8" />
-            المخزون المتحرك
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            المخزون الذي تستخدمه في العمل اليومي
-          </p>
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setLocation("/")}
+            data-testid="button-back"
+            className="hover:bg-accent"
+          >
+            <ArrowRight className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold flex items-center gap-2" data-testid="text-page-title">
+              <TruckIcon className="h-6 w-6 sm:h-8 sm:w-8" />
+              المخزون المتحرك
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              المخزون الذي تستخدمه في العمل اليومي
+            </p>
+          </div>
         </div>
         <Button 
           onClick={() => setShowUpdateModal(true)}
