@@ -743,6 +743,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(201).json(created);
       }
     } catch (error) {
+      console.error("Error updating fixed inventory:", error);
+      if (error instanceof Error) {
+        return res.status(400).json({ message: error.message });
+      }
       res.status(500).json({ message: "Failed to update fixed inventory" });
     }
   });
