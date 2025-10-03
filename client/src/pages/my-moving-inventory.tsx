@@ -1,12 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { TruckIcon, MinusCircle, ArrowRight, ArrowLeftRight } from "lucide-react";
+import { TruckIcon, MinusCircle, ArrowRight, ArrowLeftRight, FileDown } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useState } from "react";
 import { UpdateMovingInventoryModal } from "@/components/update-moving-inventory-modal";
 import { TransferToMovingModal } from "@/components/transfer-to-moving-modal";
 import { useLocation } from "wouter";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 
 interface MovingInventory {
   id: string;
@@ -63,6 +65,102 @@ export default function MyMovingInventory() {
     );
   };
 
+  const exportToExcel = async () => {
+    if (!inventory) return;
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('المخزون المتحرك');
+
+    // Set RTL
+    worksheet.views = [{ rightToLeft: true }];
+
+    // Add title
+    worksheet.mergeCells('A1:C1');
+    const titleCell = worksheet.getCell('A1');
+    titleCell.value = 'تقرير المخزون المتحرك';
+    titleCell.font = { size: 16, bold: true };
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    
+    // Add date
+    worksheet.mergeCells('A2:C2');
+    const dateCell = worksheet.getCell('A2');
+    dateCell.value = `التاريخ: ${new Date().toLocaleDateString('ar-SA')}`;
+    dateCell.alignment = { horizontal: 'center' };
+
+    // Add headers
+    worksheet.addRow([]);
+    const headerRow = worksheet.addRow(['الصنف', 'الكمية', 'الوحدة']);
+    headerRow.font = { bold: true };
+    headerRow.alignment = { horizontal: 'center' };
+    headerRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFE0E0E0' }
+      };
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
+      };
+    });
+
+    // Add data
+    const data = [
+      ['أجهزة N950', inventory.n950Devices, 'جهاز'],
+      ['أجهزة I900', inventory.i900Devices, 'جهاز'],
+      ['أوراق رول', inventory.rollPaper, 'رول'],
+      ['ملصقات مدى', inventory.stickers, 'ملصق'],
+      ['شرائح موبايلي', inventory.mobilySim, 'شريحة'],
+      ['شرائح STC', inventory.stcSim, 'شريحة'],
+    ];
+
+    data.forEach(row => {
+      const dataRow = worksheet.addRow(row);
+      dataRow.eachCell((cell) => {
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+        cell.alignment = { horizontal: 'center' };
+      });
+    });
+
+    // Add total
+    worksheet.addRow([]);
+    const totalRow = worksheet.addRow(['الإجمالي', getTotalItems(), 'قطعة']);
+    totalRow.font = { bold: true };
+    totalRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD3D3D3' }
+      };
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
+      };
+      cell.alignment = { horizontal: 'center' };
+    });
+
+    // Set column widths
+    worksheet.columns = [
+      { width: 25 },
+      { width: 15 },
+      { width: 15 }
+    ];
+
+    // Generate file
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    saveAs(blob, `المخزون_المتحرك_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto p-4 sm:p-6">
@@ -114,7 +212,7 @@ export default function MyMovingInventory() {
             </p>
           </div>
         </div>
-        <div className="flex gap-2 w-full sm:w-auto">
+        <div className="flex gap-2 w-full sm:w-auto flex-wrap">
           <Button 
             onClick={() => setShowTransferModal(true)}
             className="flex-1 sm:flex-none"
@@ -131,6 +229,15 @@ export default function MyMovingInventory() {
           >
             <MinusCircle className="w-4 h-4 ml-2" />
             تحديث المخزون
+          </Button>
+          <Button 
+            onClick={exportToExcel}
+            className="flex-1 sm:flex-none"
+            variant="secondary"
+            data-testid="button-export-excel"
+          >
+            <FileDown className="w-4 h-4 ml-2" />
+            تصدير Excel
           </Button>
         </div>
       </div>
