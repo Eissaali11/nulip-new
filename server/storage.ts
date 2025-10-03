@@ -90,6 +90,7 @@ export class MemStorage implements IStorage {
   private withdrawnDevices: Map<string, WithdrawnDevice>;
   private technicianFixedInventories: Map<string, TechnicianFixedInventory>;
   private stockMovements: Map<string, StockMovement>;
+  private technicians: Map<string, any>;
 
   constructor() {
     this.inventoryItems = new Map();
@@ -99,6 +100,7 @@ export class MemStorage implements IStorage {
     this.withdrawnDevices = new Map();
     this.technicianFixedInventories = new Map();
     this.stockMovements = new Map();
+    this.technicians = new Map();
     
     // Initialize with default region and admin user
     this.initializeDefaults();
@@ -511,7 +513,7 @@ export class MemStorage implements IStorage {
   }
 
   async getAdminStats(): Promise<AdminStats> {
-    const transactions = await this.getTransactions();
+    const { transactions } = await this.getTransactions();
     
     return {
       totalRegions: this.regions.size,
@@ -664,8 +666,7 @@ export class MemStorage implements IStorage {
     return technicians.map(tech => {
       const fixedInventory = Array.from(this.technicianFixedInventories.values())
         .find(inv => inv.technicianId === tech.id);
-      const movingInventory = Array.from(this.techniciansInventory.values())
-        .find(inv => inv.id === tech.id);
+      const movingInventory = this.technicians.get(tech.id);
       
       let alertLevel: 'good' | 'warning' | 'critical' = 'good';
       
