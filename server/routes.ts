@@ -805,27 +805,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Insufficient quantity in fixed inventory" });
       }
 
-      // Update fixed inventory (decrease)
-      const newN950Units = totalN950 - n950;
-      const newI900Units = totalI900 - i900;
-      const newPaperUnits = totalPaper - rollPaper;
-      const newStickersUnits = totalStickers - stickers;
-      const newMobilyUnits = totalMobily - mobilySim;
-      const newStcUnits = totalStc - stcSim;
+      // Helper function to subtract quantity from boxes and units
+      const subtractFromInventory = (boxes: number, units: number, toSubtract: number) => {
+        let remaining = toSubtract;
+        let newUnits = units;
+        let newBoxes = boxes;
+        
+        // First subtract from units
+        if (units >= remaining) {
+          newUnits = units - remaining;
+          remaining = 0;
+        } else {
+          remaining -= units;
+          newUnits = 0;
+        }
+        
+        // Then subtract from boxes if needed
+        if (remaining > 0) {
+          newBoxes = boxes - remaining;
+        }
+        
+        return { boxes: newBoxes, units: newUnits };
+      };
+
+      // Calculate new quantities
+      const newN950 = subtractFromInventory(fixedInventory.n950Boxes, fixedInventory.n950Units, n950);
+      const newI900 = subtractFromInventory(fixedInventory.i900Boxes, fixedInventory.i900Units, i900);
+      const newPaper = subtractFromInventory(fixedInventory.rollPaperBoxes, fixedInventory.rollPaperUnits, rollPaper);
+      const newStickers = subtractFromInventory(fixedInventory.stickersBoxes, fixedInventory.stickersUnits, stickers);
+      const newMobily = subtractFromInventory(fixedInventory.mobilySimBoxes, fixedInventory.mobilySimUnits, mobilySim);
+      const newStc = subtractFromInventory(fixedInventory.stcSimBoxes, fixedInventory.stcSimUnits, stcSim);
 
       await storage.updateTechnicianFixedInventory(technicianId, {
-        n950Boxes: 0,
-        n950Units: newN950Units,
-        i900Boxes: 0,
-        i900Units: newI900Units,
-        rollPaperBoxes: 0,
-        rollPaperUnits: newPaperUnits,
-        stickersBoxes: 0,
-        stickersUnits: newStickersUnits,
-        mobilySimBoxes: 0,
-        mobilySimUnits: newMobilyUnits,
-        stcSimBoxes: 0,
-        stcSimUnits: newStcUnits,
+        n950Boxes: newN950.boxes,
+        n950Units: newN950.units,
+        i900Boxes: newI900.boxes,
+        i900Units: newI900.units,
+        rollPaperBoxes: newPaper.boxes,
+        rollPaperUnits: newPaper.units,
+        stickersBoxes: newStickers.boxes,
+        stickersUnits: newStickers.units,
+        mobilySimBoxes: newMobily.boxes,
+        mobilySimUnits: newMobily.units,
+        stcSimBoxes: newStc.boxes,
+        stcSimUnits: newStc.units,
       });
 
       // Update moving inventory (increase)
