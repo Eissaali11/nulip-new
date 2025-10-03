@@ -1,4 +1,4 @@
-import { type InventoryItem, type InsertInventoryItem, type Transaction, type InsertTransaction, type InventoryItemWithStatus, type DashboardStats, type Region, type InsertRegion, type User, type InsertUser, type UserSafe, type RegionWithStats, type AdminStats, type TransactionWithDetails, type WithdrawnDevice, type InsertWithdrawnDevice } from "@shared/schema";
+import { type InventoryItem, type InsertInventoryItem, type Transaction, type InsertTransaction, type InventoryItemWithStatus, type DashboardStats, type Region, type InsertRegion, type User, type InsertUser, type UserSafe, type RegionWithStats, type AdminStats, type TransactionWithDetails, type WithdrawnDevice, type InsertWithdrawnDevice, type TechnicianFixedInventory, type InsertTechnicianFixedInventory, type StockMovement, type InsertStockMovement, type TechnicianWithFixedInventory, type FixedInventorySummary, type StockMovementWithDetails } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -25,7 +25,21 @@ export interface IStorage {
   deleteUser(id: string): Promise<boolean>;
   
   // Transactions
-  getTransactions(): Promise<TransactionWithDetails[]>;
+  getTransactions(filters?: {
+    page?: number;
+    limit?: number;
+    type?: string;
+    userId?: string;
+    regionId?: string;
+    startDate?: string;
+    endDate?: string;
+    search?: string;
+  }): Promise<{
+    transactions: TransactionWithDetails[];
+    total: number;
+    page: number;
+    totalPages: number;
+  }>;
   createTransaction(transaction: InsertTransaction): Promise<Transaction>;
   getRecentTransactions(limit?: number): Promise<TransactionWithDetails[]>;
   
@@ -43,6 +57,28 @@ export interface IStorage {
   createWithdrawnDevice(device: InsertWithdrawnDevice): Promise<WithdrawnDevice>;
   updateWithdrawnDevice(id: string, updates: Partial<InsertWithdrawnDevice>): Promise<WithdrawnDevice>;
   deleteWithdrawnDevice(id: string): Promise<boolean>;
+  
+  // Technician Fixed Inventories
+  getTechnicianFixedInventory(technicianId: string): Promise<TechnicianFixedInventory | undefined>;
+  createTechnicianFixedInventory(inventory: InsertTechnicianFixedInventory): Promise<TechnicianFixedInventory>;
+  updateTechnicianFixedInventory(technicianId: string, updates: Partial<InsertTechnicianFixedInventory>): Promise<TechnicianFixedInventory>;
+  getAllTechniciansWithFixedInventory(): Promise<TechnicianWithFixedInventory[]>;
+  getFixedInventorySummary(): Promise<FixedInventorySummary>;
+  
+  // Stock Movements
+  createStockMovement(movement: InsertStockMovement): Promise<StockMovement>;
+  getStockMovements(technicianId?: string, limit?: number): Promise<StockMovementWithDetails[]>;
+  transferStock(params: {
+    technicianId: string;
+    itemType: string;
+    packagingType: string;
+    quantity: number;
+    fromInventory: string;
+    toInventory: string;
+    performedBy: string;
+    reason?: string;
+    notes?: string;
+  }): Promise<{ movement: StockMovement; updatedInventory: TechnicianFixedInventory }>;
 }
 
 export class MemStorage implements IStorage {
@@ -50,12 +86,18 @@ export class MemStorage implements IStorage {
   private transactions: Map<string, Transaction>;
   private regions: Map<string, Region>;
   private users: Map<string, User>;
+  private withdrawnDevices: Map<string, WithdrawnDevice>;
+  private technicianFixedInventories: Map<string, TechnicianFixedInventory>;
+  private stockMovements: Map<string, StockMovement>;
 
   constructor() {
     this.inventoryItems = new Map();
     this.transactions = new Map();
     this.regions = new Map();
     this.users = new Map();
+    this.withdrawnDevices = new Map();
+    this.technicianFixedInventories = new Map();
+    this.stockMovements = new Map();
     
     // Initialize with default region and admin user
     this.initializeDefaults();
@@ -80,6 +122,7 @@ export class MemStorage implements IStorage {
       email: "admin@company.com",
       password: "admin123", // In real app, this would be hashed
       fullName: "مدير النظام",
+      city: null,
       role: "admin",
       regionId: defaultRegion.id,
       isActive: true,
@@ -120,11 +163,15 @@ export class MemStorage implements IStorage {
     }
     
     const item: InventoryItem = {
-      ...insertItem,
       id,
-      regionId,
+      name: insertItem.name,
+      type: insertItem.type,
+      unit: insertItem.unit,
       quantity: insertItem.quantity ?? 0,
       minThreshold: insertItem.minThreshold ?? 5,
+      technicianName: insertItem.technicianName ?? null,
+      city: insertItem.city ?? null,
+      regionId,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -151,8 +198,25 @@ export class MemStorage implements IStorage {
     return this.inventoryItems.delete(id);
   }
 
-  async getTransactions(): Promise<TransactionWithDetails[]> {
-    return Array.from(this.transactions.values())
+  async getTransactions(filters?: {
+    page?: number;
+    limit?: number;
+    type?: string;
+    userId?: string;
+    regionId?: string;
+    startDate?: string;
+    endDate?: string;
+    search?: string;
+  }): Promise<{
+    transactions: TransactionWithDetails[];
+    total: number;
+    page: number;
+    totalPages: number;
+  }> {
+    const page = filters?.page || 1;
+    const limit = filters?.limit || 10;
+
+    let allTransactions = Array.from(this.transactions.values())
       .map(transaction => {
         const item = this.inventoryItems.get(transaction.itemId);
         const user = transaction.userId ? this.users.get(transaction.userId) : null;
@@ -166,13 +230,57 @@ export class MemStorage implements IStorage {
         };
       })
       .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
+
+    // Apply filters
+    if (filters?.type) {
+      allTransactions = allTransactions.filter(t => t.type === filters.type);
+    }
+    if (filters?.userId) {
+      allTransactions = allTransactions.filter(t => t.userId === filters.userId);
+    }
+    if (filters?.regionId) {
+      allTransactions = allTransactions.filter(t => {
+        const item = this.inventoryItems.get(t.itemId);
+        return item?.regionId === filters.regionId;
+      });
+    }
+    if (filters?.startDate) {
+      const startDate = new Date(filters.startDate);
+      allTransactions = allTransactions.filter(t => t.createdAt && new Date(t.createdAt) >= startDate);
+    }
+    if (filters?.endDate) {
+      const endDate = new Date(filters.endDate);
+      allTransactions = allTransactions.filter(t => t.createdAt && new Date(t.createdAt) <= endDate);
+    }
+    if (filters?.search) {
+      const searchLower = filters.search.toLowerCase();
+      allTransactions = allTransactions.filter(t => 
+        t.itemName?.toLowerCase().includes(searchLower) ||
+        t.userName?.toLowerCase().includes(searchLower) ||
+        t.reason?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    const total = allTransactions.length;
+    const offset = (page - 1) * limit;
+    const transactions = allTransactions.slice(offset, offset + limit);
+
+    return {
+      transactions,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async createTransaction(insertTransaction: InsertTransaction): Promise<Transaction> {
     const id = randomUUID();
     const transaction: Transaction = {
-      ...insertTransaction,
       id,
+      itemId: insertTransaction.itemId,
+      userId: insertTransaction.userId ?? null,
+      type: insertTransaction.type,
+      quantity: insertTransaction.quantity,
       reason: insertTransaction.reason ?? null,
       createdAt: new Date(),
     };
@@ -181,8 +289,8 @@ export class MemStorage implements IStorage {
   }
 
   async getRecentTransactions(limit: number = 10): Promise<TransactionWithDetails[]> {
-    const transactions = await this.getTransactions();
-    return transactions.slice(0, limit);
+    const result = await this.getTransactions({ limit });
+    return result.transactions;
   }
 
   async getDashboardStats(): Promise<DashboardStats> {
@@ -344,10 +452,14 @@ export class MemStorage implements IStorage {
     
     const id = randomUUID();
     const user: User = {
-      ...insertUser,
       id,
-      regionId: insertUser.regionId || null,
-      role: insertUser.role || "employee",
+      username: insertUser.username,
+      email: insertUser.email,
+      password: insertUser.password,
+      fullName: insertUser.fullName,
+      city: insertUser.city ?? null,
+      role: insertUser.role ?? "employee",
+      regionId: insertUser.regionId ?? null,
       isActive: insertUser.isActive ?? true,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -407,6 +519,221 @@ export class MemStorage implements IStorage {
       totalTransactions: transactions.length,
       recentTransactions: transactions.slice(0, 10)
     };
+  }
+
+  // Withdrawn Devices methods (stub implementations)
+  async getWithdrawnDevices(): Promise<WithdrawnDevice[]> {
+    return Array.from(this.withdrawnDevices.values());
+  }
+
+  async getWithdrawnDevice(id: string): Promise<WithdrawnDevice | undefined> {
+    return this.withdrawnDevices.get(id);
+  }
+
+  async createWithdrawnDevice(insertDevice: InsertWithdrawnDevice): Promise<WithdrawnDevice> {
+    const id = randomUUID();
+    const device: WithdrawnDevice = {
+      id,
+      city: insertDevice.city,
+      technicianName: insertDevice.technicianName,
+      terminalId: insertDevice.terminalId,
+      serialNumber: insertDevice.serialNumber,
+      battery: insertDevice.battery,
+      chargerCable: insertDevice.chargerCable,
+      chargerHead: insertDevice.chargerHead,
+      hasSim: insertDevice.hasSim,
+      simCardType: insertDevice.simCardType ?? null,
+      damagePart: insertDevice.damagePart ?? null,
+      notes: insertDevice.notes ?? null,
+      createdBy: insertDevice.createdBy ?? null,
+      regionId: insertDevice.regionId ?? null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.withdrawnDevices.set(id, device);
+    return device;
+  }
+
+  async updateWithdrawnDevice(id: string, updates: Partial<InsertWithdrawnDevice>): Promise<WithdrawnDevice> {
+    const existingDevice = this.withdrawnDevices.get(id);
+    if (!existingDevice) {
+      throw new Error(`Withdrawn device with id ${id} not found`);
+    }
+    
+    const updatedDevice: WithdrawnDevice = {
+      ...existingDevice,
+      ...updates,
+      updatedAt: new Date(),
+    };
+    this.withdrawnDevices.set(id, updatedDevice);
+    return updatedDevice;
+  }
+
+  async deleteWithdrawnDevice(id: string): Promise<boolean> {
+    return this.withdrawnDevices.delete(id);
+  }
+
+  // Technician Fixed Inventory methods (stub implementations)
+  async getTechnicianFixedInventory(technicianId: string): Promise<TechnicianFixedInventory | undefined> {
+    return Array.from(this.technicianFixedInventories.values())
+      .find(inv => inv.technicianId === technicianId);
+  }
+
+  async createTechnicianFixedInventory(insertInventory: InsertTechnicianFixedInventory): Promise<TechnicianFixedInventory> {
+    const id = randomUUID();
+    const inventory: TechnicianFixedInventory = {
+      id,
+      technicianId: insertInventory.technicianId,
+      n950Boxes: insertInventory.n950Boxes ?? 0,
+      n950Units: insertInventory.n950Units ?? 0,
+      i900Boxes: insertInventory.i900Boxes ?? 0,
+      i900Units: insertInventory.i900Units ?? 0,
+      rollPaperBoxes: insertInventory.rollPaperBoxes ?? 0,
+      rollPaperUnits: insertInventory.rollPaperUnits ?? 0,
+      stickersBoxes: insertInventory.stickersBoxes ?? 0,
+      stickersUnits: insertInventory.stickersUnits ?? 0,
+      mobilySimBoxes: insertInventory.mobilySimBoxes ?? 0,
+      mobilySimUnits: insertInventory.mobilySimUnits ?? 0,
+      stcSimBoxes: insertInventory.stcSimBoxes ?? 0,
+      stcSimUnits: insertInventory.stcSimUnits ?? 0,
+      lowStockThreshold: insertInventory.lowStockThreshold ?? 30,
+      criticalStockThreshold: insertInventory.criticalStockThreshold ?? 70,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.technicianFixedInventories.set(id, inventory);
+    return inventory;
+  }
+
+  async updateTechnicianFixedInventory(technicianId: string, updates: Partial<InsertTechnicianFixedInventory>): Promise<TechnicianFixedInventory> {
+    const existingInventory = Array.from(this.technicianFixedInventories.values())
+      .find(inv => inv.technicianId === technicianId);
+    
+    if (!existingInventory) {
+      throw new Error(`Technician fixed inventory for technician ${technicianId} not found`);
+    }
+    
+    const updatedInventory: TechnicianFixedInventory = {
+      ...existingInventory,
+      ...updates,
+      updatedAt: new Date(),
+    };
+    this.technicianFixedInventories.set(existingInventory.id, updatedInventory);
+    return updatedInventory;
+  }
+
+  async getAllTechniciansWithFixedInventory(): Promise<TechnicianWithFixedInventory[]> {
+    const technicians = Array.from(this.users.values())
+      .filter(user => user.role === 'technician' || user.role === 'employee');
+    
+    return technicians.map(tech => {
+      const fixedInventory = Array.from(this.technicianFixedInventories.values())
+        .find(inv => inv.technicianId === tech.id);
+      
+      return {
+        technicianId: tech.id,
+        technicianName: tech.fullName,
+        city: tech.city || "غير محدد",
+        fixedInventory: fixedInventory || null,
+        alertLevel: 'good' as const,
+      };
+    });
+  }
+
+  async getFixedInventorySummary(): Promise<FixedInventorySummary> {
+    const allInventories = Array.from(this.technicianFixedInventories.values());
+    
+    return {
+      totalN950: allInventories.reduce((sum, inv) => sum + inv.n950Boxes + inv.n950Units, 0),
+      totalI900: allInventories.reduce((sum, inv) => sum + inv.i900Boxes + inv.i900Units, 0),
+      totalRollPaper: allInventories.reduce((sum, inv) => sum + inv.rollPaperBoxes + inv.rollPaperUnits, 0),
+      totalStickers: allInventories.reduce((sum, inv) => sum + inv.stickersBoxes + inv.stickersUnits, 0),
+      totalMobilySim: allInventories.reduce((sum, inv) => sum + inv.mobilySimBoxes + inv.mobilySimUnits, 0),
+      totalStcSim: allInventories.reduce((sum, inv) => sum + inv.stcSimBoxes + inv.stcSimUnits, 0),
+      techniciansWithCriticalStock: 0,
+      techniciansWithWarningStock: 0,
+      techniciansWithGoodStock: allInventories.length,
+    };
+  }
+
+  // Stock Movement methods (stub implementations)
+  async createStockMovement(insertMovement: InsertStockMovement): Promise<StockMovement> {
+    const id = randomUUID();
+    const movement: StockMovement = {
+      id,
+      technicianId: insertMovement.technicianId,
+      itemType: insertMovement.itemType,
+      packagingType: insertMovement.packagingType,
+      quantity: insertMovement.quantity,
+      fromInventory: insertMovement.fromInventory,
+      toInventory: insertMovement.toInventory,
+      reason: insertMovement.reason ?? null,
+      performedBy: insertMovement.performedBy,
+      notes: insertMovement.notes ?? null,
+      createdAt: new Date(),
+    };
+    this.stockMovements.set(id, movement);
+    return movement;
+  }
+
+  async getStockMovements(technicianId?: string, limit?: number): Promise<StockMovementWithDetails[]> {
+    let movements = Array.from(this.stockMovements.values());
+    
+    if (technicianId) {
+      movements = movements.filter(m => m.technicianId === technicianId);
+    }
+    
+    movements.sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
+    
+    if (limit) {
+      movements = movements.slice(0, limit);
+    }
+    
+    return movements.map(movement => {
+      const technician = this.users.get(movement.technicianId);
+      const performedBy = this.users.get(movement.performedBy);
+      
+      return {
+        ...movement,
+        technicianName: technician?.fullName || "غير محدد",
+        performedByName: performedBy?.fullName || "غير محدد",
+        itemNameAr: movement.itemType,
+      };
+    });
+  }
+
+  async transferStock(params: {
+    technicianId: string;
+    itemType: string;
+    packagingType: string;
+    quantity: number;
+    fromInventory: string;
+    toInventory: string;
+    performedBy: string;
+    reason?: string;
+    notes?: string;
+  }): Promise<{ movement: StockMovement; updatedInventory: TechnicianFixedInventory }> {
+    const movement = await this.createStockMovement({
+      technicianId: params.technicianId,
+      itemType: params.itemType,
+      packagingType: params.packagingType,
+      quantity: params.quantity,
+      fromInventory: params.fromInventory,
+      toInventory: params.toInventory,
+      performedBy: params.performedBy,
+      reason: params.reason,
+      notes: params.notes,
+    });
+    
+    let inventory = await this.getTechnicianFixedInventory(params.technicianId);
+    
+    if (!inventory) {
+      inventory = await this.createTechnicianFixedInventory({
+        technicianId: params.technicianId,
+      });
+    }
+    
+    return { movement, updatedInventory: inventory };
   }
 }
 

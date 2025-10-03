@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Minus, Plus, FileText, TriangleAlert, Settings, LogOut, User, Shield, History, Smartphone } from "lucide-react";
+import { Minus, Plus, FileText, TriangleAlert, Settings, LogOut, User, Shield, History, Smartphone, Package } from "lucide-react";
 import { InventoryItemWithStatus, Transaction } from "@shared/schema";
 import AddItemModal from "./add-item-modal";
 import WithdrawalModal from "./withdrawal-modal";
@@ -211,16 +211,29 @@ ${inventory.map(item =>
           </Link>
           
           {user?.role === 'admin' && (
-            <Link href="/admin">
-              <Button
-                variant="outline"
-                className="w-full flex items-center justify-center space-x-2 space-x-reverse"
-                data-testid="button-admin-panel"
-              >
-                <Settings className="h-4 w-4" />
-                <span>لوحة الإدارة</span>
-              </Button>
-            </Link>
+            <>
+              <Link href="/fixed-inventory">
+                <Button
+                  variant="outline"
+                  className="w-full flex items-center justify-center space-x-2 space-x-reverse"
+                  data-testid="button-fixed-inventory"
+                >
+                  <Package className="h-4 w-4" />
+                  <span>المخزون الثابت</span>
+                </Button>
+              </Link>
+              
+              <Link href="/admin">
+                <Button
+                  variant="outline"
+                  className="w-full flex items-center justify-center space-x-2 space-x-reverse"
+                  data-testid="button-admin-panel"
+                >
+                  <Settings className="h-4 w-4" />
+                  <span>لوحة الإدارة</span>
+                </Button>
+              </Link>
+            </>
           )}
         </CardContent>
       </Card>

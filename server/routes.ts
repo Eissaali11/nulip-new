@@ -696,6 +696,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Fixed Inventory Routes
+  app.get("/api/admin/fixed-inventory-dashboard", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const techniciansWithInventory = await storage.getAllTechniciansWithFixedInventory();
+      const summary = await storage.getFixedInventorySummary();
+      res.json({ technicians: techniciansWithInventory, summary });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch fixed inventory dashboard" });
+    }
+  });
+
+  app.get("/api/technician-fixed-inventory/:technicianId", requireAuth, async (req, res) => {
+    try {
+      const inventory = await storage.getTechnicianFixedInventory(req.params.technicianId);
+      if (!inventory) {
+        return res.status(404).json({ message: "Fixed inventory not found" });
+      }
+      res.json(inventory);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch fixed inventory" });
+    }
+  });
+
+  app.put("/api/technician-fixed-inventory/:technicianId", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const technicianId = req.params.technicianId;
+      const existingInventory = await storage.getTechnicianFixedInventory(technicianId);
+      
+      if (existingInventory) {
+        const updated = await storage.updateTechnicianFixedInventory(technicianId, req.body);
+        res.json(updated);
+      } else {
+        const created = await storage.createTechnicianFixedInventory({
+          technicianId,
+          ...req.body,
+        });
+        res.status(201).json(created);
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update fixed inventory" });
+    }
+  });
+
+  app.post("/api/stock-transfer", requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { technicianId, itemType, packagingType, quantity, fromInventory, toInventory, reason, notes } = req.body;
+      
+      const result = await storage.transferStock({
+        technicianId,
+        itemType,
+        packagingType,
+        quantity: parseInt(quantity),
+        fromInventory,
+        toInventory,
+        performedBy: user.id,
+        reason,
+        notes,
+      });
+      
+      res.json(result);
+    } catch (error) {
+      if (error instanceof Error) {
+        return res.status(400).json({ message: error.message });
+      }
+      res.status(500).json({ message: "Failed to transfer stock" });
+    }
+  });
+
+  app.get("/api/stock-movements", requireAuth, async (req, res) => {
+    try {
+      const technicianId = req.query.technicianId as string | undefined;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+      const movements = await storage.getStockMovements(technicianId, limit);
+      res.json(movements);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch stock movements" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

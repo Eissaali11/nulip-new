@@ -17,12 +17,21 @@ import {
   type InsertTechnicianInventory,
   type WithdrawnDevice,
   type InsertWithdrawnDevice,
+  type TechnicianFixedInventory,
+  type InsertTechnicianFixedInventory,
+  type StockMovement,
+  type InsertStockMovement,
+  type TechnicianWithFixedInventory,
+  type FixedInventorySummary,
+  type StockMovementWithDetails,
   regions,
   users,
   inventoryItems,
   techniciansInventory,
   transactions,
-  withdrawnDevices
+  withdrawnDevices,
+  technicianFixedInventories,
+  stockMovements
 } from "@shared/schema";
 import { IStorage } from "./storage";
 import { db } from "./db";
@@ -226,6 +235,7 @@ export class DatabaseStorage implements IStorage {
         username: users.username,
         email: users.email,
         fullName: users.fullName,
+        city: users.city,
         role: users.role,
         regionId: users.regionId,
         isActive: users.isActive,
@@ -243,6 +253,7 @@ export class DatabaseStorage implements IStorage {
         username: users.username,
         email: users.email,
         fullName: users.fullName,
+        city: users.city,
         role: users.role,
         regionId: users.regionId,
         isActive: users.isActive,
@@ -290,6 +301,7 @@ export class DatabaseStorage implements IStorage {
         username: users.username,
         email: users.email,
         fullName: users.fullName,
+        city: users.city,
         role: users.role,
         regionId: users.regionId,
         isActive: users.isActive,
@@ -336,6 +348,7 @@ export class DatabaseStorage implements IStorage {
         username: users.username,
         email: users.email,
         fullName: users.fullName,
+        city: users.city,
         role: users.role,
         regionId: users.regionId,
         isActive: users.isActive,
@@ -376,7 +389,7 @@ export class DatabaseStorage implements IStorage {
     const limit = filters?.limit || 10;
     const offset = (page - 1) * limit;
 
-    let query = db
+    const query = db
       .select({
         id: transactions.id,
         itemId: transactions.itemId,
@@ -392,14 +405,16 @@ export class DatabaseStorage implements IStorage {
       .from(transactions)
       .leftJoin(inventoryItems, eq(transactions.itemId, inventoryItems.id))
       .leftJoin(users, eq(transactions.userId, users.id))
-      .leftJoin(regions, eq(inventoryItems.regionId, regions.id));
+      .leftJoin(regions, eq(inventoryItems.regionId, regions.id))
+      .$dynamic();
 
-    let countQuery = db
+    const countQuery = db
       .select({ count: sql<number>`count(*)` })
       .from(transactions)
       .leftJoin(inventoryItems, eq(transactions.itemId, inventoryItems.id))
       .leftJoin(users, eq(transactions.userId, users.id))
-      .leftJoin(regions, eq(inventoryItems.regionId, regions.id));
+      .leftJoin(regions, eq(inventoryItems.regionId, regions.id))
+      .$dynamic();
 
     // Build where conditions
     const conditions = [];
@@ -436,18 +451,21 @@ export class DatabaseStorage implements IStorage {
     }
 
     // Apply conditions if any
+    let finalQuery = query;
+    let finalCountQuery = countQuery;
+    
     if (conditions.length > 0) {
       const whereCondition = conditions.length === 1 ? conditions[0] : and(...conditions);
-      query = query.where(whereCondition);
-      countQuery = countQuery.where(whereCondition);
+      finalQuery = query.where(whereCondition);
+      finalCountQuery = countQuery.where(whereCondition);
     }
 
     // Get total count
-    const [{ count }] = await countQuery;
+    const [{ count }] = await finalCountQuery;
     const total = Number(count);
 
     // Get paginated results
-    const allTransactions = await query
+    const allTransactions = await finalQuery
       .orderBy(desc(transactions.createdAt))
       .limit(limit)
       .offset(offset);
@@ -519,7 +537,7 @@ export class DatabaseStorage implements IStorage {
     dailyTransactions: Array<{ date: string; count: number }>;
   }> {
     // Build base query
-    let baseQuery = db
+    const baseQuery = db
       .select({
         transactionId: transactions.id,
         type: transactions.type,
@@ -531,7 +549,8 @@ export class DatabaseStorage implements IStorage {
       .from(transactions)
       .leftJoin(inventoryItems, eq(transactions.itemId, inventoryItems.id))
       .leftJoin(users, eq(transactions.userId, users.id))
-      .leftJoin(regions, eq(inventoryItems.regionId, regions.id));
+      .leftJoin(regions, eq(inventoryItems.regionId, regions.id))
+      .$dynamic();
 
     // Apply filters
     const conditions = [];
@@ -545,11 +564,12 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(inventoryItems.regionId, filters.regionId));
     }
 
+    let finalQuery = baseQuery;
     if (conditions.length > 0) {
-      baseQuery = baseQuery.where(conditions.length === 1 ? conditions[0] : and(...conditions));
+      finalQuery = baseQuery.where(conditions.length === 1 ? conditions[0] : and(...conditions));
     }
 
-    const allTransactions = await baseQuery;
+    const allTransactions = await finalQuery;
 
     // Calculate statistics
     const totalTransactions = allTransactions.length;
@@ -809,5 +829,278 @@ export class DatabaseStorage implements IStorage {
       .delete(withdrawnDevices)
       .where(eq(withdrawnDevices.id, id));
     return (result.rowCount || 0) > 0;
+  }
+
+  // Technician Fixed Inventories Operations
+  async getTechnicianFixedInventory(technicianId: string): Promise<TechnicianFixedInventory | undefined> {
+    const [inventory] = await db
+      .select()
+      .from(technicianFixedInventories)
+      .where(eq(technicianFixedInventories.technicianId, technicianId));
+    return inventory || undefined;
+  }
+
+  async createTechnicianFixedInventory(data: InsertTechnicianFixedInventory): Promise<TechnicianFixedInventory> {
+    const [inventory] = await db
+      .insert(technicianFixedInventories)
+      .values(data)
+      .returning();
+    return inventory;
+  }
+
+  async updateTechnicianFixedInventory(technicianId: string, updates: Partial<InsertTechnicianFixedInventory>): Promise<TechnicianFixedInventory> {
+    const [inventory] = await db
+      .update(technicianFixedInventories)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(technicianFixedInventories.technicianId, technicianId))
+      .returning();
+    
+    if (!inventory) {
+      throw new Error(`Fixed inventory for technician ${technicianId} not found`);
+    }
+    return inventory;
+  }
+
+  async getAllTechniciansWithFixedInventory(): Promise<TechnicianWithFixedInventory[]> {
+    const technicians = await db
+      .select({
+        id: users.id,
+        fullName: users.fullName,
+        city: users.city,
+        fixedInventory: technicianFixedInventories,
+      })
+      .from(users)
+      .leftJoin(technicianFixedInventories, eq(users.id, technicianFixedInventories.technicianId))
+      .where(eq(users.role, 'employee'));
+
+    return technicians.map(tech => {
+      let alertLevel: 'good' | 'warning' | 'critical' = 'good';
+      
+      if (tech.fixedInventory) {
+        const totalItems = 
+          tech.fixedInventory.n950Boxes + tech.fixedInventory.n950Units +
+          tech.fixedInventory.i900Boxes + tech.fixedInventory.i900Units +
+          tech.fixedInventory.rollPaperBoxes + tech.fixedInventory.rollPaperUnits +
+          tech.fixedInventory.stickersBoxes + tech.fixedInventory.stickersUnits +
+          tech.fixedInventory.mobilySimBoxes + tech.fixedInventory.mobilySimUnits +
+          tech.fixedInventory.stcSimBoxes + tech.fixedInventory.stcSimUnits;
+        
+        const threshold = tech.fixedInventory.criticalStockThreshold || 70;
+        const lowThreshold = tech.fixedInventory.lowStockThreshold || 30;
+        
+        if (totalItems === 0) {
+          alertLevel = 'critical';
+        } else if (totalItems < lowThreshold) {
+          alertLevel = 'critical';
+        } else if (totalItems < threshold) {
+          alertLevel = 'warning';
+        }
+      }
+
+      return {
+        technicianId: tech.id,
+        technicianName: tech.fullName,
+        city: tech.city || '',
+        fixedInventory: tech.fixedInventory || null,
+        alertLevel,
+      };
+    });
+  }
+
+  async getFixedInventorySummary(): Promise<FixedInventorySummary> {
+    const inventories = await db
+      .select()
+      .from(technicianFixedInventories);
+
+    const summary = inventories.reduce((acc, inv) => {
+      acc.totalN950 += (inv.n950Boxes || 0) + (inv.n950Units || 0);
+      acc.totalI900 += (inv.i900Boxes || 0) + (inv.i900Units || 0);
+      acc.totalRollPaper += (inv.rollPaperBoxes || 0) + (inv.rollPaperUnits || 0);
+      acc.totalStickers += (inv.stickersBoxes || 0) + (inv.stickersUnits || 0);
+      acc.totalMobilySim += (inv.mobilySimBoxes || 0) + (inv.mobilySimUnits || 0);
+      acc.totalStcSim += (inv.stcSimBoxes || 0) + (inv.stcSimUnits || 0);
+
+      const totalItems = 
+        (inv.n950Boxes || 0) + (inv.n950Units || 0) +
+        (inv.i900Boxes || 0) + (inv.i900Units || 0) +
+        (inv.rollPaperBoxes || 0) + (inv.rollPaperUnits || 0) +
+        (inv.stickersBoxes || 0) + (inv.stickersUnits || 0) +
+        (inv.mobilySimBoxes || 0) + (inv.mobilySimUnits || 0) +
+        (inv.stcSimBoxes || 0) + (inv.stcSimUnits || 0);
+
+      const threshold = inv.criticalStockThreshold || 70;
+      const lowThreshold = inv.lowStockThreshold || 30;
+
+      if (totalItems === 0 || totalItems < lowThreshold) {
+        acc.techniciansWithCriticalStock++;
+      } else if (totalItems < threshold) {
+        acc.techniciansWithWarningStock++;
+      } else {
+        acc.techniciansWithGoodStock++;
+      }
+
+      return acc;
+    }, {
+      totalN950: 0,
+      totalI900: 0,
+      totalRollPaper: 0,
+      totalStickers: 0,
+      totalMobilySim: 0,
+      totalStcSim: 0,
+      techniciansWithCriticalStock: 0,
+      techniciansWithWarningStock: 0,
+      techniciansWithGoodStock: 0,
+    });
+
+    return summary;
+  }
+
+  // Stock Movements Operations
+  async createStockMovement(data: InsertStockMovement): Promise<StockMovement> {
+    const [movement] = await db
+      .insert(stockMovements)
+      .values(data)
+      .returning();
+    return movement;
+  }
+
+  async getStockMovements(technicianId?: string, limit: number = 50): Promise<StockMovementWithDetails[]> {
+    let query = db
+      .select({
+        id: stockMovements.id,
+        technicianId: stockMovements.technicianId,
+        itemType: stockMovements.itemType,
+        packagingType: stockMovements.packagingType,
+        quantity: stockMovements.quantity,
+        fromInventory: stockMovements.fromInventory,
+        toInventory: stockMovements.toInventory,
+        reason: stockMovements.reason,
+        performedBy: stockMovements.performedBy,
+        notes: stockMovements.notes,
+        createdAt: stockMovements.createdAt,
+        technicianName: users.fullName,
+        performedByUser: sql<string>`performer.full_name`.as('performedByName'),
+      })
+      .from(stockMovements)
+      .leftJoin(users, eq(stockMovements.technicianId, users.id))
+      .leftJoin(sql`${users} as performer`, sql`${stockMovements.performedBy} = performer.id`);
+    
+    if (technicianId) {
+      query = query.where(eq(stockMovements.technicianId, technicianId));
+    }
+    
+    const movements = await query
+      .orderBy(desc(stockMovements.createdAt))
+      .limit(limit);
+
+    const itemNames: Record<string, string> = {
+      'n950': 'أجهزة N950',
+      'i900': 'أجهزة I900',
+      'rollPaper': 'أوراق رول',
+      'stickers': 'ملصقات مداى',
+      'mobilySim': 'شرائح موبايلي',
+      'stcSim': 'شرائح STC',
+    };
+
+    return movements.map(m => ({
+      ...m,
+      technicianName: m.technicianName ?? undefined,
+      performedByName: m.performedByUser || undefined,
+      itemNameAr: itemNames[m.itemType] || m.itemType,
+    }));
+  }
+
+  async transferStock(params: {
+    technicianId: string;
+    itemType: string;
+    packagingType: string;
+    quantity: number;
+    fromInventory: string;
+    toInventory: string;
+    performedBy: string;
+    reason?: string;
+    notes?: string;
+  }): Promise<{ movement: StockMovement; updatedInventory: TechnicianFixedInventory }> {
+    const { technicianId, itemType, packagingType, quantity, fromInventory, toInventory, performedBy, reason, notes } = params;
+
+    // Get or create fixed inventory
+    let fixedInventory = await this.getTechnicianFixedInventory(technicianId);
+    if (!fixedInventory) {
+      fixedInventory = await this.createTechnicianFixedInventory({
+        technicianId,
+        n950Boxes: 0,
+        n950Units: 0,
+        i900Boxes: 0,
+        i900Units: 0,
+        rollPaperBoxes: 0,
+        rollPaperUnits: 0,
+        stickersBoxes: 0,
+        stickersUnits: 0,
+        mobilySimBoxes: 0,
+        mobilySimUnits: 0,
+        stcSimBoxes: 0,
+        stcSimUnits: 0,
+      });
+    }
+
+    // Determine field name
+    const fieldMap: Record<string, string> = {
+      'n950_box': 'n950Boxes',
+      'n950_unit': 'n950Units',
+      'i900_box': 'i900Boxes',
+      'i900_unit': 'i900Units',
+      'rollPaper_box': 'rollPaperBoxes',
+      'rollPaper_unit': 'rollPaperUnits',
+      'stickers_box': 'stickersBoxes',
+      'stickers_unit': 'stickersUnits',
+      'mobilySim_box': 'mobilySimBoxes',
+      'mobilySim_unit': 'mobilySimUnits',
+      'stcSim_box': 'stcSimBoxes',
+      'stcSim_unit': 'stcSimUnits',
+    };
+
+    const fieldName = fieldMap[`${itemType}_${packagingType}`];
+    if (!fieldName) {
+      throw new Error(`Invalid item type or packaging type`);
+    }
+
+    const currentValue = (fixedInventory as any)[fieldName] || 0;
+
+    // Calculate new value based on direction
+    let newValue: number;
+    if (fromInventory === 'fixed' && toInventory === 'moving') {
+      // Withdrawing from fixed to moving
+      if (currentValue < quantity) {
+        throw new Error(`Insufficient stock in fixed inventory`);
+      }
+      newValue = currentValue - quantity;
+    } else if (fromInventory === 'moving' && toInventory === 'fixed') {
+      // Returning from moving to fixed
+      newValue = currentValue + quantity;
+    } else {
+      throw new Error(`Invalid inventory transfer direction`);
+    }
+
+    // Update fixed inventory
+    const updates = { [fieldName]: newValue };
+    const updatedInventory = await this.updateTechnicianFixedInventory(technicianId, updates);
+
+    // Create movement record
+    const movement = await this.createStockMovement({
+      technicianId,
+      itemType,
+      packagingType,
+      quantity,
+      fromInventory,
+      toInventory,
+      performedBy,
+      reason,
+      notes,
+    });
+
+    return { movement, updatedInventory };
   }
 }

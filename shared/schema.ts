@@ -90,6 +90,58 @@ export const withdrawnDevices = pgTable("withdrawn_devices", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Technician Fixed Inventories - المخزون الثابت لكل فني
+export const technicianFixedInventories = pgTable("technician_fixed_inventories", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  technicianId: varchar("technician_id").notNull().references(() => users.id),
+  
+  // N950 devices
+  n950Boxes: integer("n950_boxes").notNull().default(0),
+  n950Units: integer("n950_units").notNull().default(0),
+  
+  // I900 devices
+  i900Boxes: integer("i900_boxes").notNull().default(0),
+  i900Units: integer("i900_units").notNull().default(0),
+  
+  // Roll Paper
+  rollPaperBoxes: integer("roll_paper_boxes").notNull().default(0),
+  rollPaperUnits: integer("roll_paper_units").notNull().default(0),
+  
+  // Stickers
+  stickersBoxes: integer("stickers_boxes").notNull().default(0),
+  stickersUnits: integer("stickers_units").notNull().default(0),
+  
+  // Mobily SIM
+  mobilySimBoxes: integer("mobily_sim_boxes").notNull().default(0),
+  mobilySimUnits: integer("mobily_sim_units").notNull().default(0),
+  
+  // STC SIM
+  stcSimBoxes: integer("stc_sim_boxes").notNull().default(0),
+  stcSimUnits: integer("stc_sim_units").notNull().default(0),
+  
+  // Alert thresholds (percentage)
+  lowStockThreshold: integer("low_stock_threshold").notNull().default(30),
+  criticalStockThreshold: integer("critical_stock_threshold").notNull().default(70),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Stock Movements - سجل حركات النقل بين المخزون الثابت والمتحرك
+export const stockMovements = pgTable("stock_movements", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  technicianId: varchar("technician_id").notNull().references(() => users.id),
+  itemType: text("item_type").notNull(), // "n950", "i900", "rollPaper", "stickers", "mobilySim", "stcSim"
+  packagingType: text("packaging_type").notNull(), // "box", "unit"
+  quantity: integer("quantity").notNull(), // الكمية المنقولة
+  fromInventory: text("from_inventory").notNull(), // "fixed", "moving"
+  toInventory: text("to_inventory").notNull(), // "fixed", "moving"
+  reason: text("reason"), // سبب النقل
+  performedBy: varchar("performed_by").notNull().references(() => users.id),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Schema for regions
 export const insertRegionSchema = createInsertSchema(regions).omit({
   id: true,
@@ -127,6 +179,17 @@ export const insertWithdrawnDeviceSchema = createInsertSchema(withdrawnDevices).
   updatedAt: true,
 });
 
+export const insertTechnicianFixedInventorySchema = createInsertSchema(technicianFixedInventories).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertStockMovementSchema = createInsertSchema(stockMovements).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type InsertRegion = z.infer<typeof insertRegionSchema>;
 export type Region = typeof regions.$inferSelect;
@@ -140,6 +203,10 @@ export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 export type Transaction = typeof transactions.$inferSelect;
 export type InsertWithdrawnDevice = z.infer<typeof insertWithdrawnDeviceSchema>;
 export type WithdrawnDevice = typeof withdrawnDevices.$inferSelect;
+export type InsertTechnicianFixedInventory = z.infer<typeof insertTechnicianFixedInventorySchema>;
+export type TechnicianFixedInventory = typeof technicianFixedInventories.$inferSelect;
+export type InsertStockMovement = z.infer<typeof insertStockMovementSchema>;
+export type StockMovement = typeof stockMovements.$inferSelect;
 
 // Additional types for API responses
 export type InventoryItemWithStatus = InventoryItem & {
@@ -176,6 +243,42 @@ export type AdminStats = {
   activeUsers: number;
   totalTransactions: number;
   recentTransactions: TransactionWithDetails[];
+};
+
+// Fixed Inventory Dashboard Types
+export type TechnicianWithFixedInventory = {
+  technicianId: string;
+  technicianName: string;
+  city: string;
+  fixedInventory: TechnicianFixedInventory | null;
+  alertLevel: 'good' | 'warning' | 'critical'; // Overall alert level
+};
+
+export type FixedInventoryItemStatus = {
+  itemType: string;
+  itemNameAr: string;
+  boxes: number;
+  units: number;
+  total: number;
+  alertLevel: 'good' | 'warning' | 'critical';
+};
+
+export type FixedInventorySummary = {
+  totalN950: number;
+  totalI900: number;
+  totalRollPaper: number;
+  totalStickers: number;
+  totalMobilySim: number;
+  totalStcSim: number;
+  techniciansWithCriticalStock: number;
+  techniciansWithWarningStock: number;
+  techniciansWithGoodStock: number;
+};
+
+export type StockMovementWithDetails = StockMovement & {
+  technicianName?: string;
+  performedByName?: string;
+  itemNameAr?: string;
 };
 
 // Authentication schemas
