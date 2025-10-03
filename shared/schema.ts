@@ -54,6 +54,7 @@ export const techniciansInventory = pgTable("technicians_inventory", {
   mobilySim: integer("mobily_sim").notNull().default(0),
   stcSim: integer("stc_sim").notNull().default(0),
   notes: text("notes"),
+  createdBy: varchar("created_by").references(() => users.id),
   regionId: varchar("region_id").references(() => regions.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -83,6 +84,7 @@ export const withdrawnDevices = pgTable("withdrawn_devices", {
   simCardType: text("sim_card_type"), // "Mobily", "STC", "غير محدد"
   damagePart: text("damage_part"), // وصف الضرر
   notes: text("notes"),
+  createdBy: varchar("created_by").references(() => users.id),
   regionId: varchar("region_id").references(() => regions.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

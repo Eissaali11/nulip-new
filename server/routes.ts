@@ -537,8 +537,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Technicians Inventory Routes
   app.get("/api/technicians", requireAuth, async (req, res) => {
     try {
+      const user = (req as any).user;
       const techs = await storage.getTechniciansInventory();
-      res.json(techs);
+      
+      // Filter data based on user role
+      if (user.role === 'employee') {
+        // Employees only see data they created
+        const filteredTechs = techs.filter(tech => tech.createdBy === user.id);
+        res.json(filteredTechs);
+      } else {
+        // Admins see everything
+        res.json(techs);
+      }
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch technicians inventory" });
     }
@@ -558,8 +568,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/technicians", requireAuth, async (req, res) => {
     try {
+      const user = (req as any).user;
       const data = insertTechnicianInventorySchema.parse(req.body);
-      const tech = await storage.createTechnicianInventory(data);
+      
+      // Add createdBy to track who created this record
+      const techData = {
+        ...data,
+        createdBy: user.id,
+      };
+      
+      const tech = await storage.createTechnicianInventory(techData);
       res.status(201).json(tech);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -600,8 +618,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Withdrawn Devices Routes
   app.get("/api/withdrawn-devices", requireAuth, async (req, res) => {
     try {
+      const user = (req as any).user;
       const devices = await storage.getWithdrawnDevices();
-      res.json(devices);
+      
+      // Filter data based on user role
+      if (user.role === 'employee') {
+        // Employees only see devices they created
+        const filteredDevices = devices.filter(device => device.createdBy === user.id);
+        res.json(filteredDevices);
+      } else {
+        // Admins see everything
+        res.json(devices);
+      }
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch withdrawn devices" });
     }
@@ -621,8 +649,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/withdrawn-devices", requireAuth, async (req, res) => {
     try {
+      const user = (req as any).user;
       const data = insertWithdrawnDeviceSchema.parse(req.body);
-      const device = await storage.createWithdrawnDevice(data);
+      
+      // Add createdBy to track who created this record
+      const deviceData = {
+        ...data,
+        createdBy: user.id,
+      };
+      
+      const device = await storage.createWithdrawnDevice(deviceData);
       res.status(201).json(device);
     } catch (error) {
       if (error instanceof z.ZodError) {

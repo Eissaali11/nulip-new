@@ -7,8 +7,29 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/lib/auth";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Header() {
+  const { logout, user } = useAuth();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast({
+        title: "تم تسجيل الخروج بنجاح",
+        description: "شكراً لك على استخدام النظام",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "خطأ في تسجيل الخروج",
+        description: "حدث خطأ غير متوقع",
+      });
+    }
+  };
+
   return (
     <header className="bg-card border-b border-border shadow-sm">
       <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-3">
@@ -45,7 +66,7 @@ export default function Header() {
                     alt="صورة المستخدم" 
                     className="w-6 h-6 sm:w-8 sm:h-8 rounded-full flex-shrink-0" 
                   />
-                  <span className="text-xs sm:text-sm font-medium hidden xs:inline">أحمد محمد</span>
+                  <span className="text-xs sm:text-sm font-medium hidden xs:inline">{user?.fullName || 'المستخدم'}</span>
                   <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 hidden xs:inline" />
                 </Button>
               </DropdownMenuTrigger>
@@ -53,7 +74,11 @@ export default function Header() {
                 <DropdownMenuItem data-testid="link-profile">الملف الشخصي</DropdownMenuItem>
                 <DropdownMenuItem data-testid="link-settings">الإعدادات</DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive" data-testid="button-logout">
+                <DropdownMenuItem 
+                  className="text-destructive cursor-pointer" 
+                  onClick={handleLogout}
+                  data-testid="button-logout"
+                >
                   تسجيل الخروج
                 </DropdownMenuItem>
               </DropdownMenuContent>

@@ -8,6 +8,7 @@ import Dashboard from "@/pages/dashboard";
 import AdminPage from "@/pages/admin";
 import { TransactionHistoryPage } from "@/pages/transaction-history";
 import WithdrawnDevicesPage from "@/pages/withdrawn-devices";
+import UsersPage from "@/pages/users";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import { Loader2 } from "lucide-react";
@@ -22,7 +23,10 @@ function AuthenticatedRouter() {
       <Route path="/transactions" component={TransactionHistoryPage} />
       <Route path="/withdrawn-devices" component={WithdrawnDevicesPage} />
       {user?.role === "admin" && (
-        <Route path="/admin" component={AdminPage} />
+        <>
+          <Route path="/admin" component={AdminPage} />
+          <Route path="/users" component={UsersPage} />
+        </>
       )}
       <Route component={NotFound} />
     </Switch>

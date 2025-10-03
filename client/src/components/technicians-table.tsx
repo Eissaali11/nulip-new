@@ -4,17 +4,19 @@ import { Link } from "wouter";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, FileSpreadsheet, Edit, Trash2, Search, Smartphone } from "lucide-react";
+import { Plus, FileSpreadsheet, Edit, Trash2, Search, Smartphone, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { TechnicianInventory } from "@shared/schema";
 import AddTechnicianModal from "./add-technician-modal";
 import EditTechnicianModal from "./edit-technician-modal";
 import ExcelJS from 'exceljs';
+import { useAuth } from "@/lib/auth";
 
 export default function TechniciansTable() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -283,6 +285,19 @@ export default function TechniciansTable() {
                     <span className="text-orange-700 dark:text-orange-300">الأجهزة</span>
                   </Link>
                 </Button>
+
+                {user?.role === 'admin' && (
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="flex-1 sm:flex-initial gap-1.5 sm:gap-2 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950 text-xs sm:text-sm"
+                  >
+                    <Link href="/users" data-testid="button-users">
+                      <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-600 dark:text-blue-400" />
+                      <span className="text-blue-700 dark:text-blue-300">المستخدمين</span>
+                    </Link>
+                  </Button>
+                )}
                 
                 <Button
                   onClick={handleExport}
