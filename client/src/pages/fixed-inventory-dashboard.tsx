@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Package, AlertTriangle, CheckCircle, Plus } from "lucide-react";
 import { useState } from "react";
+import EditFixedInventoryModal from "@/components/edit-fixed-inventory-modal";
 
 type AlertLevel = 'good' | 'warning' | 'critical';
 
@@ -33,7 +34,7 @@ interface DashboardData {
 }
 
 export default function FixedInventoryDashboard() {
-  const [selectedTechnician, setSelectedTechnician] = useState<string | null>(null);
+  const [selectedTechnician, setSelectedTechnician] = useState<{id: string; name: string} | null>(null);
 
   const { data, isLoading } = useQuery<DashboardData>({
     queryKey: ['/api/admin/fixed-inventory-dashboard'],
@@ -255,7 +256,7 @@ export default function FixedInventoryDashboard() {
                       <Button 
                         size="sm" 
                         variant="outline"
-                        onClick={() => setSelectedTechnician(tech.technicianId)}
+                        onClick={() => setSelectedTechnician({id: tech.technicianId, name: tech.technicianName})}
                         data-testid={`button-edit-${tech.technicianId}`}
                       >
                         <Plus className="w-4 h-4 ml-1" />
@@ -311,7 +312,7 @@ export default function FixedInventoryDashboard() {
                   <Button 
                     size="sm" 
                     className="w-full"
-                    onClick={() => setSelectedTechnician(tech.technicianId)}
+                    onClick={() => setSelectedTechnician({id: tech.technicianId, name: tech.technicianName})}
                     data-testid={`button-edit-mobile-${tech.technicianId}`}
                   >
                     <Plus className="w-4 h-4 ml-1" />
@@ -323,6 +324,16 @@ export default function FixedInventoryDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit Fixed Inventory Modal */}
+      {selectedTechnician && (
+        <EditFixedInventoryModal
+          open={!!selectedTechnician}
+          onClose={() => setSelectedTechnician(null)}
+          technicianId={selectedTechnician.id}
+          technicianName={selectedTechnician.name}
+        />
+      )}
     </div>
   );
 }
