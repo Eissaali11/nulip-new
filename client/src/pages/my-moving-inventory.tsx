@@ -18,12 +18,32 @@ interface MovingInventory {
   stcSim: number;
 }
 
+interface FixedInventory {
+  n950Boxes: number;
+  n950Units: number;
+  i900Boxes: number;
+  i900Units: number;
+  rollPaperBoxes: number;
+  rollPaperUnits: number;
+  stickersBoxes: number;
+  stickersUnits: number;
+  mobilySimBoxes: number;
+  mobilySimUnits: number;
+  stcSimBoxes: number;
+  stcSimUnits: number;
+}
+
 export default function MyMovingInventory() {
   const { user } = useAuth();
   const [showUpdateModal, setShowUpdateModal] = useState(false);
 
   const { data: inventory, isLoading } = useQuery<MovingInventory>({
     queryKey: [`/api/technicians/${user?.id}`],
+    enabled: !!user?.id,
+  });
+
+  const { data: fixedInventory } = useQuery<FixedInventory>({
+    queryKey: [`/api/technician-fixed-inventory/${user?.id}`],
     enabled: !!user?.id,
   });
 
@@ -212,12 +232,13 @@ export default function MyMovingInventory() {
       </div>
 
       {/* Update Modal */}
-      {inventory && (
+      {inventory && fixedInventory && (
         <UpdateMovingInventoryModal
           open={showUpdateModal}
           onClose={() => setShowUpdateModal(false)}
           technicianId={user?.id || ''}
           currentInventory={inventory}
+          fixedInventory={fixedInventory}
         />
       )}
     </div>
