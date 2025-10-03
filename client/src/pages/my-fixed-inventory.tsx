@@ -50,7 +50,7 @@ export default function MyFixedInventory() {
 
   const [showTransferModal, setShowTransferModal] = useState(false);
 
-  const { data: existingInventory, isLoading } = useQuery({
+  const { data: existingInventory, isLoading } = useQuery<FixedInventory>({
     queryKey: [`/api/technician-fixed-inventory/${user?.id}`],
     enabled: !!user?.id,
   });
@@ -64,8 +64,8 @@ export default function MyFixedInventory() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       return await apiRequest(
-        `/api/technician-fixed-inventory/${user?.id}`,
         "PUT",
+        `/api/technician-fixed-inventory/${user?.id}`,
         inventory
       );
     },
