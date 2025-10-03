@@ -708,6 +708,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/admin/all-technicians-inventory", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const technicians = await storage.getAllTechniciansWithBothInventories();
+      res.json({ technicians });
+    } catch (error) {
+      console.error("Error fetching all technicians inventory:", error);
+      res.status(500).json({ message: "Failed to fetch technicians inventory" });
+    }
+  });
+
   app.get("/api/technician-fixed-inventory/:technicianId", requireAuth, async (req, res) => {
     try {
       const inventory = await storage.getTechnicianFixedInventory(req.params.technicianId);

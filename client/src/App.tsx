@@ -12,6 +12,7 @@ import UsersPage from "@/pages/users";
 import FixedInventoryDashboard from "@/pages/fixed-inventory-dashboard";
 import MyFixedInventory from "@/pages/my-fixed-inventory";
 import MyMovingInventory from "@/pages/my-moving-inventory";
+import AdminInventoryOverview from "@/pages/admin-inventory-overview";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import { Loader2 } from "lucide-react";
@@ -32,6 +33,7 @@ function AuthenticatedRouter() {
           <Route path="/admin" component={AdminPage} />
           <Route path="/users" component={UsersPage} />
           <Route path="/fixed-inventory" component={FixedInventoryDashboard} />
+          <Route path="/admin-inventory-overview" component={AdminInventoryOverview} />
         </>
       )}
       <Route component={NotFound} />

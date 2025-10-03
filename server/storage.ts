@@ -64,6 +64,7 @@ export interface IStorage {
   updateTechnicianFixedInventory(technicianId: string, updates: Partial<InsertTechnicianFixedInventory>): Promise<TechnicianFixedInventory>;
   getAllTechniciansWithFixedInventory(): Promise<TechnicianWithFixedInventory[]>;
   getFixedInventorySummary(): Promise<FixedInventorySummary>;
+  getAllTechniciansWithBothInventories(): Promise<any[]>;
   
   // Stock Movements
   createStockMovement(movement: InsertStockMovement): Promise<StockMovement>;
@@ -654,6 +655,49 @@ export class MemStorage implements IStorage {
       techniciansWithWarningStock: 0,
       techniciansWithGoodStock: allInventories.length,
     };
+  }
+
+  async getAllTechniciansWithBothInventories(): Promise<any[]> {
+    const technicians = Array.from(this.users.values())
+      .filter(user => user.role === 'technician' || user.role === 'employee');
+    
+    return technicians.map(tech => {
+      const fixedInventory = Array.from(this.technicianFixedInventories.values())
+        .find(inv => inv.technicianId === tech.id);
+      const movingInventory = Array.from(this.techniciansInventory.values())
+        .find(inv => inv.id === tech.id);
+      
+      let alertLevel: 'good' | 'warning' | 'critical' = 'good';
+      
+      if (fixedInventory) {
+        const totalItems = 
+          fixedInventory.n950Boxes + fixedInventory.n950Units +
+          fixedInventory.i900Boxes + fixedInventory.i900Units +
+          fixedInventory.rollPaperBoxes + fixedInventory.rollPaperUnits +
+          fixedInventory.stickersBoxes + fixedInventory.stickersUnits +
+          fixedInventory.mobilySimBoxes + fixedInventory.mobilySimUnits +
+          fixedInventory.stcSimBoxes + fixedInventory.stcSimUnits;
+        
+        const threshold = fixedInventory.criticalStockThreshold || 70;
+        const lowThreshold = fixedInventory.lowStockThreshold || 30;
+        
+        if (totalItems === 0 || totalItems < lowThreshold) {
+          alertLevel = 'critical';
+        } else if (totalItems < threshold) {
+          alertLevel = 'warning';
+        }
+      }
+      
+      return {
+        technicianId: tech.id,
+        technicianName: tech.fullName,
+        city: tech.city || "غير محدد",
+        regionId: tech.regionId,
+        fixedInventory: fixedInventory || null,
+        movingInventory: movingInventory || null,
+        alertLevel,
+      };
+    });
   }
 
   // Stock Movement methods (stub implementations)

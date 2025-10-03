@@ -958,6 +958,65 @@ export class DatabaseStorage implements IStorage {
     return summary;
   }
 
+  async getAllTechniciansWithBothInventories() {
+    const technicians = await db
+      .select({
+        id: users.id,
+        fullName: users.fullName,
+        city: users.city,
+        regionId: users.regionId,
+        fixedInventory: technicianFixedInventories,
+      })
+      .from(users)
+      .leftJoin(technicianFixedInventories, eq(users.id, technicianFixedInventories.technicianId))
+      .where(eq(users.role, 'employee'));
+
+    const result = await Promise.all(
+      technicians.map(async (tech) => {
+        const movingInventory = await db
+          .select()
+          .from(techniciansInventory)
+          .where(eq(techniciansInventory.id, tech.id))
+          .limit(1);
+
+        let alertLevel: 'good' | 'warning' | 'critical' = 'good';
+        
+        if (tech.fixedInventory) {
+          const totalItems = 
+            tech.fixedInventory.n950Boxes + tech.fixedInventory.n950Units +
+            tech.fixedInventory.i900Boxes + tech.fixedInventory.i900Units +
+            tech.fixedInventory.rollPaperBoxes + tech.fixedInventory.rollPaperUnits +
+            tech.fixedInventory.stickersBoxes + tech.fixedInventory.stickersUnits +
+            tech.fixedInventory.mobilySimBoxes + tech.fixedInventory.mobilySimUnits +
+            tech.fixedInventory.stcSimBoxes + tech.fixedInventory.stcSimUnits;
+          
+          const threshold = tech.fixedInventory.criticalStockThreshold || 70;
+          const lowThreshold = tech.fixedInventory.lowStockThreshold || 30;
+          
+          if (totalItems === 0) {
+            alertLevel = 'critical';
+          } else if (totalItems < lowThreshold) {
+            alertLevel = 'critical';
+          } else if (totalItems < threshold) {
+            alertLevel = 'warning';
+          }
+        }
+
+        return {
+          technicianId: tech.id,
+          technicianName: tech.fullName,
+          city: tech.city || '',
+          regionId: tech.regionId,
+          fixedInventory: tech.fixedInventory || null,
+          movingInventory: movingInventory[0] || null,
+          alertLevel,
+        };
+      })
+    );
+
+    return result;
+  }
+
   // Stock Movements Operations
   async createStockMovement(data: InsertStockMovement): Promise<StockMovement> {
     const [movement] = await db
