@@ -8,6 +8,7 @@ import { z } from "zod";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -90,6 +91,9 @@ export function AddUserModal({
       <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">إضافة مستخدم جديد</DialogTitle>
+          <DialogDescription>
+            قم بملء البيانات التالية لإضافة مستخدم جديد للنظام
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>

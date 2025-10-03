@@ -9,6 +9,7 @@ import type { UserSafe } from "@shared/schema";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -114,6 +115,9 @@ export function EditUserModal({
       <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">تعديل المستخدم</DialogTitle>
+          <DialogDescription>
+            قم بتحديث بيانات المستخدم في النموذج أدناه
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
