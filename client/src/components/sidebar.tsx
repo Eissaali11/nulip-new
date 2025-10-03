@@ -210,6 +210,17 @@ ${inventory.map(item =>
             </Button>
           </Link>
           
+          <Link href="/my-fixed-inventory">
+            <Button
+              variant="outline"
+              className="w-full flex items-center justify-center space-x-2 space-x-reverse"
+              data-testid="button-my-fixed-inventory"
+            >
+              <Package className="h-4 w-4" />
+              <span>مخزوني الثابت</span>
+            </Button>
+          </Link>
+          
           {user?.role === 'admin' && (
             <>
               <Link href="/fixed-inventory">
