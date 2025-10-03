@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { TruckIcon, MinusCircle, ArrowRight } from "lucide-react";
+import { TruckIcon, MinusCircle, ArrowRight, ArrowLeftRight } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useState } from "react";
 import { UpdateMovingInventoryModal } from "@/components/update-moving-inventory-modal";
+import { TransferToMovingModal } from "@/components/transfer-to-moving-modal";
 import { useLocation } from "wouter";
 
 interface MovingInventory {
@@ -19,13 +20,34 @@ interface MovingInventory {
   stcSim: number;
 }
 
+interface FixedInventory {
+  n950Boxes: number;
+  n950Units: number;
+  i900Boxes: number;
+  i900Units: number;
+  rollPaperBoxes: number;
+  rollPaperUnits: number;
+  stickersBoxes: number;
+  stickersUnits: number;
+  mobilySimBoxes: number;
+  mobilySimUnits: number;
+  stcSimBoxes: number;
+  stcSimUnits: number;
+}
+
 export default function MyMovingInventory() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [showTransferModal, setShowTransferModal] = useState(false);
 
   const { data: inventory, isLoading } = useQuery<MovingInventory>({
     queryKey: [`/api/technicians/${user?.id}`],
+    enabled: !!user?.id,
+  });
+
+  const { data: fixedInventory } = useQuery<FixedInventory>({
+    queryKey: [`/api/technician-fixed-inventory/${user?.id}`],
     enabled: !!user?.id,
   });
 
@@ -92,14 +114,25 @@ export default function MyMovingInventory() {
             </p>
           </div>
         </div>
-        <Button 
-          onClick={() => setShowUpdateModal(true)}
-          className="w-full sm:w-auto"
-          data-testid="button-update-inventory"
-        >
-          <MinusCircle className="w-4 h-4 ml-2" />
-          تحديث المخزون
-        </Button>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button 
+            onClick={() => setShowTransferModal(true)}
+            className="flex-1 sm:flex-none"
+            variant="outline"
+            data-testid="button-transfer-inventory"
+          >
+            <ArrowLeftRight className="w-4 h-4 ml-2" />
+            نقل من الثابت
+          </Button>
+          <Button 
+            onClick={() => setShowUpdateModal(true)}
+            className="flex-1 sm:flex-none"
+            data-testid="button-update-inventory"
+          >
+            <MinusCircle className="w-4 h-4 ml-2" />
+            تحديث المخزون
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -223,6 +256,16 @@ export default function MyMovingInventory() {
           </CardHeader>
         </Card>
       </div>
+
+      {/* Transfer Modal */}
+      {fixedInventory && (
+        <TransferToMovingModal
+          open={showTransferModal}
+          onClose={() => setShowTransferModal(false)}
+          technicianId={user?.id || ''}
+          fixedInventory={fixedInventory}
+        />
+      )}
 
       {/* Update Modal */}
       {inventory && (

@@ -77,6 +77,7 @@ export function TransferToMovingModal({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/technician-fixed-inventory/${technicianId}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/technicians/${technicianId}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/fixed-inventory-dashboard'] });
       toast({
