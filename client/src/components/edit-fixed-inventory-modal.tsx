@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import type { TechnicianFixedInventory } from "@shared/schema";
 
 const fixedInventorySchema = z.object({
   n950Boxes: z.coerce.number().min(0, "يجب أن يكون العدد 0 أو أكثر"),
@@ -36,6 +37,8 @@ const fixedInventorySchema = z.object({
   mobilySimUnits: z.coerce.number().min(0, "يجب أن يكون العدد 0 أو أكثر"),
   stcSimBoxes: z.coerce.number().min(0, "يجب أن يكون العدد 0 أو أكثر"),
   stcSimUnits: z.coerce.number().min(0, "يجب أن يكون العدد 0 أو أكثر"),
+  zainSimBoxes: z.coerce.number().min(0, "يجب أن يكون العدد 0 أو أكثر"),
+  zainSimUnits: z.coerce.number().min(0, "يجب أن يكون العدد 0 أو أكثر"),
 });
 
 type FixedInventoryForm = z.infer<typeof fixedInventorySchema>;
@@ -56,7 +59,7 @@ export default function EditFixedInventoryModal({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: inventory, isLoading: loadingInventory } = useQuery({
+  const { data: inventory, isLoading: loadingInventory } = useQuery<TechnicianFixedInventory>({
     queryKey: [`/api/technician-fixed-inventory/${technicianId}`],
     enabled: open && !!technicianId,
   });
@@ -76,6 +79,8 @@ export default function EditFixedInventoryModal({
       mobilySimUnits: 0,
       stcSimBoxes: 0,
       stcSimUnits: 0,
+      zainSimBoxes: 0,
+      zainSimUnits: 0,
     },
   });
 
@@ -95,6 +100,8 @@ export default function EditFixedInventoryModal({
         mobilySimUnits: inventory.mobilySimUnits || 0,
         stcSimBoxes: inventory.stcSimBoxes || 0,
         stcSimUnits: inventory.stcSimUnits || 0,
+        zainSimBoxes: inventory.zainSimBoxes || 0,
+        zainSimUnits: inventory.zainSimUnits || 0,
       });
     }
   }, [inventory, form]);

@@ -31,6 +31,7 @@ const formSchema = insertTechnicianInventorySchema.extend({
   stickers: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
   mobilySim: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
   stcSim: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
+  zainSim: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -55,6 +56,7 @@ export default function AddTechnicianModal({ open, onOpenChange }: AddTechnician
       stickers: 0,
       mobilySim: 0,
       stcSim: 0,
+      zainSim: 0,
       notes: "",
     },
   });
@@ -224,7 +226,7 @@ export default function AddTechnicianModal({ open, onOpenChange }: AddTechnician
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               <FormField
                 control={form.control}
                 name="mobilySim"
@@ -260,6 +262,27 @@ export default function AddTechnicianModal({ open, onOpenChange }: AddTechnician
                         onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
                         value={field.value || 0}
                         data-testid="input-stc"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="zainSim"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>شرائح زين</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="0"
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                        value={field.value || 0}
+                        data-testid="input-zain"
                       />
                     </FormControl>
                     <FormMessage />

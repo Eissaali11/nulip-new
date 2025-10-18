@@ -20,6 +20,7 @@ interface MovingInventory {
   stickers: number;
   mobilySim: number;
   stcSim: number;
+  zainSim: number;
 }
 
 interface FixedInventory {
@@ -35,6 +36,8 @@ interface FixedInventory {
   mobilySimUnits: number;
   stcSimBoxes: number;
   stcSimUnits: number;
+  zainSimBoxes: number;
+  zainSimUnits: number;
 }
 
 export default function MyMovingInventory() {
@@ -61,7 +64,8 @@ export default function MyMovingInventory() {
       inventory.rollPaper +
       inventory.stickers +
       inventory.mobilySim +
-      inventory.stcSim
+      inventory.stcSim +
+      inventory.zainSim
     );
   };
 
@@ -114,6 +118,7 @@ export default function MyMovingInventory() {
       ['ملصقات مدى', inventory.stickers, 'ملصق'],
       ['شرائح موبايلي', inventory.mobilySim, 'شريحة'],
       ['شرائح STC', inventory.stcSim, 'شريحة'],
+      ['شرائح زين', inventory.zainSim, 'شريحة'],
     ];
 
     data.forEach(row => {
@@ -358,6 +363,18 @@ export default function MyMovingInventory() {
               <span>شرائح STC</span>
               <span className="inline-flex items-center px-3 py-1 rounded-full bg-teal-100 dark:bg-teal-900 text-teal-800 dark:text-teal-100 text-sm font-semibold">
                 {inventory.stcSim}
+              </span>
+            </CardTitle>
+          </CardHeader>
+        </Card>
+
+        {/* Zain SIM */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base sm:text-lg flex items-center justify-between">
+              <span>شرائح زين</span>
+              <span className="inline-flex items-center px-3 py-1 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-100 text-sm font-semibold">
+                {inventory.zainSim}
               </span>
             </CardTitle>
           </CardHeader>

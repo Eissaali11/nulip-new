@@ -22,6 +22,7 @@ interface UpdateData {
   stickers: number;
   mobilySim: number;
   stcSim: number;
+  zainSim: number;
 }
 
 interface UpdateMovingInventoryModalProps {
@@ -35,6 +36,7 @@ interface UpdateMovingInventoryModalProps {
     stickers: number;
     mobilySim: number;
     stcSim: number;
+    zainSim: number;
   };
 }
 
@@ -54,6 +56,7 @@ export function UpdateMovingInventoryModal({
     stickers: currentInventory.stickers,
     mobilySim: currentInventory.mobilySim,
     stcSim: currentInventory.stcSim,
+    zainSim: currentInventory.zainSim,
   });
 
   const updateMutation = useMutation({
@@ -69,6 +72,7 @@ export function UpdateMovingInventoryModal({
           stickers: update.stickers,
           mobilySim: update.mobilySim,
           stcSim: update.stcSim,
+          zainSim: update.zainSim,
         }
       );
     },

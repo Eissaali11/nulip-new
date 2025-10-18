@@ -22,6 +22,7 @@ interface TransferData {
   stickers: number;
   mobilySim: number;
   stcSim: number;
+  zainSim: number;
 }
 
 interface TransferToMovingModalProps {
@@ -41,6 +42,8 @@ interface TransferToMovingModalProps {
     mobilySimUnits: number;
     stcSimBoxes: number;
     stcSimUnits: number;
+    zainSimBoxes: number;
+    zainSimUnits: number;
   };
 }
 
@@ -60,6 +63,7 @@ export function TransferToMovingModal({
     stickers: 0,
     mobilySim: 0,
     stcSim: 0,
+    zainSim: 0,
   });
 
   const getTotalAvailable = (boxes: number, units: number) => boxes + units;
@@ -91,6 +95,7 @@ export function TransferToMovingModal({
         stickers: 0,
         mobilySim: 0,
         stcSim: 0,
+        zainSim: 0,
       });
       onClose();
     },
@@ -111,10 +116,11 @@ export function TransferToMovingModal({
     const totalStickers = getTotalAvailable(fixedInventory.stickersBoxes, fixedInventory.stickersUnits);
     const totalMobily = getTotalAvailable(fixedInventory.mobilySimBoxes, fixedInventory.mobilySimUnits);
     const totalStc = getTotalAvailable(fixedInventory.stcSimBoxes, fixedInventory.stcSimUnits);
+    const totalZain = getTotalAvailable(fixedInventory.zainSimBoxes, fixedInventory.zainSimUnits);
 
     if (transfer.n950 > totalN950 || transfer.i900 > totalI900 || 
         transfer.rollPaper > totalPaper || transfer.stickers > totalStickers ||
-        transfer.mobilySim > totalMobily || transfer.stcSim > totalStc) {
+        transfer.mobilySim > totalMobily || transfer.stcSim > totalStc || transfer.zainSim > totalZain) {
       toast({
         variant: "destructive",
         title: "خطأ في الكمية",
@@ -124,7 +130,7 @@ export function TransferToMovingModal({
     }
 
     if (transfer.n950 === 0 && transfer.i900 === 0 && transfer.rollPaper === 0 && 
-        transfer.stickers === 0 && transfer.mobilySim === 0 && transfer.stcSim === 0) {
+        transfer.stickers === 0 && transfer.mobilySim === 0 && transfer.stcSim === 0 && transfer.zainSim === 0) {
       toast({
         variant: "destructive",
         title: "لا توجد كميات للنقل",
