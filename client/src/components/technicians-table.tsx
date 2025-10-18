@@ -93,9 +93,10 @@ export default function TechniciansTable() {
     const totalStickers = filteredTechnicians.reduce((sum, t) => sum + t.stickers, 0);
     const totalMobily = filteredTechnicians.reduce((sum, t) => sum + t.mobilySim, 0);
     const totalSTC = filteredTechnicians.reduce((sum, t) => sum + t.stcSim, 0);
+    const totalZain = filteredTechnicians.reduce((sum, t) => sum + t.zainSim, 0);
     
     // Add title row
-    worksheet.mergeCells('A1:J1');
+    worksheet.mergeCells('A1:K1');
     const titleCell = worksheet.getCell('A1');
     titleCell.value = 'نظام إدارة مخزون الفنيين';
     titleCell.font = { size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
@@ -104,7 +105,7 @@ export default function TechniciansTable() {
     worksheet.getRow(1).height = 35;
     
     // Add date row
-    worksheet.mergeCells('A2:J2');
+    worksheet.mergeCells('A2:K2');
     const dateCell = worksheet.getCell('A2');
     dateCell.value = `تاريخ التقرير: ${currentDate}`;
     dateCell.font = { size: 12, bold: true };
@@ -114,7 +115,7 @@ export default function TechniciansTable() {
     
     // Add header row
     const headerRow = worksheet.getRow(4);
-    headerRow.values = ['#', 'اسم الفني', 'المدينة', 'أجهزة N950', 'أجهزة I900', 'أوراق رول', 'ملصقات مداى', 'شرائح موبايلي', 'شرائح STC', 'ملاحظات'];
+    headerRow.values = ['#', 'اسم الفني', 'المدينة', 'أجهزة N950', 'أجهزة I900', 'أوراق رول', 'ملصقات مداى', 'شرائح موبايلي', 'شرائح STC', 'شرائح زين', 'ملاحظات'];
     headerRow.font = { bold: true, size: 11, color: { argb: 'FFFFFFFF' } };
     headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF475569' } };
     headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -142,6 +143,7 @@ export default function TechniciansTable() {
         tech.stickers,
         tech.mobilySim,
         tech.stcSim,
+        tech.zainSim,
         tech.notes || ''
       ]);
       
@@ -166,14 +168,14 @@ export default function TechniciansTable() {
       // Right align text columns
       row.getCell(2).alignment = { horizontal: 'right', vertical: 'middle' };
       row.getCell(3).alignment = { horizontal: 'right', vertical: 'middle' };
-      row.getCell(10).alignment = { horizontal: 'right', vertical: 'middle' };
+      row.getCell(11).alignment = { horizontal: 'right', vertical: 'middle' };
     });
     
     // Add statistics section
     const statsStartRow = worksheet.lastRow!.number + 2;
     
     // Stats title
-    worksheet.mergeCells(`A${statsStartRow}:J${statsStartRow}`);
+    worksheet.mergeCells(`A${statsStartRow}:K${statsStartRow}`);
     const statsTitle = worksheet.getCell(`A${statsStartRow}`);
     statsTitle.value = 'الإحصائيات الإجمالية';
     statsTitle.font = { size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
@@ -185,7 +187,7 @@ export default function TechniciansTable() {
     const statsData = [
       ['عدد الفنيين', filteredTechnicians.length, 'أجهزة N950', totalN950, 'أجهزة I900', totalI900],
       ['أوراق رول', totalRoll, 'ملصقات مداى', totalStickers, 'شرائح موبايلي', totalMobily],
-      ['شرائح STC', totalSTC, '', '', '', '']
+      ['شرائح STC', totalSTC, 'شرائح زين', totalZain, '', '']
     ];
     
     statsData.forEach((data, idx) => {
@@ -232,6 +234,7 @@ export default function TechniciansTable() {
       { width: 16 },  // ملصقات مداى
       { width: 16 },  // موبايلي
       { width: 14 },  // STC
+      { width: 14 },  // زين
       { width: 35 },  // ملاحظات
     ];
     
