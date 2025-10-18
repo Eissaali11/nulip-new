@@ -771,7 +771,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/stock-transfer", requireAuth, async (req, res) => {
     try {
       const user = (req as any).user;
-      const { technicianId, n950, i900, rollPaper, stickers, mobilySim, stcSim } = req.body;
+      const { technicianId, n950, i900, rollPaper, stickers, mobilySim, stcSim, zainSim } = req.body;
       
       // Get current fixed inventory
       const fixedInventory = await storage.getTechnicianFixedInventory(technicianId);
@@ -798,6 +798,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             stickers: 0,
             mobilySim: 0,
             stcSim: 0,
+            zainSim: 0,
             createdBy: user.id,
           })
           .returning();
@@ -812,10 +813,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const totalStickers = fixedInventory.stickersBoxes + fixedInventory.stickersUnits;
       const totalMobily = fixedInventory.mobilySimBoxes + fixedInventory.mobilySimUnits;
       const totalStc = fixedInventory.stcSimBoxes + fixedInventory.stcSimUnits;
+      const totalZain = fixedInventory.zainSimBoxes + fixedInventory.zainSimUnits;
 
       // Validate quantities
       if (n950 > totalN950 || i900 > totalI900 || rollPaper > totalPaper || 
-          stickers > totalStickers || mobilySim > totalMobily || stcSim > totalStc) {
+          stickers > totalStickers || mobilySim > totalMobily || stcSim > totalStc || zainSim > totalZain) {
         return res.status(400).json({ message: "Insufficient quantity in fixed inventory" });
       }
 
@@ -849,6 +851,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newStickers = subtractFromInventory(fixedInventory.stickersBoxes, fixedInventory.stickersUnits, stickers);
       const newMobily = subtractFromInventory(fixedInventory.mobilySimBoxes, fixedInventory.mobilySimUnits, mobilySim);
       const newStc = subtractFromInventory(fixedInventory.stcSimBoxes, fixedInventory.stcSimUnits, stcSim);
+      const newZain = subtractFromInventory(fixedInventory.zainSimBoxes, fixedInventory.zainSimUnits, zainSim);
 
       await storage.updateTechnicianFixedInventory(technicianId, {
         n950Boxes: newN950.boxes,
@@ -863,6 +866,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         mobilySimUnits: newMobily.units,
         stcSimBoxes: newStc.boxes,
         stcSimUnits: newStc.units,
+        zainSimBoxes: newZain.boxes,
+        zainSimUnits: newZain.units,
       });
 
       // Update moving inventory (increase)
@@ -873,6 +878,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         stickers: movingInventory.stickers + stickers,
         mobilySim: movingInventory.mobilySim + mobilySim,
         stcSim: movingInventory.stcSim + stcSim,
+        zainSim: movingInventory.zainSim + zainSim,
       });
 
       // Record stock movements
@@ -948,6 +954,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           itemType: 'stcSim',
           packagingType: 'unit',
           quantity: stcSim,
+          fromInventory: 'fixed',
+          toInventory: 'moving',
+          performedBy: user.id,
+          reason: 'transfer',
+          notes: 'Transfer from fixed to moving inventory',
+        }));
+      }
+      if (zainSim > 0) {
+        movements.push(storage.createStockMovement({
+          technicianId,
+          itemType: 'zainSim',
+          packagingType: 'unit',
+          quantity: zainSim,
           fromInventory: 'fixed',
           toInventory: 'moving',
           performedBy: user.id,

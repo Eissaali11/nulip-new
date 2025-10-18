@@ -599,6 +599,8 @@ export class MemStorage implements IStorage {
       mobilySimUnits: insertInventory.mobilySimUnits ?? 0,
       stcSimBoxes: insertInventory.stcSimBoxes ?? 0,
       stcSimUnits: insertInventory.stcSimUnits ?? 0,
+      zainSimBoxes: insertInventory.zainSimBoxes ?? 0,
+      zainSimUnits: insertInventory.zainSimUnits ?? 0,
       lowStockThreshold: insertInventory.lowStockThreshold ?? 30,
       criticalStockThreshold: insertInventory.criticalStockThreshold ?? 70,
       createdAt: new Date(),
@@ -653,6 +655,7 @@ export class MemStorage implements IStorage {
       totalStickers: allInventories.reduce((sum, inv) => sum + inv.stickersBoxes + inv.stickersUnits, 0),
       totalMobilySim: allInventories.reduce((sum, inv) => sum + inv.mobilySimBoxes + inv.mobilySimUnits, 0),
       totalStcSim: allInventories.reduce((sum, inv) => sum + inv.stcSimBoxes + inv.stcSimUnits, 0),
+      totalZainSim: allInventories.reduce((sum, inv) => sum + inv.zainSimBoxes + inv.zainSimUnits, 0),
       techniciansWithCriticalStock: 0,
       techniciansWithWarningStock: 0,
       techniciansWithGoodStock: allInventories.length,
@@ -677,7 +680,8 @@ export class MemStorage implements IStorage {
           fixedInventory.rollPaperBoxes + fixedInventory.rollPaperUnits +
           fixedInventory.stickersBoxes + fixedInventory.stickersUnits +
           fixedInventory.mobilySimBoxes + fixedInventory.mobilySimUnits +
-          fixedInventory.stcSimBoxes + fixedInventory.stcSimUnits;
+          fixedInventory.stcSimBoxes + fixedInventory.stcSimUnits +
+          fixedInventory.zainSimBoxes + fixedInventory.zainSimUnits;
         
         const threshold = fixedInventory.criticalStockThreshold || 70;
         const lowThreshold = fixedInventory.lowStockThreshold || 30;

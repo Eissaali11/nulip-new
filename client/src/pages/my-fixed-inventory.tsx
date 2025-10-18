@@ -28,6 +28,8 @@ interface FixedInventory {
   mobilySimUnits: number;
   stcSimBoxes: number;
   stcSimUnits: number;
+  zainSimBoxes: number;
+  zainSimUnits: number;
 }
 
 export default function MyFixedInventory() {
@@ -50,6 +52,8 @@ export default function MyFixedInventory() {
     mobilySimUnits: 0,
     stcSimBoxes: 0,
     stcSimUnits: 0,
+    zainSimBoxes: 0,
+    zainSimUnits: 0,
   });
 
   const [showTransferModal, setShowTransferModal] = useState(false);
@@ -155,6 +159,7 @@ export default function MyFixedInventory() {
       ['ملصقات مدى', inventory.stickersBoxes, inventory.stickersUnits, getTotalForItem(inventory.stickersBoxes, inventory.stickersUnits)],
       ['شرائح موبايلي', inventory.mobilySimBoxes, inventory.mobilySimUnits, getTotalForItem(inventory.mobilySimBoxes, inventory.mobilySimUnits)],
       ['شرائح STC', inventory.stcSimBoxes, inventory.stcSimUnits, getTotalForItem(inventory.stcSimBoxes, inventory.stcSimUnits)],
+      ['شرائح زين', inventory.zainSimBoxes, inventory.zainSimUnits, getTotalForItem(inventory.zainSimBoxes, inventory.zainSimUnits)],
     ];
 
     data.forEach(row => {
@@ -178,7 +183,8 @@ export default function MyFixedInventory() {
       getTotalForItem(inventory.rollPaperBoxes, inventory.rollPaperUnits) +
       getTotalForItem(inventory.stickersBoxes, inventory.stickersUnits) +
       getTotalForItem(inventory.mobilySimBoxes, inventory.mobilySimUnits) +
-      getTotalForItem(inventory.stcSimBoxes, inventory.stcSimUnits);
+      getTotalForItem(inventory.stcSimBoxes, inventory.stcSimUnits) +
+      getTotalForItem(inventory.zainSimBoxes, inventory.zainSimUnits);
 
     const totalRow = worksheet.addRow(['الإجمالي الكلي', '', '', grandTotal]);
     totalRow.font = { bold: true };
@@ -638,6 +644,56 @@ export default function MyFixedInventory() {
                   min="0"
                   className="text-lg"
                   data-testid="input-stc-units"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Zain SIM */}
+        <Card className="border-2 hover:border-purple-300 dark:hover:border-purple-700 transition-colors">
+          <CardHeader className="bg-purple-50 dark:bg-purple-950/30">
+            <CardTitle className="text-base sm:text-lg flex items-center justify-between">
+              <span>شرائح زين</span>
+              <div className="flex gap-1">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    handleQuickAdd('zainSimBoxes', 1);
+                  }}
+                  data-testid="button-add-zain-box"
+                >
+                  <Plus className="h-3 w-3 ml-1" />
+                  كرتون
+                </Button>
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="zain-boxes">كراتين</Label>
+                <Input
+                  id="zain-boxes"
+                  type="number"
+                  value={inventory.zainSimBoxes}
+                  onChange={(e) => handleUpdate('zainSimBoxes', parseInt(e.target.value) || 0)}
+                  min="0"
+                  className="text-lg"
+                  data-testid="input-zain-boxes"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="zain-units">مفرد</Label>
+                <Input
+                  id="zain-units"
+                  type="number"
+                  value={inventory.zainSimUnits}
+                  onChange={(e) => handleUpdate('zainSimUnits', parseInt(e.target.value) || 0)}
+                  min="0"
+                  className="text-lg"
+                  data-testid="input-zain-units"
                 />
               </div>
             </div>

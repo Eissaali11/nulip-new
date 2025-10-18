@@ -275,6 +275,7 @@ export type FixedInventorySummary = {
   totalStickers: number;
   totalMobilySim: number;
   totalStcSim: number;
+  totalZainSim: number;
   techniciansWithCriticalStock: number;
   techniciansWithWarningStock: number;
   techniciansWithGoodStock: number;

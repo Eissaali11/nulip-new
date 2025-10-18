@@ -23,6 +23,7 @@ interface FixedInventorySummary {
   totalStickers: number;
   totalMobilySim: number;
   totalStcSim: number;
+  totalZainSim: number;
   techniciansWithCriticalStock: number;
   techniciansWithWarningStock: number;
   techniciansWithGoodStock: number;
@@ -124,7 +125,7 @@ export default function FixedInventoryDashboard() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 sm:gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xs sm:text-sm text-muted-foreground">أجهزة N950</CardTitle>
@@ -171,6 +172,14 @@ export default function FixedInventoryDashboard() {
           </CardHeader>
           <CardContent>
             <p className="text-xl sm:text-2xl font-bold" data-testid="text-total-stc">{summary.totalStcSim}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs sm:text-sm text-muted-foreground">شرائح زين</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xl sm:text-2xl font-bold" data-testid="text-total-zain">{summary.totalZainSim}</p>
           </CardContent>
         </Card>
       </div>
@@ -236,6 +245,7 @@ export default function FixedInventoryDashboard() {
                   <th className="text-right py-3 px-2 text-sm font-semibold">ملصقات</th>
                   <th className="text-right py-3 px-2 text-sm font-semibold">موبايلي</th>
                   <th className="text-right py-3 px-2 text-sm font-semibold">STC</th>
+                  <th className="text-right py-3 px-2 text-sm font-semibold">زين</th>
                   <th className="text-right py-3 px-2 text-sm font-semibold">الحالة</th>
                   <th className="text-right py-3 px-2 text-sm font-semibold">إجراءات</th>
                 </tr>
@@ -251,6 +261,7 @@ export default function FixedInventoryDashboard() {
                     <td className="py-3 px-2">{renderItemCell(tech.fixedInventory, 'stickers')}</td>
                     <td className="py-3 px-2">{renderItemCell(tech.fixedInventory, 'mobilySim')}</td>
                     <td className="py-3 px-2">{renderItemCell(tech.fixedInventory, 'stcSim')}</td>
+                    <td className="py-3 px-2">{renderItemCell(tech.fixedInventory, 'zainSim')}</td>
                     <td className="py-3 px-2">{getAlertBadge(tech.alertLevel)}</td>
                     <td className="py-3 px-2">
                       <Button 
@@ -306,6 +317,10 @@ export default function FixedInventoryDashboard() {
                     <div>
                       <span className="text-muted-foreground">STC:</span>{' '}
                       {renderItemCell(tech.fixedInventory, 'stcSim')}
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">زين:</span>{' '}
+                      {renderItemCell(tech.fixedInventory, 'zainSim')}
                     </div>
                   </div>
 
