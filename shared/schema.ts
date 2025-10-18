@@ -53,6 +53,7 @@ export const techniciansInventory = pgTable("technicians_inventory", {
   stickers: integer("stickers").notNull().default(0),
   mobilySim: integer("mobily_sim").notNull().default(0),
   stcSim: integer("stc_sim").notNull().default(0),
+  zainSim: integer("zain_sim").notNull().default(0),
   notes: text("notes"),
   createdBy: varchar("created_by").references(() => users.id),
   regionId: varchar("region_id").references(() => regions.id),
@@ -119,6 +120,10 @@ export const technicianFixedInventories = pgTable("technician_fixed_inventories"
   stcSimBoxes: integer("stc_sim_boxes").notNull().default(0),
   stcSimUnits: integer("stc_sim_units").notNull().default(0),
   
+  // Zain SIM
+  zainSimBoxes: integer("zain_sim_boxes").notNull().default(0),
+  zainSimUnits: integer("zain_sim_units").notNull().default(0),
+  
   // Alert thresholds (percentage)
   lowStockThreshold: integer("low_stock_threshold").notNull().default(30),
   criticalStockThreshold: integer("critical_stock_threshold").notNull().default(70),
@@ -131,7 +136,7 @@ export const technicianFixedInventories = pgTable("technician_fixed_inventories"
 export const stockMovements = pgTable("stock_movements", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   technicianId: varchar("technician_id").notNull().references(() => users.id),
-  itemType: text("item_type").notNull(), // "n950", "i900", "rollPaper", "stickers", "mobilySim", "stcSim"
+  itemType: text("item_type").notNull(), // "n950", "i900", "rollPaper", "stickers", "mobilySim", "stcSim", "zainSim"
   packagingType: text("packaging_type").notNull(), // "box", "unit"
   quantity: integer("quantity").notNull(), // الكمية المنقولة
   fromInventory: text("from_inventory").notNull(), // "fixed", "moving"
