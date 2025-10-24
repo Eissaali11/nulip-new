@@ -363,6 +363,39 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteUser(id: string): Promise<boolean> {
+    // Delete all related records first to avoid foreign key constraint violations
+    
+    // Delete technician's fixed inventories
+    await db
+      .delete(technicianFixedInventories)
+      .where(eq(technicianFixedInventories.technicianId, id));
+    
+    // Delete stock movements where user is the technician
+    await db
+      .delete(stockMovements)
+      .where(eq(stockMovements.technicianId, id));
+    
+    // Delete stock movements where user performed the action
+    await db
+      .delete(stockMovements)
+      .where(eq(stockMovements.performedBy, id));
+    
+    // Delete transactions
+    await db
+      .delete(transactions)
+      .where(eq(transactions.userId, id));
+    
+    // Delete withdrawn devices
+    await db
+      .delete(withdrawnDevices)
+      .where(eq(withdrawnDevices.createdBy, id));
+    
+    // Delete technicians inventory
+    await db
+      .delete(techniciansInventory)
+      .where(eq(techniciansInventory.createdBy, id));
+    
+    // Finally, delete the user
     const result = await db
       .delete(users)
       .where(eq(users.id, id));
@@ -922,6 +955,7 @@ export class DatabaseStorage implements IStorage {
       acc.totalStickers += (inv.stickersBoxes || 0) + (inv.stickersUnits || 0);
       acc.totalMobilySim += (inv.mobilySimBoxes || 0) + (inv.mobilySimUnits || 0);
       acc.totalStcSim += (inv.stcSimBoxes || 0) + (inv.stcSimUnits || 0);
+      acc.totalZainSim += (inv.zainSimBoxes || 0) + (inv.zainSimUnits || 0);
 
       const totalItems = 
         (inv.n950Boxes || 0) + (inv.n950Units || 0) +
@@ -929,7 +963,8 @@ export class DatabaseStorage implements IStorage {
         (inv.rollPaperBoxes || 0) + (inv.rollPaperUnits || 0) +
         (inv.stickersBoxes || 0) + (inv.stickersUnits || 0) +
         (inv.mobilySimBoxes || 0) + (inv.mobilySimUnits || 0) +
-        (inv.stcSimBoxes || 0) + (inv.stcSimUnits || 0);
+        (inv.stcSimBoxes || 0) + (inv.stcSimUnits || 0) +
+        (inv.zainSimBoxes || 0) + (inv.zainSimUnits || 0);
 
       const threshold = inv.criticalStockThreshold || 70;
       const lowThreshold = inv.lowStockThreshold || 30;
@@ -950,6 +985,7 @@ export class DatabaseStorage implements IStorage {
       totalStickers: 0,
       totalMobilySim: 0,
       totalStcSim: 0,
+      totalZainSim: 0,
       techniciansWithCriticalStock: 0,
       techniciansWithWarningStock: 0,
       techniciansWithGoodStock: 0,
@@ -1027,7 +1063,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getStockMovements(technicianId?: string, limit: number = 50): Promise<StockMovementWithDetails[]> {
-    let query = db
+    const baseQuery = db
       .select({
         id: stockMovements.id,
         technicianId: stockMovements.technicianId,
@@ -1041,19 +1077,18 @@ export class DatabaseStorage implements IStorage {
         notes: stockMovements.notes,
         createdAt: stockMovements.createdAt,
         technicianName: users.fullName,
-        performedByUser: sql<string>`performer.full_name`.as('performedByName'),
       })
       .from(stockMovements)
-      .leftJoin(users, eq(stockMovements.technicianId, users.id))
-      .leftJoin(sql`${users} as performer`, sql`${stockMovements.performedBy} = performer.id`);
+      .leftJoin(users, eq(stockMovements.technicianId, users.id));
     
-    if (technicianId) {
-      query = query.where(eq(stockMovements.technicianId, technicianId));
-    }
-    
-    const movements = await query
-      .orderBy(desc(stockMovements.createdAt))
-      .limit(limit);
+    const movements = technicianId 
+      ? await baseQuery
+          .where(eq(stockMovements.technicianId, technicianId))
+          .orderBy(desc(stockMovements.createdAt))
+          .limit(limit)
+      : await baseQuery
+          .orderBy(desc(stockMovements.createdAt))
+          .limit(limit);
 
     const itemNames: Record<string, string> = {
       'n950': 'أجهزة N950',
@@ -1062,14 +1097,28 @@ export class DatabaseStorage implements IStorage {
       'stickers': 'ملصقات مداى',
       'mobilySim': 'شرائح موبايلي',
       'stcSim': 'شرائح STC',
+      'zainSim': 'شرائح زين',
     };
 
-    return movements.map(m => ({
-      ...m,
-      technicianName: m.technicianName ?? undefined,
-      performedByName: m.performedByUser || undefined,
-      itemNameAr: itemNames[m.itemType] || m.itemType,
-    }));
+    // Get performer names separately
+    const movementsWithPerformer = await Promise.all(
+      movements.map(async (m) => {
+        const performer = await db
+          .select({ fullName: users.fullName })
+          .from(users)
+          .where(eq(users.id, m.performedBy))
+          .limit(1);
+        
+        return {
+          ...m,
+          technicianName: m.technicianName ?? undefined,
+          performedByName: performer[0]?.fullName || undefined,
+          itemNameAr: itemNames[m.itemType] || m.itemType,
+        };
+      })
+    );
+
+    return movementsWithPerformer;
   }
 
   async transferStock(params: {
