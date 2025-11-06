@@ -2,16 +2,16 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/auth';
 import { loginSchema, type LoginRequest } from '@shared/schema';
-import { LogIn, User, Lock, Loader2, Shield, Sparkles } from 'lucide-react';
+import { User, Lock, Loader2, Package, TruckIcon, BarChart3, FileText, Users, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
-import rasscoLogo from "@assets/image_1762442473114.png";
-import madaDevice from "@assets/image_1762442486277.png";
+import rasscoLogo from "@assets/image_1762469285293.png";
+import backgroundImage from "@assets/Gemini_Generated_Image_1iknau1iknau1ikn_1762469188250.png";
 
 export default function Login() {
   const { login, isLoading } = useAuth();
@@ -56,332 +56,270 @@ export default function Login() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
         <motion.div 
           className="text-center"
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
         >
-          <motion.div 
-            className="relative w-24 h-24 mx-auto mb-6"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          >
-            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-500 border-r-purple-500"></div>
-            <div className="absolute inset-2 rounded-full border-4 border-transparent border-b-pink-500 border-l-cyan-500"></div>
-          </motion.div>
+          <Loader2 className="h-12 w-12 animate-spin text-[#18B2B0] mx-auto mb-4" />
           <p className="text-white text-lg font-semibold">جاري التحميل...</p>
         </motion.div>
       </div>
     );
   }
 
+  const features = [
+    {
+      icon: Package,
+      title: "إدارة المخزون الثابت والمتحرك",
+      description: "تتبع دقيق لجميع الأصناف والمواد مع تحديثات فورية للكميات"
+    },
+    {
+      icon: TruckIcon,
+      title: "إدارة المستودعات",
+      description: "نظام متقدم لإدارة المستودعات مع نظام الموافقات والتحويلات"
+    },
+    {
+      icon: Users,
+      title: "إدارة الفنيين",
+      description: "متابعة شاملة لمخزون كل فني مع تنبيهات تلقائية عند النقص"
+    },
+    {
+      icon: FileText,
+      title: "التقارير والتصدير",
+      description: "تقارير تفصيلية احترافية وتصدير Excel بتنسيق موحد ومنظم"
+    },
+    {
+      icon: BarChart3,
+      title: "لوحة المعلومات التحليلية",
+      description: "رؤية شاملة للمخزون مع مؤشرات الأداء الرئيسية والإحصائيات"
+    },
+    {
+      icon: Shield,
+      title: "نظام الصلاحيات",
+      description: "التحكم الكامل في الصلاحيات مع تسجيل كامل لجميع العمليات"
+    }
+  ];
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4 overflow-hidden relative" dir="rtl">
-      {/* Animated Background Shapes */}
-      <motion.div
-        className="absolute top-0 left-0 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl"
-        animate={{
-          x: [0, 100, 0],
-          y: [0, 150, 0],
-          scale: [1, 1.2, 1],
-        }}
-        transition={{
-          duration: 15,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
-      <motion.div
-        className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl"
-        animate={{
-          x: [0, -100, 0],
-          y: [0, -150, 0],
-          scale: [1, 1.3, 1],
-        }}
-        transition={{
-          duration: 18,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
-      <motion.div
-        className="absolute top-1/2 left-1/2 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"
-        animate={{
-          x: [-200, 200, -200],
-          y: [-100, 100, -100],
-        }}
-        transition={{
-          duration: 20,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
+    <div 
+      className="min-h-screen flex items-center justify-center relative overflow-hidden" 
+      dir="rtl"
+      style={{
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+      {/* Dark Overlay */}
+      <div className="absolute inset-0 bg-gray-900/70 backdrop-blur-sm"></div>
 
-      <div className="relative z-10 w-full max-w-6xl mx-auto grid lg:grid-cols-2 gap-8 items-center">
-        {/* Left Side - Branding */}
-        <motion.div
-          className="hidden lg:block space-y-8"
-          initial={{ opacity: 0, x: -50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          {/* Title */}
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 py-8">
+        <div className="grid lg:grid-cols-2 gap-12 items-start">
+          {/* Left Side - Features */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
+            className="space-y-8 order-2 lg:order-1"
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8 }}
           >
-            <motion.h1 
-              className="text-6xl font-black text-white mb-4 flex items-center gap-3"
-              animate={{ 
-                textShadow: [
-                  "0 0 20px rgba(59, 130, 246, 0.5)",
-                  "0 0 40px rgba(147, 51, 234, 0.7)",
-                  "0 0 20px rgba(59, 130, 246, 0.5)",
-                ]
-              }}
-              transition={{ duration: 3, repeat: Infinity }}
-            >
-              <Sparkles className="h-14 w-14 text-yellow-400 animate-pulse" />
-              نظام إدارة المخزون
-            </motion.h1>
-            <p className="text-2xl text-white/90 font-semibold">
-              حلول متقدمة لإدارة مخزون الفنيين
-            </p>
-          </motion.div>
-
-          {/* Logo */}
-          <motion.div 
-            className="flex items-center gap-6 flex-wrap"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-          >
+            {/* Logo - Desktop Only */}
             <motion.div
-              className="bg-white/95 backdrop-blur-sm rounded-2xl p-5 shadow-2xl"
-              whileHover={{ scale: 1.1, rotate: 5 }}
-              transition={{ type: "spring", stiffness: 300 }}
+              className="hidden lg:flex justify-start mb-8"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
             >
-              <img src={rasscoLogo} alt="RASSCO" className="h-16 w-auto" />
+              <img src={rasscoLogo} alt="RASSCO" className="h-20 w-auto drop-shadow-2xl" />
             </motion.div>
-          </motion.div>
 
-          {/* Device Image */}
-          <motion.div
-            className="relative"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-          >
+            {/* Title */}
             <motion.div
-              animate={{ 
-                y: [0, -20, 0],
-              }}
-              transition={{ 
-                duration: 4,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-              className="relative"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="text-center lg:text-right"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-3xl blur-2xl opacity-50"></div>
-              <img src={madaDevice} alt="MADA Device" className="h-64 w-auto relative z-10 drop-shadow-2xl mx-auto" />
+              <h1 className="text-4xl lg:text-5xl font-black text-white mb-4">
+                StockPro
+              </h1>
+              <p className="text-xl lg:text-2xl text-[#18B2B0] font-semibold mb-2">
+                نظام إدارة المخزون الاحترافي
+              </p>
+              <p className="text-base lg:text-lg text-gray-300">
+                حلول متقدمة لإدارة مخزون الفنيين والمستودعات
+              </p>
             </motion.div>
-          </motion.div>
 
-          {/* Features */}
-          <motion.div
-            className="space-y-3"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-          >
-            {[
-              "تتبع المخزون الثابت والمتحرك",
-              "إدارة متقدمة للفنيين",
-              "تقارير شاملة وتصدير Excel",
-            ].map((feature, index) => (
-              <motion.div
-                key={index}
-                className="flex items-center gap-3 text-white/90"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 1 + index * 0.1 }}
-              >
-                <div className="p-2 bg-green-500/20 rounded-lg border border-green-400/30">
-                  <Shield className="w-5 h-5 text-green-400" />
-                </div>
-                <span className="font-semibold text-lg">{feature}</span>
-              </motion.div>
-            ))}
-          </motion.div>
-        </motion.div>
-
-        {/* Right Side - Login Form */}
-        <motion.div
-          initial={{ opacity: 0, x: 50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          <Card className="w-full bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl border-2 border-white/20 shadow-2xl">
-            <CardHeader className="space-y-1 text-center pb-6">
-              <motion.div 
-                className="flex justify-center mb-4"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
-              >
-                <motion.div 
-                  className="p-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl shadow-2xl"
-                  animate={{ 
-                    boxShadow: [
-                      "0 0 20px rgba(59, 130, 246, 0.5)",
-                      "0 0 40px rgba(147, 51, 234, 0.7)",
-                      "0 0 20px rgba(59, 130, 246, 0.5)",
-                    ]
-                  }}
-                  transition={{ duration: 2, repeat: Infinity }}
+            {/* Features Grid */}
+            <motion.div
+              className="grid gap-4 mt-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+            >
+              {features.map((feature, index) => (
+                <motion.div
+                  key={index}
+                  className="flex gap-4 items-start bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/20 hover:bg-white/15 transition-all duration-300"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 + index * 0.1 }}
+                  whileHover={{ scale: 1.02, x: 5 }}
                 >
-                  <LogIn className="h-12 w-12 text-white drop-shadow-lg" />
+                  <div className="p-3 bg-[#18B2B0]/20 rounded-lg border border-[#18B2B0]/30">
+                    <feature.icon className="w-6 h-6 text-[#18B2B0]" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-white text-lg mb-1">{feature.title}</h3>
+                    <p className="text-gray-300 text-sm leading-relaxed">{feature.description}</p>
+                  </div>
                 </motion.div>
-              </motion.div>
-              <CardTitle className="text-3xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                تسجيل الدخول
-              </CardTitle>
-              <CardDescription className="text-base">
-                أدخل بيانات تسجيل الدخول للوصول إلى النظام
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-                  <FormField
-                    control={form.control}
-                    name="username"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-base font-bold">اسم المستخدم</FormLabel>
-                        <FormControl>
-                          <motion.div 
-                            className="relative"
-                            whileFocus={{ scale: 1.02 }}
-                            transition={{ duration: 0.2 }}
-                          >
-                            <User className="absolute right-3 top-3 h-5 w-5 text-gray-400" />
-                            <Input
-                              data-testid="input-username"
-                              placeholder="أدخل اسم المستخدم"
-                              className="pr-10 h-12 text-base border-2 focus:border-blue-500 transition-colors"
-                              disabled={isSubmitting}
-                              {...field}
-                            />
-                          </motion.div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-base font-bold">كلمة المرور</FormLabel>
-                        <FormControl>
-                          <motion.div 
-                            className="relative"
-                            whileFocus={{ scale: 1.02 }}
-                            transition={{ duration: 0.2 }}
-                          >
-                            <Lock className="absolute right-3 top-3 h-5 w-5 text-gray-400" />
-                            <Input
-                              data-testid="input-password"
-                              type="password"
-                              placeholder="أدخل كلمة المرور"
-                              className="pr-10 h-12 text-base border-2 focus:border-blue-500 transition-colors"
-                              disabled={isSubmitting}
-                              {...field}
-                            />
-                          </motion.div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              ))}
+            </motion.div>
+          </motion.div>
 
-                  <motion.div
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
+          {/* Right Side - Login Form */}
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8 }}
+            className="flex flex-col items-center justify-center order-1 lg:order-2"
+          >
+            {/* Mobile Logo */}
+            <motion.div
+              className="lg:hidden mb-8"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <img src={rasscoLogo} alt="RASSCO" className="h-16 w-auto mx-auto drop-shadow-2xl" />
+            </motion.div>
+
+            <Card className="w-full max-w-md bg-white/95 backdrop-blur-xl border-2 border-white/30 shadow-2xl">
+              <CardHeader className="text-center pb-6 pt-8">
+                <div className="flex justify-center mb-6">
+                  <div className="p-4 bg-gradient-to-br from-[#18B2B0] to-teal-600 rounded-full shadow-lg">
+                    <Shield className="h-12 w-12 text-white" />
+                  </div>
+                </div>
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">تسجيل الدخول</h2>
+                <p className="text-gray-600">مرحباً بك في نظام StockPro</p>
+              </CardHeader>
+              
+              <CardContent className="pb-8">
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <FormField
+                      control={form.control}
+                      name="username"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-gray-700 font-semibold">اسم المستخدم</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <User className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                              <Input
+                                {...field}
+                                type="text"
+                                placeholder="أدخل اسم المستخدم"
+                                className="pr-10 h-12 border-gray-300 focus:border-[#18B2B0] focus:ring-[#18B2B0]"
+                                disabled={isSubmitting}
+                                data-testid="input-username"
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-gray-700 font-semibold">كلمة المرور</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Lock className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                              <Input
+                                {...field}
+                                type="password"
+                                placeholder="أدخل كلمة المرور"
+                                className="pr-10 h-12 border-gray-300 focus:border-[#18B2B0] focus:ring-[#18B2B0]"
+                                disabled={isSubmitting}
+                                data-testid="input-password"
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
                     <Button
-                      data-testid="button-login"
                       type="submit"
-                      className="w-full h-12 text-base font-bold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg"
+                      className="w-full h-12 bg-gradient-to-r from-[#18B2B0] to-teal-600 hover:from-[#15a09e] hover:to-teal-700 text-white font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300"
                       disabled={isSubmitting}
+                      data-testid="button-login"
                     >
                       {isSubmitting ? (
                         <>
-                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                          <Loader2 className="ml-2 h-5 w-5 animate-spin" />
                           جاري تسجيل الدخول...
                         </>
                       ) : (
-                        <>
-                          <LogIn className="mr-2 h-5 w-5" />
-                          تسجيل الدخول
-                        </>
+                        'تسجيل الدخول'
                       )}
                     </Button>
-                  </motion.div>
-                </form>
-              </Form>
+                  </form>
+                </Form>
 
-              <motion.div 
-                className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1 }}
-              >
-                <div className="border-t pt-4 border-gray-200 dark:border-gray-700">
-                  <p className="font-semibold text-base mb-2">حسابات تجريبية:</p>
-                  <div className="mt-3 space-y-2">
-                    <motion.div 
-                      className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800"
-                      whileHover={{ scale: 1.02 }}
-                    >
-                      <p className="font-bold text-blue-700 dark:text-blue-300">مدير النظام</p>
-                      <p className="text-xs mt-1">admin / admin123</p>
-                    </motion.div>
-                    <motion.div 
-                      className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800"
-                      whileHover={{ scale: 1.02 }}
-                    >
-                      <p className="font-bold text-green-700 dark:text-green-300">فني</p>
-                      <p className="text-xs mt-1">employee1 / emp123</p>
-                    </motion.div>
+                {/* Demo Credentials */}
+                <div className="mt-8 pt-6 border-t border-gray-200">
+                  <p className="text-sm text-gray-500 text-center mb-3 font-semibold">حسابات تجريبية:</p>
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                      <p className="font-bold text-blue-700 mb-1">مدير</p>
+                      <p className="text-gray-600">admin / admin123</p>
+                    </div>
+                    <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                      <p className="font-bold text-green-700 mb-1">فني</p>
+                      <p className="text-gray-600">employee1 / emp123</p>
+                    </div>
                   </div>
                 </div>
-              </motion.div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          {/* Mobile Logo */}
-          <motion.div 
-            className="lg:hidden flex items-center justify-center gap-4 mt-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-          >
+            {/* Copyright */}
             <motion.div
-              className="bg-white/95 backdrop-blur-sm rounded-xl p-3 shadow-xl"
-              whileHover={{ scale: 1.1, rotate: 5 }}
+              className="mt-8 text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1 }}
             >
-              <img src={rasscoLogo} alt="RASSCO" className="h-10 w-auto" />
+              <div className="bg-white/10 backdrop-blur-md px-6 py-4 rounded-lg border border-white/20">
+                <p className="text-white font-semibold text-sm mb-1">
+                  جميع الحقوق محفوظة © 2024
+                </p>
+                <p className="text-[#18B2B0] font-bold text-base">
+                  عيسى القحطاني
+                </p>
+                <a 
+                  href="mailto:skrkhtan@gmail.com" 
+                  className="text-gray-300 hover:text-white text-sm transition-colors duration-300 inline-block mt-1"
+                >
+                  skrkhtan@gmail.com
+                </a>
+              </div>
             </motion.div>
           </motion.div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );
