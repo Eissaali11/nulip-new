@@ -158,6 +158,9 @@ export default function WarehouseDetailsPage() {
             technicianId: transfer.technicianId,
             technicianName: transfer.technicianName,
             notes: transfer.notes,
+            status: transfer.status,
+            rejectionReason: transfer.rejectionReason,
+            respondedAt: transfer.respondedAt,
             createdAt: transfer.createdAt,
           };
         }
