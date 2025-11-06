@@ -154,6 +154,12 @@ export default function AdminInventoryOverview() {
       month: 'long', 
       day: 'numeric' 
     });
+    const englishDate = currentDate.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
     const time = currentDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
 
     worksheet.mergeCells('A1:L1');
@@ -176,7 +182,7 @@ export default function AdminInventoryOverview() {
 
     worksheet.mergeCells('A2:L2');
     const dateCell = worksheet.getCell('A2');
-    dateCell.value = `Report Date: ${arabicDate} - ${time}`;
+    dateCell.value = `تاريخ التقرير: ${arabicDate} | Report Date: ${englishDate} | ${time}`;
     dateCell.alignment = { horizontal: 'center', vertical: 'middle' };
     dateCell.font = { bold: true, size: 11 };
     dateCell.fill = {
@@ -481,7 +487,7 @@ export default function AdminInventoryOverview() {
 
     dashboardSheet.mergeCells('A2:H2');
     const dashDateCell = dashboardSheet.getCell('A2');
-    dashDateCell.value = `Report Date: ${arabicDate} - ${time}`;
+    dashDateCell.value = `تاريخ التقرير: ${arabicDate} | Report Date: ${englishDate} | ${time}`;
     dashDateCell.alignment = { horizontal: 'center', vertical: 'middle' };
     dashDateCell.font = { bold: true, size: 12 };
     dashDateCell.fill = {
@@ -701,7 +707,7 @@ export default function AdminInventoryOverview() {
 
     unitsSheet.mergeCells('A2:L2');
     const unitsDateCell = unitsSheet.getCell('A2');
-    unitsDateCell.value = `تقرير الوحدات - Units Report | ${arabicDate} - ${time}`;
+    unitsDateCell.value = `تقرير الوحدات | Units Report | ${arabicDate} | ${englishDate} | ${time}`;
     unitsDateCell.alignment = { horizontal: 'center', vertical: 'middle' };
     unitsDateCell.font = { bold: true, size: 11 };
     unitsDateCell.fill = {
@@ -870,7 +876,7 @@ export default function AdminInventoryOverview() {
 
     fixedBoxesSheet.mergeCells('A2:L2');
     const fixedBoxesDateCell = fixedBoxesSheet.getCell('A2');
-    fixedBoxesDateCell.value = `المخزون الثابت - كرتون | Fixed Inventory - Boxes | ${arabicDate} - ${time}`;
+    fixedBoxesDateCell.value = `المخزون الثابت - كرتون | Fixed Inventory - Boxes | ${arabicDate} | ${englishDate} | ${time}`;
     fixedBoxesDateCell.alignment = { horizontal: 'center', vertical: 'middle' };
     fixedBoxesDateCell.font = { bold: true, size: 11 };
     fixedBoxesDateCell.fill = {
@@ -1039,7 +1045,7 @@ export default function AdminInventoryOverview() {
 
     fixedUnitsSheet.mergeCells('A2:L2');
     const fixedUnitsDateCell = fixedUnitsSheet.getCell('A2');
-    fixedUnitsDateCell.value = `المخزون الثابت - وحدات | Fixed Inventory - Units | ${arabicDate} - ${time}`;
+    fixedUnitsDateCell.value = `المخزون الثابت - وحدات | Fixed Inventory - Units | ${arabicDate} | ${englishDate} | ${time}`;
     fixedUnitsDateCell.alignment = { horizontal: 'center', vertical: 'middle' };
     fixedUnitsDateCell.font = { bold: true, size: 11 };
     fixedUnitsDateCell.fill = {
@@ -1254,22 +1260,14 @@ export default function AdminInventoryOverview() {
           </div>
 
           {/* Export Button */}
-          <motion.div 
-            whileHover={{ scale: 1.05 }} 
-            whileTap={{ scale: 0.95 }}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+          <Button
+            onClick={exportToExcel}
+            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold shadow-lg transition-all hover:shadow-xl"
+            data-testid="button-export-all"
           >
-            <Button
-              onClick={exportToExcel}
-              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold shadow-lg"
-              data-testid="button-export-all"
-            >
-              <FileDown className="w-5 h-5 ml-2" />
-              تصدير Excel
-            </Button>
-          </motion.div>
+            <FileDown className="w-5 h-5 ml-2" />
+            تصدير Excel
+          </Button>
         </motion.div>
 
         {/* Summary Cards */}
