@@ -2,9 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Home, ArrowRight, AlertTriangle, CheckCircle, XCircle, Package, TrendingUp, User, Sparkles, BarChart3 } from "lucide-react";
+import { Home, ArrowRight, AlertTriangle, CheckCircle, XCircle, Package, TrendingUp, User, Sparkles, BarChart3, FileDown } from "lucide-react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 import {
   Accordion,
   AccordionContent,
@@ -128,6 +130,179 @@ export default function AdminInventoryOverview() {
   const warningTechs = technicians.filter(t => t.alertLevel === 'warning').length;
   const goodTechs = technicians.filter(t => t.alertLevel === 'good').length;
 
+  const exportToExcel = async () => {
+    if (technicians.length === 0) return;
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('مخزون الفنيين');
+
+    worksheet.views = [{ rightToLeft: true }];
+
+    // Add title
+    worksheet.mergeCells('A1:L1');
+    const titleCell = worksheet.getCell('A1');
+    titleCell.value = 'تقرير شامل لمخزون جميع الفنيين';
+    titleCell.font = { size: 18, bold: true };
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    titleCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF4F46E5' }
+    };
+    titleCell.font = { ...titleCell.font, color: { argb: 'FFFFFFFF' } };
+
+    // Add date
+    worksheet.mergeCells('A2:L2');
+    const dateCell = worksheet.getCell('A2');
+    dateCell.value = `تاريخ التقرير: ${new Date().toLocaleDateString('ar-SA')} - ${new Date().toLocaleTimeString('ar-SA')}`;
+    dateCell.alignment = { horizontal: 'center' };
+    dateCell.font = { bold: true };
+
+    worksheet.addRow([]);
+
+    // Headers
+    const headerRow = worksheet.addRow([
+      'اسم الفني',
+      'المدينة',
+      'الحالة',
+      'المخزون الثابت',
+      'المخزون المتحرك',
+      'N950 (ث)',
+      'I9000s (ث)',
+      'I9100 (ث)',
+      'N950 (م)',
+      'I9000s (م)',
+      'I9100 (م)',
+      'الإجمالي'
+    ]);
+    
+    headerRow.font = { bold: true, size: 12 };
+    headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    headerRow.height = 25;
+    headerRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFE0E7FF' }
+      };
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
+      };
+    });
+
+    // Data rows
+    technicians.forEach((tech) => {
+      const fixedTotal = calculateFixedTotal(tech.fixedInventory);
+      const movingTotal = calculateMovingTotal(tech.movingInventory);
+      
+      const statusText = tech.alertLevel === 'critical' ? 'حرج' : 
+                        tech.alertLevel === 'warning' ? 'تحذير' : 'جيد';
+      
+      const dataRow = worksheet.addRow([
+        tech.technicianName,
+        tech.city,
+        statusText,
+        fixedTotal,
+        movingTotal,
+        tech.fixedInventory ? getTotalForItem(tech.fixedInventory.n950Boxes, tech.fixedInventory.n950Units) : 0,
+        tech.fixedInventory ? getTotalForItem(tech.fixedInventory.i9000sBoxes, tech.fixedInventory.i9000sUnits) : 0,
+        tech.fixedInventory ? getTotalForItem(tech.fixedInventory.i9100Boxes, tech.fixedInventory.i9100Units) : 0,
+        tech.movingInventory?.n950Devices || 0,
+        tech.movingInventory?.i9000sDevices || 0,
+        tech.movingInventory?.i9100Devices || 0,
+        fixedTotal + movingTotal
+      ]);
+
+      dataRow.alignment = { horizontal: 'center', vertical: 'middle' };
+      dataRow.eachCell((cell) => {
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+      });
+
+      // Color code based on status
+      if (tech.alertLevel === 'critical') {
+        dataRow.getCell(3).fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFFECACA' }
+        };
+      } else if (tech.alertLevel === 'warning') {
+        dataRow.getCell(3).fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFFEF3C7' }
+        };
+      } else {
+        dataRow.getCell(3).fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFD1FAE5' }
+        };
+      }
+    });
+
+    // Summary row
+    worksheet.addRow([]);
+    const summaryRow = worksheet.addRow([
+      'الإجمالي',
+      `${technicians.length} فني`,
+      '',
+      technicians.reduce((sum, t) => sum + calculateFixedTotal(t.fixedInventory), 0),
+      technicians.reduce((sum, t) => sum + calculateMovingTotal(t.movingInventory), 0),
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      technicians.reduce((sum, t) => sum + calculateFixedTotal(t.fixedInventory) + calculateMovingTotal(t.movingInventory), 0)
+    ]);
+
+    summaryRow.font = { bold: true, size: 12 };
+    summaryRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    summaryRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD1D5DB' }
+      };
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
+      };
+    });
+
+    // Set column widths
+    worksheet.columns = [
+      { width: 20 },  // Name
+      { width: 15 },  // City
+      { width: 12 },  // Status
+      { width: 15 },  // Fixed Total
+      { width: 15 },  // Moving Total
+      { width: 12 },  // N950 Fixed
+      { width: 12 },  // I9000s Fixed
+      { width: 12 },  // I9100 Fixed
+      { width: 12 },  // N950 Moving
+      { width: 12 },  // I9000s Moving
+      { width: 12 },  // I9100 Moving
+      { width: 15 }   // Total
+    ];
+
+    // Generate file
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    saveAs(blob, `مخزون_جميع_الفنيين_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
@@ -161,7 +336,7 @@ export default function AdminInventoryOverview() {
           transition={{ duration: 0.6 }}
           className="flex items-center justify-between gap-4 flex-wrap"
         >
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-1">
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button
                 onClick={() => setLocation('/')}
@@ -190,6 +365,24 @@ export default function AdminInventoryOverview() {
               </p>
             </div>
           </div>
+
+          {/* Export Button */}
+          <motion.div 
+            whileHover={{ scale: 1.05 }} 
+            whileTap={{ scale: 0.95 }}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <Button
+              onClick={exportToExcel}
+              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold shadow-lg"
+              data-testid="button-export-all"
+            >
+              <FileDown className="w-5 h-5 ml-2" />
+              تصدير Excel
+            </Button>
+          </motion.div>
         </motion.div>
 
         {/* Summary Cards */}
