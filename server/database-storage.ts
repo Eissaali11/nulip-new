@@ -793,7 +793,7 @@ export class DatabaseStorage implements IStorage {
     const [tech] = await db
       .select()
       .from(techniciansInventory)
-      .where(eq(techniciansInventory.id, id));
+      .where(eq(techniciansInventory.createdBy, id));
     return tech || undefined;
   }
 
