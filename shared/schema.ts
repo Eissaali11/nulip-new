@@ -20,6 +20,7 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
   fullName: text("full_name").notNull(),
+  profileImage: text("profile_image"),
   city: text("city"),
   role: text("role").notNull().default("employee"), // "admin", "employee"
   regionId: varchar("region_id").references(() => regions.id),

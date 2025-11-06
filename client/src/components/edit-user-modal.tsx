@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -6,6 +6,8 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { insertUserSchema } from "@shared/schema";
 import { z } from "zod";
 import type { UserSafe } from "@shared/schema";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Upload, User as UserIcon, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -50,6 +52,8 @@ export function EditUserModal({
   user: UserSafe | null;
 }) {
   const { toast } = useToast();
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<EditUserFormData>({
     resolver: zodResolver(editUserFormSchema),
@@ -58,6 +62,7 @@ export function EditUserModal({
       email: "",
       password: "",
       fullName: "",
+      profileImage: "",
       city: "",
       role: "employee",
       isActive: true,
@@ -69,26 +74,68 @@ export function EditUserModal({
       form.reset({
         username: user.username,
         email: user.email,
-        password: "", // Don't show password
+        password: "",
         fullName: user.fullName,
+        profileImage: user.profileImage || "",
         city: user.city || "",
         role: user.role,
         isActive: user.isActive,
       });
+      setProfileImage(user.profileImage || null);
     }
   }, [user, form]);
 
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast({
+          title: "حجم الصورة كبير جداً",
+          description: "يجب أن تكون الصورة أقل من 2 ميجابايت",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "نوع الملف غير صحيح",
+          description: "يرجى اختيار صورة",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setProfileImage(base64String);
+        form.setValue('profileImage', base64String);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setProfileImage(null);
+    form.setValue('profileImage', '');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const updateUserMutation = useMutation({
     mutationFn: async (data: EditUserFormData) => {
-      // Remove password if empty
       const updateData = { ...data };
       if (!updateData.password) {
         delete updateData.password;
       }
+      updateData.profileImage = profileImage || undefined;
       return await apiRequest("PATCH", `/api/users/${user?.id}`, updateData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
       toast({
         title: "تم التحديث بنجاح",
         description: "تم تحديث بيانات المستخدم",
@@ -108,31 +155,80 @@ export function EditUserModal({
     updateUserMutation.mutate(data);
   };
 
+  const getInitials = (name: string) => {
+    if (!name) return 'U';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
   if (!user) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold">تعديل المستخدم</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-2xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            تعديل المستخدم
+          </DialogTitle>
+          <DialogDescription className="text-base">
             قم بتحديث بيانات المستخدم في النموذج أدناه
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Profile Image Upload */}
+            <div className="flex flex-col items-center gap-4 p-6 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 rounded-xl border-2 border-dashed border-blue-300 dark:border-blue-700">
+              <div className="relative">
+                <Avatar className="h-32 w-32 border-4 border-white dark:border-slate-700 shadow-xl">
+                  <AvatarImage src={profileImage || undefined} alt="Profile" />
+                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-3xl font-bold">
+                    {getInitials(form.watch('fullName'))}
+                  </AvatarFallback>
+                </Avatar>
+                {profileImage && (
+                  <button
+                    type="button"
+                    onClick={removeImage}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 shadow-lg transition-all"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              <div className="text-center">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  id="edit-profile-image-upload"
+                />
+                <label
+                  htmlFor="edit-profile-image-upload"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg cursor-pointer shadow-lg transition-all font-semibold"
+                >
+                  <Upload className="h-4 w-4" />
+                  {profileImage ? 'تغيير الصورة' : 'رفع صورة شخصية'}
+                </label>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">
+                  اختياري - بحد أقصى 2 ميجابايت
+                </p>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="fullName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>الاسم الكامل</FormLabel>
+                    <FormLabel className="font-bold">الاسم الكامل</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
                         placeholder="أدخل الاسم الكامل"
+                        className="h-11"
                         data-testid="input-fullname"
                       />
                     </FormControl>
@@ -146,11 +242,12 @@ export function EditUserModal({
                 name="username"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>اسم المستخدم</FormLabel>
+                    <FormLabel className="font-bold">اسم المستخدم</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
                         placeholder="أدخل اسم المستخدم"
+                        className="h-11"
                         data-testid="input-username"
                       />
                     </FormControl>
@@ -164,12 +261,13 @@ export function EditUserModal({
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>البريد الإلكتروني</FormLabel>
+                    <FormLabel className="font-bold">البريد الإلكتروني</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
                         type="email"
                         placeholder="example@company.com"
+                        className="h-11"
                         data-testid="input-email"
                       />
                     </FormControl>
@@ -183,12 +281,13 @@ export function EditUserModal({
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>كلمة السر الجديدة (اتركها فارغة للإبقاء على القديمة)</FormLabel>
+                    <FormLabel className="font-bold">كلمة السر الجديدة (اختياري)</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
                         type="password"
-                        placeholder="أدخل كلمة السر الجديدة"
+                        placeholder="اتركها فارغة إذا لم ترد التغيير"
+                        className="h-11"
                         data-testid="input-password"
                       />
                     </FormControl>
@@ -202,11 +301,12 @@ export function EditUserModal({
                 name="city"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>المدينة</FormLabel>
+                    <FormLabel className="font-bold">المدينة (اختياري)</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
                         placeholder="أدخل المدينة"
+                        className="h-11"
                         data-testid="input-city"
                       />
                     </FormControl>
@@ -220,20 +320,20 @@ export function EditUserModal({
                 name="role"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>الصلاحية</FormLabel>
+                    <FormLabel className="font-bold">الصلاحية</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       value={field.value}
                       data-testid="select-role"
                     >
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="h-11">
                           <SelectValue placeholder="اختر الصلاحية" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="admin">إدمن (Admin)</SelectItem>
-                        <SelectItem value="employee">فني (Employee)</SelectItem>
+                        <SelectItem value="admin">👑 إدمن (Admin)</SelectItem>
+                        <SelectItem value="employee">👨‍💼 فني (Employee)</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -245,9 +345,12 @@ export function EditUserModal({
                 control={form.control}
                 name="isActive"
                 render={({ field }) => (
-                  <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                  <FormItem className="flex items-center justify-between space-y-0 rounded-lg border p-4">
                     <div className="space-y-0.5">
-                      <FormLabel className="text-base">الحساب نشط</FormLabel>
+                      <FormLabel className="font-bold">حالة المستخدم</FormLabel>
+                      <div className="text-sm text-muted-foreground">
+                        {field.value ? 'نشط' : 'غير نشط'}
+                      </div>
                     </div>
                     <FormControl>
                       <Switch
@@ -261,11 +364,12 @@ export function EditUserModal({
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-4">
+            <div className="flex justify-end gap-3 pt-4 border-t">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
+                className="px-6"
                 data-testid="button-cancel"
               >
                 إلغاء
@@ -273,9 +377,10 @@ export function EditUserModal({
               <Button
                 type="submit"
                 disabled={updateUserMutation.isPending}
+                className="px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                 data-testid="button-submit"
               >
-                {updateUserMutation.isPending ? "جاري التحديث..." : "تحديث"}
+                {updateUserMutation.isPending ? "جاري التحديث..." : "حفظ التغييرات"}
               </Button>
             </div>
           </form>

@@ -4,14 +4,20 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, Edit, Trash2, Users as UsersIcon, ArrowRight } from "lucide-react";
-import { Link } from "wouter";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Search, Plus, Edit, Trash2, Users as UsersIcon, Home, ArrowRight, Sparkles, UserCircle } from "lucide-react";
+import { useLocation } from "wouter";
+import { motion } from "framer-motion";
 import type { UserSafe } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { AddUserModal } from "@/components/add-user-modal";
 import { EditUserModal } from "@/components/edit-user-modal";
+import rasscoLogo from "@assets/image_1762442473114.png";
+import neoleapLogo from "@assets/image_1762442479737.png";
+import madaDevice from "@assets/image_1762442486277.png";
 
 export default function UsersPage() {
+  const [, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -61,210 +67,322 @@ export default function UsersPage() {
       user.city?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
   if (isLoading) {
-    return <div className="text-center py-8">جاري التحميل...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <motion.div 
+          className="text-center"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <motion.div 
+            className="relative w-24 h-24 mx-auto mb-6"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          >
+            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-500 border-r-purple-500"></div>
+            <div className="absolute inset-2 rounded-full border-4 border-transparent border-b-pink-500 border-l-cyan-500"></div>
+          </motion.div>
+          <p className="text-white text-lg font-semibold">جاري التحميل...</p>
+        </motion.div>
+      </div>
+    );
   }
 
   return (
-    <>
-      <Card className="shadow-lg">
-        <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-b">
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-3">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900" dir="rtl">
+      {/* Animated Banner */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 shadow-2xl">
+        <div className="absolute inset-0 bg-grid-white/5"></div>
+        
+        <motion.div
+          className="absolute top-0 left-0 w-72 h-72 bg-blue-500/30 rounded-full blur-3xl"
+          animate={{
+            x: [0, 100, 0],
+            y: [0, 50, 0],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        <motion.div
+          className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl"
+          animate={{
+            x: [0, -100, 0],
+            y: [0, -50, 0],
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+
+        <div className="relative container mx-auto px-4 py-8">
+          <motion.div
+            className="mb-4"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button
-                asChild
-                variant="ghost"
-                size="sm"
-                className="hover:bg-blue-100 dark:hover:bg-blue-900"
+                onClick={() => setLocation('/')}
+                className="bg-white/95 hover:bg-white text-blue-600 font-bold shadow-xl border-2 border-white/50"
+                data-testid="button-back-home"
               >
-                <Link href="/" data-testid="button-back-home">
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                  <span>العودة للرئيسية</span>
-                </Link>
+                <Home className="w-5 h-5 ml-2" />
+                الصفحة الرئيسية
+                <ArrowRight className="w-5 h-5 mr-2" />
               </Button>
-            </div>
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                  <UsersIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div>
-                  <h2 className="text-xl md:text-2xl font-bold text-foreground">إدارة المستخدمين</h2>
-                  <p className="text-sm text-muted-foreground">إضافة وإدارة مستخدمي النظام</p>
-                </div>
-              </div>
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
-                <div className="relative flex-1 sm:flex-initial">
-                  <Input
-                    type="text"
-                    placeholder="ابحث..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 w-full sm:w-64 bg-white dark:bg-gray-900 text-sm"
-                    data-testid="input-search"
-                  />
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => setShowAddModal(true)}
-                    className="flex-1 sm:flex-initial gap-1.5 sm:gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm"
-                    data-testid="button-add-user"
-                  >
-                    <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                    <span>إضافة مستخدم</span>
-                  </Button>
-                </div>
-              </div>
-            </div>
+            </motion.div>
+          </motion.div>
+
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+            <motion.div 
+              className="flex items-center gap-8"
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+            >
+              <motion.div
+                className="bg-white/95 backdrop-blur-sm rounded-2xl p-4 shadow-2xl"
+                whileHover={{ scale: 1.05, rotate: 2 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                <img src={rasscoLogo} alt="RASSCO" className="h-16 w-auto" />
+              </motion.div>
+              
+              <motion.div
+                className="bg-white/95 backdrop-blur-sm rounded-2xl p-4 shadow-2xl"
+                whileHover={{ scale: 1.05, rotate: -2 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                <img src={neoleapLogo} alt="Neoleap" className="h-16 w-auto" />
+              </motion.div>
+            </motion.div>
+
+            <motion.div 
+              className="text-center flex-1"
+              initial={{ opacity: 0, y: -30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+            >
+              <motion.div
+                animate={{ 
+                  scale: [1, 1.02, 1],
+                }}
+                transition={{ 
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              >
+                <h1 className="text-4xl lg:text-5xl font-black text-white mb-2 drop-shadow-2xl flex items-center justify-center gap-3">
+                  <Sparkles className="h-10 w-10 text-yellow-300 animate-pulse" />
+                  إدارة المستخدمين
+                  <Sparkles className="h-10 w-10 text-yellow-300 animate-pulse" />
+                </h1>
+                <p className="text-white/90 text-lg font-semibold">إضافة وإدارة مستخدمي النظام</p>
+              </motion.div>
+            </motion.div>
+
+            <motion.div
+              className="relative"
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+            >
+              <motion.div
+                animate={{ 
+                  y: [0, -10, 0],
+                }}
+                transition={{ 
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+                className="relative"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-3xl blur-xl opacity-50"></div>
+                <img src={madaDevice} alt="MADA Device" className="h-48 w-auto relative z-10 drop-shadow-2xl" />
+              </motion.div>
+            </motion.div>
           </div>
-        </CardHeader>
+        </div>
 
-        <CardContent>
-          {filteredUsers && filteredUsers.length > 0 ? (
-            <>
-              {/* Mobile Card View */}
-              <div className="block lg:hidden space-y-3">
-                {filteredUsers.map((user) => (
-                  <div key={user.id} className="bg-card border border-border rounded-lg p-4 shadow-sm">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-sm text-foreground">{user.fullName}</h3>
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold
-                            ${user.role === 'admin' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' : 
-                              'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'}`}>
-                            {user.role === 'admin' ? 'إدمن' : 'فني'}
-                          </span>
+        <div className="absolute bottom-0 left-0 right-0">
+          <svg viewBox="0 0 1200 120" preserveAspectRatio="none" className="w-full h-12 fill-slate-900">
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"></path>
+          </svg>
+        </div>
+      </div>
+
+      <div className="container mx-auto p-4 sm:p-6 space-y-6">
+        {/* Search and Add Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between"
+        >
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
+            <Input
+              type="text"
+              placeholder="ابحث عن مستخدم..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pr-10 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 h-12"
+              data-testid="input-search"
+            />
+          </div>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button
+              onClick={() => setShowAddModal(true)}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold shadow-lg h-12 px-6"
+              data-testid="button-add-user"
+            >
+              <Plus className="h-5 w-5 ml-2" />
+              إضافة مستخدم جديد
+            </Button>
+          </motion.div>
+        </motion.div>
+
+        {/* Users Grid */}
+        {filteredUsers && filteredUsers.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredUsers.map((user, index) => (
+              <motion.div
+                key={user.id}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, delay: index * 0.05 }}
+                whileHover={{ y: -5, scale: 1.02 }}
+              >
+                <Card className="bg-white dark:bg-slate-800 border-0 shadow-2xl overflow-hidden">
+                  <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 pb-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-4 flex-1">
+                        <motion.div
+                          whileHover={{ scale: 1.1 }}
+                          className="relative"
+                        >
+                          <Avatar className="h-16 w-16 border-4 border-white dark:border-slate-700 shadow-lg">
+                            <AvatarImage src={user.profileImage || undefined} alt={user.fullName} />
+                            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-lg">
+                              {getInitials(user.fullName)}
+                            </AvatarFallback>
+                          </Avatar>
+                          {user.isActive && (
+                            <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white dark:border-slate-800"></div>
+                          )}
+                        </motion.div>
+                        <div className="flex-1">
+                          <h3 className="font-bold text-lg text-slate-800 dark:text-white truncate">{user.fullName}</h3>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">@{user.username}</p>
                         </div>
-                        <p className="text-xs text-muted-foreground">@{user.username}</p>
-                        <p className="text-xs text-muted-foreground">{user.email}</p>
-                        {user.city && <p className="text-xs text-muted-foreground">📍 {user.city}</p>}
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(user)}
-                          className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950 dark:hover:text-blue-400"
-                          data-testid={`button-edit-${user.id}`}
-                        >
-                          <Edit className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(user.id)}
-                          className="h-8 w-8 hover:bg-destructive/10"
-                          data-testid={`button-delete-${user.id}`}
-                        >
-                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div>
-                        <span className="text-muted-foreground">الحالة: </span>
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold
-                          ${user.isActive ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 
-                            'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
-                          {user.isActive ? 'نشط' : 'غير نشط'}
-                        </span>
+                      <div className="flex gap-1">
+                        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(user)}
+                            className="h-8 w-8 hover:bg-blue-100 dark:hover:bg-blue-900 hover:text-blue-600"
+                            data-testid={`button-edit-${user.id}`}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </motion.div>
+                        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(user.id)}
+                            className="h-8 w-8 hover:bg-red-100 dark:hover:bg-red-900 hover:text-red-600"
+                            data-testid={`button-delete-${user.id}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </motion.div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Desktop Table View */}
-              <div className="hidden lg:block overflow-x-auto -mx-4 sm:mx-0 rounded-lg">
-                <div className="inline-block min-w-full align-middle">
-                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
-                      <tr>
-                        <th className="whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-right text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">الاسم</th>
-                        <th className="hidden md:table-cell whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-right text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">اسم المستخدم</th>
-                        <th className="hidden xl:table-cell whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-right text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">البريد</th>
-                        <th className="whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">المدينة</th>
-                        <th className="whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">الصلاحية</th>
-                        <th className="hidden lg:table-cell whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">الحالة</th>
-                        <th className="whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300"></th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border bg-background">
-                      {filteredUsers.map((user) => (
-                        <tr key={user.id} className="hover:bg-muted/30 transition-colors" data-testid={`row-user-${user.id}`}>
-                          <td className="whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-[10px] sm:text-sm font-medium text-foreground">
-                            {user.fullName}
-                          </td>
-                          <td className="hidden md:table-cell whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-[10px] sm:text-sm text-muted-foreground">
-                            @{user.username}
-                          </td>
-                          <td className="hidden xl:table-cell whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-[10px] sm:text-sm text-muted-foreground">
-                            {user.email}
-                          </td>
-                          <td className="whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm">
-                            {user.city || '-'}
-                          </td>
-                          <td className="whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm">
-                            <span className={`inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[9px] sm:text-xs font-semibold
-                              ${user.role === 'admin' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' : 
-                                'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'}`}>
-                              {user.role === 'admin' ? 'إدمن' : 'فني'}
-                            </span>
-                          </td>
-                          <td className="hidden lg:table-cell whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm">
-                            <span className={`inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[9px] sm:text-xs font-semibold
-                              ${user.isActive ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 
-                                'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
-                              {user.isActive ? 'نشط' : 'غير نشط'}
-                            </span>
-                          </td>
-                          <td className="whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3">
-                            <div className="flex items-center justify-center gap-0.5 sm:gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleEdit(user)}
-                                className="h-7 w-7 sm:h-8 sm:w-8 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950 dark:hover:text-blue-400"
-                                title="تعديل"
-                                data-testid={`button-edit-${user.id}`}
-                              >
-                                <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleDelete(user.id)}
-                                className="h-7 w-7 sm:h-8 sm:w-8 hover:bg-destructive/10 hover:text-destructive"
-                                title="حذف"
-                                data-testid={`button-delete-${user.id}`}
-                              >
-                                <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground text-lg mb-4">
-                لا يوجد مستخدمين مسجلين
-              </p>
-              <Button onClick={() => setShowAddModal(true)} className="gap-2">
-                <Plus className="h-4 w-4" />
-                <span>إضافة أول مستخدم</span>
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  </CardHeader>
+                  <CardContent className="pt-4 space-y-3">
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-slate-600 dark:text-slate-400">📧</span>
+                      <span className="text-slate-700 dark:text-slate-300 truncate">{user.email}</span>
+                    </div>
+                    {user.city && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-slate-600 dark:text-slate-400">📍</span>
+                        <span className="text-slate-700 dark:text-slate-300">{user.city}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 flex-wrap pt-2">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold
+                        ${user.role === 'admin' 
+                          ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg' 
+                          : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg'}`}>
+                        {user.role === 'admin' ? '👑 مدير النظام' : '👨‍💼 فني'}
+                      </span>
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold
+                        ${user.isActive 
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                          : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
+                        {user.isActive ? '✓ نشط' : '✗ غير نشط'}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-16"
+          >
+            <Card className="max-w-md mx-auto bg-white dark:bg-slate-800 border-0 shadow-2xl">
+              <CardContent className="py-12">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 200 }}
+                >
+                  <UserCircle className="h-24 w-24 mx-auto mb-6 text-slate-400" />
+                </motion.div>
+                <h3 className="text-2xl font-bold mb-3 text-slate-800 dark:text-white">
+                  {searchTerm ? 'لا توجد نتائج' : 'لا يوجد مستخدمين'}
+                </h3>
+                <p className="text-slate-600 dark:text-slate-400 mb-6">
+                  {searchTerm 
+                    ? 'لم نجد أي مستخدم يطابق بحثك' 
+                    : 'قم بإضافة أول مستخدم للنظام'}
+                </p>
+                {!searchTerm && (
+                  <Button 
+                    onClick={() => setShowAddModal(true)} 
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  >
+                    <Plus className="h-5 w-5 ml-2" />
+                    إضافة أول مستخدم
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </div>
 
       <AddUserModal open={showAddModal} onOpenChange={setShowAddModal} />
       <EditUserModal 
@@ -272,6 +390,6 @@ export default function UsersPage() {
         onOpenChange={setShowEditModal}
         user={selectedUser}
       />
-    </>
+    </div>
   );
 }
