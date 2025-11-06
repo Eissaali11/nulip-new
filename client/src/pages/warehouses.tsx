@@ -14,10 +14,13 @@ import {
   AlertTriangle,
   ArrowRight,
   LayoutDashboard,
-  Sparkles
+  Sparkles,
+  Download
 } from "lucide-react";
 import CreateWarehouseModal from "@/components/create-warehouse-modal";
 import bannerImage from "@assets/Gemini_Generated_Image_1iknau1iknau1ikn_1762464877305.png";
+import { exportWarehousesToExcel } from "@/lib/exportToExcel";
+import { useToast } from "@/hooks/use-toast";
 
 interface WarehouseInventory {
   id: string;
@@ -54,10 +57,34 @@ interface WarehouseData {
 
 export default function WarehousesPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const { toast } = useToast();
 
   const { data: warehouses = [], isLoading } = useQuery<WarehouseData[]>({
     queryKey: ["/api/warehouses"],
   });
+
+  const handleExportWarehouses = async () => {
+    if (warehouses && warehouses.length > 0) {
+      try {
+        await exportWarehousesToExcel({ warehouses });
+        toast({ 
+          title: "تم تصدير التقرير بنجاح", 
+          description: "تم حفظ ملف Excel في جهازك" 
+        });
+      } catch (error) {
+        toast({ 
+          title: "حدث خطأ أثناء التصدير", 
+          description: "يرجى المحاولة مرة أخرى",
+          variant: "destructive" 
+        });
+      }
+    } else {
+      toast({ 
+        title: "لا توجد مستودعات للتصدير", 
+        variant: "destructive" 
+      });
+    }
+  };
 
   const calculateTotalItems = (inventory: WarehouseInventory | null) => {
     if (!inventory) return 0;
@@ -222,16 +249,29 @@ export default function WarehousesPage() {
             <h2 className="text-3xl font-bold text-gray-900">إدارة المستودعات</h2>
             <p className="text-gray-600 mt-1">تحكم كامل في مستودعاتك ومخزونك</p>
           </div>
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button 
-              onClick={() => setShowCreateModal(true)}
-              className="bg-gradient-to-r from-[#18B2B0] to-teal-500 hover:from-[#16a09e] hover:to-teal-600 shadow-xl text-white"
-              data-testid="button-create-warehouse"
-            >
-              <Plus className="h-5 w-5 ml-2" />
-              إضافة مستودع جديد
-            </Button>
-          </motion.div>
+          <div className="flex gap-3">
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button 
+                onClick={handleExportWarehouses}
+                variant="outline"
+                className="border-2 border-[#18B2B0] text-[#18B2B0] hover:bg-[#18B2B0]/10 hover:border-[#16a09e] shadow-lg"
+                data-testid="button-export-warehouses"
+              >
+                <Download className="h-5 w-5 ml-2" />
+                تصدير إلى Excel
+              </Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button 
+                onClick={() => setShowCreateModal(true)}
+                className="bg-gradient-to-r from-[#18B2B0] to-teal-500 hover:from-[#16a09e] hover:to-teal-600 shadow-xl text-white"
+                data-testid="button-create-warehouse"
+              >
+                <Plus className="h-5 w-5 ml-2" />
+                إضافة مستودع جديد
+              </Button>
+            </motion.div>
+          </div>
         </div>
 
         {isLoading ? (
