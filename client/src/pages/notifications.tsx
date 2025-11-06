@@ -211,22 +211,30 @@ export default function NotificationsPage() {
     return <Package className="h-5 w-5" />;
   };
 
-  // Group all transfers into a single card
-  const groupedTransfersList = pendingTransfers && pendingTransfers.length > 0 ? [{
-    id: 'all-pending',
-    warehouseName: 'جميع المستودعات',
-    createdAt: new Date(),
-    notes: null,
-    items: pendingTransfers.map(transfer => ({
+  // Group transfers by warehouse and creation time (same operation)
+  const groupedTransfers = pendingTransfers?.reduce((acc, transfer) => {
+    const key = `${transfer.warehouseId}-${new Date(transfer.createdAt).getTime()}`;
+    if (!acc[key]) {
+      acc[key] = {
+        id: transfer.id,
+        warehouseId: transfer.warehouseId,
+        warehouseName: transfer.warehouseName,
+        createdAt: transfer.createdAt,
+        notes: transfer.notes,
+        items: [],
+      };
+    }
+    acc[key].items.push({
       id: transfer.id,
       itemType: transfer.itemType,
       itemNameAr: getItemNameAr(transfer.itemType),
       packagingType: transfer.packagingType,
       quantity: transfer.quantity,
-      warehouseName: transfer.warehouseName,
-      createdAt: transfer.createdAt,
-    })),
-  }] : [];
+    });
+    return acc;
+  }, {} as Record<string, any>);
+
+  const groupedTransfersList = groupedTransfers ? Object.values(groupedTransfers) : [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50/30 to-slate-50" dir="rtl">
@@ -390,10 +398,12 @@ export default function NotificationsPage() {
                             <CardTitle className="text-lg font-bold text-gray-900">
                               {transferGroup.warehouseName || "مستودع"}
                             </CardTitle>
-                            <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                              <Calendar className="h-3 w-3" />
-                              {format(new Date(transferGroup.createdAt), "d MMMM yyyy", { locale: ar })}
-                            </p>
+                            {transferGroup.createdAt && (
+                              <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                {format(new Date(transferGroup.createdAt), "d MMMM yyyy", { locale: ar })}
+                              </p>
+                            )}
                           </div>
                         </div>
                         <Badge className="bg-yellow-100 text-yellow-700 border-yellow-300">
@@ -404,31 +414,22 @@ export default function NotificationsPage() {
                     </CardHeader>
 
                     <CardContent className="space-y-3">
-                      <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                      <div className="space-y-2">
                         {transferGroup.items.map((item: any, idx: number) => (
-                          <div key={idx} className="flex flex-col gap-2 p-3 bg-gradient-to-r from-[#18B2B0]/10 to-teal-50 rounded-xl border border-[#18B2B0]/20">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                {getItemIcon(item.itemType)}
-                                <span className="font-semibold text-gray-900">
-                                  {item.itemNameAr}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 font-bold">
-                                  {item.quantity}
-                                </Badge>
-                                <span className="text-sm text-gray-600">
-                                  {item.packagingType === 'box' ? 'كرتون' : 'وحدة'}
-                                </span>
-                              </div>
+                          <div key={idx} className="flex items-center justify-between p-3 bg-gradient-to-r from-[#18B2B0]/10 to-teal-50 rounded-xl border border-[#18B2B0]/20">
+                            <div className="flex items-center gap-2">
+                              {getItemIcon(item.itemType)}
+                              <span className="font-semibold text-gray-900">
+                                {item.itemNameAr}
+                              </span>
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-gray-600">
-                              <Warehouse className="h-3 w-3" />
-                              <span>{item.warehouseName || 'مستودع'}</span>
-                              <span className="mx-1">•</span>
-                              <Calendar className="h-3 w-3" />
-                              <span>{format(new Date(item.createdAt), "d MMM yyyy", { locale: ar })}</span>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 font-bold">
+                                {item.quantity}
+                              </Badge>
+                              <span className="text-sm text-gray-600">
+                                {item.packagingType === 'box' ? 'كرتون' : 'وحدة'}
+                              </span>
                             </div>
                           </div>
                         ))}
@@ -482,6 +483,19 @@ export default function NotificationsPage() {
               </DialogHeader>
 
               <div className="space-y-6 py-6">
+                {/* Warehouse Info */}
+                <div className="p-5 bg-gradient-to-r from-[#18B2B0]/10 to-teal-50 rounded-2xl border-2 border-[#18B2B0]/20">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Warehouse className="h-6 w-6 text-[#18B2B0]" />
+                    <h3 className="text-xl font-bold text-gray-900">المستودع</h3>
+                  </div>
+                  <p className="text-2xl font-bold text-[#18B2B0]">
+                    {(selectedTransfer as any).warehouseName || "غير محدد"}
+                  </p>
+                </div>
+
+                <Separator />
+
                 {/* Item Details */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
@@ -489,10 +503,10 @@ export default function NotificationsPage() {
                     الأصناف المطلوبة ({(selectedTransfer as any).items?.length || 0})
                   </h3>
                   
-                  <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                  <div className="space-y-3">
                     {(selectedTransfer as any).items?.map((item: any, idx: number) => (
                       <div key={idx} className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200">
-                        <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <div className="p-2 bg-white rounded-lg">
                               <Package className="h-6 w-6 text-blue-600" />
@@ -509,20 +523,22 @@ export default function NotificationsPage() {
                             <p className="text-3xl font-black text-green-700">{item.quantity}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3 pt-2 border-t border-blue-200/50 text-sm text-gray-600">
-                          <div className="flex items-center gap-1">
-                            <Warehouse className="h-4 w-4" />
-                            <span>{item.warehouseName || 'مستودع'}</span>
-                          </div>
-                          <span className="text-gray-400">•</span>
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4" />
-                            <span>{format(new Date(item.createdAt), "d MMMM yyyy", { locale: ar })}</span>
-                          </div>
-                        </div>
                       </div>
                     ))}
                   </div>
+                </div>
+
+                <Separator />
+
+                {/* Date & Time */}
+                <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Clock className="h-5 w-5 text-gray-600" />
+                    <h3 className="text-lg font-bold text-gray-900">تاريخ الطلب</h3>
+                  </div>
+                  <p className="text-lg text-gray-700">
+                    {(selectedTransfer as any).createdAt && format(new Date((selectedTransfer as any).createdAt), "EEEE، d MMMM yyyy - الساعة h:mm a", { locale: ar })}
+                  </p>
                 </div>
 
                 {/* Notes */}
