@@ -677,6 +677,175 @@ export default function AdminInventoryOverview() {
       { width: 5 }
     ];
 
+    // Units Sheet
+    const unitsSheet = workbook.addWorksheet('الوحدات - Units');
+    unitsSheet.views = [{ rightToLeft: true }];
+
+    unitsSheet.mergeCells('A1:L1');
+    const unitsTitleCell = unitsSheet.getCell('A1');
+    unitsTitleCell.value = 'نظام إدارة مخزون الفنيين - Technician Inventory Management System';
+    unitsTitleCell.font = { size: 18, bold: true, color: { argb: 'FFFFFFFF' } };
+    unitsTitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    unitsTitleCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF2563EB' }
+    };
+    unitsTitleCell.border = {
+      top: { style: 'medium', color: { argb: 'FF2563EB' } },
+      left: { style: 'medium', color: { argb: 'FF2563EB' } },
+      bottom: { style: 'medium', color: { argb: 'FF2563EB' } },
+      right: { style: 'medium', color: { argb: 'FF2563EB' } }
+    };
+    unitsSheet.getRow(1).height = 35;
+
+    unitsSheet.mergeCells('A2:L2');
+    const unitsDateCell = unitsSheet.getCell('A2');
+    unitsDateCell.value = `تقرير الوحدات - Units Report | ${arabicDate} - ${time}`;
+    unitsDateCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    unitsDateCell.font = { bold: true, size: 11 };
+    unitsDateCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFDBEAFE' }
+    };
+    unitsSheet.getRow(2).height = 25;
+
+    unitsSheet.addRow([]);
+
+    const unitsHeaderRow = unitsSheet.addRow([
+      '#',
+      'Technicians Name',
+      'City',
+      'N950',
+      'I9000s',
+      'I9100',
+      'Roll Sheets',
+      'Madal Stickers',
+      'New Batteries',
+      'SIM Mobily',
+      'SIM STC',
+      'SIM Zain'
+    ]);
+    
+    unitsHeaderRow.font = { bold: true, size: 11, color: { argb: 'FFFFFFFF' } };
+    unitsHeaderRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    unitsHeaderRow.height = 30;
+    unitsHeaderRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF4A5568' }
+      };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+
+    let unitsTotals = {
+      n950: 0, i9000s: 0, i9100: 0,
+      rollPaper: 0, stickers: 0, batteries: 0,
+      mobilySim: 0, stcSim: 0, zainSim: 0
+    };
+
+    technicians.forEach((tech, index) => {
+      const movingInv = tech.movingInventory;
+      const n950Units = movingInv?.n950Units || 0;
+      const i9000sUnits = movingInv?.i9000sUnits || 0;
+      const i9100Units = movingInv?.i9100Units || 0;
+      const rollPaperUnits = movingInv?.rollPaperUnits || 0;
+      const stickersUnits = movingInv?.stickersUnits || 0;
+      const batteriesUnits = movingInv?.newBatteriesUnits || 0;
+      const mobilySimUnits = movingInv?.mobilySimUnits || 0;
+      const stcSimUnits = movingInv?.stcSimUnits || 0;
+      const zainSimUnits = movingInv?.zainSimUnits || 0;
+
+      unitsTotals.n950 += n950Units;
+      unitsTotals.i9000s += i9000sUnits;
+      unitsTotals.i9100 += i9100Units;
+      unitsTotals.rollPaper += rollPaperUnits;
+      unitsTotals.stickers += stickersUnits;
+      unitsTotals.batteries += batteriesUnits;
+      unitsTotals.mobilySim += mobilySimUnits;
+      unitsTotals.stcSim += stcSimUnits;
+      unitsTotals.zainSim += zainSimUnits;
+      
+      const unitsDataRow = unitsSheet.addRow([
+        index + 1,
+        tech.technicianName,
+        tech.city,
+        n950Units,
+        i9000sUnits,
+        i9100Units,
+        rollPaperUnits,
+        stickersUnits,
+        batteriesUnits,
+        mobilySimUnits,
+        stcSimUnits,
+        zainSimUnits
+      ]);
+
+      unitsDataRow.alignment = { horizontal: 'center', vertical: 'middle' };
+      unitsDataRow.eachCell((cell) => {
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FF000000' } },
+          left: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } },
+          right: { style: 'thin', color: { argb: 'FF000000' } }
+        };
+      });
+    });
+
+    const unitsTotalRow = unitsSheet.addRow([
+      '',
+      'Total Units',
+      '',
+      unitsTotals.n950,
+      unitsTotals.i9000s,
+      unitsTotals.i9100,
+      unitsTotals.rollPaper,
+      unitsTotals.stickers,
+      unitsTotals.batteries,
+      unitsTotals.mobilySim,
+      unitsTotals.stcSim,
+      unitsTotals.zainSim
+    ]);
+
+    unitsTotalRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
+    unitsTotalRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    unitsTotalRow.height = 25;
+    unitsTotalRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF16A085' }
+      };
+      cell.border = {
+        top: { style: 'medium', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'medium', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+
+    unitsSheet.columns = [
+      { width: 8 },
+      { width: 25 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 18 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 }
+    ];
+
     // Generate file
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
