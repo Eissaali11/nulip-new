@@ -1240,11 +1240,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/warehouse-transfers", requireAuth, requireAdmin, async (req, res) => {
+  app.get("/api/warehouse-transfers", requireAuth, async (req, res) => {
     try {
+      const user = (req as any).user;
       const warehouseId = req.query.warehouseId as string | undefined;
-      const technicianId = req.query.technicianId as string | undefined;
+      let technicianId = req.query.technicianId as string | undefined;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+      
+      if (user.role !== 'admin') {
+        technicianId = user.id;
+      }
+      
       const transfers = await storage.getWarehouseTransfers(warehouseId, technicianId, limit);
       res.json(transfers);
     } catch (error) {
