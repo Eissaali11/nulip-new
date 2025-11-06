@@ -846,6 +846,344 @@ export default function AdminInventoryOverview() {
       { width: 15 }
     ];
 
+    // Fixed Inventory - Boxes Sheet
+    const fixedBoxesSheet = workbook.addWorksheet('المخزون الثابت - كرتون');
+    fixedBoxesSheet.views = [{ rightToLeft: true }];
+
+    fixedBoxesSheet.mergeCells('A1:L1');
+    const fixedBoxesTitleCell = fixedBoxesSheet.getCell('A1');
+    fixedBoxesTitleCell.value = 'نظام إدارة مخزون الفنيين - Technician Inventory Management System';
+    fixedBoxesTitleCell.font = { size: 18, bold: true, color: { argb: 'FFFFFFFF' } };
+    fixedBoxesTitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    fixedBoxesTitleCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF2563EB' }
+    };
+    fixedBoxesTitleCell.border = {
+      top: { style: 'medium', color: { argb: 'FF2563EB' } },
+      left: { style: 'medium', color: { argb: 'FF2563EB' } },
+      bottom: { style: 'medium', color: { argb: 'FF2563EB' } },
+      right: { style: 'medium', color: { argb: 'FF2563EB' } }
+    };
+    fixedBoxesSheet.getRow(1).height = 35;
+
+    fixedBoxesSheet.mergeCells('A2:L2');
+    const fixedBoxesDateCell = fixedBoxesSheet.getCell('A2');
+    fixedBoxesDateCell.value = `المخزون الثابت - كرتون | Fixed Inventory - Boxes | ${arabicDate} - ${time}`;
+    fixedBoxesDateCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    fixedBoxesDateCell.font = { bold: true, size: 11 };
+    fixedBoxesDateCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFDBEAFE' }
+    };
+    fixedBoxesSheet.getRow(2).height = 25;
+
+    fixedBoxesSheet.addRow([]);
+
+    const fixedBoxesHeaderRow = fixedBoxesSheet.addRow([
+      '#',
+      'Technicians Name',
+      'City',
+      'N950 (كرتون)',
+      'I9000s (كرتون)',
+      'I9100 (كرتون)',
+      'Roll Sheets (كرتون)',
+      'Madal Stickers (كرتون)',
+      'New Batteries (كرتون)',
+      'SIM Mobily (كرتون)',
+      'SIM STC (كرتون)',
+      'SIM Zain (كرتون)'
+    ]);
+    
+    fixedBoxesHeaderRow.font = { bold: true, size: 11, color: { argb: 'FFFFFFFF' } };
+    fixedBoxesHeaderRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    fixedBoxesHeaderRow.height = 30;
+    fixedBoxesHeaderRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF4A5568' }
+      };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+
+    let fixedBoxesTotals = {
+      n950: 0, i9000s: 0, i9100: 0,
+      rollPaper: 0, stickers: 0, batteries: 0,
+      mobilySim: 0, stcSim: 0, zainSim: 0
+    };
+
+    technicians.forEach((tech, index) => {
+      const fixedInv = tech.fixedInventory;
+      const n950Boxes = fixedInv?.n950Boxes || 0;
+      const i9000sBoxes = fixedInv?.i9000sBoxes || 0;
+      const i9100Boxes = fixedInv?.i9100Boxes || 0;
+      const rollPaperBoxes = fixedInv?.rollPaperBoxes || 0;
+      const stickersBoxes = fixedInv?.stickersBoxes || 0;
+      const batteriesBoxes = fixedInv?.newBatteriesBoxes || 0;
+      const mobilySimBoxes = fixedInv?.mobilySimBoxes || 0;
+      const stcSimBoxes = fixedInv?.stcSimBoxes || 0;
+      const zainSimBoxes = fixedInv?.zainSimBoxes || 0;
+
+      fixedBoxesTotals.n950 += n950Boxes;
+      fixedBoxesTotals.i9000s += i9000sBoxes;
+      fixedBoxesTotals.i9100 += i9100Boxes;
+      fixedBoxesTotals.rollPaper += rollPaperBoxes;
+      fixedBoxesTotals.stickers += stickersBoxes;
+      fixedBoxesTotals.batteries += batteriesBoxes;
+      fixedBoxesTotals.mobilySim += mobilySimBoxes;
+      fixedBoxesTotals.stcSim += stcSimBoxes;
+      fixedBoxesTotals.zainSim += zainSimBoxes;
+      
+      const fixedBoxesDataRow = fixedBoxesSheet.addRow([
+        index + 1,
+        tech.technicianName,
+        tech.city,
+        n950Boxes,
+        i9000sBoxes,
+        i9100Boxes,
+        rollPaperBoxes,
+        stickersBoxes,
+        batteriesBoxes,
+        mobilySimBoxes,
+        stcSimBoxes,
+        zainSimBoxes
+      ]);
+
+      fixedBoxesDataRow.alignment = { horizontal: 'center', vertical: 'middle' };
+      fixedBoxesDataRow.eachCell((cell) => {
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FF000000' } },
+          left: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } },
+          right: { style: 'thin', color: { argb: 'FF000000' } }
+        };
+      });
+    });
+
+    const fixedBoxesTotalRow = fixedBoxesSheet.addRow([
+      '',
+      'Total Boxes - إجمالي الكراتين',
+      '',
+      fixedBoxesTotals.n950,
+      fixedBoxesTotals.i9000s,
+      fixedBoxesTotals.i9100,
+      fixedBoxesTotals.rollPaper,
+      fixedBoxesTotals.stickers,
+      fixedBoxesTotals.batteries,
+      fixedBoxesTotals.mobilySim,
+      fixedBoxesTotals.stcSim,
+      fixedBoxesTotals.zainSim
+    ]);
+
+    fixedBoxesTotalRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
+    fixedBoxesTotalRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    fixedBoxesTotalRow.height = 25;
+    fixedBoxesTotalRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF10B981' }
+      };
+      cell.border = {
+        top: { style: 'medium', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'medium', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+
+    fixedBoxesSheet.columns = [
+      { width: 8 },
+      { width: 25 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 20 },
+      { width: 20 },
+      { width: 18 },
+      { width: 18 },
+      { width: 15 },
+      { width: 15 }
+    ];
+
+    // Fixed Inventory - Units Sheet
+    const fixedUnitsSheet = workbook.addWorksheet('المخزون الثابت - وحدات');
+    fixedUnitsSheet.views = [{ rightToLeft: true }];
+
+    fixedUnitsSheet.mergeCells('A1:L1');
+    const fixedUnitsTitleCell = fixedUnitsSheet.getCell('A1');
+    fixedUnitsTitleCell.value = 'نظام إدارة مخزون الفنيين - Technician Inventory Management System';
+    fixedUnitsTitleCell.font = { size: 18, bold: true, color: { argb: 'FFFFFFFF' } };
+    fixedUnitsTitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    fixedUnitsTitleCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF2563EB' }
+    };
+    fixedUnitsTitleCell.border = {
+      top: { style: 'medium', color: { argb: 'FF2563EB' } },
+      left: { style: 'medium', color: { argb: 'FF2563EB' } },
+      bottom: { style: 'medium', color: { argb: 'FF2563EB' } },
+      right: { style: 'medium', color: { argb: 'FF2563EB' } }
+    };
+    fixedUnitsSheet.getRow(1).height = 35;
+
+    fixedUnitsSheet.mergeCells('A2:L2');
+    const fixedUnitsDateCell = fixedUnitsSheet.getCell('A2');
+    fixedUnitsDateCell.value = `المخزون الثابت - وحدات | Fixed Inventory - Units | ${arabicDate} - ${time}`;
+    fixedUnitsDateCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    fixedUnitsDateCell.font = { bold: true, size: 11 };
+    fixedUnitsDateCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFDBEAFE' }
+    };
+    fixedUnitsSheet.getRow(2).height = 25;
+
+    fixedUnitsSheet.addRow([]);
+
+    const fixedUnitsHeaderRow = fixedUnitsSheet.addRow([
+      '#',
+      'Technicians Name',
+      'City',
+      'N950 (وحدات)',
+      'I9000s (وحدات)',
+      'I9100 (وحدات)',
+      'Roll Sheets (وحدات)',
+      'Madal Stickers (وحدات)',
+      'New Batteries (وحدات)',
+      'SIM Mobily (وحدات)',
+      'SIM STC (وحدات)',
+      'SIM Zain (وحدات)'
+    ]);
+    
+    fixedUnitsHeaderRow.font = { bold: true, size: 11, color: { argb: 'FFFFFFFF' } };
+    fixedUnitsHeaderRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    fixedUnitsHeaderRow.height = 30;
+    fixedUnitsHeaderRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF4A5568' }
+      };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+
+    let fixedUnitsTotals = {
+      n950: 0, i9000s: 0, i9100: 0,
+      rollPaper: 0, stickers: 0, batteries: 0,
+      mobilySim: 0, stcSim: 0, zainSim: 0
+    };
+
+    technicians.forEach((tech, index) => {
+      const fixedInv = tech.fixedInventory;
+      const n950Units = fixedInv?.n950Units || 0;
+      const i9000sUnits = fixedInv?.i9000sUnits || 0;
+      const i9100Units = fixedInv?.i9100Units || 0;
+      const rollPaperUnits = fixedInv?.rollPaperUnits || 0;
+      const stickersUnits = fixedInv?.stickersUnits || 0;
+      const batteriesUnits = fixedInv?.newBatteriesUnits || 0;
+      const mobilySimUnits = fixedInv?.mobilySimUnits || 0;
+      const stcSimUnits = fixedInv?.stcSimUnits || 0;
+      const zainSimUnits = fixedInv?.zainSimUnits || 0;
+
+      fixedUnitsTotals.n950 += n950Units;
+      fixedUnitsTotals.i9000s += i9000sUnits;
+      fixedUnitsTotals.i9100 += i9100Units;
+      fixedUnitsTotals.rollPaper += rollPaperUnits;
+      fixedUnitsTotals.stickers += stickersUnits;
+      fixedUnitsTotals.batteries += batteriesUnits;
+      fixedUnitsTotals.mobilySim += mobilySimUnits;
+      fixedUnitsTotals.stcSim += stcSimUnits;
+      fixedUnitsTotals.zainSim += zainSimUnits;
+      
+      const fixedUnitsDataRow = fixedUnitsSheet.addRow([
+        index + 1,
+        tech.technicianName,
+        tech.city,
+        n950Units,
+        i9000sUnits,
+        i9100Units,
+        rollPaperUnits,
+        stickersUnits,
+        batteriesUnits,
+        mobilySimUnits,
+        stcSimUnits,
+        zainSimUnits
+      ]);
+
+      fixedUnitsDataRow.alignment = { horizontal: 'center', vertical: 'middle' };
+      fixedUnitsDataRow.eachCell((cell) => {
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FF000000' } },
+          left: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } },
+          right: { style: 'thin', color: { argb: 'FF000000' } }
+        };
+      });
+    });
+
+    const fixedUnitsTotalRow = fixedUnitsSheet.addRow([
+      '',
+      'Total Units - إجمالي الوحدات',
+      '',
+      fixedUnitsTotals.n950,
+      fixedUnitsTotals.i9000s,
+      fixedUnitsTotals.i9100,
+      fixedUnitsTotals.rollPaper,
+      fixedUnitsTotals.stickers,
+      fixedUnitsTotals.batteries,
+      fixedUnitsTotals.mobilySim,
+      fixedUnitsTotals.stcSim,
+      fixedUnitsTotals.zainSim
+    ]);
+
+    fixedUnitsTotalRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
+    fixedUnitsTotalRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    fixedUnitsTotalRow.height = 25;
+    fixedUnitsTotalRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF10B981' }
+      };
+      cell.border = {
+        top: { style: 'medium', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'medium', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+
+    fixedUnitsSheet.columns = [
+      { width: 8 },
+      { width: 25 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 20 },
+      { width: 20 },
+      { width: 18 },
+      { width: 18 },
+      { width: 15 },
+      { width: 15 }
+    ];
+
     // Generate file
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
