@@ -43,7 +43,7 @@ export default function NotificationsPage() {
   const [rejectionReason, setRejectionReason] = useState("");
 
   const { data: pendingTransfers, isLoading } = useQuery<WarehouseTransfer[]>({
-    queryKey: ["/api/warehouse-transfers", user?.id],
+    queryKey: user?.id ? [`/api/warehouse-transfers`] : [],
     enabled: !!user?.id,
     select: (data) => data.filter(t => t.status === 'pending' && t.technicianId === user?.id),
   });
@@ -53,7 +53,7 @@ export default function NotificationsPage() {
       return apiRequest("POST", `/api/warehouse-transfers/${transferId}/accept`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/warehouse-transfers", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/warehouse-transfers"] });
       queryClient.invalidateQueries({ queryKey: [`/api/technicians/${user?.id}`] });
       toast({
         title: "تم القبول",
@@ -74,7 +74,7 @@ export default function NotificationsPage() {
       return apiRequest("POST", `/api/warehouse-transfers/${transferId}/reject`, { reason });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/warehouse-transfers", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/warehouse-transfers"] });
       setRejectDialogOpen(false);
       setRejectionReason("");
       setSelectedTransferId(null);
