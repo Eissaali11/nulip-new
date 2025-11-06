@@ -2,12 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Home, ArrowRight, AlertTriangle, CheckCircle, XCircle, Package, TrendingUp, User, Sparkles } from "lucide-react";
+import { Home, ArrowRight, AlertTriangle, CheckCircle, XCircle, Package, TrendingUp, User, Sparkles, BarChart3 } from "lucide-react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
-import rasscoLogo from "@assets/image_1762442473114.png";
-import neoleapLogo from "@assets/image_1762442479737.png";
-import madaDevice from "@assets/image_1762442486277.png";
 import {
   Accordion,
   AccordionContent,
@@ -133,7 +130,7 @@ export default function AdminInventoryOverview() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
         <motion.div 
           className="text-center"
           initial={{ opacity: 0, scale: 0.8 }}
@@ -148,56 +145,27 @@ export default function AdminInventoryOverview() {
             <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-500 border-r-purple-500"></div>
             <div className="absolute inset-2 rounded-full border-4 border-transparent border-b-pink-500 border-l-cyan-500"></div>
           </motion.div>
-          <p className="text-white text-lg font-semibold">جاري التحميل...</p>
+          <p className="text-slate-700 dark:text-slate-300 text-lg font-semibold">جاري التحميل...</p>
         </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900" dir="rtl">
-      {/* Animated Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 shadow-2xl">
-        <div className="absolute inset-0 bg-grid-white/5"></div>
-        
-        {/* Animated Background Shapes */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800" dir="rtl">
+      <div className="container mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+        {/* Header */}
         <motion.div
-          className="absolute top-0 left-0 w-72 h-72 bg-blue-500/30 rounded-full blur-3xl"
-          animate={{
-            x: [0, 100, 0],
-            y: [0, 50, 0],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-        <motion.div
-          className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl"
-          animate={{
-            x: [0, -100, 0],
-            y: [0, -50, 0],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-
-        <div className="relative container mx-auto px-4 py-8">
-          {/* Back Button */}
-          <motion.div
-            className="mb-4"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
-          >
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="flex items-center justify-between gap-4 flex-wrap"
+        >
+          <div className="flex items-center gap-4">
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button
                 onClick={() => setLocation('/')}
-                className="bg-white/95 hover:bg-white text-blue-600 font-bold shadow-xl border-2 border-white/50"
+                className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold shadow-lg"
                 data-testid="button-back-home"
               >
                 <Home className="w-5 h-5 ml-2" />
@@ -205,117 +173,49 @@ export default function AdminInventoryOverview() {
                 <ArrowRight className="w-5 h-5 mr-2" />
               </Button>
             </motion.div>
-          </motion.div>
-
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
-            {/* Left Side - Logos Animation */}
-            <motion.div 
-              className="flex items-center gap-8"
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-            >
-              <motion.div
-                className="bg-white/95 backdrop-blur-sm rounded-2xl p-4 shadow-2xl"
-                whileHover={{ scale: 1.05, rotate: 2 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <img src={rasscoLogo} alt="RASSCO" className="h-16 w-auto" />
-              </motion.div>
-              
-              <motion.div
-                className="bg-white/95 backdrop-blur-sm rounded-2xl p-4 shadow-2xl"
-                whileHover={{ scale: 1.05, rotate: -2 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <img src={neoleapLogo} alt="Neoleap" className="h-16 w-auto" />
-              </motion.div>
-            </motion.div>
-
-            {/* Center - Title */}
-            <motion.div 
-              className="text-center flex-1"
-              initial={{ opacity: 0, y: -30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-            >
-              <motion.div
-                animate={{ 
-                  scale: [1, 1.02, 1],
-                }}
-                transition={{ 
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              >
-                <h1 className="text-4xl lg:text-5xl font-black text-white mb-2 drop-shadow-2xl flex items-center justify-center gap-3">
-                  <Sparkles className="h-10 w-10 text-yellow-300 animate-pulse" />
-                  لوحة مخزون الفنيين
-                  <Sparkles className="h-10 w-10 text-yellow-300 animate-pulse" />
-                </h1>
-                <p className="text-white/90 text-lg font-semibold">عرض شامل لمخزون جميع الفنيين</p>
-              </motion.div>
-            </motion.div>
-
-            {/* Right Side - Device Image */}
-            <motion.div
-              className="relative"
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-            >
-              <motion.div
-                animate={{ 
-                  y: [0, -10, 0],
-                }}
-                transition={{ 
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-                className="relative"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-3xl blur-xl opacity-50"></div>
-                <img src={madaDevice} alt="MADA Device" className="h-48 w-auto relative z-10 drop-shadow-2xl" />
-              </motion.div>
-            </motion.div>
+            
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-black text-slate-800 dark:text-white flex items-center gap-3">
+                <motion.div
+                  className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl shadow-xl"
+                  animate={{ rotate: [0, 5, 0, -5, 0] }}
+                  transition={{ duration: 4, repeat: Infinity }}
+                >
+                  <BarChart3 className="h-8 w-8 text-white drop-shadow-lg" />
+                </motion.div>
+                لوحة مخزون الفنيين
+              </h1>
+              <p className="text-slate-600 dark:text-slate-400 mt-1 text-sm sm:text-base">
+                عرض شامل واحترافي لمخزون جميع الفنيين
+              </p>
+            </div>
           </div>
-        </div>
+        </motion.div>
 
-        {/* Bottom Wave */}
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1200 120" preserveAspectRatio="none" className="w-full h-12 fill-slate-900">
-            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"></path>
-          </svg>
-        </div>
-      </div>
-
-      <div className="container mx-auto p-4 sm:p-6 space-y-6">
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
             whileHover={{ y: -5, scale: 1.02 }}
           >
-            <Card className="bg-gradient-to-br from-red-500/20 to-rose-500/20 border-2 border-red-500/50 shadow-2xl shadow-red-500/20 backdrop-blur-xl overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 to-transparent"></div>
+            <Card className="bg-gradient-to-br from-red-500 to-rose-600 border-0 shadow-2xl text-white overflow-hidden">
+              <div className="absolute inset-0 bg-grid-white/5"></div>
               <CardHeader className="pb-2 relative">
-                <CardTitle className="text-sm text-red-100 flex items-center gap-2">
+                <CardTitle className="text-sm text-red-50 flex items-center gap-2 font-bold uppercase tracking-wide">
                   <motion.div
                     animate={{ rotate: [0, -10, 0, 10, 0] }}
                     transition={{ duration: 2, repeat: Infinity }}
                   >
-                    <XCircle className="w-5 h-5 text-red-300" />
+                    <XCircle className="w-5 h-5" />
                   </motion.div>
-                  فنيين بحالة حرجة
+                  حالة حرجة
                 </CardTitle>
               </CardHeader>
               <CardContent className="relative">
                 <motion.p 
-                  className="text-5xl font-black text-white drop-shadow-lg" 
+                  className="text-6xl font-black drop-shadow-2xl" 
                   data-testid="text-critical-count"
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
@@ -323,6 +223,7 @@ export default function AdminInventoryOverview() {
                 >
                   {criticalTechs}
                 </motion.p>
+                <p className="text-xs text-red-100 mt-2 font-semibold">فني</p>
               </CardContent>
             </Card>
           </motion.div>
@@ -333,22 +234,22 @@ export default function AdminInventoryOverview() {
             transition={{ duration: 0.5, delay: 0.1 }}
             whileHover={{ y: -5, scale: 1.02 }}
           >
-            <Card className="bg-gradient-to-br from-amber-500/20 to-orange-500/20 border-2 border-amber-500/50 shadow-2xl shadow-amber-500/20 backdrop-blur-xl overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent"></div>
+            <Card className="bg-gradient-to-br from-amber-500 to-orange-600 border-0 shadow-2xl text-white overflow-hidden">
+              <div className="absolute inset-0 bg-grid-white/5"></div>
               <CardHeader className="pb-2 relative">
-                <CardTitle className="text-sm text-amber-100 flex items-center gap-2">
+                <CardTitle className="text-sm text-amber-50 flex items-center gap-2 font-bold uppercase tracking-wide">
                   <motion.div
                     animate={{ rotate: [0, -10, 0, 10, 0] }}
                     transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
                   >
-                    <AlertTriangle className="w-5 h-5 text-amber-300" />
+                    <AlertTriangle className="w-5 h-5" />
                   </motion.div>
-                  فنيين بتحذير
+                  تحذير
                 </CardTitle>
               </CardHeader>
               <CardContent className="relative">
                 <motion.p 
-                  className="text-5xl font-black text-white drop-shadow-lg" 
+                  className="text-6xl font-black drop-shadow-2xl" 
                   data-testid="text-warning-count"
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
@@ -356,6 +257,7 @@ export default function AdminInventoryOverview() {
                 >
                   {warningTechs}
                 </motion.p>
+                <p className="text-xs text-amber-100 mt-2 font-semibold">فني</p>
               </CardContent>
             </Card>
           </motion.div>
@@ -366,22 +268,22 @@ export default function AdminInventoryOverview() {
             transition={{ duration: 0.5, delay: 0.2 }}
             whileHover={{ y: -5, scale: 1.02 }}
           >
-            <Card className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 border-2 border-green-500/50 shadow-2xl shadow-green-500/20 backdrop-blur-xl overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent"></div>
+            <Card className="bg-gradient-to-br from-green-500 to-emerald-600 border-0 shadow-2xl text-white overflow-hidden">
+              <div className="absolute inset-0 bg-grid-white/5"></div>
               <CardHeader className="pb-2 relative">
-                <CardTitle className="text-sm text-green-100 flex items-center gap-2">
+                <CardTitle className="text-sm text-green-50 flex items-center gap-2 font-bold uppercase tracking-wide">
                   <motion.div
                     animate={{ scale: [1, 1.2, 1] }}
                     transition={{ duration: 2, repeat: Infinity }}
                   >
-                    <CheckCircle className="w-5 h-5 text-green-300" />
+                    <CheckCircle className="w-5 h-5" />
                   </motion.div>
-                  فنيين بحالة جيدة
+                  حالة جيدة
                 </CardTitle>
               </CardHeader>
               <CardContent className="relative">
                 <motion.p 
-                  className="text-5xl font-black text-white drop-shadow-lg" 
+                  className="text-6xl font-black drop-shadow-2xl" 
                   data-testid="text-good-count"
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
@@ -389,6 +291,7 @@ export default function AdminInventoryOverview() {
                 >
                   {goodTechs}
                 </motion.p>
+                <p className="text-xs text-green-100 mt-2 font-semibold">فني</p>
               </CardContent>
             </Card>
           </motion.div>
@@ -400,9 +303,9 @@ export default function AdminInventoryOverview() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
         >
-          <Card className="bg-slate-800/50 backdrop-blur-xl border-2 border-slate-700/50 shadow-2xl">
-            <CardHeader>
-              <CardTitle className="text-2xl flex items-center gap-3 text-white">
+          <Card className="bg-white dark:bg-slate-800 border-0 shadow-2xl">
+            <CardHeader className="border-b dark:border-slate-700 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900">
+              <CardTitle className="text-2xl flex items-center gap-3 text-slate-800 dark:text-white">
                 <motion.div 
                   className="p-3 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl shadow-lg"
                   animate={{ rotate: [0, 5, 0, -5, 0] }}
@@ -413,7 +316,7 @@ export default function AdminInventoryOverview() {
                 <span className="font-black">قائمة الفنيين ({technicians.length})</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-2 sm:p-6">
+            <CardContent className="p-3 sm:p-6">
               <Accordion type="multiple" className="w-full space-y-3">
                 {technicians.map((tech, index) => (
                   <motion.div
@@ -424,42 +327,46 @@ export default function AdminInventoryOverview() {
                   >
                     <AccordionItem 
                       value={tech.technicianId} 
-                      className="bg-slate-700/30 backdrop-blur-sm border-2 border-slate-600/30 rounded-xl overflow-hidden"
+                      className="bg-gradient-to-r from-slate-50 to-white dark:from-slate-700 dark:to-slate-800 border-2 border-slate-200 dark:border-slate-600 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow"
                       data-testid={`accordion-tech-${index}`}
                     >
-                      <AccordionTrigger className="px-4 py-4 hover:no-underline hover:bg-slate-600/20 transition-colors">
+                      <AccordionTrigger className="px-4 py-4 hover:no-underline hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors">
                         <div className="flex items-center gap-3 w-full">
                           <div className="flex-1 text-right">
-                            <div className="font-bold text-lg text-white" data-testid={`text-tech-name-${index}`}>
+                            <div className="font-bold text-lg text-slate-800 dark:text-white" data-testid={`text-tech-name-${index}`}>
                               {tech.technicianName}
                             </div>
-                            <div className="text-sm text-slate-300" data-testid={`text-tech-city-${index}`}>
-                              {tech.city}
+                            <div className="text-sm text-slate-600 dark:text-slate-400" data-testid={`text-tech-city-${index}`}>
+                              📍 {tech.city}
                             </div>
                           </div>
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-3 flex-wrap justify-end">
                             {getAlertBadge(tech.alertLevel)}
-                            <div className="text-sm bg-blue-500/20 px-3 py-1 rounded-lg border border-blue-400/30">
-                              <div className="flex items-center gap-1 text-blue-200">
-                                <Package className="w-4 h-4" />
-                                <span className="font-bold text-white">{calculateFixedTotal(tech.fixedInventory)}</span>
+                            <div className="flex items-center gap-2">
+                              <div className="text-center bg-blue-100 dark:bg-blue-900/30 px-3 py-2 rounded-lg border-2 border-blue-300 dark:border-blue-700">
+                                <div className="flex items-center gap-1 text-blue-700 dark:text-blue-300">
+                                  <Package className="w-4 h-4" />
+                                  <span className="font-black text-lg">{calculateFixedTotal(tech.fixedInventory)}</span>
+                                </div>
+                                <div className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold">ثابت</div>
                               </div>
-                            </div>
-                            <div className="text-sm bg-green-500/20 px-3 py-1 rounded-lg border border-green-400/30">
-                              <div className="flex items-center gap-1 text-green-200">
-                                <TrendingUp className="w-4 h-4" />
-                                <span className="font-bold text-white">{calculateMovingTotal(tech.movingInventory)}</span>
+                              <div className="text-center bg-green-100 dark:bg-green-900/30 px-3 py-2 rounded-lg border-2 border-green-300 dark:border-green-700">
+                                <div className="flex items-center gap-1 text-green-700 dark:text-green-300">
+                                  <TrendingUp className="w-4 h-4" />
+                                  <span className="font-black text-lg">{calculateMovingTotal(tech.movingInventory)}</span>
+                                </div>
+                                <div className="text-[10px] text-green-600 dark:text-green-400 font-semibold">متحرك</div>
                               </div>
                             </div>
                           </div>
                         </div>
                       </AccordionTrigger>
-                      <AccordionContent className="px-4 pb-4 bg-slate-800/50">
+                      <AccordionContent className="px-4 pb-4 bg-slate-50 dark:bg-slate-900/50">
                         <div className="space-y-4 pt-4">
                           {/* Fixed Inventory */}
-                          <div className="bg-gradient-to-br from-blue-500/20 to-cyan-500/20 p-4 rounded-xl border-2 border-blue-400/30 shadow-lg">
-                            <h4 className="font-black text-white mb-3 flex items-center gap-2 text-lg">
-                              <div className="p-2 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg">
+                          <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 p-5 rounded-2xl border-2 border-blue-200 dark:border-blue-800 shadow-lg">
+                            <h4 className="font-black text-blue-900 dark:text-blue-100 mb-4 flex items-center gap-2 text-lg">
+                              <div className="p-2 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl shadow-md">
                                 <Package className="w-5 h-5 text-white" />
                               </div>
                               المخزون الثابت
@@ -522,14 +429,14 @@ export default function AdminInventoryOverview() {
                                 />
                               </div>
                             ) : (
-                              <p className="text-sm text-slate-300">لا توجد بيانات</p>
+                              <p className="text-sm text-slate-600 dark:text-slate-400">لا توجد بيانات</p>
                             )}
                           </div>
 
                           {/* Moving Inventory */}
-                          <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 p-4 rounded-xl border-2 border-green-400/30 shadow-lg">
-                            <h4 className="font-black text-white mb-3 flex items-center gap-2 text-lg">
-                              <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg">
+                          <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 p-5 rounded-2xl border-2 border-green-200 dark:border-green-800 shadow-lg">
+                            <h4 className="font-black text-green-900 dark:text-green-100 mb-4 flex items-center gap-2 text-lg">
+                              <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl shadow-md">
                                 <TrendingUp className="w-5 h-5 text-white" />
                               </div>
                               المخزون المتحرك
@@ -583,7 +490,7 @@ export default function AdminInventoryOverview() {
                                 />
                               </div>
                             ) : (
-                              <p className="text-sm text-slate-300">لا توجد بيانات</p>
+                              <p className="text-sm text-slate-600 dark:text-slate-400">لا توجد بيانات</p>
                             )}
                           </div>
                         </div>
@@ -604,16 +511,16 @@ function InventoryItem({ label, boxes, units, testId }: { label: string; boxes: 
   const total = (boxes || 0) + (units || 0);
   return (
     <motion.div 
-      className="bg-white/10 backdrop-blur-sm p-3 rounded-lg border border-white/20 shadow-lg" 
+      className="bg-white dark:bg-slate-800 p-3 rounded-xl border-2 border-blue-200 dark:border-blue-700 shadow-md hover:shadow-lg transition-shadow" 
       data-testid={testId}
-      whileHover={{ scale: 1.05, backgroundColor: "rgba(255, 255, 255, 0.15)" }}
+      whileHover={{ scale: 1.05, y: -2 }}
       transition={{ duration: 0.2 }}
     >
-      <div className="text-xs font-semibold text-slate-300 mb-1">{label}</div>
+      <div className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{label}</div>
       <div className="text-sm">
-        <span className="font-black text-2xl text-white">{total}</span>
-        <span className="text-xs text-slate-400 mr-1">
-          ({boxes || 0}ك + {units || 0}م)
+        <span className="font-black text-2xl text-blue-700 dark:text-blue-300">{total}</span>
+        <span className="text-xs text-slate-500 dark:text-slate-500 mr-1 block mt-1">
+          {boxes || 0} كرتون + {units || 0} مفرد
         </span>
       </div>
     </motion.div>
@@ -623,15 +530,15 @@ function InventoryItem({ label, boxes, units, testId }: { label: string; boxes: 
 function MovingInventoryItem({ label, value, testId }: { label: string; value: number; testId: string }) {
   return (
     <motion.div 
-      className="bg-white/10 backdrop-blur-sm p-3 rounded-lg border border-white/20 shadow-lg" 
+      className="bg-white dark:bg-slate-800 p-3 rounded-xl border-2 border-green-200 dark:border-green-700 shadow-md hover:shadow-lg transition-shadow" 
       data-testid={testId}
-      whileHover={{ scale: 1.05, backgroundColor: "rgba(255, 255, 255, 0.15)" }}
+      whileHover={{ scale: 1.05, y: -2 }}
       transition={{ duration: 0.2 }}
     >
-      <div className="text-xs font-semibold text-slate-300 mb-1">{label}</div>
+      <div className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{label}</div>
       <div className="text-sm">
-        <span className="font-black text-2xl text-white">{value || 0}</span>
-        <span className="text-xs text-slate-400 mr-1">وحدة</span>
+        <span className="font-black text-2xl text-green-700 dark:text-green-300">{value || 0}</span>
+        <span className="text-xs text-slate-500 dark:text-slate-500 mr-1 block mt-1">وحدة</span>
       </div>
     </motion.div>
   );
