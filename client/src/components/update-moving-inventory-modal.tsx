@@ -17,9 +17,11 @@ import { PlusCircle } from "lucide-react";
 
 interface UpdateData {
   n950: number;
-  i900: number;
+  i9000s: number;
+  i9100: number;
   rollPaper: number;
   stickers: number;
+  newBatteries: number;
   mobilySim: number;
   stcSim: number;
   zainSim: number;
@@ -31,9 +33,11 @@ interface UpdateMovingInventoryModalProps {
   technicianId: string;
   currentInventory: {
     n950Devices: number;
-    i900Devices: number;
+    i9000sDevices: number;
+    i9100Devices: number;
     rollPaper: number;
     stickers: number;
+    newBatteries: number;
     mobilySim: number;
     stcSim: number;
     zainSim: number;
@@ -50,26 +54,29 @@ export function UpdateMovingInventoryModal({
   const queryClient = useQueryClient();
 
   const [update, setUpdate] = useState<UpdateData>({
-    n950: currentInventory.n950Devices,
-    i900: currentInventory.i900Devices,
-    rollPaper: currentInventory.rollPaper,
-    stickers: currentInventory.stickers,
-    mobilySim: currentInventory.mobilySim,
-    stcSim: currentInventory.stcSim,
-    zainSim: currentInventory.zainSim,
+    n950: currentInventory.n950Devices || 0,
+    i9000s: currentInventory.i9000sDevices || 0,
+    i9100: currentInventory.i9100Devices || 0,
+    rollPaper: currentInventory.rollPaper || 0,
+    stickers: currentInventory.stickers || 0,
+    newBatteries: currentInventory.newBatteries || 0,
+    mobilySim: currentInventory.mobilySim || 0,
+    stcSim: currentInventory.stcSim || 0,
+    zainSim: currentInventory.zainSim || 0,
   });
 
   const updateMutation = useMutation({
     mutationFn: async () => {
-      // Direct update to moving inventory only
       return await apiRequest(
         "PATCH",
         `/api/technicians/${technicianId}`,
         {
           n950Devices: update.n950,
-          i900Devices: update.i900,
+          i9000sDevices: update.i9000s,
+          i9100Devices: update.i9100,
           rollPaper: update.rollPaper,
           stickers: update.stickers,
+          newBatteries: update.newBatteries,
           mobilySim: update.mobilySim,
           stcSim: update.stcSim,
           zainSim: update.zainSim,
@@ -117,7 +124,7 @@ export function UpdateMovingInventoryModal({
             <div className="flex justify-between items-center">
               <Label htmlFor="n950">أجهزة N950</Label>
               <span className="text-sm text-muted-foreground">
-                الحالي: {currentInventory.n950Devices}
+                الحالي: {currentInventory.n950Devices || 0}
               </span>
             </div>
             <Input
@@ -130,21 +137,39 @@ export function UpdateMovingInventoryModal({
             />
           </div>
 
-          {/* I900 */}
+          {/* I9000s */}
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <Label htmlFor="i900">أجهزة I900</Label>
+              <Label htmlFor="i9000s">أجهزة I9000s</Label>
               <span className="text-sm text-muted-foreground">
-                الحالي: {currentInventory.i900Devices}
+                الحالي: {currentInventory.i9000sDevices || 0}
               </span>
             </div>
             <Input
-              id="i900"
+              id="i9000s"
               type="number"
               min="0"
-              value={update.i900}
-              onChange={(e) => setUpdate({ ...update, i900: Math.max(0, parseInt(e.target.value) || 0) })}
-              data-testid="input-update-i900"
+              value={update.i9000s}
+              onChange={(e) => setUpdate({ ...update, i9000s: Math.max(0, parseInt(e.target.value) || 0) })}
+              data-testid="input-update-i9000s"
+            />
+          </div>
+
+          {/* I9100 */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <Label htmlFor="i9100">أجهزة I9100</Label>
+              <span className="text-sm text-muted-foreground">
+                الحالي: {currentInventory.i9100Devices || 0}
+              </span>
+            </div>
+            <Input
+              id="i9100"
+              type="number"
+              min="0"
+              value={update.i9100}
+              onChange={(e) => setUpdate({ ...update, i9100: Math.max(0, parseInt(e.target.value) || 0) })}
+              data-testid="input-update-i9100"
             />
           </div>
 
@@ -153,7 +178,7 @@ export function UpdateMovingInventoryModal({
             <div className="flex justify-between items-center">
               <Label htmlFor="rollPaper">أوراق رول</Label>
               <span className="text-sm text-muted-foreground">
-                الحالي: {currentInventory.rollPaper}
+                الحالي: {currentInventory.rollPaper || 0}
               </span>
             </div>
             <Input
@@ -171,7 +196,7 @@ export function UpdateMovingInventoryModal({
             <div className="flex justify-between items-center">
               <Label htmlFor="stickers">ملصقات مدى</Label>
               <span className="text-sm text-muted-foreground">
-                الحالي: {currentInventory.stickers}
+                الحالي: {currentInventory.stickers || 0}
               </span>
             </div>
             <Input
@@ -184,12 +209,30 @@ export function UpdateMovingInventoryModal({
             />
           </div>
 
+          {/* New Batteries */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <Label htmlFor="newBatteries">بطاريات جديدة</Label>
+              <span className="text-sm text-muted-foreground">
+                الحالي: {currentInventory.newBatteries || 0}
+              </span>
+            </div>
+            <Input
+              id="newBatteries"
+              type="number"
+              min="0"
+              value={update.newBatteries}
+              onChange={(e) => setUpdate({ ...update, newBatteries: Math.max(0, parseInt(e.target.value) || 0) })}
+              data-testid="input-update-batteries"
+            />
+          </div>
+
           {/* Mobily SIM */}
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <Label htmlFor="mobilySim">شرائح موبايلي</Label>
               <span className="text-sm text-muted-foreground">
-                الحالي: {currentInventory.mobilySim}
+                الحالي: {currentInventory.mobilySim || 0}
               </span>
             </div>
             <Input
@@ -207,7 +250,7 @@ export function UpdateMovingInventoryModal({
             <div className="flex justify-between items-center">
               <Label htmlFor="stcSim">شرائح STC</Label>
               <span className="text-sm text-muted-foreground">
-                الحالي: {currentInventory.stcSim}
+                الحالي: {currentInventory.stcSim || 0}
               </span>
             </div>
             <Input
@@ -217,6 +260,24 @@ export function UpdateMovingInventoryModal({
               value={update.stcSim}
               onChange={(e) => setUpdate({ ...update, stcSim: Math.max(0, parseInt(e.target.value) || 0) })}
               data-testid="input-update-stc"
+            />
+          </div>
+
+          {/* Zain SIM */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <Label htmlFor="zainSim">شرائح زين</Label>
+              <span className="text-sm text-muted-foreground">
+                الحالي: {currentInventory.zainSim || 0}
+              </span>
+            </div>
+            <Input
+              id="zainSim"
+              type="number"
+              min="0"
+              value={update.zainSim}
+              onChange={(e) => setUpdate({ ...update, zainSim: Math.max(0, parseInt(e.target.value) || 0) })}
+              data-testid="input-update-zain"
             />
           </div>
         </div>

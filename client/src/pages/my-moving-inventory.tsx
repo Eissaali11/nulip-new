@@ -1,23 +1,29 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { TruckIcon, MinusCircle, ArrowRight, ArrowLeftRight, FileDown } from "lucide-react";
+import { TruckIcon, MinusCircle, ArrowRight, ArrowLeftRight, FileDown, Home, Package, Sparkles } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useState } from "react";
 import { UpdateMovingInventoryModal } from "@/components/update-moving-inventory-modal";
 import { TransferToMovingModal } from "@/components/transfer-to-moving-modal";
 import { useLocation } from "wouter";
+import { motion } from "framer-motion";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
+import rasscoLogo from "@assets/image_1762442473114.png";
+import neoleapLogo from "@assets/image_1762442479737.png";
+import madaDevice from "@assets/image_1762442486277.png";
 
 interface MovingInventory {
   id: string;
   technicianName: string;
   city: string;
   n950Devices: number;
-  i900Devices: number;
+  i9000sDevices: number;
+  i9100Devices: number;
   rollPaper: number;
   stickers: number;
+  newBatteries: number;
   mobilySim: number;
   stcSim: number;
   zainSim: number;
@@ -26,12 +32,16 @@ interface MovingInventory {
 interface FixedInventory {
   n950Boxes: number;
   n950Units: number;
-  i900Boxes: number;
-  i900Units: number;
+  i9000sBoxes: number;
+  i9000sUnits: number;
+  i9100Boxes: number;
+  i9100Units: number;
   rollPaperBoxes: number;
   rollPaperUnits: number;
   stickersBoxes: number;
   stickersUnits: number;
+  newBatteriesBoxes: number;
+  newBatteriesUnits: number;
   mobilySimBoxes: number;
   mobilySimUnits: number;
   stcSimBoxes: number;
@@ -59,13 +69,15 @@ export default function MyMovingInventory() {
   const getTotalItems = () => {
     if (!inventory) return 0;
     return (
-      inventory.n950Devices +
-      inventory.i900Devices +
-      inventory.rollPaper +
-      inventory.stickers +
-      inventory.mobilySim +
-      inventory.stcSim +
-      inventory.zainSim
+      (inventory.n950Devices || 0) +
+      (inventory.i9000sDevices || 0) +
+      (inventory.i9100Devices || 0) +
+      (inventory.rollPaper || 0) +
+      (inventory.stickers || 0) +
+      (inventory.newBatteries || 0) +
+      (inventory.mobilySim || 0) +
+      (inventory.stcSim || 0) +
+      (inventory.zainSim || 0)
     );
   };
 
@@ -75,23 +87,19 @@ export default function MyMovingInventory() {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('المخزون المتحرك');
 
-    // Set RTL
     worksheet.views = [{ rightToLeft: true }];
 
-    // Add title
     worksheet.mergeCells('A1:C1');
     const titleCell = worksheet.getCell('A1');
     titleCell.value = 'تقرير المخزون المتحرك';
     titleCell.font = { size: 16, bold: true };
     titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
     
-    // Add date
     worksheet.mergeCells('A2:C2');
     const dateCell = worksheet.getCell('A2');
     dateCell.value = `التاريخ: ${new Date().toLocaleDateString('ar-SA')}`;
     dateCell.alignment = { horizontal: 'center' };
 
-    // Add headers
     worksheet.addRow([]);
     const headerRow = worksheet.addRow(['الصنف', 'الكمية', 'الوحدة']);
     headerRow.font = { bold: true };
@@ -110,15 +118,16 @@ export default function MyMovingInventory() {
       };
     });
 
-    // Add data
     const data = [
-      ['أجهزة N950', inventory.n950Devices, 'جهاز'],
-      ['أجهزة I900', inventory.i900Devices, 'جهاز'],
-      ['أوراق رول', inventory.rollPaper, 'رول'],
-      ['ملصقات مدى', inventory.stickers, 'ملصق'],
-      ['شرائح موبايلي', inventory.mobilySim, 'شريحة'],
-      ['شرائح STC', inventory.stcSim, 'شريحة'],
-      ['شرائح زين', inventory.zainSim, 'شريحة'],
+      ['أجهزة N950', inventory.n950Devices || 0, 'جهاز'],
+      ['أجهزة I9000s', inventory.i9000sDevices || 0, 'جهاز'],
+      ['أجهزة I9100', inventory.i9100Devices || 0, 'جهاز'],
+      ['أوراق رول', inventory.rollPaper || 0, 'رول'],
+      ['ملصقات مدى', inventory.stickers || 0, 'ملصق'],
+      ['بطاريات جديدة', inventory.newBatteries || 0, 'بطارية'],
+      ['شرائح موبايلي', inventory.mobilySim || 0, 'شريحة'],
+      ['شرائح STC', inventory.stcSim || 0, 'شريحة'],
+      ['شرائح زين', inventory.zainSim || 0, 'شريحة'],
     ];
 
     data.forEach(row => {
@@ -134,7 +143,6 @@ export default function MyMovingInventory() {
       });
     });
 
-    // Add total
     worksheet.addRow([]);
     const totalRow = worksheet.addRow(['الإجمالي', getTotalItems(), 'قطعة']);
     totalRow.font = { bold: true };
@@ -153,14 +161,12 @@ export default function MyMovingInventory() {
       cell.alignment = { horizontal: 'center' };
     });
 
-    // Set column widths
     worksheet.columns = [
       { width: 25 },
       { width: 15 },
       { width: 15 }
     ];
 
-    // Generate file
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     saveAs(blob, `المخزون_المتحرك_${new Date().toISOString().split('T')[0]}.xlsx`);
@@ -168,25 +174,47 @@ export default function MyMovingInventory() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-4 sm:p-6">
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">جاري التحميل...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <motion.div 
+          className="text-center"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <motion.div 
+            className="relative w-24 h-24 mx-auto mb-6"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          >
+            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-500 border-r-purple-500"></div>
+            <div className="absolute inset-2 rounded-full border-4 border-transparent border-b-pink-500 border-l-cyan-500"></div>
+          </motion.div>
+          <p className="text-white text-lg font-semibold">جاري التحميل...</p>
+        </motion.div>
       </div>
     );
   }
 
   if (!inventory) {
     return (
-      <div className="container mx-auto p-4 sm:p-6">
-        <Card>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl border-2 border-white/20 shadow-2xl">
           <CardContent className="py-12 text-center">
-            <TruckIcon className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-semibold mb-2">لا يوجد مخزون متحرك</h3>
-            <p className="text-muted-foreground">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 200 }}
+            >
+              <TruckIcon className="h-24 w-24 mx-auto mb-6 text-blue-500" />
+            </motion.div>
+            <h3 className="text-2xl font-bold mb-3 text-slate-800 dark:text-white">لا يوجد مخزون متحرك</h3>
+            <p className="text-slate-600 dark:text-slate-400 mb-6">
               قم بنقل بعض العناصر من المخزون الثابت أولاً
             </p>
+            <Button onClick={() => setLocation("/")} className="bg-gradient-to-r from-blue-600 to-purple-600">
+              <Home className="w-4 h-4 ml-2" />
+              العودة للصفحة الرئيسية
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -194,194 +222,341 @@ export default function MyMovingInventory() {
   }
 
   return (
-    <div className="container mx-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setLocation("/")}
-            data-testid="button-back"
-            className="hover:bg-accent"
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900" dir="rtl">
+      {/* Animated Banner */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 shadow-2xl">
+        <div className="absolute inset-0 bg-grid-white/5"></div>
+        
+        <motion.div
+          className="absolute top-0 left-0 w-72 h-72 bg-blue-500/30 rounded-full blur-3xl"
+          animate={{
+            x: [0, 100, 0],
+            y: [0, 50, 0],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        <motion.div
+          className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl"
+          animate={{
+            x: [0, -100, 0],
+            y: [0, -50, 0],
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+
+        <div className="relative container mx-auto px-4 py-8">
+          <motion.div
+            className="mb-4"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
           >
-            <ArrowRight className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold flex items-center gap-2" data-testid="text-page-title">
-              <TruckIcon className="h-6 w-6 sm:h-8 sm:w-8" />
-              المخزون المتحرك
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              المخزون الذي تستخدمه في العمل اليومي
-            </p>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button
+                onClick={() => setLocation('/')}
+                className="bg-white/95 hover:bg-white text-blue-600 font-bold shadow-xl border-2 border-white/50"
+                data-testid="button-back-home"
+              >
+                <Home className="w-5 h-5 ml-2" />
+                الصفحة الرئيسية
+                <ArrowRight className="w-5 h-5 mr-2" />
+              </Button>
+            </motion.div>
+          </motion.div>
+
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+            <motion.div 
+              className="flex items-center gap-8"
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+            >
+              <motion.div
+                className="bg-white/95 backdrop-blur-sm rounded-2xl p-4 shadow-2xl"
+                whileHover={{ scale: 1.05, rotate: 2 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                <img src={rasscoLogo} alt="RASSCO" className="h-16 w-auto" />
+              </motion.div>
+              
+              <motion.div
+                className="bg-white/95 backdrop-blur-sm rounded-2xl p-4 shadow-2xl"
+                whileHover={{ scale: 1.05, rotate: -2 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                <img src={neoleapLogo} alt="Neoleap" className="h-16 w-auto" />
+              </motion.div>
+            </motion.div>
+
+            <motion.div 
+              className="text-center flex-1"
+              initial={{ opacity: 0, y: -30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+            >
+              <motion.div
+                animate={{ 
+                  scale: [1, 1.02, 1],
+                }}
+                transition={{ 
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              >
+                <h1 className="text-4xl lg:text-5xl font-black text-white mb-2 drop-shadow-2xl flex items-center justify-center gap-3">
+                  <Sparkles className="h-10 w-10 text-yellow-300 animate-pulse" />
+                  المخزون المتحرك
+                  <Sparkles className="h-10 w-10 text-yellow-300 animate-pulse" />
+                </h1>
+                <p className="text-white/90 text-lg font-semibold">المخزون الذي تستخدمه في العمل اليومي</p>
+              </motion.div>
+            </motion.div>
+
+            <motion.div
+              className="relative"
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+            >
+              <motion.div
+                animate={{ 
+                  y: [0, -10, 0],
+                }}
+                transition={{ 
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+                className="relative"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-3xl blur-xl opacity-50"></div>
+                <img src={madaDevice} alt="MADA Device" className="h-48 w-auto relative z-10 drop-shadow-2xl" />
+              </motion.div>
+            </motion.div>
           </div>
         </div>
-        <div className="flex gap-2 w-full sm:w-auto flex-wrap">
-          <Button 
-            onClick={() => setShowTransferModal(true)}
-            className="flex-1 sm:flex-none"
-            variant="outline"
-            data-testid="button-transfer-inventory"
-          >
-            <ArrowLeftRight className="w-4 h-4 ml-2" />
-            نقل من الثابت
-          </Button>
-          <Button 
-            onClick={() => setShowUpdateModal(true)}
-            className="flex-1 sm:flex-none"
-            data-testid="button-update-inventory"
-          >
-            <MinusCircle className="w-4 h-4 ml-2" />
-            تحديث المخزون
-          </Button>
-          <Button 
-            onClick={exportToExcel}
-            className="flex-1 sm:flex-none"
-            variant="secondary"
-            data-testid="button-export-excel"
-          >
-            <FileDown className="w-4 h-4 ml-2" />
-            تصدير Excel
-          </Button>
+
+        <div className="absolute bottom-0 left-0 right-0">
+          <svg viewBox="0 0 1200 120" preserveAspectRatio="none" className="w-full h-12 fill-slate-900">
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"></path>
+          </svg>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-blue-700 dark:text-blue-300">إجمالي العناصر</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-blue-900 dark:text-blue-100" data-testid="text-total-items">
-              {getTotalItems()}
-            </p>
-          </CardContent>
-        </Card>
+      <div className="container mx-auto p-4 sm:p-6 space-y-6">
+        {/* Action Buttons */}
+        <motion.div 
+          className="flex gap-3 flex-wrap justify-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button 
+              onClick={() => setShowTransferModal(true)}
+              className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-lg"
+              data-testid="button-transfer-inventory"
+            >
+              <ArrowLeftRight className="w-4 h-4 ml-2" />
+              نقل من الثابت
+            </Button>
+          </motion.div>
+          
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button 
+              onClick={() => setShowUpdateModal(true)}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg"
+              data-testid="button-update-inventory"
+            >
+              <MinusCircle className="w-4 h-4 ml-2" />
+              تحديث المخزون
+            </Button>
+          </motion.div>
+          
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button 
+              onClick={exportToExcel}
+              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg"
+              data-testid="button-export-excel"
+            >
+              <FileDown className="w-4 h-4 ml-2" />
+              تصدير Excel
+            </Button>
+          </motion.div>
+        </motion.div>
 
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-purple-700 dark:text-purple-300">الأجهزة</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-purple-900 dark:text-purple-100" data-testid="text-total-devices">
-              {inventory.n950Devices + inventory.i900Devices}
-            </p>
-          </CardContent>
-        </Card>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            whileHover={{ y: -5, scale: 1.02 }}
+          >
+            <Card className="bg-gradient-to-br from-blue-500 to-cyan-600 border-0 shadow-2xl text-white overflow-hidden">
+              <div className="absolute inset-0 bg-grid-white/5"></div>
+              <CardHeader className="pb-2 relative">
+                <CardTitle className="text-sm text-blue-50 font-bold flex items-center gap-2">
+                  <Package className="w-5 h-5" />
+                  إجمالي العناصر
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="relative">
+                <motion.p 
+                  className="text-5xl font-black drop-shadow-lg" 
+                  data-testid="text-total-items"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 200 }}
+                >
+                  {getTotalItems()}
+                </motion.p>
+              </CardContent>
+            </Card>
+          </motion.div>
 
-        <Card className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950 dark:to-amber-900">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-amber-700 dark:text-amber-300">الملحقات</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-amber-900 dark:text-amber-100" data-testid="text-total-accessories">
-              {inventory.rollPaper + inventory.stickers}
-            </p>
-          </CardContent>
-        </Card>
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            whileHover={{ y: -5, scale: 1.02 }}
+          >
+            <Card className="bg-gradient-to-br from-purple-500 to-pink-600 border-0 shadow-2xl text-white overflow-hidden">
+              <div className="absolute inset-0 bg-grid-white/5"></div>
+              <CardHeader className="pb-2 relative">
+                <CardTitle className="text-sm text-purple-50 font-bold flex items-center gap-2">
+                  <TruckIcon className="w-5 h-5" />
+                  الأجهزة
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="relative">
+                <motion.p 
+                  className="text-5xl font-black drop-shadow-lg" 
+                  data-testid="text-total-devices"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
+                >
+                  {(inventory.n950Devices || 0) + (inventory.i9000sDevices || 0) + (inventory.i9100Devices || 0)}
+                </motion.p>
+              </CardContent>
+            </Card>
+          </motion.div>
 
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-green-700 dark:text-green-300">الشرائح</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-green-900 dark:text-green-100" data-testid="text-total-sims">
-              {inventory.mobilySim + inventory.stcSim}
-            </p>
-          </CardContent>
-        </Card>
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            whileHover={{ y: -5, scale: 1.02 }}
+          >
+            <Card className="bg-gradient-to-br from-amber-500 to-orange-600 border-0 shadow-2xl text-white overflow-hidden">
+              <div className="absolute inset-0 bg-grid-white/5"></div>
+              <CardHeader className="pb-2 relative">
+                <CardTitle className="text-sm text-amber-50 font-bold flex items-center gap-2">
+                  <Package className="w-5 h-5" />
+                  الملحقات
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="relative">
+                <motion.p 
+                  className="text-5xl font-black drop-shadow-lg" 
+                  data-testid="text-total-accessories"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
+                >
+                  {(inventory.rollPaper || 0) + (inventory.stickers || 0) + (inventory.newBatteries || 0)}
+                </motion.p>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            whileHover={{ y: -5, scale: 1.02 }}
+          >
+            <Card className="bg-gradient-to-br from-green-500 to-emerald-600 border-0 shadow-2xl text-white overflow-hidden">
+              <div className="absolute inset-0 bg-grid-white/5"></div>
+              <CardHeader className="pb-2 relative">
+                <CardTitle className="text-sm text-green-50 font-bold flex items-center gap-2">
+                  <Package className="w-5 h-5" />
+                  الشرائح
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="relative">
+                <motion.p 
+                  className="text-5xl font-black drop-shadow-lg" 
+                  data-testid="text-total-sims"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 200, delay: 0.3 }}
+                >
+                  {(inventory.mobilySim || 0) + (inventory.stcSim || 0) + (inventory.zainSim || 0)}
+                </motion.p>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+
+        {/* Detailed Inventory */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[
+              { label: 'أجهزة N950', value: inventory.n950Devices || 0, color: 'blue', icon: '📱' },
+              { label: 'أجهزة I9000s', value: inventory.i9000sDevices || 0, color: 'purple', icon: '📱' },
+              { label: 'أجهزة I9100', value: inventory.i9100Devices || 0, color: 'indigo', icon: '📱' },
+              { label: 'أوراق رول', value: inventory.rollPaper || 0, color: 'amber', icon: '📄' },
+              { label: 'ملصقات مداى', value: inventory.stickers || 0, color: 'orange', icon: '🏷️' },
+              { label: 'بطاريات جديدة', value: inventory.newBatteries || 0, color: 'yellow', icon: '🔋' },
+              { label: 'شرائح موبايلي', value: inventory.mobilySim || 0, color: 'green', icon: '📶' },
+              { label: 'شرائح STC', value: inventory.stcSim || 0, color: 'teal', icon: '📶' },
+              { label: 'شرائح زين', value: inventory.zainSim || 0, color: 'cyan', icon: '📶' },
+            ].map((item, index) => (
+              <motion.div
+                key={item.label}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, delay: 0.5 + index * 0.05 }}
+                whileHover={{ scale: 1.05, y: -5 }}
+              >
+                <Card className="bg-white dark:bg-slate-800 border-0 shadow-xl overflow-hidden">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base sm:text-lg flex items-center justify-between">
+                      <span className="flex items-center gap-2">
+                        <span className="text-2xl">{item.icon}</span>
+                        {item.label}
+                      </span>
+                      <motion.span 
+                        className={`inline-flex items-center px-4 py-2 rounded-xl bg-gradient-to-r from-${item.color}-500 to-${item.color}-600 text-white text-lg font-black shadow-lg`}
+                        whileHover={{ scale: 1.1 }}
+                      >
+                        {item.value}
+                      </motion.span>
+                    </CardTitle>
+                  </CardHeader>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
       </div>
 
-      {/* Detailed Inventory */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* N950 */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base sm:text-lg flex items-center justify-between">
-              <span>أجهزة N950</span>
-              <span className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100 text-sm font-semibold">
-                {inventory.n950Devices}
-              </span>
-            </CardTitle>
-          </CardHeader>
-        </Card>
-
-        {/* I900 */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base sm:text-lg flex items-center justify-between">
-              <span>أجهزة I900</span>
-              <span className="inline-flex items-center px-3 py-1 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-100 text-sm font-semibold">
-                {inventory.i900Devices}
-              </span>
-            </CardTitle>
-          </CardHeader>
-        </Card>
-
-        {/* Roll Paper */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base sm:text-lg flex items-center justify-between">
-              <span>أوراق رول</span>
-              <span className="inline-flex items-center px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100 text-sm font-semibold">
-                {inventory.rollPaper}
-              </span>
-            </CardTitle>
-          </CardHeader>
-        </Card>
-
-        {/* Stickers */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base sm:text-lg flex items-center justify-between">
-              <span>ملصقات مداى</span>
-              <span className="inline-flex items-center px-3 py-1 rounded-full bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-100 text-sm font-semibold">
-                {inventory.stickers}
-              </span>
-            </CardTitle>
-          </CardHeader>
-        </Card>
-
-        {/* Mobily SIM */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base sm:text-lg flex items-center justify-between">
-              <span>شرائح موبايلي</span>
-              <span className="inline-flex items-center px-3 py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 text-sm font-semibold">
-                {inventory.mobilySim}
-              </span>
-            </CardTitle>
-          </CardHeader>
-        </Card>
-
-        {/* STC SIM */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base sm:text-lg flex items-center justify-between">
-              <span>شرائح STC</span>
-              <span className="inline-flex items-center px-3 py-1 rounded-full bg-teal-100 dark:bg-teal-900 text-teal-800 dark:text-teal-100 text-sm font-semibold">
-                {inventory.stcSim}
-              </span>
-            </CardTitle>
-          </CardHeader>
-        </Card>
-
-        {/* Zain SIM */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base sm:text-lg flex items-center justify-between">
-              <span>شرائح زين</span>
-              <span className="inline-flex items-center px-3 py-1 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-100 text-sm font-semibold">
-                {inventory.zainSim}
-              </span>
-            </CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
-
-      {/* Transfer Modal */}
+      {/* Modals */}
       {fixedInventory && (
         <TransferToMovingModal
           open={showTransferModal}
@@ -391,7 +566,6 @@ export default function MyMovingInventory() {
         />
       )}
 
-      {/* Update Modal */}
       {inventory && (
         <UpdateMovingInventoryModal
           open={showUpdateModal}
