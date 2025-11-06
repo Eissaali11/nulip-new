@@ -22,6 +22,8 @@ export default function TechniciansTable() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedTechnician, setSelectedTechnician] = useState<TechnicianInventory | null>(null);
 
+  const getTotalForItem = (boxes: number, units: number) => (boxes || 0) + (units || 0);
+
   const { data: technicians, isLoading } = useQuery<TechnicianInventory[]>({
     queryKey: ["/api/technicians"],
   });
@@ -87,16 +89,18 @@ export default function TechniciansTable() {
     });
     
     // Calculate totals
-    const totalN950 = filteredTechnicians.reduce((sum, t) => sum + t.n950Devices, 0);
-    const totalI900 = filteredTechnicians.reduce((sum, t) => sum + t.i900Devices, 0);
-    const totalRoll = filteredTechnicians.reduce((sum, t) => sum + t.rollPaper, 0);
-    const totalStickers = filteredTechnicians.reduce((sum, t) => sum + t.stickers, 0);
-    const totalMobily = filteredTechnicians.reduce((sum, t) => sum + t.mobilySim, 0);
-    const totalSTC = filteredTechnicians.reduce((sum, t) => sum + t.stcSim, 0);
-    const totalZain = filteredTechnicians.reduce((sum, t) => sum + t.zainSim, 0);
+    const totalN950 = filteredTechnicians.reduce((sum, t) => sum + getTotalForItem(t.n950Boxes, t.n950Units), 0);
+    const totalI9000s = filteredTechnicians.reduce((sum, t) => sum + getTotalForItem(t.i9000sBoxes, t.i9000sUnits), 0);
+    const totalI9100 = filteredTechnicians.reduce((sum, t) => sum + getTotalForItem(t.i9100Boxes, t.i9100Units), 0);
+    const totalRoll = filteredTechnicians.reduce((sum, t) => sum + getTotalForItem(t.rollPaperBoxes, t.rollPaperUnits), 0);
+    const totalStickers = filteredTechnicians.reduce((sum, t) => sum + getTotalForItem(t.stickersBoxes, t.stickersUnits), 0);
+    const totalNewBatteries = filteredTechnicians.reduce((sum, t) => sum + getTotalForItem(t.newBatteriesBoxes, t.newBatteriesUnits), 0);
+    const totalMobily = filteredTechnicians.reduce((sum, t) => sum + getTotalForItem(t.mobilySimBoxes, t.mobilySimUnits), 0);
+    const totalSTC = filteredTechnicians.reduce((sum, t) => sum + getTotalForItem(t.stcSimBoxes, t.stcSimUnits), 0);
+    const totalZain = filteredTechnicians.reduce((sum, t) => sum + getTotalForItem(t.zainSimBoxes, t.zainSimUnits), 0);
     
     // Add title row
-    worksheet.mergeCells('A1:K1');
+    worksheet.mergeCells('A1:M1');
     const titleCell = worksheet.getCell('A1');
     titleCell.value = 'نظام إدارة مخزون الفنيين';
     titleCell.font = { size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
@@ -105,7 +109,7 @@ export default function TechniciansTable() {
     worksheet.getRow(1).height = 35;
     
     // Add date row
-    worksheet.mergeCells('A2:K2');
+    worksheet.mergeCells('A2:M2');
     const dateCell = worksheet.getCell('A2');
     dateCell.value = `تاريخ التقرير: ${currentDate}`;
     dateCell.font = { size: 12, bold: true };
@@ -115,7 +119,7 @@ export default function TechniciansTable() {
     
     // Add header row
     const headerRow = worksheet.getRow(4);
-    headerRow.values = ['#', 'اسم الفني', 'المدينة', 'أجهزة N950', 'أجهزة I900', 'أوراق رول', 'ملصقات مداى', 'شرائح موبايلي', 'شرائح STC', 'شرائح زين', 'ملاحظات'];
+    headerRow.values = ['#', 'اسم الفني', 'المدينة', 'أجهزة N950', 'أجهزة I9000s', 'أجهزة I9100', 'أوراق رول', 'ملصقات مداى', 'بطاريات جديدة', 'شرائح موبايلي', 'شرائح STC', 'شرائح زين', 'ملاحظات'];
     headerRow.font = { bold: true, size: 11, color: { argb: 'FFFFFFFF' } };
     headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF475569' } };
     headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -137,13 +141,15 @@ export default function TechniciansTable() {
         index + 1,
         tech.technicianName,
         tech.city,
-        tech.n950Devices,
-        tech.i900Devices,
-        tech.rollPaper,
-        tech.stickers,
-        tech.mobilySim,
-        tech.stcSim,
-        tech.zainSim,
+        getTotalForItem(tech.n950Boxes, tech.n950Units),
+        getTotalForItem(tech.i9000sBoxes, tech.i9000sUnits),
+        getTotalForItem(tech.i9100Boxes, tech.i9100Units),
+        getTotalForItem(tech.rollPaperBoxes, tech.rollPaperUnits),
+        getTotalForItem(tech.stickersBoxes, tech.stickersUnits),
+        getTotalForItem(tech.newBatteriesBoxes, tech.newBatteriesUnits),
+        getTotalForItem(tech.mobilySimBoxes, tech.mobilySimUnits),
+        getTotalForItem(tech.stcSimBoxes, tech.stcSimUnits),
+        getTotalForItem(tech.zainSimBoxes, tech.zainSimUnits),
         tech.notes || ''
       ]);
       
@@ -168,14 +174,14 @@ export default function TechniciansTable() {
       // Right align text columns
       row.getCell(2).alignment = { horizontal: 'right', vertical: 'middle' };
       row.getCell(3).alignment = { horizontal: 'right', vertical: 'middle' };
-      row.getCell(11).alignment = { horizontal: 'right', vertical: 'middle' };
+      row.getCell(13).alignment = { horizontal: 'right', vertical: 'middle' };
     });
     
     // Add statistics section
     const statsStartRow = worksheet.lastRow!.number + 2;
     
     // Stats title
-    worksheet.mergeCells(`A${statsStartRow}:K${statsStartRow}`);
+    worksheet.mergeCells(`A${statsStartRow}:M${statsStartRow}`);
     const statsTitle = worksheet.getCell(`A${statsStartRow}`);
     statsTitle.value = 'الإحصائيات الإجمالية';
     statsTitle.font = { size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
@@ -185,9 +191,10 @@ export default function TechniciansTable() {
     
     // Stats data
     const statsData = [
-      ['عدد الفنيين', filteredTechnicians.length, 'أجهزة N950', totalN950, 'أجهزة I900', totalI900],
-      ['أوراق رول', totalRoll, 'ملصقات مداى', totalStickers, 'شرائح موبايلي', totalMobily],
-      ['شرائح STC', totalSTC, 'شرائح زين', totalZain, '', '']
+      ['عدد الفنيين', filteredTechnicians.length, 'أجهزة N950', totalN950, 'أجهزة I9000s', totalI9000s],
+      ['أجهزة I9100', totalI9100, 'أوراق رول', totalRoll, 'ملصقات مداى', totalStickers],
+      ['بطاريات جديدة', totalNewBatteries, 'شرائح موبايلي', totalMobily, 'شرائح STC', totalSTC],
+      ['شرائح زين', totalZain, '', '', '', '']
     ];
     
     statsData.forEach((data, idx) => {
@@ -229,9 +236,11 @@ export default function TechniciansTable() {
       { width: 25 },  // اسم الفني
       { width: 18 },  // المدينة
       { width: 14 },  // N950
-      { width: 14 },  // I900
+      { width: 14 },  // I9000s
+      { width: 14 },  // I9100
       { width: 14 },  // أوراق رول
       { width: 16 },  // ملصقات مداى
+      { width: 16 },  // بطاريات جديدة
       { width: 16 },  // موبايلي
       { width: 14 },  // STC
       { width: 14 },  // زين
@@ -369,37 +378,37 @@ export default function TechniciansTable() {
                       <div>
                         <span className="text-muted-foreground">N950: </span>
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100 text-[10px] font-semibold">
-                          {tech.n950Devices}
+                          {getTotalForItem(tech.n950Boxes, tech.n950Units)}
                         </span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">I900: </span>
+                        <span className="text-muted-foreground">I9000s: </span>
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-100 text-[10px] font-semibold">
-                          {tech.i900Devices}
+                          {getTotalForItem(tech.i9000sBoxes, tech.i9000sUnits)}
                         </span>
                       </div>
                       <div>
                         <span className="text-muted-foreground">رول: </span>
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100 text-[10px] font-semibold">
-                          {tech.rollPaper}
+                          {getTotalForItem(tech.rollPaperBoxes, tech.rollPaperUnits)}
                         </span>
                       </div>
                       <div>
                         <span className="text-muted-foreground">ملصقات: </span>
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-100 text-[10px] font-semibold">
-                          {tech.stickers}
+                          {getTotalForItem(tech.stickersBoxes, tech.stickersUnits)}
                         </span>
                       </div>
                       <div>
                         <span className="text-muted-foreground">موبايلي: </span>
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 text-[10px] font-semibold">
-                          {tech.mobilySim}
+                          {getTotalForItem(tech.mobilySimBoxes, tech.mobilySimUnits)}
                         </span>
                       </div>
                       <div>
                         <span className="text-muted-foreground">STC: </span>
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-cyan-100 dark:bg-cyan-900 text-cyan-800 dark:text-cyan-100 text-[10px] font-semibold">
-                          {tech.stcSim}
+                          {getTotalForItem(tech.stcSimBoxes, tech.stcSimUnits)}
                         </span>
                       </div>
                     </div>
@@ -422,7 +431,7 @@ export default function TechniciansTable() {
                         <th className="whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-right text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">الفني</th>
                         <th className="hidden md:table-cell whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-right text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">المدينة</th>
                         <th className="whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">N950</th>
-                        <th className="whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">I900</th>
+                        <th className="whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">I9000s</th>
                         <th className="hidden lg:table-cell whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">رول</th>
                         <th className="hidden lg:table-cell whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">ملصقات</th>
                         <th className="hidden xl:table-cell whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">موبايلي</th>
@@ -442,32 +451,32 @@ export default function TechniciansTable() {
                           </td>
                           <td className="whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm" data-testid={`text-n950-${tech.id}`}>
                             <span className="inline-flex items-center justify-center px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100 text-[10px] sm:text-sm font-semibold">
-                              {tech.n950Devices}
+                              {getTotalForItem(tech.n950Boxes, tech.n950Units)}
                             </span>
                           </td>
-                          <td className="whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm" data-testid={`text-i900-${tech.id}`}>
+                          <td className="whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm" data-testid={`text-i9000s-${tech.id}`}>
                             <span className="inline-flex items-center justify-center px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-100 text-[10px] sm:text-sm font-semibold">
-                              {tech.i900Devices}
+                              {getTotalForItem(tech.i9000sBoxes, tech.i9000sUnits)}
                             </span>
                           </td>
                           <td className="hidden lg:table-cell whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-center text-xs sm:text-sm" data-testid={`text-roll-${tech.id}`}>
                             <span className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100 font-semibold">
-                              {tech.rollPaper}
+                              {getTotalForItem(tech.rollPaperBoxes, tech.rollPaperUnits)}
                             </span>
                           </td>
                           <td className="hidden lg:table-cell whitespace-nowrap px-2 py-2 sm:px-4 sm:py-3 text-center text-xs sm:text-sm" data-testid={`text-stickers-${tech.id}`}>
                             <span className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-100 font-semibold">
-                              {tech.stickers}
+                              {getTotalForItem(tech.stickersBoxes, tech.stickersUnits)}
                             </span>
                           </td>
                           <td className="hidden xl:table-cell whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm" data-testid={`text-mobily-${tech.id}`}>
                             <span className="inline-flex items-center justify-center px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 text-[10px] sm:text-sm font-semibold">
-                              {tech.mobilySim}
+                              {getTotalForItem(tech.mobilySimBoxes, tech.mobilySimUnits)}
                             </span>
                           </td>
                           <td className="hidden xl:table-cell whitespace-nowrap px-1 py-2 sm:px-4 sm:py-3 text-center text-[10px] sm:text-sm" data-testid={`text-stc-${tech.id}`}>
                             <span className="inline-flex items-center justify-center px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-cyan-100 dark:bg-cyan-900 text-cyan-800 dark:text-cyan-100 text-[10px] sm:text-sm font-semibold">
-                              {tech.stcSim}
+                              {getTotalForItem(tech.stcSimBoxes, tech.stcSimUnits)}
                             </span>
                           </td>
                           <td className="hidden xl:table-cell px-2 py-2 sm:px-4 sm:py-3 text-xs sm:text-sm text-muted-foreground max-w-xs truncate" data-testid={`text-notes-${tech.id}`}>
