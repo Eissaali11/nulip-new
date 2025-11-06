@@ -1192,11 +1192,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/warehouse-transfers", requireAuth, requireAdmin, async (req, res) => {
     try {
       const user = (req as any).user;
-      const validatedData = insertWarehouseTransferSchema.parse(req.body);
-      await storage.transferFromWarehouse({
-        ...validatedData,
-        performedBy: user.id,
-      });
+      const { warehouseId, technicianId, notes, ...items } = req.body;
+
+      if (!warehouseId || !technicianId) {
+        return res.status(400).json({ message: "warehouseId and technicianId are required" });
+      }
+
+      const itemTypes = ['n950', 'i9000s', 'i9100', 'rollPaper', 'stickers', 'newBatteries', 'mobilySim', 'stcSim', 'zainSim'];
+      const transfers: any[] = [];
+
+      for (const itemType of itemTypes) {
+        const quantity = items[itemType];
+        const packagingType = items[`${itemType}PackagingType`];
+
+        if (quantity && quantity > 0 && packagingType) {
+          transfers.push({
+            warehouseId,
+            technicianId,
+            itemType,
+            packagingType,
+            quantity,
+            performedBy: user.id,
+            notes,
+          });
+        }
+      }
+
+      if (transfers.length === 0) {
+        return res.status(400).json({ message: "No items to transfer" });
+      }
+
+      for (const transfer of transfers) {
+        await storage.transferFromWarehouse(transfer);
+      }
+
       res.json({ success: true, message: "Transfer completed successfully" });
     } catch (error) {
       console.error("Error creating warehouse transfer:", error);
