@@ -146,7 +146,7 @@ export default function WarehousesPage() {
                 >
                   <ArrowRight className="h-4 w-4 ml-2" />
                   <LayoutDashboard className="h-4 w-4 ml-2" />
-                  العودة للوحة الإدارة
+                  الرجوع للقائمة الرئيسية
                 </Button>
               </motion.div>
             </Link>
