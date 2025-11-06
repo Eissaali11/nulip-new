@@ -314,6 +314,7 @@ export const insertWarehouseSchema = createInsertSchema(warehouses).omit({
 export const insertWarehouseInventorySchema = createInsertSchema(warehouseInventory).omit({
   id: true,
   updatedAt: true,
+  warehouseId: true,
 });
 
 export const insertWarehouseTransferSchema = createInsertSchema(warehouseTransfers).omit({
