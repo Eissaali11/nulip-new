@@ -28,6 +28,7 @@ import { useAuth } from "@/lib/auth";
 const formSchema = insertTechnicianInventorySchema.extend({
   n950Devices: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
   i900Devices: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
+  i9000sDevices: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
   rollPaper: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
   stickers: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
   mobilySim: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
@@ -52,6 +53,7 @@ export default function AddTechnicianModal({ open, onOpenChange }: AddTechnician
     defaultValues: {
       n950Devices: 0,
       i900Devices: 0,
+      i9000sDevices: 0,
       rollPaper: 0,
       stickers: 0,
       mobilySim: 0,
@@ -156,6 +158,27 @@ export default function AddTechnicianModal({ open, onOpenChange }: AddTechnician
                         onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
                         value={field.value || 0}
                         data-testid="input-i900"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="i9000sDevices"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>أجهزة I9000s</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="0"
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                        value={field.value || 0}
+                        data-testid="input-i9000s"
                       />
                     </FormControl>
                     <FormMessage />
