@@ -52,7 +52,7 @@ export default function NotificationsPage() {
       return apiRequest("POST", `/api/warehouse-transfers/${transferId}/accept`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/warehouse-transfers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/warehouse-transfers", user?.id] });
       queryClient.invalidateQueries({ queryKey: [`/api/technicians/${user?.id}`] });
       toast({
         title: "تم القبول",
@@ -66,7 +66,7 @@ export default function NotificationsPage() {
       return apiRequest("POST", `/api/warehouse-transfers/${transferId}/reject`, { reason });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/warehouse-transfers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/warehouse-transfers", user?.id] });
       setRejectDialogOpen(false);
       setRejectionReason("");
       toast({
