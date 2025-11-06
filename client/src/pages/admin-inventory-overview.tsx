@@ -160,10 +160,24 @@ export default function AdminInventoryOverview() {
     };
     titleCell.font = { ...titleCell.font, color: { argb: 'FFFFFFFF' } };
 
-    // Add date
+    // Add date (Arabic and English)
     worksheet.mergeCells('A2:L2');
     const dateCell = worksheet.getCell('A2');
-    dateCell.value = `تاريخ التقرير: ${new Date().toLocaleDateString('ar-SA')} - ${new Date().toLocaleTimeString('ar-SA')}`;
+    const currentDate = new Date();
+    const arabicDate = currentDate.toLocaleDateString('ar-SA', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    const englishDate = currentDate.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    const time = currentDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+    dateCell.value = `تاريخ التقرير: ${arabicDate} | ${englishDate} - ${time}`;
     dateCell.alignment = { horizontal: 'center' };
     dateCell.font = { bold: true };
 
