@@ -17,7 +17,6 @@ import { useAuth } from "@/lib/auth";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import rasscoLogo from "@assets/image_1762442473114.png";
-import neoleapLogo from "@assets/image_1762442479737.png";
 import madaDevice from "@assets/image_1762442486277.png";
 
 interface WarehouseTransfer {
@@ -133,7 +132,7 @@ export default function Dashboard() {
           </div>
 
           <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
-            {/* Left Side - Logos Animation */}
+            {/* Left Side - Logo Animation */}
             <motion.div 
               className="flex items-center gap-8"
               initial={{ opacity: 0, x: -50 }}
@@ -146,14 +145,6 @@ export default function Dashboard() {
                 transition={{ type: "spring", stiffness: 300 }}
               >
                 <img src={rasscoLogo} alt="RASSCO" className="h-16 w-auto" />
-              </motion.div>
-              
-              <motion.div
-                className="bg-white/95 backdrop-blur-sm rounded-2xl p-4 shadow-2xl"
-                whileHover={{ scale: 1.05, rotate: -2 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <img src={neoleapLogo} alt="Neoleap" className="h-16 w-auto" />
               </motion.div>
             </motion.div>
 

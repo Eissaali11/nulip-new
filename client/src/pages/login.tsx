@@ -11,7 +11,6 @@ import { loginSchema, type LoginRequest } from '@shared/schema';
 import { LogIn, User, Lock, Loader2, Shield, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import rasscoLogo from "@assets/image_1762442473114.png";
-import neoleapLogo from "@assets/image_1762442479737.png";
 import madaDevice from "@assets/image_1762442486277.png";
 
 export default function Login() {
@@ -153,7 +152,7 @@ export default function Login() {
             </p>
           </motion.div>
 
-          {/* Logos */}
+          {/* Logo */}
           <motion.div 
             className="flex items-center gap-6 flex-wrap"
             initial={{ opacity: 0, y: 20 }}
@@ -166,14 +165,6 @@ export default function Login() {
               transition={{ type: "spring", stiffness: 300 }}
             >
               <img src={rasscoLogo} alt="RASSCO" className="h-16 w-auto" />
-            </motion.div>
-            
-            <motion.div
-              className="bg-white/95 backdrop-blur-sm rounded-2xl p-5 shadow-2xl"
-              whileHover={{ scale: 1.1, rotate: -5 }}
-              transition={{ type: "spring", stiffness: 300 }}
-            >
-              <img src={neoleapLogo} alt="Neoleap" className="h-16 w-auto" />
             </motion.div>
           </motion.div>
 
@@ -376,7 +367,7 @@ export default function Login() {
             </CardContent>
           </Card>
 
-          {/* Mobile Logos */}
+          {/* Mobile Logo */}
           <motion.div 
             className="lg:hidden flex items-center justify-center gap-4 mt-6"
             initial={{ opacity: 0, y: 20 }}
@@ -388,13 +379,6 @@ export default function Login() {
               whileHover={{ scale: 1.1, rotate: 5 }}
             >
               <img src={rasscoLogo} alt="RASSCO" className="h-10 w-auto" />
-            </motion.div>
-            
-            <motion.div
-              className="bg-white/95 backdrop-blur-sm rounded-xl p-3 shadow-xl"
-              whileHover={{ scale: 1.1, rotate: -5 }}
-            >
-              <img src={neoleapLogo} alt="Neoleap" className="h-10 w-auto" />
             </motion.div>
           </motion.div>
         </motion.div>
