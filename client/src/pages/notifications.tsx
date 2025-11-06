@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, CheckCircle, XCircle, Warehouse, Package, Bell, BellOff, ArrowRight, Info, Calendar, Hash } from "lucide-react";
+import { Clock, CheckCircle, XCircle, Warehouse, Package, Bell, BellOff, ArrowRight, Info, Calendar, Hash, Trash2, CheckSquare } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useState } from "react";
 import { Link } from "wouter";
@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 
@@ -42,6 +43,9 @@ export default function NotificationsPage() {
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [selectedTransfer, setSelectedTransfer] = useState<WarehouseTransfer | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkRejectDialogOpen, setBulkRejectDialogOpen] = useState(false);
+  const [bulkRejectionReason, setBulkRejectionReason] = useState("");
 
   const { data: pendingTransfers, isLoading } = useQuery<WarehouseTransfer[]>({
     queryKey: user?.id ? [`/api/warehouse-transfers`] : [],
@@ -117,6 +121,75 @@ export default function NotificationsPage() {
   const handleCardClick = (transferGroup: any) => {
     setSelectedTransfer(transferGroup);
     setDetailsDialogOpen(true);
+  };
+
+  const handleToggleSelect = (groupId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(groupId)) {
+      newSelected.delete(groupId);
+    } else {
+      newSelected.add(groupId);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.size === groupedTransfersList.length) {
+      setSelectedIds(new Set());
+    } else {
+      const allIds = new Set(groupedTransfersList.map(g => g.id));
+      setSelectedIds(allIds);
+    }
+  };
+
+  const handleBulkReject = () => {
+    if (selectedIds.size === 0) {
+      toast({
+        title: "تنبيه",
+        description: "يرجى تحديد عنصر واحد على الأقل",
+        variant: "destructive",
+      });
+      return;
+    }
+    setBulkRejectDialogOpen(true);
+  };
+
+  const handleConfirmBulkReject = async () => {
+    if (!bulkRejectionReason.trim()) {
+      toast({
+        title: "تنبيه",
+        description: "يرجى إدخال سبب الرفض",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      for (const groupId of selectedIds) {
+        const group = groupedTransfersList.find(g => g.id === groupId);
+        if (group) {
+          for (const item of group.items) {
+            await rejectMutation.mutateAsync({ transferId: item.id, reason: bulkRejectionReason });
+          }
+        }
+      }
+      
+      setSelectedIds(new Set());
+      setBulkRejectDialogOpen(false);
+      setBulkRejectionReason("");
+      
+      toast({
+        title: "✅ تم الرفض",
+        description: `تم رفض ${selectedIds.size} عملية نقل بنجاح`,
+      });
+    } catch (error) {
+      toast({
+        title: "خطأ",
+        description: "حدث خطأ أثناء رفض العمليات",
+        variant: "destructive",
+      });
+    }
   };
 
   const getItemNameAr = (itemType: string) => {
@@ -217,11 +290,40 @@ export default function NotificationsPage() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.3 }}
+              className="flex flex-wrap items-center gap-3 mt-2 sm:mt-4"
             >
-              <Badge className="bg-white text-orange-600 text-base sm:text-lg px-4 py-2 mt-2 sm:mt-4 shadow-lg" data-testid="badge-pending-count">
+              <Badge className="bg-white text-orange-600 text-base sm:text-lg px-4 py-2 shadow-lg" data-testid="badge-pending-count">
                 <Bell className="h-4 w-4 mr-2" />
                 {groupedTransfersList.length} طلب معلق
               </Badge>
+              
+              <Button
+                onClick={handleSelectAll}
+                variant="outline"
+                className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
+                data-testid="button-select-all"
+              >
+                <CheckSquare className="h-4 w-4 ml-2" />
+                {selectedIds.size === groupedTransfersList.length ? "إلغاء التحديد" : "تحديد الكل"}
+              </Button>
+              
+              {selectedIds.size > 0 && (
+                <Badge className="bg-white text-red-600 text-base px-3 py-2 shadow-lg">
+                  {selectedIds.size} محدد
+                </Badge>
+              )}
+              
+              {selectedIds.size > 0 && (
+                <Button
+                  onClick={handleBulkReject}
+                  variant="destructive"
+                  className="bg-red-500 hover:bg-red-600 text-white shadow-lg"
+                  data-testid="button-bulk-reject"
+                >
+                  <Trash2 className="h-4 w-4 ml-2" />
+                  رفض المحدد ({selectedIds.size})
+                </Button>
+              )}
             </motion.div>
           )}
         </div>
@@ -273,12 +375,22 @@ export default function NotificationsPage() {
                   className="cursor-pointer"
                   data-testid={`card-transfer-${transferGroup.id}`}
                 >
-                  <Card className="h-full border-2 border-orange-200 hover:border-orange-400 hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-white to-orange-50/30 overflow-hidden">
+                  <Card className={`h-full border-2 hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-white to-orange-50/30 overflow-hidden ${selectedIds.has(transferGroup.id) ? 'border-orange-500 ring-4 ring-orange-200' : 'border-orange-200 hover:border-orange-400'}`}>
                     <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-orange-400 via-amber-400 to-orange-500"></div>
                     
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-3">
+                          <div 
+                            onClick={(e) => handleToggleSelect(transferGroup.id, e)}
+                            className="flex items-center justify-center"
+                            data-testid={`checkbox-transfer-${transferGroup.id}`}
+                          >
+                            <Checkbox
+                              checked={selectedIds.has(transferGroup.id)}
+                              className="h-5 w-5 border-2 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                            />
+                          </div>
                           <div className="p-3 bg-orange-100 rounded-xl">
                             <Warehouse className="h-6 w-6 text-orange-600" />
                           </div>
@@ -519,6 +631,53 @@ export default function NotificationsPage() {
               data-testid="button-confirm-reject"
             >
               {rejectMutation.isPending ? "جاري الرفض..." : "تأكيد الرفض"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Reject Dialog */}
+      <Dialog open={bulkRejectDialogOpen} onOpenChange={setBulkRejectDialogOpen}>
+        <DialogContent dir="rtl" className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl flex items-center gap-2">
+              <div className="p-2 bg-red-100 rounded-lg">
+                <Trash2 className="h-6 w-6 text-red-600" />
+              </div>
+              رفض الطلبات المحددة
+            </DialogTitle>
+            <DialogDescription className="text-lg">
+              سيتم رفض <strong className="text-red-600">{selectedIds.size}</strong> طلب نقل. يرجى إدخال سبب الرفض
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Textarea
+              value={bulkRejectionReason}
+              onChange={(e) => setBulkRejectionReason(e.target.value)}
+              placeholder="مثال: الكمية غير متوفرة، أو التوقيت غير مناسب..."
+              className="min-h-[150px] text-base resize-none"
+              data-testid="input-bulk-rejection-reason"
+            />
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setBulkRejectDialogOpen(false);
+                setBulkRejectionReason("");
+              }}
+              data-testid="button-cancel-bulk-reject"
+            >
+              إلغاء
+            </Button>
+            <Button
+              onClick={handleConfirmBulkReject}
+              disabled={!bulkRejectionReason.trim() || rejectMutation.isPending}
+              className="bg-red-600 hover:bg-red-700"
+              data-testid="button-confirm-bulk-reject"
+            >
+              <Trash2 className="h-4 w-4 ml-2" />
+              {rejectMutation.isPending ? "جاري الرفض..." : `رفض ${selectedIds.size} طلب`}
             </Button>
           </DialogFooter>
         </DialogContent>
