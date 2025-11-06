@@ -45,15 +45,24 @@ interface TechnicianInventoryData {
   } | null;
   movingInventory: {
     id: string;
-    n950Devices: number;
-    i9000sDevices: number;
-    i9100Devices: number;
-    rollPaper: number;
-    stickers: number;
-    newBatteries: number;
-    mobilySim: number;
-    stcSim: number;
-    zainSim: number;
+    n950Boxes: number;
+    n950Units: number;
+    i9000sBoxes: number;
+    i9000sUnits: number;
+    i9100Boxes: number;
+    i9100Units: number;
+    rollPaperBoxes: number;
+    rollPaperUnits: number;
+    stickersBoxes: number;
+    stickersUnits: number;
+    newBatteriesBoxes: number;
+    newBatteriesUnits: number;
+    mobilySimBoxes: number;
+    mobilySimUnits: number;
+    stcSimBoxes: number;
+    stcSimUnits: number;
+    zainSimBoxes: number;
+    zainSimUnits: number;
   } | null;
   alertLevel: 'good' | 'warning' | 'critical';
 }
@@ -114,15 +123,15 @@ export default function AdminInventoryOverview() {
   const calculateMovingTotal = (inv: TechnicianInventoryData['movingInventory']) => {
     if (!inv) return 0;
     return (
-      (inv.n950Devices || 0) +
-      (inv.i9000sDevices || 0) +
-      (inv.i9100Devices || 0) +
-      (inv.rollPaper || 0) +
-      (inv.stickers || 0) +
-      (inv.newBatteries || 0) +
-      (inv.mobilySim || 0) +
-      (inv.stcSim || 0) +
-      (inv.zainSim || 0)
+      getTotalForItem(inv.n950Boxes, inv.n950Units) +
+      getTotalForItem(inv.i9000sBoxes, inv.i9000sUnits) +
+      getTotalForItem(inv.i9100Boxes, inv.i9100Units) +
+      getTotalForItem(inv.rollPaperBoxes, inv.rollPaperUnits) +
+      getTotalForItem(inv.stickersBoxes, inv.stickersUnits) +
+      getTotalForItem(inv.newBatteriesBoxes, inv.newBatteriesUnits) +
+      getTotalForItem(inv.mobilySimBoxes, inv.mobilySimUnits) +
+      getTotalForItem(inv.stcSimBoxes, inv.stcSimUnits) +
+      getTotalForItem(inv.zainSimBoxes, inv.zainSimUnits)
     );
   };
 
@@ -210,9 +219,9 @@ export default function AdminInventoryOverview() {
         tech.fixedInventory ? getTotalForItem(tech.fixedInventory.n950Boxes, tech.fixedInventory.n950Units) : 0,
         tech.fixedInventory ? getTotalForItem(tech.fixedInventory.i9000sBoxes, tech.fixedInventory.i9000sUnits) : 0,
         tech.fixedInventory ? getTotalForItem(tech.fixedInventory.i9100Boxes, tech.fixedInventory.i9100Units) : 0,
-        tech.movingInventory?.n950Devices || 0,
-        tech.movingInventory?.i9000sDevices || 0,
-        tech.movingInventory?.i9100Devices || 0,
+        tech.movingInventory ? getTotalForItem(tech.movingInventory.n950Boxes, tech.movingInventory.n950Units) : 0,
+        tech.movingInventory ? getTotalForItem(tech.movingInventory.i9000sBoxes, tech.movingInventory.i9000sUnits) : 0,
+        tech.movingInventory ? getTotalForItem(tech.movingInventory.i9100Boxes, tech.movingInventory.i9100Units) : 0,
         fixedTotal + movingTotal
       ]);
 
@@ -638,47 +647,56 @@ export default function AdminInventoryOverview() {
                               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                 <MovingInventoryItem 
                                   label="N950" 
-                                  value={tech.movingInventory.n950Devices || 0}
+                                  boxes={tech.movingInventory.n950Boxes}
+                                  units={tech.movingInventory.n950Units}
                                   testId={`moving-n950-${index}`}
                                 />
                                 <MovingInventoryItem 
                                   label="I9000s" 
-                                  value={tech.movingInventory.i9000sDevices || 0}
+                                  boxes={tech.movingInventory.i9000sBoxes}
+                                  units={tech.movingInventory.i9000sUnits}
                                   testId={`moving-i9000s-${index}`}
                                 />
                                 <MovingInventoryItem 
                                   label="I9100" 
-                                  value={tech.movingInventory.i9100Devices || 0}
+                                  boxes={tech.movingInventory.i9100Boxes}
+                                  units={tech.movingInventory.i9100Units}
                                   testId={`moving-i9100-${index}`}
                                 />
                                 <MovingInventoryItem 
                                   label="أوراق رول" 
-                                  value={tech.movingInventory.rollPaper || 0}
+                                  boxes={tech.movingInventory.rollPaperBoxes}
+                                  units={tech.movingInventory.rollPaperUnits}
                                   testId={`moving-rollpaper-${index}`}
                                 />
                                 <MovingInventoryItem 
                                   label="ملصقات" 
-                                  value={tech.movingInventory.stickers || 0}
+                                  boxes={tech.movingInventory.stickersBoxes}
+                                  units={tech.movingInventory.stickersUnits}
                                   testId={`moving-stickers-${index}`}
                                 />
                                 <MovingInventoryItem 
                                   label="بطاريات جديدة" 
-                                  value={tech.movingInventory.newBatteries || 0}
+                                  boxes={tech.movingInventory.newBatteriesBoxes}
+                                  units={tech.movingInventory.newBatteriesUnits}
                                   testId={`moving-batteries-${index}`}
                                 />
                                 <MovingInventoryItem 
                                   label="موبايلي" 
-                                  value={tech.movingInventory.mobilySim || 0}
+                                  boxes={tech.movingInventory.mobilySimBoxes}
+                                  units={tech.movingInventory.mobilySimUnits}
                                   testId={`moving-mobily-${index}`}
                                 />
                                 <MovingInventoryItem 
                                   label="STC" 
-                                  value={tech.movingInventory.stcSim || 0}
+                                  boxes={tech.movingInventory.stcSimBoxes}
+                                  units={tech.movingInventory.stcSimUnits}
                                   testId={`moving-stc-${index}`}
                                 />
                                 <MovingInventoryItem 
                                   label="زين" 
-                                  value={tech.movingInventory.zainSim || 0}
+                                  boxes={tech.movingInventory.zainSimBoxes}
+                                  units={tech.movingInventory.zainSimUnits}
                                   testId={`moving-zain-${index}`}
                                 />
                               </div>
@@ -720,7 +738,8 @@ function InventoryItem({ label, boxes, units, testId }: { label: string; boxes: 
   );
 }
 
-function MovingInventoryItem({ label, value, testId }: { label: string; value: number; testId: string }) {
+function MovingInventoryItem({ label, boxes, units, testId }: { label: string; boxes: number; units: number; testId: string }) {
+  const total = (boxes || 0) + (units || 0);
   return (
     <motion.div 
       className="bg-white dark:bg-slate-800 p-3 rounded-xl border-2 border-green-200 dark:border-green-700 shadow-md hover:shadow-lg transition-shadow" 
@@ -730,8 +749,10 @@ function MovingInventoryItem({ label, value, testId }: { label: string; value: n
     >
       <div className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{label}</div>
       <div className="text-sm">
-        <span className="font-black text-2xl text-green-700 dark:text-green-300">{value || 0}</span>
-        <span className="text-xs text-slate-500 dark:text-slate-500 mr-1 block mt-1">وحدة</span>
+        <span className="font-black text-2xl text-green-700 dark:text-green-300">{total}</span>
+        <span className="text-xs text-slate-500 dark:text-slate-500 mr-1 block mt-1">
+          {boxes || 0} كرتون + {units || 0} مفرد
+        </span>
       </div>
     </motion.div>
   );
