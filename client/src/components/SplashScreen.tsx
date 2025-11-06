@@ -80,23 +80,14 @@ export function SplashScreen() {
 
         <div className="flex flex-col items-center gap-3">
           <h1
-            className="splash-text text-3xl md:text-4xl font-bold text-gray-800 dark:text-white text-center"
+            className="splash-text text-5xl md:text-6xl font-bold text-gray-800 dark:text-white text-center"
             style={{
               fontFamily: "'Poppins', sans-serif",
             }}
             data-testid="splash-title"
           >
-            عيسى القحطاني
+            Evest
           </h1>
-          <p
-            className="splash-subtitle text-xl md:text-2xl font-semibold text-[#18B2B0] dark:text-teal-400 text-center"
-            style={{
-              fontFamily: "'Poppins', sans-serif",
-            }}
-            data-testid="splash-subtitle"
-          >
-            للخدمات التقنية
-          </p>
         </div>
 
         <div className="splash-subtitle mt-4">
