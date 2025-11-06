@@ -18,9 +18,11 @@ interface TechnicianWithFixedInventory {
 
 interface FixedInventorySummary {
   totalN950: number;
-  totalI900: number;
+  totalI9000s: number;
+  totalI9100: number;
   totalRollPaper: number;
   totalStickers: number;
+  totalNewBatteries: number;
   totalMobilySim: number;
   totalStcSim: number;
   totalZainSim: number;

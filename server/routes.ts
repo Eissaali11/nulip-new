@@ -814,7 +814,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .values({
             id: technicianId, // Use userId as id
             technicianName: techUser?.fullName || 'Unknown',
-            city: 'N/A',
+            city: techUser?.city || 'N/A',
             n950Devices: 0,
             i9000sDevices: 0,
             i9100Devices: 0,

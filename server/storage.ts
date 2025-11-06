@@ -590,12 +590,16 @@ export class MemStorage implements IStorage {
       technicianId: insertInventory.technicianId,
       n950Boxes: insertInventory.n950Boxes ?? 0,
       n950Units: insertInventory.n950Units ?? 0,
-      i900Boxes: insertInventory.i900Boxes ?? 0,
-      i900Units: insertInventory.i900Units ?? 0,
+      i9000sBoxes: insertInventory.i9000sBoxes ?? 0,
+      i9000sUnits: insertInventory.i9000sUnits ?? 0,
+      i9100Boxes: insertInventory.i9100Boxes ?? 0,
+      i9100Units: insertInventory.i9100Units ?? 0,
       rollPaperBoxes: insertInventory.rollPaperBoxes ?? 0,
       rollPaperUnits: insertInventory.rollPaperUnits ?? 0,
       stickersBoxes: insertInventory.stickersBoxes ?? 0,
       stickersUnits: insertInventory.stickersUnits ?? 0,
+      newBatteriesBoxes: insertInventory.newBatteriesBoxes ?? 0,
+      newBatteriesUnits: insertInventory.newBatteriesUnits ?? 0,
       mobilySimBoxes: insertInventory.mobilySimBoxes ?? 0,
       mobilySimUnits: insertInventory.mobilySimUnits ?? 0,
       stcSimBoxes: insertInventory.stcSimBoxes ?? 0,
@@ -660,9 +664,11 @@ export class MemStorage implements IStorage {
     
     return {
       totalN950: allInventories.reduce((sum, inv) => sum + inv.n950Boxes + inv.n950Units, 0),
-      totalI900: allInventories.reduce((sum, inv) => sum + inv.i900Boxes + inv.i900Units, 0),
+      totalI9000s: allInventories.reduce((sum, inv) => sum + inv.i9000sBoxes + inv.i9000sUnits, 0),
+      totalI9100: allInventories.reduce((sum, inv) => sum + inv.i9100Boxes + inv.i9100Units, 0),
       totalRollPaper: allInventories.reduce((sum, inv) => sum + inv.rollPaperBoxes + inv.rollPaperUnits, 0),
       totalStickers: allInventories.reduce((sum, inv) => sum + inv.stickersBoxes + inv.stickersUnits, 0),
+      totalNewBatteries: allInventories.reduce((sum, inv) => sum + inv.newBatteriesBoxes + inv.newBatteriesUnits, 0),
       totalMobilySim: allInventories.reduce((sum, inv) => sum + inv.mobilySimBoxes + inv.mobilySimUnits, 0),
       totalStcSim: allInventories.reduce((sum, inv) => sum + inv.stcSimBoxes + inv.stcSimUnits, 0),
       totalZainSim: allInventories.reduce((sum, inv) => sum + inv.zainSimBoxes + inv.zainSimUnits, 0),
@@ -686,9 +692,11 @@ export class MemStorage implements IStorage {
       if (fixedInventory) {
         const totalItems = 
           fixedInventory.n950Boxes + fixedInventory.n950Units +
-          fixedInventory.i900Boxes + fixedInventory.i900Units +
+          fixedInventory.i9000sBoxes + fixedInventory.i9000sUnits +
+          fixedInventory.i9100Boxes + fixedInventory.i9100Units +
           fixedInventory.rollPaperBoxes + fixedInventory.rollPaperUnits +
           fixedInventory.stickersBoxes + fixedInventory.stickersUnits +
+          fixedInventory.newBatteriesBoxes + fixedInventory.newBatteriesUnits +
           fixedInventory.mobilySimBoxes + fixedInventory.mobilySimUnits +
           fixedInventory.stcSimBoxes + fixedInventory.stcSimUnits +
           fixedInventory.zainSimBoxes + fixedInventory.zainSimUnits;
