@@ -33,7 +33,7 @@ const formSchema = insertTechnicianInventorySchema.extend({
   mobilySim: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
   stcSim: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
   zainSim: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
-}).omit({ technicianName: true });
+}).omit({ technicianName: true, city: true });
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -50,7 +50,6 @@ export default function AddTechnicianModal({ open, onOpenChange }: AddTechnician
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      city: "",
       n950Devices: 0,
       i900Devices: 0,
       rollPaper: 0,
@@ -64,11 +63,12 @@ export default function AddTechnicianModal({ open, onOpenChange }: AddTechnician
 
   const addTechMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      const dataWithTechnicianName = {
+      const dataWithUserInfo = {
         ...data,
-        technicianName: user?.fullName || ""
+        technicianName: user?.fullName || "",
+        city: user?.city || ""
       };
-      const response = await apiRequest("POST", "/api/technicians", dataWithTechnicianName);
+      const response = await apiRequest("POST", "/api/technicians", dataWithUserInfo);
       return response.json();
     },
     onSuccess: () => {
@@ -105,33 +105,19 @@ export default function AddTechnicianModal({ open, onOpenChange }: AddTechnician
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4">
-            {/* عرض اسم الفني المسجل */}
+            {/* عرض معلومات الفني المسجل */}
             <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 rounded-lg p-4 border-2 border-blue-200 dark:border-blue-800">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-blue-600 dark:text-blue-400 font-bold">اسم الفني:</span>
-                <span className="text-lg font-bold text-slate-800 dark:text-white">{user?.fullName || "غير محدد"}</span>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-blue-600 dark:text-blue-400 font-bold">اسم الفني:</span>
+                  <span className="text-lg font-bold text-slate-800 dark:text-white">{user?.fullName || "غير محدد"}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-blue-600 dark:text-blue-400 font-bold">المدينة:</span>
+                  <span className="text-lg font-bold text-slate-800 dark:text-white">{user?.city || "غير محدد"}</span>
+                </div>
               </div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">سيتم إضافة البيانات باسمك تلقائياً</p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 sm:gap-4">
-              <FormField
-                control={form.control}
-                name="city"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>المدينة</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="أدخل اسم المدينة"
-                        {...field}
-                        data-testid="input-city"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <p className="text-sm text-slate-600 dark:text-slate-400 mt-3">سيتم إضافة البيانات باسمك ومدينتك تلقائياً</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
