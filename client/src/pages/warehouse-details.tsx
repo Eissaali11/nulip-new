@@ -81,6 +81,18 @@ interface WarehouseData {
   inventory: WarehouseInventory | null;
 }
 
+interface WarehouseTransferRaw {
+  id: string;
+  warehouseId: string;
+  technicianId: string;
+  technicianName: string;
+  itemType: string;
+  packagingType: string;
+  quantity: number;
+  notes?: string;
+  createdAt: string;
+}
+
 interface WarehouseTransfer {
   id: string;
   warehouseId: string;
@@ -124,7 +136,31 @@ export default function WarehouseDetailsPage() {
 
   const { data: transfers = [], isLoading: transfersLoading } = useQuery<WarehouseTransfer[]>({
     queryKey: ["/api/warehouse-transfers"],
-    select: (data) => data.filter((t) => t.warehouseId === warehouseId),
+    select: (rawData: WarehouseTransferRaw[]) => {
+      const filtered = rawData.filter((t) => t.warehouseId === warehouseId);
+      
+      const grouped = filtered.reduce((acc, transfer) => {
+        const key = `${transfer.technicianId}-${transfer.createdAt}-${transfer.notes || ''}`;
+        
+        if (!acc[key]) {
+          acc[key] = {
+            id: transfer.id,
+            warehouseId: transfer.warehouseId,
+            technicianId: transfer.technicianId,
+            technicianName: transfer.technicianName,
+            notes: transfer.notes,
+            createdAt: transfer.createdAt,
+          };
+        }
+        
+        acc[key][transfer.itemType] = transfer.quantity;
+        acc[key][`${transfer.itemType}PackagingType`] = transfer.packagingType;
+        
+        return acc;
+      }, {} as Record<string, WarehouseTransfer>);
+      
+      return Object.values(grouped);
+    },
   });
 
   const deleteWarehouseMutation = useMutation({
