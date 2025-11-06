@@ -1,18 +1,18 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, CheckCircle, XCircle, Warehouse, Package, Bell, BellOff, ArrowRight, User } from "lucide-react";
+import { Clock, CheckCircle, XCircle, Warehouse, Package, Bell, BellOff, ArrowRight, Info, Calendar, Hash } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useState } from "react";
 import { Link } from "wouter";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 
@@ -38,8 +38,9 @@ interface WarehouseTransfer {
 export default function NotificationsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
-  const [selectedTransferId, setSelectedTransferId] = useState<string | null>(null);
+  const [selectedTransfer, setSelectedTransfer] = useState<WarehouseTransfer | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
 
   const { data: pendingTransfers, isLoading } = useQuery<WarehouseTransfer[]>({
@@ -55,8 +56,9 @@ export default function NotificationsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/warehouse-transfers"] });
       queryClient.invalidateQueries({ queryKey: [`/api/technicians/${user?.id}`] });
+      setDetailsDialogOpen(false);
       toast({
-        title: "تم القبول",
+        title: "✅ تم القبول",
         description: "تم قبول عملية النقل بنجاح وإضافتها إلى مخزونك المتحرك",
       });
     },
@@ -76,8 +78,9 @@ export default function NotificationsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/warehouse-transfers"] });
       setRejectDialogOpen(false);
+      setDetailsDialogOpen(false);
       setRejectionReason("");
-      setSelectedTransferId(null);
+      setSelectedTransfer(null);
       toast({
         title: "تم الرفض",
         description: "تم رفض عملية النقل",
@@ -92,10 +95,24 @@ export default function NotificationsPage() {
     },
   });
 
-  const handleReject = () => {
-    if (selectedTransferId && rejectionReason.trim()) {
-      rejectMutation.mutate({ transferId: selectedTransferId, reason: rejectionReason });
+  const handleAccept = (transfer: WarehouseTransfer) => {
+    acceptMutation.mutate(transfer.id);
+  };
+
+  const handleRejectClick = () => {
+    setDetailsDialogOpen(false);
+    setRejectDialogOpen(true);
+  };
+
+  const handleConfirmReject = () => {
+    if (selectedTransfer && rejectionReason.trim()) {
+      rejectMutation.mutate({ transferId: selectedTransfer.id, reason: rejectionReason });
     }
+  };
+
+  const handleCardClick = (transfer: WarehouseTransfer) => {
+    setSelectedTransfer(transfer);
+    setDetailsDialogOpen(true);
   };
 
   const getItemNameAr = (itemType: string) => {
@@ -111,6 +128,10 @@ export default function NotificationsPage() {
       zainSim: "شرائح زين",
     };
     return itemNames[itemType] || itemType;
+  };
+
+  const getItemIcon = (itemType: string) => {
+    return <Package className="h-5 w-5" />;
   };
 
   return (
@@ -178,199 +199,288 @@ export default function NotificationsPage() {
       </div>
 
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Card className="shadow-2xl border-2 border-orange-100 overflow-hidden bg-white">
-            <CardHeader className="bg-gradient-to-r from-orange-50 to-amber-50 border-b-2 border-orange-100">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div>
-                  <CardTitle className="text-2xl sm:text-3xl text-gray-900 flex items-center gap-3">
-                    <div className="p-2 bg-orange-100 rounded-xl">
-                      <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-orange-600" />
-                    </div>
-                    طلبات النقل المعلقة
-                  </CardTitle>
-                  <CardDescription className="text-base sm:text-lg mt-2">
-                    راجع وقم بالموافقة أو الرفض على طلبات النقل من المستودعات
-                  </CardDescription>
-                </div>
-                {pendingTransfers && pendingTransfers.length > 0 && (
-                  <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-300 text-lg px-4 py-2">
-                    {pendingTransfers.length} طلب
-                  </Badge>
-                )}
-              </div>
-            </CardHeader>
-            
-            <CardContent className="p-4 sm:p-6">
-              {isLoading ? (
-                <div className="space-y-4">
-                  {[1, 2, 3].map((i) => (
-                    <Skeleton key={i} className="h-24 w-full" />
-                  ))}
-                </div>
-              ) : !pendingTransfers || pendingTransfers.length === 0 ? (
-                <motion.div
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="text-center py-16"
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-64 w-full rounded-2xl" />
+            ))}
+          </div>
+        ) : !pendingTransfers || pendingTransfers.length === 0 ? (
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="text-center py-20"
+          >
+            <Card className="max-w-md mx-auto border-2 border-gray-200 shadow-xl">
+              <CardContent className="pt-12 pb-12">
+                <motion.div 
+                  className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-r from-gray-100 to-gray-200 mb-6"
+                  animate={{ rotate: [0, 10, -10, 0] }}
+                  transition={{ duration: 2, repeat: Infinity }}
                 >
-                  <motion.div 
-                    className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-r from-gray-100 to-gray-200 mb-6"
-                    animate={{ rotate: [0, 10, -10, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    <BellOff className="h-12 w-12 text-gray-400" />
-                  </motion.div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                    لا توجد طلبات معلقة
-                  </h3>
-                  <p className="text-lg text-gray-500">
-                    ستظهر هنا طلبات النقل التي تحتاج موافقتك
-                  </p>
+                  <BellOff className="h-12 w-12 text-gray-400" />
                 </motion.div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-orange-50/50">
-                        <TableHead className="text-right font-bold text-gray-700">المستودع</TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">الصنف</TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">النوع</TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">الكمية</TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">التاريخ</TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">ملاحظات</TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">الإجراءات</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {pendingTransfers.map((transfer, index) => (
-                        <motion.tr
-                          key={transfer.id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.3, delay: index * 0.05 }}
-                          className="hover:bg-orange-50/30 transition-colors"
-                          data-testid={`row-transfer-${transfer.id}`}
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                  لا توجد طلبات معلقة
+                </h3>
+                <p className="text-lg text-gray-500">
+                  ستظهر هنا طلبات النقل التي تحتاج موافقتك
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <AnimatePresence>
+              {pendingTransfers.map((transfer, index) => (
+                <motion.div
+                  key={transfer.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                  whileHover={{ y: -8, scale: 1.02 }}
+                  onClick={() => handleCardClick(transfer)}
+                  className="cursor-pointer"
+                  data-testid={`card-transfer-${transfer.id}`}
+                >
+                  <Card className="h-full border-2 border-orange-200 hover:border-orange-400 hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-white to-orange-50/30 overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-orange-400 via-amber-400 to-orange-500"></div>
+                    
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-3">
+                          <div className="p-3 bg-orange-100 rounded-xl">
+                            <Warehouse className="h-6 w-6 text-orange-600" />
+                          </div>
+                          <div>
+                            <CardTitle className="text-lg font-bold text-gray-900">
+                              {transfer.warehouseName || "مستودع"}
+                            </CardTitle>
+                            <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {format(new Date(transfer.createdAt), "d MMMM yyyy", { locale: ar })}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge className="bg-yellow-100 text-yellow-700 border-yellow-300">
+                          <Clock className="h-3 w-3 mr-1" />
+                          معلق
+                        </Badge>
+                      </div>
+                    </CardHeader>
+
+                    <CardContent className="space-y-3">
+                      <div className="flex items-center justify-between p-3 bg-gradient-to-r from-[#18B2B0]/10 to-teal-50 rounded-xl border border-[#18B2B0]/20">
+                        <div className="flex items-center gap-2">
+                          {getItemIcon(transfer.itemType)}
+                          <span className="font-semibold text-gray-900">
+                            {getItemNameAr(transfer.itemType)}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 font-bold">
+                            {transfer.quantity}
+                          </Badge>
+                          <span className="text-sm text-gray-600">
+                            {transfer.packagingType === 'box' ? 'كرتون' : 'وحدة'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {transfer.notes && (
+                        <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                          <p className="text-xs font-semibold text-gray-600 mb-1 flex items-center gap-1">
+                            <Info className="h-3 w-3" />
+                            ملاحظات:
+                          </p>
+                          <p className="text-sm text-gray-700 line-clamp-2">
+                            {transfer.notes}
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="pt-2">
+                        <Button
+                          className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold shadow-md"
+                          data-testid={`button-view-details-${transfer.id}`}
                         >
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <div className="p-2 bg-orange-100 rounded-lg">
-                                <Warehouse className="h-4 w-4 text-orange-600" />
-                              </div>
-                              <span className="font-semibold text-gray-900" data-testid={`text-warehouse-${transfer.id}`}>
-                                {transfer.warehouseName}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge className="bg-[#18B2B0]/10 text-[#18B2B0] border-[#18B2B0]/20" data-testid={`text-item-${transfer.id}`}>
-                              {getItemNameAr(transfer.itemType)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell data-testid={`text-packaging-${transfer.id}`}>
-                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                              {transfer.packagingType === 'box' ? 'كرتونة' : 'قطعة'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Package className="h-4 w-4 text-gray-400" />
-                              <span className="font-bold text-lg text-gray-900" data-testid={`text-quantity-${transfer.id}`}>
-                                {transfer.quantity}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-sm text-gray-600" data-testid={`text-date-${transfer.id}`}>
-                            {format(new Date(transfer.createdAt), "dd MMM yyyy", { locale: ar })}
-                            <br />
-                            <span className="text-xs text-gray-500">
-                              {format(new Date(transfer.createdAt), "HH:mm", { locale: ar })}
-                            </span>
-                          </TableCell>
-                          <TableCell className="max-w-[200px]">
-                            {transfer.notes ? (
-                              <p className="text-sm text-gray-600 truncate" title={transfer.notes} data-testid={`text-notes-${transfer.id}`}>
-                                {transfer.notes}
-                              </p>
-                            ) : (
-                              <span className="text-sm text-gray-400">-</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                onClick={() => acceptMutation.mutate(transfer.id)}
-                                disabled={acceptMutation.isPending}
-                                className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-md"
-                                data-testid={`button-accept-${transfer.id}`}
-                              >
-                                <CheckCircle className="h-4 w-4 mr-1" />
-                                {acceptMutation.isPending ? "جاري..." : "قبول"}
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setSelectedTransferId(transfer.id);
-                                  setRejectDialogOpen(true);
-                                }}
-                                disabled={rejectMutation.isPending}
-                                className="border-red-300 text-red-600 hover:bg-red-50"
-                                data-testid={`button-reject-${transfer.id}`}
-                              >
-                                <XCircle className="h-4 w-4 mr-1" />
-                                رفض
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </motion.tr>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
+                          <Info className="h-4 w-4 ml-2" />
+                          عرض التفاصيل
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
       </div>
 
+      {/* Details Dialog */}
+      <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto" dir="rtl">
+          {selectedTransfer && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-3xl flex items-center gap-3 text-gray-900">
+                  <div className="p-3 bg-gradient-to-br from-orange-500 to-amber-500 rounded-2xl">
+                    <Package className="h-8 w-8 text-white" />
+                  </div>
+                  تفاصيل طلب النقل
+                </DialogTitle>
+                <DialogDescription className="text-base text-gray-600">
+                  راجع تفاصيل الطلب وقم بالموافقة أو الرفض
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-6 py-6">
+                {/* Warehouse Info */}
+                <div className="p-5 bg-gradient-to-r from-[#18B2B0]/10 to-teal-50 rounded-2xl border-2 border-[#18B2B0]/20">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Warehouse className="h-6 w-6 text-[#18B2B0]" />
+                    <h3 className="text-xl font-bold text-gray-900">المستودع</h3>
+                  </div>
+                  <p className="text-2xl font-bold text-[#18B2B0]">
+                    {selectedTransfer.warehouseName || "غير محدد"}
+                  </p>
+                </div>
+
+                <Separator />
+
+                {/* Item Details */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <Package className="h-5 w-5 text-orange-600" />
+                    تفاصيل الصنف
+                  </h3>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
+                      <p className="text-sm text-gray-600 mb-1">الصنف</p>
+                      <p className="text-xl font-bold text-blue-700">
+                        {getItemNameAr(selectedTransfer.itemType)}
+                      </p>
+                    </div>
+                    
+                    <div className="p-4 bg-purple-50 rounded-xl border border-purple-200">
+                      <p className="text-sm text-gray-600 mb-1">النوع</p>
+                      <p className="text-xl font-bold text-purple-700">
+                        {selectedTransfer.packagingType === 'box' ? 'كرتونة' : 'قطعة'}
+                      </p>
+                    </div>
+                    
+                    <div className="p-4 bg-green-50 rounded-xl border border-green-200 col-span-2">
+                      <p className="text-sm text-gray-600 mb-1">الكمية المطلوبة</p>
+                      <p className="text-3xl font-black text-green-700 flex items-center gap-2">
+                        <Hash className="h-8 w-8" />
+                        {selectedTransfer.quantity}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Date & Time */}
+                <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Clock className="h-5 w-5 text-gray-600" />
+                    <h3 className="text-lg font-bold text-gray-900">تاريخ الطلب</h3>
+                  </div>
+                  <p className="text-lg text-gray-700">
+                    {format(new Date(selectedTransfer.createdAt), "EEEE، d MMMM yyyy - الساعة h:mm a", { locale: ar })}
+                  </p>
+                </div>
+
+                {/* Notes */}
+                {selectedTransfer.notes && (
+                  <>
+                    <Separator />
+                    <div className="p-4 bg-amber-50 rounded-xl border-2 border-amber-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Info className="h-5 w-5 text-amber-600" />
+                        <h3 className="text-lg font-bold text-gray-900">ملاحظات</h3>
+                      </div>
+                      <p className="text-base text-gray-700 leading-relaxed">
+                        {selectedTransfer.notes}
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <DialogFooter className="gap-3 sm:gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setDetailsDialogOpen(false)}
+                  className="flex-1"
+                  data-testid="button-cancel-details"
+                >
+                  إلغاء
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleRejectClick}
+                  className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
+                  data-testid={`button-reject-details-${selectedTransfer.id}`}
+                >
+                  <XCircle className="h-5 w-5 ml-2" />
+                  رفض
+                </Button>
+                <Button
+                  onClick={() => handleAccept(selectedTransfer)}
+                  disabled={acceptMutation.isPending}
+                  className="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg"
+                  data-testid={`button-accept-details-${selectedTransfer.id}`}
+                >
+                  <CheckCircle className="h-5 w-5 ml-2" />
+                  {acceptMutation.isPending ? "جاري القبول..." : "قبول"}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject Dialog */}
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
         <DialogContent dir="rtl" className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle className="text-2xl flex items-center gap-2">
-              <XCircle className="h-6 w-6 text-red-600" />
+              <div className="p-2 bg-red-100 rounded-lg">
+                <XCircle className="h-6 w-6 text-red-600" />
+              </div>
               رفض طلب النقل
             </DialogTitle>
             <DialogDescription className="text-lg">
               يرجى إدخال سبب رفض هذا الطلب
             </DialogDescription>
           </DialogHeader>
-          <Textarea
-            value={rejectionReason}
-            onChange={(e) => setRejectionReason(e.target.value)}
-            placeholder="مثال: الكمية غير متوفرة، أو التوقيت غير مناسب..."
-            className="min-h-[120px] text-base"
-            data-testid="input-rejection-reason"
-          />
+          <div className="py-4">
+            <Textarea
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              placeholder="مثال: الكمية غير متوفرة، أو التوقيت غير مناسب..."
+              className="min-h-[150px] text-base resize-none"
+              data-testid="input-rejection-reason"
+            />
+          </div>
           <DialogFooter className="gap-2">
             <Button
               variant="outline"
               onClick={() => {
                 setRejectDialogOpen(false);
                 setRejectionReason("");
-                setSelectedTransferId(null);
+                setDetailsDialogOpen(true);
               }}
               data-testid="button-cancel-reject"
             >
               إلغاء
             </Button>
             <Button
-              onClick={handleReject}
+              onClick={handleConfirmReject}
               disabled={!rejectionReason.trim() || rejectMutation.isPending}
               className="bg-red-600 hover:bg-red-700"
               data-testid="button-confirm-reject"
