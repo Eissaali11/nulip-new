@@ -18,15 +18,24 @@ interface MovingInventory {
   id: string;
   technicianName: string;
   city: string;
-  n950Devices: number;
-  i9000sDevices: number;
-  i9100Devices: number;
-  rollPaper: number;
-  stickers: number;
-  newBatteries: number;
-  mobilySim: number;
-  stcSim: number;
-  zainSim: number;
+  n950Boxes: number;
+  n950Units: number;
+  i9000sBoxes: number;
+  i9000sUnits: number;
+  i9100Boxes: number;
+  i9100Units: number;
+  rollPaperBoxes: number;
+  rollPaperUnits: number;
+  stickersBoxes: number;
+  stickersUnits: number;
+  newBatteriesBoxes: number;
+  newBatteriesUnits: number;
+  mobilySimBoxes: number;
+  mobilySimUnits: number;
+  stcSimBoxes: number;
+  stcSimUnits: number;
+  zainSimBoxes: number;
+  zainSimUnits: number;
 }
 
 interface FixedInventory {
@@ -69,15 +78,15 @@ export default function MyMovingInventory() {
   const getTotalItems = () => {
     if (!inventory) return 0;
     return (
-      (inventory.n950Devices || 0) +
-      (inventory.i9000sDevices || 0) +
-      (inventory.i9100Devices || 0) +
-      (inventory.rollPaper || 0) +
-      (inventory.stickers || 0) +
-      (inventory.newBatteries || 0) +
-      (inventory.mobilySim || 0) +
-      (inventory.stcSim || 0) +
-      (inventory.zainSim || 0)
+      (inventory.n950Boxes || 0) + (inventory.n950Units || 0) +
+      (inventory.i9000sBoxes || 0) + (inventory.i9000sUnits || 0) +
+      (inventory.i9100Boxes || 0) + (inventory.i9100Units || 0) +
+      (inventory.rollPaperBoxes || 0) + (inventory.rollPaperUnits || 0) +
+      (inventory.stickersBoxes || 0) + (inventory.stickersUnits || 0) +
+      (inventory.newBatteriesBoxes || 0) + (inventory.newBatteriesUnits || 0) +
+      (inventory.mobilySimBoxes || 0) + (inventory.mobilySimUnits || 0) +
+      (inventory.stcSimBoxes || 0) + (inventory.stcSimUnits || 0) +
+      (inventory.zainSimBoxes || 0) + (inventory.zainSimUnits || 0)
     );
   };
 
@@ -119,15 +128,24 @@ export default function MyMovingInventory() {
     });
 
     const data = [
-      ['أجهزة N950', inventory.n950Devices || 0, 'جهاز'],
-      ['أجهزة I9000s', inventory.i9000sDevices || 0, 'جهاز'],
-      ['أجهزة I9100', inventory.i9100Devices || 0, 'جهاز'],
-      ['أوراق رول', inventory.rollPaper || 0, 'رول'],
-      ['ملصقات مدى', inventory.stickers || 0, 'ملصق'],
-      ['بطاريات جديدة', inventory.newBatteries || 0, 'بطارية'],
-      ['شرائح موبايلي', inventory.mobilySim || 0, 'شريحة'],
-      ['شرائح STC', inventory.stcSim || 0, 'شريحة'],
-      ['شرائح زين', inventory.zainSim || 0, 'شريحة'],
+      ['أجهزة N950 - كرتون', inventory.n950Boxes || 0, 'كرتون'],
+      ['أجهزة N950 - وحدات', inventory.n950Units || 0, 'جهاز'],
+      ['أجهزة I9000s - كرتون', inventory.i9000sBoxes || 0, 'كرتون'],
+      ['أجهزة I9000s - وحدات', inventory.i9000sUnits || 0, 'جهاز'],
+      ['أجهزة I9100 - كرتون', inventory.i9100Boxes || 0, 'كرتون'],
+      ['أجهزة I9100 - وحدات', inventory.i9100Units || 0, 'جهاز'],
+      ['أوراق رول - كرتون', inventory.rollPaperBoxes || 0, 'كرتون'],
+      ['أوراق رول - وحدات', inventory.rollPaperUnits || 0, 'رول'],
+      ['ملصقات مدى - كرتون', inventory.stickersBoxes || 0, 'كرتون'],
+      ['ملصقات مدى - وحدات', inventory.stickersUnits || 0, 'ملصق'],
+      ['بطاريات جديدة - كرتون', inventory.newBatteriesBoxes || 0, 'كرتون'],
+      ['بطاريات جديدة - وحدات', inventory.newBatteriesUnits || 0, 'بطارية'],
+      ['شرائح موبايلي - كرتون', inventory.mobilySimBoxes || 0, 'كرتون'],
+      ['شرائح موبايلي - وحدات', inventory.mobilySimUnits || 0, 'شريحة'],
+      ['شرائح STC - كرتون', inventory.stcSimBoxes || 0, 'كرتون'],
+      ['شرائح STC - وحدات', inventory.stcSimUnits || 0, 'شريحة'],
+      ['شرائح زين - كرتون', inventory.zainSimBoxes || 0, 'كرتون'],
+      ['شرائح زين - وحدات', inventory.zainSimUnits || 0, 'شريحة'],
     ];
 
     data.forEach(row => {
@@ -446,7 +464,7 @@ export default function MyMovingInventory() {
                   animate={{ scale: 1 }}
                   transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
                 >
-                  {(inventory.n950Devices || 0) + (inventory.i9000sDevices || 0) + (inventory.i9100Devices || 0)}
+                  {(inventory.n950Boxes || 0) + (inventory.n950Units || 0) + (inventory.i9000sBoxes || 0) + (inventory.i9000sUnits || 0) + (inventory.i9100Boxes || 0) + (inventory.i9100Units || 0)}
                 </motion.p>
               </CardContent>
             </Card>
@@ -474,7 +492,7 @@ export default function MyMovingInventory() {
                   animate={{ scale: 1 }}
                   transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
                 >
-                  {(inventory.rollPaper || 0) + (inventory.stickers || 0) + (inventory.newBatteries || 0)}
+                  {(inventory.rollPaperBoxes || 0) + (inventory.rollPaperUnits || 0) + (inventory.stickersBoxes || 0) + (inventory.stickersUnits || 0) + (inventory.newBatteriesBoxes || 0) + (inventory.newBatteriesUnits || 0)}
                 </motion.p>
               </CardContent>
             </Card>
@@ -502,7 +520,7 @@ export default function MyMovingInventory() {
                   animate={{ scale: 1 }}
                   transition={{ type: "spring", stiffness: 200, delay: 0.3 }}
                 >
-                  {(inventory.mobilySim || 0) + (inventory.stcSim || 0) + (inventory.zainSim || 0)}
+                  {(inventory.mobilySimBoxes || 0) + (inventory.mobilySimUnits || 0) + (inventory.stcSimBoxes || 0) + (inventory.stcSimUnits || 0) + (inventory.zainSimBoxes || 0) + (inventory.zainSimUnits || 0)}
                 </motion.p>
               </CardContent>
             </Card>
@@ -517,15 +535,15 @@ export default function MyMovingInventory() {
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[
-              { label: 'أجهزة N950', value: inventory.n950Devices || 0, color: 'blue', icon: '📱' },
-              { label: 'أجهزة I9000s', value: inventory.i9000sDevices || 0, color: 'purple', icon: '📱' },
-              { label: 'أجهزة I9100', value: inventory.i9100Devices || 0, color: 'indigo', icon: '📱' },
-              { label: 'أوراق رول', value: inventory.rollPaper || 0, color: 'amber', icon: '📄' },
-              { label: 'ملصقات مداى', value: inventory.stickers || 0, color: 'orange', icon: '🏷️' },
-              { label: 'بطاريات جديدة', value: inventory.newBatteries || 0, color: 'yellow', icon: '🔋' },
-              { label: 'شرائح موبايلي', value: inventory.mobilySim || 0, color: 'green', icon: '📶' },
-              { label: 'شرائح STC', value: inventory.stcSim || 0, color: 'teal', icon: '📶' },
-              { label: 'شرائح زين', value: inventory.zainSim || 0, color: 'cyan', icon: '📶' },
+              { label: 'أجهزة N950', boxes: inventory.n950Boxes || 0, units: inventory.n950Units || 0, color: 'blue', icon: '📱' },
+              { label: 'أجهزة I9000s', boxes: inventory.i9000sBoxes || 0, units: inventory.i9000sUnits || 0, color: 'purple', icon: '📱' },
+              { label: 'أجهزة I9100', boxes: inventory.i9100Boxes || 0, units: inventory.i9100Units || 0, color: 'indigo', icon: '📱' },
+              { label: 'أوراق رول', boxes: inventory.rollPaperBoxes || 0, units: inventory.rollPaperUnits || 0, color: 'amber', icon: '📄' },
+              { label: 'ملصقات مداى', boxes: inventory.stickersBoxes || 0, units: inventory.stickersUnits || 0, color: 'orange', icon: '🏷️' },
+              { label: 'بطاريات جديدة', boxes: inventory.newBatteriesBoxes || 0, units: inventory.newBatteriesUnits || 0, color: 'yellow', icon: '🔋' },
+              { label: 'شرائح موبايلي', boxes: inventory.mobilySimBoxes || 0, units: inventory.mobilySimUnits || 0, color: 'green', icon: '📶' },
+              { label: 'شرائح STC', boxes: inventory.stcSimBoxes || 0, units: inventory.stcSimUnits || 0, color: 'teal', icon: '📶' },
+              { label: 'شرائح زين', boxes: inventory.zainSimBoxes || 0, units: inventory.zainSimUnits || 0, color: 'cyan', icon: '📶' },
             ].map((item, index) => (
               <motion.div
                 key={item.label}
@@ -536,17 +554,27 @@ export default function MyMovingInventory() {
               >
                 <Card className="bg-white dark:bg-slate-800 border-0 shadow-xl overflow-hidden">
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-base sm:text-lg flex items-center justify-between">
-                      <span className="flex items-center gap-2">
+                    <CardTitle className="text-base sm:text-lg">
+                      <div className="flex items-center gap-2 mb-3">
                         <span className="text-2xl">{item.icon}</span>
-                        {item.label}
-                      </span>
-                      <motion.span 
-                        className={`inline-flex items-center px-4 py-2 rounded-xl bg-gradient-to-r from-${item.color}-500 to-${item.color}-600 text-white text-lg font-black shadow-lg`}
-                        whileHover={{ scale: 1.1 }}
-                      >
-                        {item.value}
-                      </motion.span>
+                        <span>{item.label}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <motion.div 
+                          className={`flex-1 flex items-center justify-center px-3 py-2 rounded-lg bg-gradient-to-r from-${item.color}-500 to-${item.color}-600 text-white text-sm font-bold shadow-md`}
+                          whileHover={{ scale: 1.05 }}
+                        >
+                          <span className="text-xs ml-1">كرتون:</span>
+                          <span className="text-lg font-black">{item.boxes}</span>
+                        </motion.div>
+                        <motion.div 
+                          className={`flex-1 flex items-center justify-center px-3 py-2 rounded-lg bg-gradient-to-r from-${item.color}-400 to-${item.color}-500 text-white text-sm font-bold shadow-md`}
+                          whileHover={{ scale: 1.05 }}
+                        >
+                          <span className="text-xs ml-1">وحدات:</span>
+                          <span className="text-lg font-black">{item.units}</span>
+                        </motion.div>
+                      </div>
                     </CardTitle>
                   </CardHeader>
                 </Card>

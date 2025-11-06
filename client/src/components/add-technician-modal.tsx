@@ -26,14 +26,24 @@ import { insertTechnicianInventorySchema } from "@shared/schema";
 import { useAuth } from "@/lib/auth";
 
 const formSchema = insertTechnicianInventorySchema.extend({
-  n950Devices: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
-  i900Devices: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
-  i9000sDevices: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
-  rollPaper: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
-  stickers: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
-  mobilySim: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
-  stcSim: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
-  zainSim: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
+  n950Boxes: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
+  n950Units: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
+  i9000sBoxes: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
+  i9000sUnits: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
+  i9100Boxes: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
+  i9100Units: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
+  rollPaperBoxes: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
+  rollPaperUnits: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
+  stickersBoxes: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
+  stickersUnits: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
+  newBatteriesBoxes: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
+  newBatteriesUnits: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
+  mobilySimBoxes: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
+  mobilySimUnits: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
+  stcSimBoxes: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
+  stcSimUnits: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
+  zainSimBoxes: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
+  zainSimUnits: z.number().min(0, "الكمية يجب أن تكون صفر أو أكثر"),
 }).omit({ technicianName: true, city: true });
 
 type FormData = z.infer<typeof formSchema>;
@@ -51,14 +61,24 @@ export default function AddTechnicianModal({ open, onOpenChange }: AddTechnician
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      n950Devices: 0,
-      i900Devices: 0,
-      i9000sDevices: 0,
-      rollPaper: 0,
-      stickers: 0,
-      mobilySim: 0,
-      stcSim: 0,
-      zainSim: 0,
+      n950Boxes: 0,
+      n950Units: 0,
+      i9000sBoxes: 0,
+      i9000sUnits: 0,
+      i9100Boxes: 0,
+      i9100Units: 0,
+      rollPaperBoxes: 0,
+      rollPaperUnits: 0,
+      stickersBoxes: 0,
+      stickersUnits: 0,
+      newBatteriesBoxes: 0,
+      newBatteriesUnits: 0,
+      mobilySimBoxes: 0,
+      mobilySimUnits: 0,
+      stcSimBoxes: 0,
+      stcSimUnits: 0,
+      zainSimBoxes: 0,
+      zainSimUnits: 0,
       notes: "",
     },
   });
@@ -122,178 +142,427 @@ export default function AddTechnicianModal({ open, onOpenChange }: AddTechnician
               <p className="text-sm text-slate-600 dark:text-slate-400 mt-3">سيتم إضافة البيانات باسمك ومدينتك تلقائياً</p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <FormField
-                control={form.control}
-                name="n950Devices"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>أجهزة N950</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="0"
-                        {...field}
-                        onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
-                        value={field.value || 0}
-                        data-testid="input-n950"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="i900Devices"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>أجهزة I900</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="0"
-                        {...field}
-                        onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
-                        value={field.value || 0}
-                        data-testid="input-i900"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="i9000sDevices"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>أجهزة I9000s</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="0"
-                        {...field}
-                        onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
-                        value={field.value || 0}
-                        data-testid="input-i9000s"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {/* N950 Devices */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">أجهزة N950</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="n950Boxes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">كراتين</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                          value={field.value || 0}
+                          data-testid="input-n950-boxes"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="n950Units"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">وحدات</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                          value={field.value || 0}
+                          data-testid="input-n950-units"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <FormField
-                control={form.control}
-                name="rollPaper"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>أوراق رول</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="0"
-                        {...field}
-                        onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
-                        value={field.value || 0}
-                        data-testid="input-roll-paper"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="stickers"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>ملصقات مدى</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="0"
-                        {...field}
-                        onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
-                        value={field.value || 0}
-                        data-testid="input-stickers"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {/* I9000s Devices */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">أجهزة I9000s</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="i9000sBoxes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">كراتين</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                          value={field.value || 0}
+                          data-testid="input-i9000s-boxes"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="i9000sUnits"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">وحدات</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                          value={field.value || 0}
+                          data-testid="input-i9000s-units"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-              <FormField
-                control={form.control}
-                name="mobilySim"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>شرائح موبايلي</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="0"
-                        {...field}
-                        onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
-                        value={field.value || 0}
-                        data-testid="input-mobily"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {/* I9100 Devices */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">أجهزة I9100</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="i9100Boxes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">كراتين</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                          value={field.value || 0}
+                          data-testid="input-i9100-boxes"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="i9100Units"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">وحدات</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                          value={field.value || 0}
+                          data-testid="input-i9100-units"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
 
-              <FormField
-                control={form.control}
-                name="stcSim"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>شرائح STC</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="0"
-                        {...field}
-                        onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
-                        value={field.value || 0}
-                        data-testid="input-stc"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {/* Roll Paper */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">أوراق رول</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="rollPaperBoxes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">كراتين</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                          value={field.value || 0}
+                          data-testid="input-roll-paper-boxes"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="rollPaperUnits"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">وحدات</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                          value={field.value || 0}
+                          data-testid="input-roll-paper-units"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
 
-              <FormField
-                control={form.control}
-                name="zainSim"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>شرائح زين</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="0"
-                        {...field}
-                        onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
-                        value={field.value || 0}
-                        data-testid="input-zain"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {/* Stickers */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">ملصقات مدى</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="stickersBoxes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">كراتين</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                          value={field.value || 0}
+                          data-testid="input-stickers-boxes"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="stickersUnits"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">وحدات</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                          value={field.value || 0}
+                          data-testid="input-stickers-units"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* New Batteries */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">بطاريات جديدة</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="newBatteriesBoxes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">كراتين</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                          value={field.value || 0}
+                          data-testid="input-new-batteries-boxes"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="newBatteriesUnits"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">وحدات</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                          value={field.value || 0}
+                          data-testid="input-new-batteries-units"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Mobily SIM */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">شرائح موبايلي</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="mobilySimBoxes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">كراتين</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                          value={field.value || 0}
+                          data-testid="input-mobily-sim-boxes"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="mobilySimUnits"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">وحدات</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                          value={field.value || 0}
+                          data-testid="input-mobily-sim-units"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* STC SIM */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">شرائح STC</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="stcSimBoxes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">كراتين</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                          value={field.value || 0}
+                          data-testid="input-stc-sim-boxes"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="stcSimUnits"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">وحدات</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                          value={field.value || 0}
+                          data-testid="input-stc-sim-units"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Zain SIM */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">شرائح زين</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="zainSimBoxes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">كراتين</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                          value={field.value || 0}
+                          data-testid="input-zain-sim-boxes"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="zainSimUnits"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">وحدات</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                          value={field.value || 0}
+                          data-testid="input-zain-sim-units"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
             <FormField

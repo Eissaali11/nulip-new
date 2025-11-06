@@ -794,7 +794,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/stock-transfer", requireAuth, async (req, res) => {
     try {
       const user = (req as any).user;
-      const { technicianId, n950, i9000s, i9100, rollPaper, stickers, newBatteries: newBatteriesAmount, mobilySim, stcSim, zainSim } = req.body;
+      const { 
+        technicianId, 
+        n950, i9000s, i9100, rollPaper, stickers, newBatteries: newBatteriesAmount, mobilySim, stcSim, zainSim,
+        n950PackagingType, i9000sPackagingType, i9100PackagingType, rollPaperPackagingType, stickersPackagingType,
+        newBatteriesPackagingType, mobilySimPackagingType, stcSimPackagingType, zainSimPackagingType
+      } = req.body;
       
       // Get current fixed inventory
       const fixedInventory = await storage.getTechnicianFixedInventory(technicianId);
@@ -815,15 +820,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
             id: technicianId, // Use userId as id
             technicianName: techUser?.fullName || 'Unknown',
             city: techUser?.city || 'N/A',
-            n950Devices: 0,
-            i9000sDevices: 0,
-            i9100Devices: 0,
-            rollPaper: 0,
-            stickers: 0,
-            newBatteries: 0,
-            mobilySim: 0,
-            stcSim: 0,
-            zainSim: 0,
+            n950Boxes: 0,
+            n950Units: 0,
+            i9000sBoxes: 0,
+            i9000sUnits: 0,
+            i9100Boxes: 0,
+            i9100Units: 0,
+            rollPaperBoxes: 0,
+            rollPaperUnits: 0,
+            stickersBoxes: 0,
+            stickersUnits: 0,
+            newBatteriesBoxes: 0,
+            newBatteriesUnits: 0,
+            mobilySimBoxes: 0,
+            mobilySimUnits: 0,
+            stcSimBoxes: 0,
+            stcSimUnits: 0,
+            zainSimBoxes: 0,
+            zainSimUnits: 0,
             createdBy: user.id,
           })
           .returning();
@@ -831,99 +845,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
         movingInventory = created;
       }
 
-      // Calculate total available in fixed inventory
-      const totalN950 = fixedInventory.n950Boxes + fixedInventory.n950Units;
-      const totalI9000s = fixedInventory.i9000sBoxes + fixedInventory.i9000sUnits;
-      const totalI9100 = fixedInventory.i9100Boxes + fixedInventory.i9100Units;
-      const totalPaper = fixedInventory.rollPaperBoxes + fixedInventory.rollPaperUnits;
-      const totalStickers = fixedInventory.stickersBoxes + fixedInventory.stickersUnits;
-      const totalBatteries = fixedInventory.newBatteriesBoxes + fixedInventory.newBatteriesUnits;
-      const totalMobily = fixedInventory.mobilySimBoxes + fixedInventory.mobilySimUnits;
-      const totalStc = fixedInventory.stcSimBoxes + fixedInventory.stcSimUnits;
-      const totalZain = fixedInventory.zainSimBoxes + fixedInventory.zainSimUnits;
-
-      // Validate quantities
-      if (n950 > totalN950 || i9000s > totalI9000s || i9100 > totalI9100 || rollPaper > totalPaper || 
-          stickers > totalStickers || newBatteriesAmount > totalBatteries || mobilySim > totalMobily || 
-          stcSim > totalStc || zainSim > totalZain) {
-        return res.status(400).json({ message: "Insufficient quantity in fixed inventory" });
+      // Validate quantities based on packaging type
+      if (n950 > 0 && n950PackagingType === 'box' && n950 > fixedInventory.n950Boxes) {
+        return res.status(400).json({ message: "Insufficient N950 boxes in fixed inventory" });
+      }
+      if (n950 > 0 && n950PackagingType === 'unit' && n950 > fixedInventory.n950Units) {
+        return res.status(400).json({ message: "Insufficient N950 units in fixed inventory" });
+      }
+      if (i9000s > 0 && i9000sPackagingType === 'box' && i9000s > fixedInventory.i9000sBoxes) {
+        return res.status(400).json({ message: "Insufficient i9000s boxes in fixed inventory" });
+      }
+      if (i9000s > 0 && i9000sPackagingType === 'unit' && i9000s > fixedInventory.i9000sUnits) {
+        return res.status(400).json({ message: "Insufficient i9000s units in fixed inventory" });
+      }
+      if (i9100 > 0 && i9100PackagingType === 'box' && i9100 > fixedInventory.i9100Boxes) {
+        return res.status(400).json({ message: "Insufficient i9100 boxes in fixed inventory" });
+      }
+      if (i9100 > 0 && i9100PackagingType === 'unit' && i9100 > fixedInventory.i9100Units) {
+        return res.status(400).json({ message: "Insufficient i9100 units in fixed inventory" });
+      }
+      if (rollPaper > 0 && rollPaperPackagingType === 'box' && rollPaper > fixedInventory.rollPaperBoxes) {
+        return res.status(400).json({ message: "Insufficient roll paper boxes in fixed inventory" });
+      }
+      if (rollPaper > 0 && rollPaperPackagingType === 'unit' && rollPaper > fixedInventory.rollPaperUnits) {
+        return res.status(400).json({ message: "Insufficient roll paper units in fixed inventory" });
+      }
+      if (stickers > 0 && stickersPackagingType === 'box' && stickers > fixedInventory.stickersBoxes) {
+        return res.status(400).json({ message: "Insufficient stickers boxes in fixed inventory" });
+      }
+      if (stickers > 0 && stickersPackagingType === 'unit' && stickers > fixedInventory.stickersUnits) {
+        return res.status(400).json({ message: "Insufficient stickers units in fixed inventory" });
+      }
+      if (newBatteriesAmount > 0 && newBatteriesPackagingType === 'box' && newBatteriesAmount > fixedInventory.newBatteriesBoxes) {
+        return res.status(400).json({ message: "Insufficient batteries boxes in fixed inventory" });
+      }
+      if (newBatteriesAmount > 0 && newBatteriesPackagingType === 'unit' && newBatteriesAmount > fixedInventory.newBatteriesUnits) {
+        return res.status(400).json({ message: "Insufficient batteries units in fixed inventory" });
+      }
+      if (mobilySim > 0 && mobilySimPackagingType === 'box' && mobilySim > fixedInventory.mobilySimBoxes) {
+        return res.status(400).json({ message: "Insufficient Mobily SIM boxes in fixed inventory" });
+      }
+      if (mobilySim > 0 && mobilySimPackagingType === 'unit' && mobilySim > fixedInventory.mobilySimUnits) {
+        return res.status(400).json({ message: "Insufficient Mobily SIM units in fixed inventory" });
+      }
+      if (stcSim > 0 && stcSimPackagingType === 'box' && stcSim > fixedInventory.stcSimBoxes) {
+        return res.status(400).json({ message: "Insufficient STC SIM boxes in fixed inventory" });
+      }
+      if (stcSim > 0 && stcSimPackagingType === 'unit' && stcSim > fixedInventory.stcSimUnits) {
+        return res.status(400).json({ message: "Insufficient STC SIM units in fixed inventory" });
+      }
+      if (zainSim > 0 && zainSimPackagingType === 'box' && zainSim > fixedInventory.zainSimBoxes) {
+        return res.status(400).json({ message: "Insufficient Zain SIM boxes in fixed inventory" });
+      }
+      if (zainSim > 0 && zainSimPackagingType === 'unit' && zainSim > fixedInventory.zainSimUnits) {
+        return res.status(400).json({ message: "Insufficient Zain SIM units in fixed inventory" });
       }
 
-      // Helper function to subtract quantity from boxes and units
-      const subtractFromInventory = (boxes: number, units: number, toSubtract: number) => {
-        let remaining = toSubtract;
-        let newUnits = units;
-        let newBoxes = boxes;
-        
-        // First subtract from units
-        if (units >= remaining) {
-          newUnits = units - remaining;
-          remaining = 0;
-        } else {
-          remaining -= units;
-          newUnits = 0;
-        }
-        
-        // Then subtract from boxes if needed
-        if (remaining > 0) {
-          newBoxes = boxes - remaining;
-        }
-        
-        return { boxes: newBoxes, units: newUnits };
-      };
-
-      // Calculate new quantities
-      const newN950 = subtractFromInventory(fixedInventory.n950Boxes, fixedInventory.n950Units, n950);
-      const newI9000s = subtractFromInventory(fixedInventory.i9000sBoxes, fixedInventory.i9000sUnits, i9000s);
-      const newI9100 = subtractFromInventory(fixedInventory.i9100Boxes, fixedInventory.i9100Units, i9100);
-      const newPaper = subtractFromInventory(fixedInventory.rollPaperBoxes, fixedInventory.rollPaperUnits, rollPaper);
-      const newStickers = subtractFromInventory(fixedInventory.stickersBoxes, fixedInventory.stickersUnits, stickers);
-      const newBatteries = subtractFromInventory(fixedInventory.newBatteriesBoxes, fixedInventory.newBatteriesUnits, newBatteriesAmount);
-      const newMobily = subtractFromInventory(fixedInventory.mobilySimBoxes, fixedInventory.mobilySimUnits, mobilySim);
-      const newStc = subtractFromInventory(fixedInventory.stcSimBoxes, fixedInventory.stcSimUnits, stcSim);
-      const newZain = subtractFromInventory(fixedInventory.zainSimBoxes, fixedInventory.zainSimUnits, zainSim);
-
+      // Update fixed inventory - subtract from the specified packaging type only
       await storage.updateTechnicianFixedInventory(technicianId, {
-        n950Boxes: newN950.boxes,
-        n950Units: newN950.units,
-        i9000sBoxes: newI9000s.boxes,
-        i9000sUnits: newI9000s.units,
-        i9100Boxes: newI9100.boxes,
-        i9100Units: newI9100.units,
-        rollPaperBoxes: newPaper.boxes,
-        rollPaperUnits: newPaper.units,
-        stickersBoxes: newStickers.boxes,
-        stickersUnits: newStickers.units,
-        newBatteriesBoxes: newBatteries.boxes,
-        newBatteriesUnits: newBatteries.units,
-        mobilySimBoxes: newMobily.boxes,
-        mobilySimUnits: newMobily.units,
-        stcSimBoxes: newStc.boxes,
-        stcSimUnits: newStc.units,
-        zainSimBoxes: newZain.boxes,
-        zainSimUnits: newZain.units,
+        n950Boxes: n950PackagingType === 'box' ? fixedInventory.n950Boxes - n950 : fixedInventory.n950Boxes,
+        n950Units: n950PackagingType === 'unit' ? fixedInventory.n950Units - n950 : fixedInventory.n950Units,
+        i9000sBoxes: i9000sPackagingType === 'box' ? fixedInventory.i9000sBoxes - i9000s : fixedInventory.i9000sBoxes,
+        i9000sUnits: i9000sPackagingType === 'unit' ? fixedInventory.i9000sUnits - i9000s : fixedInventory.i9000sUnits,
+        i9100Boxes: i9100PackagingType === 'box' ? fixedInventory.i9100Boxes - i9100 : fixedInventory.i9100Boxes,
+        i9100Units: i9100PackagingType === 'unit' ? fixedInventory.i9100Units - i9100 : fixedInventory.i9100Units,
+        rollPaperBoxes: rollPaperPackagingType === 'box' ? fixedInventory.rollPaperBoxes - rollPaper : fixedInventory.rollPaperBoxes,
+        rollPaperUnits: rollPaperPackagingType === 'unit' ? fixedInventory.rollPaperUnits - rollPaper : fixedInventory.rollPaperUnits,
+        stickersBoxes: stickersPackagingType === 'box' ? fixedInventory.stickersBoxes - stickers : fixedInventory.stickersBoxes,
+        stickersUnits: stickersPackagingType === 'unit' ? fixedInventory.stickersUnits - stickers : fixedInventory.stickersUnits,
+        newBatteriesBoxes: newBatteriesPackagingType === 'box' ? fixedInventory.newBatteriesBoxes - newBatteriesAmount : fixedInventory.newBatteriesBoxes,
+        newBatteriesUnits: newBatteriesPackagingType === 'unit' ? fixedInventory.newBatteriesUnits - newBatteriesAmount : fixedInventory.newBatteriesUnits,
+        mobilySimBoxes: mobilySimPackagingType === 'box' ? fixedInventory.mobilySimBoxes - mobilySim : fixedInventory.mobilySimBoxes,
+        mobilySimUnits: mobilySimPackagingType === 'unit' ? fixedInventory.mobilySimUnits - mobilySim : fixedInventory.mobilySimUnits,
+        stcSimBoxes: stcSimPackagingType === 'box' ? fixedInventory.stcSimBoxes - stcSim : fixedInventory.stcSimBoxes,
+        stcSimUnits: stcSimPackagingType === 'unit' ? fixedInventory.stcSimUnits - stcSim : fixedInventory.stcSimUnits,
+        zainSimBoxes: zainSimPackagingType === 'box' ? fixedInventory.zainSimBoxes - zainSim : fixedInventory.zainSimBoxes,
+        zainSimUnits: zainSimPackagingType === 'unit' ? fixedInventory.zainSimUnits - zainSim : fixedInventory.zainSimUnits,
       });
 
-      // Update moving inventory (increase)
+      // Update moving inventory - add to the same packaging type
       await storage.updateTechnicianInventory(technicianId, {
-        n950Devices: movingInventory.n950Devices + n950,
-        i9000sDevices: movingInventory.i9000sDevices + i9000s,
-        i9100Devices: movingInventory.i9100Devices + i9100,
-        rollPaper: movingInventory.rollPaper + rollPaper,
-        stickers: movingInventory.stickers + stickers,
-        newBatteries: movingInventory.newBatteries + newBatteriesAmount,
-        mobilySim: movingInventory.mobilySim + mobilySim,
-        stcSim: movingInventory.stcSim + stcSim,
-        zainSim: movingInventory.zainSim + zainSim,
+        n950Boxes: n950PackagingType === 'box' ? movingInventory.n950Boxes + n950 : movingInventory.n950Boxes,
+        n950Units: n950PackagingType === 'unit' ? movingInventory.n950Units + n950 : movingInventory.n950Units,
+        i9000sBoxes: i9000sPackagingType === 'box' ? movingInventory.i9000sBoxes + i9000s : movingInventory.i9000sBoxes,
+        i9000sUnits: i9000sPackagingType === 'unit' ? movingInventory.i9000sUnits + i9000s : movingInventory.i9000sUnits,
+        i9100Boxes: i9100PackagingType === 'box' ? movingInventory.i9100Boxes + i9100 : movingInventory.i9100Boxes,
+        i9100Units: i9100PackagingType === 'unit' ? movingInventory.i9100Units + i9100 : movingInventory.i9100Units,
+        rollPaperBoxes: rollPaperPackagingType === 'box' ? movingInventory.rollPaperBoxes + rollPaper : movingInventory.rollPaperBoxes,
+        rollPaperUnits: rollPaperPackagingType === 'unit' ? movingInventory.rollPaperUnits + rollPaper : movingInventory.rollPaperUnits,
+        stickersBoxes: stickersPackagingType === 'box' ? movingInventory.stickersBoxes + stickers : movingInventory.stickersBoxes,
+        stickersUnits: stickersPackagingType === 'unit' ? movingInventory.stickersUnits + stickers : movingInventory.stickersUnits,
+        newBatteriesBoxes: newBatteriesPackagingType === 'box' ? movingInventory.newBatteriesBoxes + newBatteriesAmount : movingInventory.newBatteriesBoxes,
+        newBatteriesUnits: newBatteriesPackagingType === 'unit' ? movingInventory.newBatteriesUnits + newBatteriesAmount : movingInventory.newBatteriesUnits,
+        mobilySimBoxes: mobilySimPackagingType === 'box' ? movingInventory.mobilySimBoxes + mobilySim : movingInventory.mobilySimBoxes,
+        mobilySimUnits: mobilySimPackagingType === 'unit' ? movingInventory.mobilySimUnits + mobilySim : movingInventory.mobilySimUnits,
+        stcSimBoxes: stcSimPackagingType === 'box' ? movingInventory.stcSimBoxes + stcSim : movingInventory.stcSimBoxes,
+        stcSimUnits: stcSimPackagingType === 'unit' ? movingInventory.stcSimUnits + stcSim : movingInventory.stcSimUnits,
+        zainSimBoxes: zainSimPackagingType === 'box' ? movingInventory.zainSimBoxes + zainSim : movingInventory.zainSimBoxes,
+        zainSimUnits: zainSimPackagingType === 'unit' ? movingInventory.zainSimUnits + zainSim : movingInventory.zainSimUnits,
       });
 
-      // Record stock movements
+      // Record stock movements with actual packaging types
       const movements = [];
       if (n950 > 0) {
         movements.push(storage.createStockMovement({
           technicianId,
           itemType: 'n950',
-          packagingType: 'unit',
+          packagingType: n950PackagingType,
           quantity: n950,
           fromInventory: 'fixed',
           toInventory: 'moving',
@@ -936,7 +964,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         movements.push(storage.createStockMovement({
           technicianId,
           itemType: 'i9000s',
-          packagingType: 'unit',
+          packagingType: i9000sPackagingType,
           quantity: i9000s,
           fromInventory: 'fixed',
           toInventory: 'moving',
@@ -949,7 +977,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         movements.push(storage.createStockMovement({
           technicianId,
           itemType: 'i9100',
-          packagingType: 'unit',
+          packagingType: i9100PackagingType,
           quantity: i9100,
           fromInventory: 'fixed',
           toInventory: 'moving',
@@ -962,7 +990,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         movements.push(storage.createStockMovement({
           technicianId,
           itemType: 'newBatteries',
-          packagingType: 'unit',
+          packagingType: newBatteriesPackagingType,
           quantity: newBatteriesAmount,
           fromInventory: 'fixed',
           toInventory: 'moving',
@@ -975,7 +1003,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         movements.push(storage.createStockMovement({
           technicianId,
           itemType: 'rollPaper',
-          packagingType: 'unit',
+          packagingType: rollPaperPackagingType,
           quantity: rollPaper,
           fromInventory: 'fixed',
           toInventory: 'moving',
@@ -988,7 +1016,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         movements.push(storage.createStockMovement({
           technicianId,
           itemType: 'stickers',
-          packagingType: 'unit',
+          packagingType: stickersPackagingType,
           quantity: stickers,
           fromInventory: 'fixed',
           toInventory: 'moving',
@@ -1001,7 +1029,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         movements.push(storage.createStockMovement({
           technicianId,
           itemType: 'mobilySim',
-          packagingType: 'unit',
+          packagingType: mobilySimPackagingType,
           quantity: mobilySim,
           fromInventory: 'fixed',
           toInventory: 'moving',
@@ -1014,7 +1042,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         movements.push(storage.createStockMovement({
           technicianId,
           itemType: 'stcSim',
-          packagingType: 'unit',
+          packagingType: stcSimPackagingType,
           quantity: stcSim,
           fromInventory: 'fixed',
           toInventory: 'moving',
@@ -1027,7 +1055,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         movements.push(storage.createStockMovement({
           technicianId,
           itemType: 'zainSim',
-          packagingType: 'unit',
+          packagingType: zainSimPackagingType,
           quantity: zainSim,
           fromInventory: 'fixed',
           toInventory: 'moving',

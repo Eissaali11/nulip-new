@@ -43,20 +43,48 @@ export const inventoryItems = pgTable("inventory_items", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Technicians inventory table - new structure for tracking technician equipment
+// Technicians inventory table - المخزون المتحرك (يتتبع الكراتين والوحدات منفصلة)
 export const techniciansInventory = pgTable("technicians_inventory", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   technicianName: text("technician_name").notNull(),
   city: text("city").notNull(),
-  n950Devices: integer("n950_devices").notNull().default(0),
-  i9000sDevices: integer("i9000s_devices").notNull().default(0),
-  i9100Devices: integer("i9100_devices").notNull().default(0),
-  rollPaper: integer("roll_paper").notNull().default(0),
-  stickers: integer("stickers").notNull().default(0),
-  newBatteries: integer("new_batteries").notNull().default(0),
-  mobilySim: integer("mobily_sim").notNull().default(0),
-  stcSim: integer("stc_sim").notNull().default(0),
-  zainSim: integer("zain_sim").notNull().default(0),
+  
+  // N950 devices
+  n950Boxes: integer("n950_boxes").notNull().default(0),
+  n950Units: integer("n950_units").notNull().default(0),
+  
+  // I9000s devices
+  i9000sBoxes: integer("i9000s_boxes").notNull().default(0),
+  i9000sUnits: integer("i9000s_units").notNull().default(0),
+  
+  // I9100 devices
+  i9100Boxes: integer("i9100_boxes").notNull().default(0),
+  i9100Units: integer("i9100_units").notNull().default(0),
+  
+  // Roll Paper
+  rollPaperBoxes: integer("roll_paper_boxes").notNull().default(0),
+  rollPaperUnits: integer("roll_paper_units").notNull().default(0),
+  
+  // Stickers
+  stickersBoxes: integer("stickers_boxes").notNull().default(0),
+  stickersUnits: integer("stickers_units").notNull().default(0),
+  
+  // New Batteries
+  newBatteriesBoxes: integer("new_batteries_boxes").notNull().default(0),
+  newBatteriesUnits: integer("new_batteries_units").notNull().default(0),
+  
+  // Mobily SIM
+  mobilySimBoxes: integer("mobily_sim_boxes").notNull().default(0),
+  mobilySimUnits: integer("mobily_sim_units").notNull().default(0),
+  
+  // STC SIM
+  stcSimBoxes: integer("stc_sim_boxes").notNull().default(0),
+  stcSimUnits: integer("stc_sim_units").notNull().default(0),
+  
+  // Zain SIM
+  zainSimBoxes: integer("zain_sim_boxes").notNull().default(0),
+  zainSimUnits: integer("zain_sim_units").notNull().default(0),
+  
   notes: text("notes"),
   createdBy: varchar("created_by").references(() => users.id),
   regionId: varchar("region_id").references(() => regions.id),
