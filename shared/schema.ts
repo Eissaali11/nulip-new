@@ -308,6 +308,7 @@ export const insertWarehouseSchema = createInsertSchema(warehouses).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  createdBy: true,
 });
 
 export const insertWarehouseInventorySchema = createInsertSchema(warehouseInventory).omit({
