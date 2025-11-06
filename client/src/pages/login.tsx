@@ -293,15 +293,15 @@ export default function Login() {
               </motion.div>
             </motion.div>
 
-            <Card className="w-full max-w-md bg-white/95 backdrop-blur-xl border-2 border-white/30 shadow-2xl">
+            <Card className="w-full max-w-md bg-white/20 backdrop-blur-xl border-2 border-white/30 shadow-2xl">
               <CardHeader className="text-center pb-6 pt-8">
                 <div className="flex justify-center mb-6">
                   <div className="p-4 bg-gradient-to-br from-[#18B2B0] to-teal-600 rounded-full shadow-lg">
                     <Shield className="h-12 w-12 text-white" />
                   </div>
                 </div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">تسجيل الدخول</h2>
-                <p className="text-gray-600">مرحباً بك في نظام StockPro</p>
+                <h2 className="text-3xl font-bold text-white mb-2">تسجيل الدخول</h2>
+                <p className="text-gray-200">مرحباً بك في نظام StockPro</p>
               </CardHeader>
               
               <CardContent className="pb-8">
@@ -312,7 +312,7 @@ export default function Login() {
                       name="username"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700 font-semibold">اسم المستخدم</FormLabel>
+                          <FormLabel className="text-white font-semibold">اسم المستخدم</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <User className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
@@ -320,7 +320,7 @@ export default function Login() {
                                 {...field}
                                 type="text"
                                 placeholder="أدخل اسم المستخدم"
-                                className="pr-10 h-12 border-gray-300 focus:border-[#18B2B0] focus:ring-[#18B2B0]"
+                                className="pr-10 h-12 bg-white/90 border-gray-300 focus:border-[#18B2B0] focus:ring-[#18B2B0]"
                                 disabled={isSubmitting}
                                 data-testid="input-username"
                               />
@@ -336,7 +336,7 @@ export default function Login() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700 font-semibold">كلمة المرور</FormLabel>
+                          <FormLabel className="text-white font-semibold">كلمة المرور</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Lock className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
@@ -344,7 +344,7 @@ export default function Login() {
                                 {...field}
                                 type="password"
                                 placeholder="أدخل كلمة المرور"
-                                className="pr-10 h-12 border-gray-300 focus:border-[#18B2B0] focus:ring-[#18B2B0]"
+                                className="pr-10 h-12 bg-white/90 border-gray-300 focus:border-[#18B2B0] focus:ring-[#18B2B0]"
                                 disabled={isSubmitting}
                                 data-testid="input-password"
                               />
@@ -372,21 +372,6 @@ export default function Login() {
                     </Button>
                   </form>
                 </Form>
-
-                {/* Demo Credentials */}
-                <div className="mt-8 pt-6 border-t border-gray-200">
-                  <p className="text-sm text-gray-500 text-center mb-3 font-semibold">حسابات تجريبية:</p>
-                  <div className="grid grid-cols-2 gap-3 text-xs">
-                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                      <p className="font-bold text-blue-700 mb-1">مدير</p>
-                      <p className="text-gray-600">admin / admin123</p>
-                    </div>
-                    <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-                      <p className="font-bold text-green-700 mb-1">فني</p>
-                      <p className="text-gray-600">employee1 / emp123</p>
-                    </div>
-                  </div>
-                </div>
               </CardContent>
             </Card>
 
