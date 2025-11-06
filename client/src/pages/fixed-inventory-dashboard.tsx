@@ -127,7 +127,7 @@ export default function FixedInventoryDashboard() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xs sm:text-sm text-muted-foreground">أجهزة N950</CardTitle>
@@ -138,10 +138,26 @@ export default function FixedInventoryDashboard() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs sm:text-sm text-muted-foreground">أجهزة I900</CardTitle>
+            <CardTitle className="text-xs sm:text-sm text-muted-foreground">أجهزة I9000s</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xl sm:text-2xl font-bold" data-testid="text-total-i900">{summary.totalI900}</p>
+            <p className="text-xl sm:text-2xl font-bold" data-testid="text-total-i9000s">{summary.totalI9000s}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs sm:text-sm text-muted-foreground">أجهزة I9100</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xl sm:text-2xl font-bold" data-testid="text-total-i9100">{summary.totalI9100}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs sm:text-sm text-muted-foreground">بطاريات جديدة</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xl sm:text-2xl font-bold" data-testid="text-total-batteries">{summary.totalNewBatteries}</p>
           </CardContent>
         </Card>
         <Card>

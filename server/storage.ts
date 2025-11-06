@@ -126,6 +126,7 @@ export class MemStorage implements IStorage {
       email: "admin@company.com",
       password: "admin123", // In real app, this would be hashed
       fullName: "مدير النظام",
+      profileImage: null,
       city: null,
       role: "admin",
       regionId: defaultRegion.id,
@@ -461,6 +462,7 @@ export class MemStorage implements IStorage {
       email: insertUser.email,
       password: insertUser.password,
       fullName: insertUser.fullName,
+      profileImage: insertUser.profileImage ?? null,
       city: insertUser.city ?? null,
       role: insertUser.role ?? "employee",
       regionId: insertUser.regionId ?? null,
