@@ -244,33 +244,29 @@ export default function WarehousesPage() {
       {/* Warehouses Content */}
       <div className="max-w-7xl mx-auto px-6 py-10">
         {/* Add Warehouse Button */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
-            <h2 className="text-3xl font-bold text-gray-900">إدارة المستودعات</h2>
-            <p className="text-gray-600 mt-1">تحكم كامل في مستودعاتك ومخزونك</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">إدارة المستودعات</h2>
+            <p className="text-sm sm:text-base text-gray-600 mt-1">تحكم كامل في مستودعاتك ومخزونك</p>
           </div>
-          <div className="flex gap-3">
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button 
-                onClick={handleExportWarehouses}
-                variant="outline"
-                className="border-2 border-[#18B2B0] text-[#18B2B0] hover:bg-[#18B2B0]/10 hover:border-[#16a09e] shadow-lg"
-                data-testid="button-export-warehouses"
-              >
-                <Download className="h-5 w-5 ml-2" />
-                تصدير إلى Excel
-              </Button>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button 
-                onClick={() => setShowCreateModal(true)}
-                className="bg-gradient-to-r from-[#18B2B0] to-teal-500 hover:from-[#16a09e] hover:to-teal-600 shadow-xl text-white"
-                data-testid="button-create-warehouse"
-              >
-                <Plus className="h-5 w-5 ml-2" />
-                إضافة مستودع جديد
-              </Button>
-            </motion.div>
+          <div className="flex gap-2 sm:gap-3 w-full sm:w-auto flex-wrap">
+            <Button 
+              onClick={handleExportWarehouses}
+              variant="outline"
+              className="border-2 border-[#18B2B0] text-[#18B2B0] hover:bg-[#18B2B0]/10 hover:border-[#16a09e] shadow-lg transition-all flex-1 sm:flex-none text-sm sm:text-base"
+              data-testid="button-export-warehouses"
+            >
+              <Download className="h-4 w-4 sm:h-5 sm:w-5 ml-2" />
+              تصدير إلى Excel
+            </Button>
+            <Button 
+              onClick={() => setShowCreateModal(true)}
+              className="bg-gradient-to-r from-[#18B2B0] to-teal-500 hover:from-[#16a09e] hover:to-teal-600 shadow-xl text-white transition-all flex-1 sm:flex-none text-sm sm:text-base"
+              data-testid="button-create-warehouse"
+            >
+              <Plus className="h-4 w-4 sm:h-5 sm:w-5 ml-2" />
+              إضافة مستودع جديد
+            </Button>
           </div>
         </div>
 
@@ -305,17 +301,15 @@ export default function WarehousesPage() {
             <p className="text-lg text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
               ابدأ بإضافة أول مستودع لإدارة المخزون بكفاءة
             </p>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button 
-                onClick={() => setShowCreateModal(true)}
-                size="lg"
-                className="bg-gradient-to-r from-[#18B2B0] to-teal-500 hover:from-[#16a09e] hover:to-teal-600 shadow-lg text-lg px-8"
-                data-testid="button-create-warehouse-empty"
-              >
-                <Plus className="h-5 w-5 ml-2" />
-                إضافة مستودع جديد
-              </Button>
-            </motion.div>
+            <Button 
+              onClick={() => setShowCreateModal(true)}
+              size="lg"
+              className="bg-gradient-to-r from-[#18B2B0] to-teal-500 hover:from-[#16a09e] hover:to-teal-600 shadow-lg text-base sm:text-lg px-6 sm:px-8 transition-all"
+              data-testid="button-create-warehouse-empty"
+            >
+              <Plus className="h-5 w-5 ml-2" />
+              إضافة مستودع جديد
+            </Button>
           </motion.div>
         ) : (
           <motion.div 

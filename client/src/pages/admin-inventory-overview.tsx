@@ -1227,31 +1227,33 @@ export default function AdminInventoryOverview() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="flex items-center justify-between gap-4 flex-wrap"
+          className="space-y-4"
         >
-          <div className="flex items-center gap-4 flex-1">
+          {/* Header and Back Button */}
+          <div className="flex items-center gap-3">
             <Button
               onClick={() => setLocation('/')}
-              className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold shadow-lg transition-all hover:shadow-xl"
+              className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold shadow-lg transition-all hover:shadow-xl text-sm sm:text-base"
               data-testid="button-back-home"
             >
-              <Home className="w-5 h-5 ml-2" />
-              الصفحة الرئيسية
-              <ArrowRight className="w-5 h-5 mr-2" />
+              <Home className="w-4 h-4 sm:w-5 sm:h-5 ml-2" />
+              الرئيسية
+              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
             </Button>
             
-            <div>
-              <h1 className="text-3xl sm:text-4xl font-black text-slate-800 dark:text-white flex items-center gap-3">
+            <div className="flex-1">
+              <h1 className="text-xl sm:text-3xl lg:text-4xl font-black text-slate-800 dark:text-white flex items-center gap-2 sm:gap-3">
                 <motion.div
-                  className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl shadow-xl"
+                  className="p-2 sm:p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl sm:rounded-2xl shadow-xl"
                   animate={{ rotate: [0, 5, 0, -5, 0] }}
                   transition={{ duration: 4, repeat: Infinity }}
                 >
-                  <BarChart3 className="h-8 w-8 text-white drop-shadow-lg" />
+                  <BarChart3 className="h-5 w-5 sm:h-7 sm:w-7 lg:h-8 lg:w-8 text-white drop-shadow-lg" />
                 </motion.div>
-                لوحة مخزون الفنيين
+                <span className="hidden sm:inline">لوحة مخزون الفنيين</span>
+                <span className="sm:hidden">مخزون الفنيين</span>
               </h1>
-              <p className="text-slate-600 dark:text-slate-400 mt-1 text-sm sm:text-base">
+              <p className="text-slate-600 dark:text-slate-400 mt-1 text-xs sm:text-sm lg:text-base">
                 عرض شامل واحترافي لمخزون جميع الفنيين
               </p>
             </div>
@@ -1260,10 +1262,10 @@ export default function AdminInventoryOverview() {
           {/* Export Button */}
           <Button
             onClick={exportToExcel}
-            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold shadow-lg transition-all hover:shadow-xl"
+            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold shadow-lg transition-all hover:shadow-xl w-full sm:w-auto text-sm sm:text-base"
             data-testid="button-export-all"
           >
-            <FileDown className="w-5 h-5 ml-2" />
+            <FileDown className="w-4 h-4 sm:w-5 sm:h-5 ml-2" />
             تصدير Excel
           </Button>
         </motion.div>
