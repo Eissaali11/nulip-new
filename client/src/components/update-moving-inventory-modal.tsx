@@ -122,6 +122,8 @@ export function UpdateMovingInventoryModal({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/technicians/${technicianId}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/all-technicians-inventory'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/technician-inventory/${technicianId}`] });
       toast({
         title: "تم التحديث بنجاح",
         description: "تم تحديث المخزون المتحرك",

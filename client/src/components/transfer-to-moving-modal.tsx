@@ -119,6 +119,8 @@ export function TransferToMovingModal({
       queryClient.invalidateQueries({ queryKey: [`/api/technicians/${technicianId}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/fixed-inventory-dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/all-technicians-inventory'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/technician-inventory/${technicianId}`] });
       toast({
         title: "✓ تم النقل بنجاح",
         description: "تم نقل الكميات من المخزون الثابت إلى المتحرك",
