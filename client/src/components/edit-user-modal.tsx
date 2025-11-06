@@ -179,8 +179,12 @@ export function EditUserModal({
             {/* Profile Image Upload */}
             <div className="flex flex-col items-center gap-4 p-6 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 rounded-xl border-2 border-dashed border-blue-300 dark:border-blue-700">
               <div className="relative">
-                <Avatar className="h-32 w-32 border-4 border-white dark:border-slate-700 shadow-xl">
-                  <AvatarImage src={profileImage || undefined} alt="Profile" />
+                <Avatar key={profileImage || 'no-image'} className="h-32 w-32 border-4 border-white dark:border-slate-700 shadow-xl">
+                  <AvatarImage 
+                    src={profileImage || undefined} 
+                    alt="Profile"
+                    className="object-cover"
+                  />
                   <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-3xl font-bold">
                     {getInitials(form.watch('fullName'))}
                   </AvatarFallback>

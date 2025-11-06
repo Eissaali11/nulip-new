@@ -275,8 +275,12 @@ export default function UsersPage() {
                           whileHover={{ scale: 1.1 }}
                           className="relative"
                         >
-                          <Avatar className="h-16 w-16 border-4 border-white dark:border-slate-700 shadow-lg">
-                            <AvatarImage src={user.profileImage || undefined} alt={user.fullName} />
+                          <Avatar key={user.profileImage || user.id} className="h-16 w-16 border-4 border-white dark:border-slate-700 shadow-lg">
+                            <AvatarImage 
+                              src={user.profileImage || undefined} 
+                              alt={user.fullName}
+                              className="object-cover"
+                            />
                             <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-lg">
                               {getInitials(user.fullName)}
                             </AvatarFallback>
