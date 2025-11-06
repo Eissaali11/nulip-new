@@ -1230,17 +1230,15 @@ export default function AdminInventoryOverview() {
           className="flex items-center justify-between gap-4 flex-wrap"
         >
           <div className="flex items-center gap-4 flex-1">
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button
-                onClick={() => setLocation('/')}
-                className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold shadow-lg"
-                data-testid="button-back-home"
-              >
-                <Home className="w-5 h-5 ml-2" />
-                الصفحة الرئيسية
-                <ArrowRight className="w-5 h-5 mr-2" />
-              </Button>
-            </motion.div>
+            <Button
+              onClick={() => setLocation('/')}
+              className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold shadow-lg transition-all hover:shadow-xl"
+              data-testid="button-back-home"
+            >
+              <Home className="w-5 h-5 ml-2" />
+              الصفحة الرئيسية
+              <ArrowRight className="w-5 h-5 mr-2" />
+            </Button>
             
             <div>
               <h1 className="text-3xl sm:text-4xl font-black text-slate-800 dark:text-white flex items-center gap-3">
