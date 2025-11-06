@@ -211,12 +211,13 @@ export default function NotificationsPage() {
     return <Package className="h-5 w-5" />;
   };
 
-  // Group transfers by warehouse and creation time (rounded to minute)
+  // Group transfers by warehouse, performer, notes, and day
+  // This groups items from the same transfer operation together
   const groupedTransfers = pendingTransfers?.reduce((acc, transfer) => {
     const date = new Date(transfer.createdAt);
-    // Round to the nearest minute to group operations done at similar times
-    const roundedTime = new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes()).getTime();
-    const key = `${transfer.warehouseId}-${roundedTime}`;
+    const dayKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+    // Group by warehouse, day, performer, and notes to identify same operation
+    const key = `${transfer.warehouseId}-${dayKey}-${transfer.performedBy}-${transfer.notes || 'no-notes'}`;
     
     if (!acc[key]) {
       acc[key] = {
@@ -225,6 +226,7 @@ export default function NotificationsPage() {
         warehouseName: transfer.warehouseName,
         createdAt: transfer.createdAt,
         notes: transfer.notes,
+        performedBy: transfer.performedBy,
         items: [],
       };
     }
