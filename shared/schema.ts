@@ -100,9 +100,13 @@ export const technicianFixedInventories = pgTable("technician_fixed_inventories"
   n950Boxes: integer("n950_boxes").notNull().default(0),
   n950Units: integer("n950_units").notNull().default(0),
   
-  // I900 devices
-  i900Boxes: integer("i900_boxes").notNull().default(0),
-  i900Units: integer("i900_units").notNull().default(0),
+  // I9000s devices
+  i9000sBoxes: integer("i9000s_boxes").notNull().default(0),
+  i9000sUnits: integer("i9000s_units").notNull().default(0),
+  
+  // I9100 devices
+  i9100Boxes: integer("i9100_boxes").notNull().default(0),
+  i9100Units: integer("i9100_units").notNull().default(0),
   
   // Roll Paper
   rollPaperBoxes: integer("roll_paper_boxes").notNull().default(0),
@@ -111,6 +115,10 @@ export const technicianFixedInventories = pgTable("technician_fixed_inventories"
   // Stickers
   stickersBoxes: integer("stickers_boxes").notNull().default(0),
   stickersUnits: integer("stickers_units").notNull().default(0),
+  
+  // New Batteries
+  newBatteriesBoxes: integer("new_batteries_boxes").notNull().default(0),
+  newBatteriesUnits: integer("new_batteries_units").notNull().default(0),
   
   // Mobily SIM
   mobilySimBoxes: integer("mobily_sim_boxes").notNull().default(0),
@@ -136,7 +144,7 @@ export const technicianFixedInventories = pgTable("technician_fixed_inventories"
 export const stockMovements = pgTable("stock_movements", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   technicianId: varchar("technician_id").notNull().references(() => users.id),
-  itemType: text("item_type").notNull(), // "n950", "i900", "rollPaper", "stickers", "mobilySim", "stcSim", "zainSim"
+  itemType: text("item_type").notNull(), // "n950", "i9000s", "i9100", "rollPaper", "stickers", "newBatteries", "mobilySim", "stcSim", "zainSim"
   packagingType: text("packaging_type").notNull(), // "box", "unit"
   quantity: integer("quantity").notNull(), // الكمية المنقولة
   fromInventory: text("from_inventory").notNull(), // "fixed", "moving"
