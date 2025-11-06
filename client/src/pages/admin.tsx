@@ -19,7 +19,7 @@ import type { RegionWithStats, UserSafe, AdminStats, Region, InsertRegion, Inser
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import logoPath from "@assets/5fd20532dbfff_cropped-RASSAUDI-Logo_1762460814438.png";
+import bannerImage from "@assets/Gemini_Generated_Image_1iknau1iknau1ikn_1762464877305.png";
 
 // Form schemas
 const regionFormSchema = z.object({
@@ -221,61 +221,80 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50/30 to-slate-50" dir="rtl">
-      {/* Animated Logo Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#18B2B0] via-teal-500 to-[#18B2B0] shadow-2xl">
-        <div className="absolute inset-0 bg-black/5"></div>
+      {/* Elegant Professional Banner */}
+      <div className="relative overflow-hidden h-96 shadow-2xl">
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <img
+            src={bannerImage}
+            alt="Admin Dashboard Banner"
+            className="w-full h-full object-cover"
+          />
+        </div>
+
+        {/* Multi-Layer Gradient Overlays for Depth */}
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-900/85 via-[#18B2B0]/30 to-slate-900/75"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-slate-900/50"></div>
+
+        {/* Elegant Decorative Glow Effects */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#18B2B0]/20 rounded-full blur-3xl opacity-60"></div>
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-teal-400/15 rounded-full blur-3xl opacity-50"></div>
+
+        {/* Top Premium Border Accent */}
+        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-[#18B2B0] to-transparent"></div>
+
+        {/* Content Section */}
+        <div className="relative h-full flex flex-col justify-between px-6 py-6">
+          {/* Top Section - Back Button */}
+          <div>
+            <Link href="/">
+              <Button 
+                variant="secondary" 
+                className="bg-white/10 backdrop-blur-xl border-2 border-white/20 text-white hover:bg-white/20 hover:border-[#18B2B0]/60 hover:shadow-[0_0_20px_rgba(24,178,176,0.3)] shadow-2xl transition-all duration-300"
+                data-testid="button-back-dashboard"
+              >
+                <ArrowRight className="h-4 w-4 ml-2" />
+                <LayoutDashboard className="h-4 w-4 ml-2" />
+                العودة للوحة الرئيسية
+              </Button>
+            </Link>
+          </div>
+
+          {/* Center Premium Content */}
+          <div className="flex flex-col items-center justify-center text-center">
+            <div className="relative">
+              {/* Static Elegant Glow Effect */}
+              <div className="absolute inset-0 bg-[#18B2B0]/30 rounded-full blur-2xl"></div>
+              
+              {/* Premium Glass Card with Icon */}
+              <div className="relative bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl p-8 rounded-3xl border-2 border-white/30 shadow-[0_8px_32px_rgba(0,0,0,0.3)] mb-6">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#18B2B0]/10 to-transparent rounded-3xl"></div>
+                <LayoutDashboard className="relative h-20 w-20 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]" />
+              </div>
+            </div>
+
+            {/* Title and Description */}
+            <h1 className="text-5xl font-black text-white mb-3 drop-shadow-2xl tracking-tight">
+              لوحة الإدارة
+            </h1>
+            <p className="text-xl text-white/95 font-semibold drop-shadow-lg">
+              إدارة شاملة للنظام والموظفين والعمليات
+            </p>
+          </div>
+
+          {/* Bottom Spacer */}
+          <div></div>
+        </div>
+
+        {/* Elegant Bottom Gradient Fade */}
+        <div className="absolute bottom-0 inset-x-0 h-32 bg-gradient-to-t from-slate-50 via-slate-50/60 to-transparent"></div>
         
-        {/* Animated logos - Right to Left */}
-        <div className="flex gap-16 py-8 animate-[scroll-rtl_30s_linear_infinite] whitespace-nowrap">
-          {[...Array(10)].map((_, i) => (
-            <img
-              key={`rtl-${i}`}
-              src={logoPath}
-              alt="RAS Saudi Logo"
-              className="h-16 w-auto object-contain opacity-90 hover:opacity-100 transition-opacity"
-            />
-          ))}
-        </div>
-
-        {/* Animated logos - Left to Right (reversed) */}
-        <div className="flex gap-16 py-8 animate-[scroll-ltr_25s_linear_infinite] whitespace-nowrap border-t border-white/10">
-          {[...Array(10)].map((_, i) => (
-            <img
-              key={`ltr-${i}`}
-              src={logoPath}
-              alt="RAS Saudi Logo"
-              className="h-16 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity"
-            />
-          ))}
-        </div>
-
-        {/* Overlay gradient for smooth edges */}
-        <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#18B2B0] to-transparent pointer-events-none"></div>
-        <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#18B2B0] to-transparent pointer-events-none"></div>
+        {/* Bottom Premium Border Accent */}
+        <div className="absolute bottom-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-[#18B2B0]/60 to-transparent"></div>
       </div>
 
       {/* Main Content */}
       <div className="p-6 space-y-6 max-w-7xl mx-auto">
-        {/* Navigation Header */}
-        <div className="flex justify-between items-center bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-[#18B2B0]/20">
-          <Link href="/">
-            <Button 
-              variant="outline" 
-              className="flex items-center gap-2 hover:bg-[#18B2B0]/10 hover:border-[#18B2B0] transition-all duration-300" 
-              data-testid="button-back-dashboard"
-            >
-              <ArrowRight className="h-5 w-5 text-[#18B2B0]" />
-              <LayoutDashboard className="h-5 w-5 text-[#18B2B0]" />
-              <span className="font-semibold">العودة للوحة الرئيسية</span>
-            </Button>
-          </Link>
-          <div className="text-right">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-[#18B2B0] via-teal-600 to-cyan-600 bg-clip-text text-transparent">
-              لوحة الإدارة
-            </h1>
-            <p className="text-gray-600 mt-2 text-lg">إدارة شاملة للنظام والموظفين والعمليات</p>
-          </div>
-        </div>
 
         {/* Enhanced Stats Cards */}
         {adminStats && (
