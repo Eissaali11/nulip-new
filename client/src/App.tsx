@@ -22,6 +22,8 @@ import ProfilePage from "@/pages/profile";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import { Loader2 } from "lucide-react";
+import { SplashScreen } from "@/components/SplashScreen";
+import { useState, useEffect } from "react";
 
 function AuthenticatedRouter() {
   const { user } = useAuth();
@@ -75,11 +77,22 @@ function AppContent() {
 }
 
 function App() {
+  const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 2500);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
           <Toaster />
+          {showSplash && <SplashScreen />}
           <AppContent />
         </TooltipProvider>
       </AuthProvider>
