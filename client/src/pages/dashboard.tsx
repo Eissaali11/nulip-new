@@ -74,8 +74,8 @@ export default function Dashboard() {
         />
 
         <div className="relative container mx-auto px-4 py-8">
-          {/* User Avatar Dropdown - Top Right */}
-          <div className="absolute top-4 left-4 z-50">
+          {/* User Avatar Dropdown - Top Left */}
+          <div className="absolute top-4 right-4 z-50">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <motion.button
