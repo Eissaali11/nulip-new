@@ -159,7 +159,7 @@ export default function Login() {
                 />
                 {/* Logo Container */}
                 <motion.div
-                  className="relative bg-white rounded-full shadow-2xl border-4 border-[#18B2B0]/50 w-32 h-32 flex items-center justify-center overflow-hidden"
+                  className="relative bg-white rounded-full shadow-2xl border-4 border-[#18B2B0]/50 w-32 h-32 flex items-center justify-center p-4"
                   whileHover={{ scale: 1.1 }}
                   animate={{
                     boxShadow: [
@@ -177,7 +177,7 @@ export default function Login() {
                   <img 
                     src={rasscoLogo} 
                     alt="RASSCO" 
-                    className="w-full h-full object-cover scale-110"
+                    className="w-full h-full object-contain"
                   />
                 </motion.div>
               </motion.div>
@@ -269,7 +269,7 @@ export default function Login() {
                 />
                 {/* Logo Container */}
                 <motion.div
-                  className="relative bg-white rounded-full shadow-2xl border-4 border-[#18B2B0]/50 w-28 h-28 flex items-center justify-center overflow-hidden"
+                  className="relative bg-white rounded-full shadow-2xl border-4 border-[#18B2B0]/50 w-28 h-28 flex items-center justify-center p-3"
                   whileHover={{ scale: 1.1 }}
                   animate={{
                     boxShadow: [
@@ -287,7 +287,7 @@ export default function Login() {
                   <img 
                     src={rasscoLogo} 
                     alt="RASSCO" 
-                    className="w-full h-full object-cover scale-110"
+                    className="w-full h-full object-contain"
                   />
                 </motion.div>
               </motion.div>
