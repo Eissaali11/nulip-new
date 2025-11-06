@@ -147,22 +147,6 @@ export default function AdminInventoryOverview() {
 
     worksheet.views = [{ rightToLeft: true }];
 
-    // Add title
-    worksheet.mergeCells('A1:L1');
-    const titleCell = worksheet.getCell('A1');
-    titleCell.value = 'تقرير شامل لمخزون جميع الفنيين';
-    titleCell.font = { size: 18, bold: true };
-    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-    titleCell.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FF4F46E5' }
-    };
-    titleCell.font = { ...titleCell.font, color: { argb: 'FFFFFFFF' } };
-
-    // Add date (Arabic and English)
-    worksheet.mergeCells('A2:L2');
-    const dateCell = worksheet.getCell('A2');
     const currentDate = new Date();
     const arabicDate = currentDate.toLocaleDateString('ar-SA', { 
       weekday: 'long', 
@@ -170,154 +154,308 @@ export default function AdminInventoryOverview() {
       month: 'long', 
       day: 'numeric' 
     });
-    const englishDate = currentDate.toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
     const time = currentDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
-    dateCell.value = `تاريخ التقرير: ${arabicDate} | ${englishDate} - ${time}`;
-    dateCell.alignment = { horizontal: 'center' };
-    dateCell.font = { bold: true };
+
+    worksheet.mergeCells('A1:L1');
+    const titleCell = worksheet.getCell('A1');
+    titleCell.value = 'نظام إدارة مخزون الفنيين - Technician Inventory Management System';
+    titleCell.font = { size: 18, bold: true, color: { argb: 'FFFFFFFF' } };
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    titleCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF2563EB' }
+    };
+    titleCell.border = {
+      top: { style: 'medium', color: { argb: 'FF2563EB' } },
+      left: { style: 'medium', color: { argb: 'FF2563EB' } },
+      bottom: { style: 'medium', color: { argb: 'FF2563EB' } },
+      right: { style: 'medium', color: { argb: 'FF2563EB' } }
+    };
+    worksheet.getRow(1).height = 35;
+
+    worksheet.mergeCells('A2:L2');
+    const dateCell = worksheet.getCell('A2');
+    dateCell.value = `Report Date: ${arabicDate} - ${time}`;
+    dateCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    dateCell.font = { bold: true, size: 11 };
+    dateCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFDBEAFE' }
+    };
+    worksheet.getRow(2).height = 25;
 
     worksheet.addRow([]);
 
-    // Headers
     const headerRow = worksheet.addRow([
-      'اسم الفني',
-      'المدينة',
-      'الحالة',
-      'المخزون الثابت',
-      'المخزون المتحرك',
-      'N950 (ث)',
-      'I9000s (ث)',
-      'I9100 (ث)',
-      'N950 (م)',
-      'I9000s (م)',
-      'I9100 (م)',
-      'الإجمالي'
+      '#',
+      'Technicians Name',
+      'City',
+      'N950 Devices',
+      'I9000s Devices',
+      'I9100 Devices',
+      'Roll Sheets',
+      'Madal Stickers',
+      'New Batteries',
+      'SIM Mobily',
+      'SIM STC',
+      'SIM Zain'
     ]);
     
-    headerRow.font = { bold: true, size: 12 };
+    headerRow.font = { bold: true, size: 11, color: { argb: 'FFFFFFFF' } };
     headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
-    headerRow.height = 25;
+    headerRow.height = 30;
     headerRow.eachCell((cell) => {
       cell.fill = {
         type: 'pattern',
         pattern: 'solid',
-        fgColor: { argb: 'FFE0E7FF' }
+        fgColor: { argb: 'FF4A5568' }
       };
       cell.border = {
-        top: { style: 'thin' },
-        left: { style: 'thin' },
-        bottom: { style: 'thin' },
-        right: { style: 'thin' }
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
       };
     });
 
-    // Data rows
-    technicians.forEach((tech) => {
-      const fixedTotal = calculateFixedTotal(tech.fixedInventory);
-      const movingTotal = calculateMovingTotal(tech.movingInventory);
-      
-      const statusText = tech.alertLevel === 'critical' ? 'حرج' : 
-                        tech.alertLevel === 'warning' ? 'تحذير' : 'جيد';
+    let totals = {
+      n950: 0, i9000s: 0, i9100: 0,
+      rollPaper: 0, stickers: 0, batteries: 0,
+      mobilySim: 0, stcSim: 0, zainSim: 0
+    };
+
+    technicians.forEach((tech, index) => {
+      const movingInv = tech.movingInventory;
+      const n950 = movingInv ? getTotalForItem(movingInv.n950Boxes, movingInv.n950Units) : 0;
+      const i9000s = movingInv ? getTotalForItem(movingInv.i9000sBoxes, movingInv.i9000sUnits) : 0;
+      const i9100 = movingInv ? getTotalForItem(movingInv.i9100Boxes, movingInv.i9100Units) : 0;
+      const rollPaper = movingInv ? getTotalForItem(movingInv.rollPaperBoxes, movingInv.rollPaperUnits) : 0;
+      const stickers = movingInv ? getTotalForItem(movingInv.stickersBoxes, movingInv.stickersUnits) : 0;
+      const batteries = movingInv ? getTotalForItem(movingInv.newBatteriesBoxes, movingInv.newBatteriesUnits) : 0;
+      const mobilySim = movingInv ? getTotalForItem(movingInv.mobilySimBoxes, movingInv.mobilySimUnits) : 0;
+      const stcSim = movingInv ? getTotalForItem(movingInv.stcSimBoxes, movingInv.stcSimUnits) : 0;
+      const zainSim = movingInv ? getTotalForItem(movingInv.zainSimBoxes, movingInv.zainSimUnits) : 0;
+
+      totals.n950 += n950;
+      totals.i9000s += i9000s;
+      totals.i9100 += i9100;
+      totals.rollPaper += rollPaper;
+      totals.stickers += stickers;
+      totals.batteries += batteries;
+      totals.mobilySim += mobilySim;
+      totals.stcSim += stcSim;
+      totals.zainSim += zainSim;
       
       const dataRow = worksheet.addRow([
+        index + 1,
         tech.technicianName,
         tech.city,
-        statusText,
-        fixedTotal,
-        movingTotal,
-        tech.fixedInventory ? getTotalForItem(tech.fixedInventory.n950Boxes, tech.fixedInventory.n950Units) : 0,
-        tech.fixedInventory ? getTotalForItem(tech.fixedInventory.i9000sBoxes, tech.fixedInventory.i9000sUnits) : 0,
-        tech.fixedInventory ? getTotalForItem(tech.fixedInventory.i9100Boxes, tech.fixedInventory.i9100Units) : 0,
-        tech.movingInventory ? getTotalForItem(tech.movingInventory.n950Boxes, tech.movingInventory.n950Units) : 0,
-        tech.movingInventory ? getTotalForItem(tech.movingInventory.i9000sBoxes, tech.movingInventory.i9000sUnits) : 0,
-        tech.movingInventory ? getTotalForItem(tech.movingInventory.i9100Boxes, tech.movingInventory.i9100Units) : 0,
-        fixedTotal + movingTotal
+        n950,
+        i9000s,
+        i9100,
+        rollPaper,
+        stickers,
+        batteries,
+        mobilySim,
+        stcSim,
+        zainSim
       ]);
 
       dataRow.alignment = { horizontal: 'center', vertical: 'middle' };
       dataRow.eachCell((cell) => {
         cell.border = {
-          top: { style: 'thin' },
-          left: { style: 'thin' },
-          bottom: { style: 'thin' },
-          right: { style: 'thin' }
+          top: { style: 'thin', color: { argb: 'FF000000' } },
+          left: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } },
+          right: { style: 'thin', color: { argb: 'FF000000' } }
         };
       });
-
-      // Color code based on status
-      if (tech.alertLevel === 'critical') {
-        dataRow.getCell(3).fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: 'FFFECACA' }
-        };
-      } else if (tech.alertLevel === 'warning') {
-        dataRow.getCell(3).fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: 'FFFEF3C7' }
-        };
-      } else {
-        dataRow.getCell(3).fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: 'FFD1FAE5' }
-        };
-      }
     });
 
-    // Summary row
-    worksheet.addRow([]);
-    const summaryRow = worksheet.addRow([
-      'الإجمالي',
-      `${technicians.length} فني`,
+    const totalRow = worksheet.addRow([
       '',
-      technicians.reduce((sum, t) => sum + calculateFixedTotal(t.fixedInventory), 0),
-      technicians.reduce((sum, t) => sum + calculateMovingTotal(t.movingInventory), 0),
+      'Total',
       '',
-      '',
-      '',
-      '',
-      '',
-      '',
-      technicians.reduce((sum, t) => sum + calculateFixedTotal(t.fixedInventory) + calculateMovingTotal(t.movingInventory), 0)
+      totals.n950,
+      totals.i9000s,
+      totals.i9100,
+      totals.rollPaper,
+      totals.stickers,
+      totals.batteries,
+      totals.mobilySim,
+      totals.stcSim,
+      totals.zainSim
     ]);
 
-    summaryRow.font = { bold: true, size: 12 };
-    summaryRow.alignment = { horizontal: 'center', vertical: 'middle' };
-    summaryRow.eachCell((cell) => {
+    totalRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
+    totalRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    totalRow.height = 25;
+    totalRow.eachCell((cell) => {
       cell.fill = {
         type: 'pattern',
         pattern: 'solid',
-        fgColor: { argb: 'FFD1D5DB' }
+        fgColor: { argb: 'FF16A085' }
       };
       cell.border = {
-        top: { style: 'thin' },
-        left: { style: 'thin' },
-        bottom: { style: 'thin' },
-        right: { style: 'thin' }
+        top: { style: 'medium', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'medium', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
       };
     });
 
-    // Set column widths
+    const totalBoxRow = worksheet.addRow([
+      '',
+      'Total Box',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      ''
+    ]);
+
+    totalBoxRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
+    totalBoxRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    totalBoxRow.height = 25;
+    totalBoxRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF16A085' }
+      };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'medium', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+
+    worksheet.addRow([]);
+    
+    const statsHeaderRow = worksheet.addRow(['Overall Statistics']);
+    worksheet.mergeCells(statsHeaderRow.number, 1, statsHeaderRow.number, 12);
+    statsHeaderRow.font = { bold: true, size: 14, color: { argb: 'FFFFFFFF' } };
+    statsHeaderRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    statsHeaderRow.height = 28;
+    statsHeaderRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF16A085' }
+      };
+      cell.border = {
+        top: { style: 'medium', color: { argb: 'FF000000' } },
+        left: { style: 'medium', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'medium', color: { argb: 'FF000000' } }
+      };
+    });
+
+    const statsRow1 = worksheet.addRow([
+      'Technicians Name',
+      technicians.length,
+      'N950 Devices',
+      totals.n950,
+      'I9000s Devices',
+      totals.i9000s,
+      'I9100 Devices',
+      totals.i9100
+    ]);
+    statsRow1.alignment = { horizontal: 'center', vertical: 'middle' };
+    statsRow1.eachCell((cell, colNumber) => {
+      if (colNumber % 2 === 1) {
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFE0F7F6' }
+        };
+        cell.font = { bold: true };
+      }
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+
+    const statsRow2 = worksheet.addRow([
+      'Roll Sheets',
+      totals.rollPaper,
+      'Madal Stickers',
+      totals.stickers,
+      'SIM Mobily',
+      totals.mobilySim,
+      'New Batteries',
+      totals.batteries
+    ]);
+    statsRow2.alignment = { horizontal: 'center', vertical: 'middle' };
+    statsRow2.eachCell((cell, colNumber) => {
+      if (colNumber % 2 === 1) {
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFE0F7F6' }
+        };
+        cell.font = { bold: true };
+      }
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+
+    const statsRow3 = worksheet.addRow([
+      'SIM STC',
+      totals.stcSim,
+      'SIM Zain',
+      totals.zainSim,
+      '',
+      '',
+      '',
+      ''
+    ]);
+    statsRow3.alignment = { horizontal: 'center', vertical: 'middle' };
+    statsRow3.eachCell((cell, colNumber) => {
+      if (colNumber % 2 === 1) {
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFE0F7F6' }
+        };
+        cell.font = { bold: true };
+      }
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'medium', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+
     worksheet.columns = [
-      { width: 20 },  // Name
-      { width: 15 },  // City
-      { width: 12 },  // Status
-      { width: 15 },  // Fixed Total
-      { width: 15 },  // Moving Total
-      { width: 12 },  // N950 Fixed
-      { width: 12 },  // I9000s Fixed
-      { width: 12 },  // I9100 Fixed
-      { width: 12 },  // N950 Moving
-      { width: 12 },  // I9000s Moving
-      { width: 12 },  // I9100 Moving
-      { width: 15 }   // Total
+      { width: 8 },
+      { width: 25 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 18 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 }
     ];
 
     // Generate file
