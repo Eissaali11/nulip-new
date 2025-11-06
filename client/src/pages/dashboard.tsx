@@ -3,8 +3,16 @@ import TechniciansTable from "@/components/technicians-table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Package, TruckIcon, ArrowRight, LayoutDashboard, Sparkles, Users, Warehouse, ClipboardCheck, Bell, UserCircle, LogOut } from "lucide-react";
-import { Link } from "wouter";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Package, TruckIcon, ArrowRight, LayoutDashboard, Sparkles, Users, Warehouse, ClipboardCheck, Bell, UserCircle, LogOut, User, Shield } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -19,13 +27,19 @@ interface WarehouseTransfer {
 }
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const [, setLocation] = useLocation();
   
   const { data: pendingTransfers = [] } = useQuery<WarehouseTransfer[]>({
     queryKey: ["/api/warehouse-transfers", user?.id],
     enabled: !!user?.id && user?.role !== 'admin',
     select: (data) => data.filter(t => t.status === 'pending' && t.technicianId === user?.id),
   });
+
+  const handleLogout = async () => {
+    await logout();
+    setLocation("/");
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900" dir="rtl">
@@ -60,6 +74,64 @@ export default function Dashboard() {
         />
 
         <div className="relative container mx-auto px-4 py-8">
+          {/* User Avatar Dropdown - Top Right */}
+          <div className="absolute top-4 left-4 z-50">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <motion.button
+                  className="flex items-center gap-3 bg-white/20 backdrop-blur-md hover:bg-white/30 rounded-full px-4 py-2 transition-all duration-300 shadow-lg border border-white/30"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  data-testid="button-user-avatar"
+                >
+                  <div className="p-2 bg-white/30 rounded-full">
+                    <UserCircle className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="text-right hidden sm:block">
+                    <p className="text-white font-bold text-sm">{user?.fullName}</p>
+                    <p className="text-white/80 text-xs">
+                      {user?.role === 'admin' ? 'مدير' : 'فني'}
+                    </p>
+                  </div>
+                </motion.button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56 bg-white/95 backdrop-blur-lg" align="start">
+                <DropdownMenuLabel className="text-right">الحساب</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="cursor-default focus:bg-transparent">
+                  <div className="flex items-center gap-2 w-full">
+                    <User className="h-4 w-4 text-gray-600" />
+                    <div className="flex-1 text-right">
+                      <p className="text-sm font-medium">{user?.fullName}</p>
+                      <p className="text-xs text-gray-500">@{user?.username}</p>
+                    </div>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-default focus:bg-transparent">
+                  <div className="flex items-center gap-2 w-full justify-end">
+                    <Badge className={user?.role === 'admin' 
+                      ? "bg-purple-100 text-purple-700 border-purple-200" 
+                      : "bg-blue-100 text-blue-700 border-blue-200"}>
+                      {user?.role === 'admin' ? 'مدير' : 'فني'}
+                    </Badge>
+                    <Shield className="h-4 w-4 text-gray-600" />
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  className="cursor-pointer text-right focus:bg-red-50 text-red-600"
+                  onClick={handleLogout}
+                  data-testid="dropdown-logout"
+                >
+                  <div className="flex items-center gap-2 w-full justify-end">
+                    <span className="font-medium">تسجيل الخروج</span>
+                    <LogOut className="h-4 w-4" />
+                  </div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
           <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
             {/* Left Side - Logos Animation */}
             <motion.div 
@@ -318,7 +390,7 @@ export default function Dashboard() {
 
         {/* Admin Quick Access */}
         {user?.role === 'admin' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <motion.div
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
@@ -506,45 +578,6 @@ export default function Dashboard() {
                         data-testid="button-admin-operations"
                       >
                         إدارة العمليات
-                        <ArrowRight className="mr-2 h-5 w-5" />
-                      </Button>
-                    </motion.div>
-                  </Link>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.5 }}
-              whileHover={{ y: -5, scale: 1.02 }}
-            >
-              <Card className="border-2 border-purple-500/50 hover:shadow-2xl hover:shadow-purple-500/30 transition-all duration-300 bg-gradient-to-br from-purple-50/50 via-violet-50/30 to-purple-50/50 backdrop-blur-sm overflow-hidden h-full">
-                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent"></div>
-                <CardHeader className="relative">
-                  <CardTitle className="flex items-center gap-3 text-xl">
-                    <motion.div 
-                      className="p-3 bg-gradient-to-br from-purple-500 to-violet-600 rounded-2xl shadow-lg"
-                      whileHover={{ rotate: 360 }}
-                      transition={{ duration: 0.6 }}
-                    >
-                      <UserCircle className="h-6 w-6 text-white drop-shadow-md" />
-                    </motion.div>
-                    <span className="font-black">الملف الشخصي</span>
-                  </CardTitle>
-                  <CardDescription className="text-base">
-                    عرض معلوماتك الشخصية وتسجيل الخروج
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="relative">
-                  <Link href="/profile">
-                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                      <Button 
-                        className="w-full bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white font-bold shadow-lg shadow-purple-500/50 text-base py-6" 
-                        data-testid="button-admin-profile"
-                      >
-                        الملف الشخصي
                         <ArrowRight className="mr-2 h-5 w-5" />
                       </Button>
                     </motion.div>
