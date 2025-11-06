@@ -86,7 +86,7 @@ export function SplashScreen() {
             }}
             data-testid="splash-title"
           >
-            Evest
+            StockPro
           </h1>
         </div>
 
