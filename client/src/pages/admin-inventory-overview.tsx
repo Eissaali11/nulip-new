@@ -458,6 +458,225 @@ export default function AdminInventoryOverview() {
       { width: 15 }
     ];
 
+    const dashboardSheet = workbook.addWorksheet('Dashboard');
+    dashboardSheet.views = [{ rightToLeft: true }];
+
+    dashboardSheet.mergeCells('A1:H1');
+    const dashTitleCell = dashboardSheet.getCell('A1');
+    dashTitleCell.value = 'لوحة المعلومات - Dashboard';
+    dashTitleCell.font = { size: 24, bold: true, color: { argb: 'FFFFFFFF' } };
+    dashTitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    dashTitleCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF2563EB' }
+    };
+    dashTitleCell.border = {
+      top: { style: 'medium', color: { argb: 'FF000000' } },
+      left: { style: 'medium', color: { argb: 'FF000000' } },
+      bottom: { style: 'medium', color: { argb: 'FF000000' } },
+      right: { style: 'medium', color: { argb: 'FF000000' } }
+    };
+    dashboardSheet.getRow(1).height = 45;
+
+    dashboardSheet.mergeCells('A2:H2');
+    const dashDateCell = dashboardSheet.getCell('A2');
+    dashDateCell.value = `Report Date: ${arabicDate} - ${time}`;
+    dashDateCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    dashDateCell.font = { bold: true, size: 12 };
+    dashDateCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFDBEAFE' }
+    };
+    dashboardSheet.getRow(2).height = 25;
+
+    dashboardSheet.addRow([]);
+
+    const kpiHeaderRow = dashboardSheet.addRow(['Key Performance Indicators']);
+    dashboardSheet.mergeCells(kpiHeaderRow.number, 1, kpiHeaderRow.number, 8);
+    kpiHeaderRow.font = { bold: true, size: 16, color: { argb: 'FFFFFFFF' } };
+    kpiHeaderRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    kpiHeaderRow.height = 30;
+    kpiHeaderRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF16A085' }
+      };
+      cell.border = {
+        top: { style: 'medium', color: { argb: 'FF000000' } },
+        left: { style: 'medium', color: { argb: 'FF000000' } },
+        bottom: { style: 'medium', color: { argb: 'FF000000' } },
+        right: { style: 'medium', color: { argb: 'FF000000' } }
+      };
+    });
+
+    dashboardSheet.addRow([]);
+
+    const kpiLabelsRow = dashboardSheet.addRow(['Metric', '', 'Total', '', 'Critical', '', 'Warning', '']);
+    kpiLabelsRow.font = { bold: true, size: 12, color: { argb: 'FFFFFFFF' } };
+    kpiLabelsRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    kpiLabelsRow.height = 25;
+    kpiLabelsRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF4A5568' }
+      };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+
+    const totalTechs = technicians.length;
+    const kpiRow1 = dashboardSheet.addRow([
+      'Total Technicians',
+      '',
+      totalTechs,
+      '',
+      criticalTechs,
+      '',
+      warningTechs,
+      ''
+    ]);
+    kpiRow1.alignment = { horizontal: 'center', vertical: 'middle' };
+    kpiRow1.getCell(1).font = { bold: true };
+    kpiRow1.getCell(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFE0F7F6' }
+    };
+    kpiRow1.getCell(3).font = { bold: true, size: 14, color: { argb: 'FF2563EB' } };
+    kpiRow1.getCell(5).font = { bold: true, size: 14, color: { argb: 'FFDC2626' } };
+    kpiRow1.getCell(7).font = { bold: true, size: 14, color: { argb: 'FFEA580C' } };
+    kpiRow1.eachCell((cell) => {
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+
+    const totalInventory = totals.n950 + totals.i9000s + totals.i9100 + totals.rollPaper + totals.stickers + totals.batteries + totals.mobilySim + totals.stcSim + totals.zainSim;
+    const kpiRow2 = dashboardSheet.addRow([
+      'Total Inventory Items',
+      '',
+      totalInventory,
+      '',
+      '',
+      '',
+      '',
+      ''
+    ]);
+    kpiRow2.alignment = { horizontal: 'center', vertical: 'middle' };
+    kpiRow2.getCell(1).font = { bold: true };
+    kpiRow2.getCell(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFE0F7F6' }
+    };
+    kpiRow2.getCell(3).font = { bold: true, size: 14, color: { argb: 'FF16A085' } };
+    kpiRow2.eachCell((cell) => {
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+
+    dashboardSheet.addRow([]);
+    dashboardSheet.addRow([]);
+
+    const inventoryBreakdownRow = dashboardSheet.addRow(['Inventory Breakdown by Category']);
+    dashboardSheet.mergeCells(inventoryBreakdownRow.number, 1, inventoryBreakdownRow.number, 8);
+    inventoryBreakdownRow.font = { bold: true, size: 16, color: { argb: 'FFFFFFFF' } };
+    inventoryBreakdownRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    inventoryBreakdownRow.height = 30;
+    inventoryBreakdownRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF16A085' }
+      };
+      cell.border = {
+        top: { style: 'medium', color: { argb: 'FF000000' } },
+        left: { style: 'medium', color: { argb: 'FF000000' } },
+        bottom: { style: 'medium', color: { argb: 'FF000000' } },
+        right: { style: 'medium', color: { argb: 'FF000000' } }
+      };
+    });
+
+    dashboardSheet.addRow([]);
+
+    const categoryHeader = dashboardSheet.addRow(['Category', '', 'Quantity', '', 'Percentage', '']);
+    categoryHeader.font = { bold: true, size: 12, color: { argb: 'FFFFFFFF' } };
+    categoryHeader.alignment = { horizontal: 'center', vertical: 'middle' };
+    categoryHeader.height = 25;
+    categoryHeader.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF4A5568' }
+      };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+
+    const categories = [
+      { name: 'N950 Devices', value: totals.n950 },
+      { name: 'I9000s Devices', value: totals.i9000s },
+      { name: 'I9100 Devices', value: totals.i9100 },
+      { name: 'Roll Sheets', value: totals.rollPaper },
+      { name: 'Madal Stickers', value: totals.stickers },
+      { name: 'New Batteries', value: totals.batteries },
+      { name: 'SIM Mobily', value: totals.mobilySim },
+      { name: 'SIM STC', value: totals.stcSim },
+      { name: 'SIM Zain', value: totals.zainSim }
+    ];
+
+    categories.forEach((cat) => {
+      const percentage = totalInventory > 0 ? ((cat.value / totalInventory) * 100).toFixed(2) : '0.00';
+      const catRow = dashboardSheet.addRow([cat.name, '', cat.value, '', `${percentage}%`, '']);
+      catRow.alignment = { horizontal: 'center', vertical: 'middle' };
+      catRow.getCell(1).font = { bold: true };
+      catRow.getCell(1).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFE0F7F6' }
+      };
+      catRow.getCell(3).font = { bold: true, color: { argb: 'FF2563EB' } };
+      catRow.getCell(5).font = { bold: true };
+      catRow.eachCell((cell) => {
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FF000000' } },
+          left: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } },
+          right: { style: 'thin', color: { argb: 'FF000000' } }
+        };
+      });
+    });
+
+    dashboardSheet.columns = [
+      { width: 25 },
+      { width: 5 },
+      { width: 15 },
+      { width: 5 },
+      { width: 15 },
+      { width: 5 },
+      { width: 15 },
+      { width: 5 }
+    ];
+
     // Generate file
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });

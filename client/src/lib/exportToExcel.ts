@@ -582,6 +582,268 @@ export const exportWarehousesToExcel = async ({
     };
   });
 
+  const unitsSheet = workbook.addWorksheet('الوحدات - Units');
+  unitsSheet.views = [{ rightToLeft: true }];
+
+  unitsSheet.mergeCells('A1:L1');
+  const unitsTitleCell = unitsSheet.getCell('A1');
+  unitsTitleCell.value = companyName;
+  unitsTitleCell.font = { size: 20, bold: true, color: { argb: 'FFFFFFFF' } };
+  unitsTitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  unitsTitleCell.fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FF18B2B0' }
+  };
+  unitsTitleCell.border = {
+    top: { style: 'medium', color: { argb: 'FF18B2B0' } },
+    left: { style: 'medium', color: { argb: 'FF18B2B0' } },
+    bottom: { style: 'medium', color: { argb: 'FF18B2B0' } },
+    right: { style: 'medium', color: { argb: 'FF18B2B0' } }
+  };
+  unitsSheet.getRow(1).height = 35;
+
+  unitsSheet.mergeCells('A2:L2');
+  const unitsSubtitleCell = unitsSheet.getCell('A2');
+  unitsSubtitleCell.value = 'تقرير الوحدات - Units Report';
+  unitsSubtitleCell.font = { size: 16, bold: true, color: { argb: 'FF18B2B0' } };
+  unitsSubtitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  unitsSubtitleCell.fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FFE0F7F6' }
+  };
+  unitsSheet.getRow(2).height = 28;
+
+  unitsSheet.mergeCells('A3:L3');
+  const unitsDateCell = unitsSheet.getCell('A3');
+  unitsDateCell.value = `تاريخ التقرير: ${arabicDate} - الساعة: ${time}`;
+  unitsDateCell.font = { size: 12, bold: true };
+  unitsDateCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  unitsDateCell.fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FFF0F9FF' }
+  };
+  unitsSheet.getRow(3).height = 25;
+
+  unitsSheet.addRow([]);
+
+  const unitsHeaderRow = unitsSheet.addRow([
+    '#',
+    'اسم المستودع',
+    'الموقع',
+    'N950',
+    'I9000s',
+    'I9100',
+    'ورق حراري',
+    'ملصقات',
+    'بطاريات',
+    'موبايلي',
+    'STC',
+    'زين'
+  ]);
+  
+  unitsHeaderRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+  unitsHeaderRow.height = 30;
+  unitsHeaderRow.eachCell((cell) => {
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF4A5568' }
+    };
+    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    cell.border = {
+      top: { style: 'thin', color: { argb: 'FF000000' } },
+      left: { style: 'thin', color: { argb: 'FF000000' } },
+      bottom: { style: 'thin', color: { argb: 'FF000000' } },
+      right: { style: 'thin', color: { argb: 'FF000000' } }
+    };
+  });
+
+  warehouses.forEach((warehouse, index) => {
+    const inv = warehouse.inventory;
+    
+    const unitsDataRow = unitsSheet.addRow([
+      index + 1,
+      warehouse.name,
+      warehouse.location,
+      inv?.n950Units || 0,
+      inv?.i9000sUnits || 0,
+      inv?.i9100Units || 0,
+      inv?.rollPaperUnits || 0,
+      inv?.stickersUnits || 0,
+      inv?.newBatteriesUnits || 0,
+      inv?.mobilySimUnits || 0,
+      inv?.stcSimUnits || 0,
+      inv?.zainSimUnits || 0
+    ]);
+    
+    unitsDataRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    unitsDataRow.eachCell((cell) => {
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+  });
+
+  const unitsTotalRow = unitsSheet.addRow([
+    '',
+    'الإجمالي',
+    '',
+    totals.n950Units,
+    totals.i9000sUnits,
+    totals.i9100Units,
+    totals.rollPaperUnits,
+    totals.stickersUnits,
+    totals.newBatteriesUnits,
+    totals.mobilySimUnits,
+    totals.stcSimUnits,
+    totals.zainSimUnits
+  ]);
+
+  unitsTotalRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
+  unitsTotalRow.alignment = { horizontal: 'center', vertical: 'middle' };
+  unitsTotalRow.height = 25;
+  unitsTotalRow.eachCell((cell) => {
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF16A085' }
+    };
+    cell.border = {
+      top: { style: 'medium', color: { argb: 'FF000000' } },
+      left: { style: 'thin', color: { argb: 'FF000000' } },
+      bottom: { style: 'medium', color: { argb: 'FF000000' } },
+      right: { style: 'thin', color: { argb: 'FF000000' } }
+    };
+  });
+
+  unitsSheet.columns = [
+    { width: 6 },
+    { width: 25 },
+    { width: 25 },
+    { width: 15 },
+    { width: 15 },
+    { width: 15 },
+    { width: 15 },
+    { width: 15 },
+    { width: 15 },
+    { width: 15 },
+    { width: 15 },
+    { width: 15 }
+  ];
+
+  unitsSheet.addRow([]);
+  
+  const unitsStatsHeaderRow = unitsSheet.addRow(['الإحصائيات العامة - Units Statistics']);
+  unitsSheet.mergeCells(unitsStatsHeaderRow.number, 1, unitsStatsHeaderRow.number, 12);
+  unitsStatsHeaderRow.font = { bold: true, size: 14, color: { argb: 'FFFFFFFF' } };
+  unitsStatsHeaderRow.alignment = { horizontal: 'center', vertical: 'middle' };
+  unitsStatsHeaderRow.height = 28;
+  unitsStatsHeaderRow.eachCell((cell) => {
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF16A085' }
+    };
+    cell.border = {
+      top: { style: 'medium', color: { argb: 'FF000000' } },
+      left: { style: 'medium', color: { argb: 'FF000000' } },
+      bottom: { style: 'thin', color: { argb: 'FF000000' } },
+      right: { style: 'medium', color: { argb: 'FF000000' } }
+    };
+  });
+
+  const unitsStatsRow1 = unitsSheet.addRow([
+    'إجمالي الوحدات',
+    totals.n950Units + totals.i9000sUnits + totals.i9100Units + 
+    totals.rollPaperUnits + totals.stickersUnits + totals.newBatteriesUnits +
+    totals.mobilySimUnits + totals.stcSimUnits + totals.zainSimUnits,
+    'N950 (وحدات)',
+    totals.n950Units,
+    'I9000s (وحدات)',
+    totals.i9000sUnits,
+    'I9100 (وحدات)',
+    totals.i9100Units
+  ]);
+  unitsStatsRow1.alignment = { horizontal: 'center', vertical: 'middle' };
+  unitsStatsRow1.eachCell((cell, colNumber) => {
+    if (colNumber % 2 === 1) {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFE0F7F6' }
+      };
+      cell.font = { bold: true };
+    }
+    cell.border = {
+      top: { style: 'thin', color: { argb: 'FF000000' } },
+      left: { style: 'thin', color: { argb: 'FF000000' } },
+      bottom: { style: 'thin', color: { argb: 'FF000000' } },
+      right: { style: 'thin', color: { argb: 'FF000000' } }
+    };
+  });
+
+  const unitsStatsRow2 = unitsSheet.addRow([
+    'ورق حراري (وحدات)',
+    totals.rollPaperUnits,
+    'ملصقات (وحدات)',
+    totals.stickersUnits,
+    'بطاريات (وحدات)',
+    totals.newBatteriesUnits,
+    'موبايلي (وحدات)',
+    totals.mobilySimUnits
+  ]);
+  unitsStatsRow2.alignment = { horizontal: 'center', vertical: 'middle' };
+  unitsStatsRow2.eachCell((cell, colNumber) => {
+    if (colNumber % 2 === 1) {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFE0F7F6' }
+      };
+      cell.font = { bold: true };
+    }
+    cell.border = {
+      top: { style: 'thin', color: { argb: 'FF000000' } },
+      left: { style: 'thin', color: { argb: 'FF000000' } },
+      bottom: { style: 'thin', color: { argb: 'FF000000' } },
+      right: { style: 'thin', color: { argb: 'FF000000' } }
+    };
+  });
+
+  const unitsStatsRow3 = unitsSheet.addRow([
+    'STC (وحدات)',
+    totals.stcSimUnits,
+    'زين (وحدات)',
+    totals.zainSimUnits,
+    '',
+    '',
+    '',
+    ''
+  ]);
+  unitsStatsRow3.alignment = { horizontal: 'center', vertical: 'middle' };
+  unitsStatsRow3.eachCell((cell, colNumber) => {
+    if (colNumber % 2 === 1) {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFE0F7F6' }
+      };
+      cell.font = { bold: true };
+    }
+    cell.border = {
+      top: { style: 'thin', color: { argb: 'FF000000' } },
+      left: { style: 'thin', color: { argb: 'FF000000' } },
+      bottom: { style: 'medium', color: { argb: 'FF000000' } },
+      right: { style: 'thin', color: { argb: 'FF000000' } }
+    };
+  });
+
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   const fileName = `تقرير_المستودعات_${new Date().toISOString().split('T')[0]}.xlsx`;
