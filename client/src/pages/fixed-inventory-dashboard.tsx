@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Package, AlertTriangle, CheckCircle, Plus } from "lucide-react";
 import { useState } from "react";
-import EditFixedInventoryModal from "@/components/edit-fixed-inventory-modal";
+import { EditTechnicianFixedInventoryModal } from "@/components/edit-technician-fixed-inventory-modal";
 
 type AlertLevel = 'good' | 'warning' | 'critical';
 
@@ -342,7 +342,7 @@ export default function FixedInventoryDashboard() {
 
       {/* Edit Fixed Inventory Modal */}
       {selectedTechnician && (
-        <EditFixedInventoryModal
+        <EditTechnicianFixedInventoryModal
           open={!!selectedTechnician}
           onClose={() => setSelectedTechnician(null)}
           technicianId={selectedTechnician.id}

@@ -93,8 +93,8 @@ export function TransferToMovingModal({
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/fixed-inventory-dashboard'] });
       toast({
-        title: "✓ Transfer Successful",
-        description: "Quantities transferred from fixed to moving inventory",
+        title: "✓ تم النقل بنجاح",
+        description: "تم نقل الكميات من المخزون الثابت إلى المتحرك",
       });
       setTransfer({
         n950: 0,
@@ -112,8 +112,8 @@ export function TransferToMovingModal({
     onError: () => {
       toast({
         variant: "destructive",
-        title: "✗ Transfer Failed",
-        description: "An error occurred while transferring quantities",
+        title: "✗ فشل النقل",
+        description: "حدث خطأ أثناء نقل الكميات",
       });
     },
   });
@@ -135,8 +135,8 @@ export function TransferToMovingModal({
         transfer.mobilySim > totalMobily || transfer.stcSim > totalStc || transfer.zainSim > totalZain) {
       toast({
         variant: "destructive",
-        title: "Quantity Error",
-        description: "Requested quantity exceeds available stock",
+        title: "خطأ في الكمية",
+        description: "الكمية المطلوبة أكبر من المتاح",
       });
       return;
     }
@@ -146,8 +146,8 @@ export function TransferToMovingModal({
         transfer.stcSim === 0 && transfer.zainSim === 0) {
       toast({
         variant: "destructive",
-        title: "No Quantities",
-        description: "Please enter quantities to transfer",
+        title: "لا توجد كميات",
+        description: "يرجى إدخال كميات للنقل",
       });
       return;
     }
@@ -158,7 +158,7 @@ export function TransferToMovingModal({
   const items = [
     {
       id: 'n950',
-      label: 'N950 Devices',
+      label: 'أجهزة N950',
       icon: Box,
       available: getTotalAvailable(fixedInventory.n950Boxes, fixedInventory.n950Units),
       value: transfer.n950,
@@ -167,7 +167,7 @@ export function TransferToMovingModal({
     },
     {
       id: 'i9000s',
-      label: 'I9000s Devices',
+      label: 'أجهزة I9000s',
       icon: Box,
       available: getTotalAvailable(fixedInventory.i9000sBoxes, fixedInventory.i9000sUnits),
       value: transfer.i9000s,
@@ -176,7 +176,7 @@ export function TransferToMovingModal({
     },
     {
       id: 'i9100',
-      label: 'I9100 Devices',
+      label: 'أجهزة I9100',
       icon: Box,
       available: getTotalAvailable(fixedInventory.i9100Boxes, fixedInventory.i9100Units),
       value: transfer.i9100,
@@ -185,7 +185,7 @@ export function TransferToMovingModal({
     },
     {
       id: 'rollPaper',
-      label: 'Roll Sheets',
+      label: 'أوراق رول',
       icon: FileText,
       available: getTotalAvailable(fixedInventory.rollPaperBoxes, fixedInventory.rollPaperUnits),
       value: transfer.rollPaper,
@@ -194,7 +194,7 @@ export function TransferToMovingModal({
     },
     {
       id: 'stickers',
-      label: 'Madai Stickers',
+      label: 'ملصقات مدى',
       icon: Sticker,
       available: getTotalAvailable(fixedInventory.stickersBoxes, fixedInventory.stickersUnits),
       value: transfer.stickers,
@@ -203,7 +203,7 @@ export function TransferToMovingModal({
     },
     {
       id: 'newBatteries',
-      label: 'New Batteries',
+      label: 'بطاريات جديدة',
       icon: Battery,
       available: getTotalAvailable(fixedInventory.newBatteriesBoxes, fixedInventory.newBatteriesUnits),
       value: transfer.newBatteries,
@@ -212,7 +212,7 @@ export function TransferToMovingModal({
     },
     {
       id: 'mobilySim',
-      label: 'SIM Mobily',
+      label: 'شرائح موبايلي',
       icon: Smartphone,
       available: getTotalAvailable(fixedInventory.mobilySimBoxes, fixedInventory.mobilySimUnits),
       value: transfer.mobilySim,
@@ -221,7 +221,7 @@ export function TransferToMovingModal({
     },
     {
       id: 'stcSim',
-      label: 'SIM STC',
+      label: 'شرائح STC',
       icon: Smartphone,
       available: getTotalAvailable(fixedInventory.stcSimBoxes, fixedInventory.stcSimUnits),
       value: transfer.stcSim,
@@ -230,7 +230,7 @@ export function TransferToMovingModal({
     },
     {
       id: 'zainSim',
-      label: 'SIM Zain',
+      label: 'شرائح زين',
       icon: Smartphone,
       available: getTotalAvailable(fixedInventory.zainSimBoxes, fixedInventory.zainSimUnits),
       value: transfer.zainSim,
@@ -241,16 +241,16 @@ export function TransferToMovingModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950" dir="rtl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3 text-xl sm:text-2xl font-bold">
             <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl">
               <ArrowRight className="h-6 w-6 text-white" />
             </div>
-            Transfer to Moving Inventory
+            نقل إلى المخزون المتحرك
           </DialogTitle>
           <DialogDescription className="text-base">
-            Enter quantities to transfer from fixed to moving inventory
+            أدخل الكميات المراد نقلها من المخزون الثابت إلى المتحرك
           </DialogDescription>
         </DialogHeader>
 
@@ -276,7 +276,7 @@ export function TransferToMovingModal({
                   </span>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-xs text-muted-foreground">Available: {item.available}</span>
+                  <span className="text-xs text-muted-foreground">المتاح: {item.available.toLocaleString('ar-SA')}</span>
                   <Input
                     id={item.id}
                     type="number"
@@ -293,7 +293,7 @@ export function TransferToMovingModal({
           })}
         </div>
 
-        <DialogFooter className="flex-col sm:flex-row gap-2 pt-4 border-t">
+        <DialogFooter className="flex-col sm:flex-row gap-2 pt-4 border-t" dir="rtl">
           <Button
             variant="outline"
             onClick={onClose}
@@ -301,7 +301,7 @@ export function TransferToMovingModal({
             className="flex-1 sm:flex-initial h-11"
             data-testid="button-cancel-transfer"
           >
-            Cancel
+            إلغاء
           </Button>
           <Button
             onClick={handleTransfer}
@@ -310,7 +310,7 @@ export function TransferToMovingModal({
             data-testid="button-confirm-transfer"
           >
             <Package className="w-4 h-4 ml-2" />
-            {transferMutation.isPending ? "Transferring..." : "Transfer Quantities"}
+            {transferMutation.isPending ? "جاري النقل..." : "نقل الكميات"}
           </Button>
         </DialogFooter>
       </DialogContent>

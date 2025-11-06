@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -13,8 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from "@/lib/auth";
-import { Save, Box, Smartphone, FileText, Sticker, Battery } from "lucide-react";
+import { Save, Box, Smartphone, FileText, Sticker, Battery, Loader2 } from "lucide-react";
 
 interface FixedInventory {
   id?: string;
@@ -39,23 +38,29 @@ interface FixedInventory {
   zainSimUnits: number;
 }
 
-interface EditFixedInventoryModalProps {
+interface EditTechnicianFixedInventoryModalProps {
   open: boolean;
   onClose: () => void;
-  inventory?: FixedInventory;
+  technicianId: string;
+  technicianName: string;
 }
 
-export function EditFixedInventoryModal({
+export function EditTechnicianFixedInventoryModal({
   open,
   onClose,
-  inventory,
-}: EditFixedInventoryModalProps) {
-  const { user } = useAuth();
+  technicianId,
+  technicianName,
+}: EditTechnicianFixedInventoryModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const { data: existingInventory, isLoading } = useQuery<FixedInventory>({
+    queryKey: [`/api/technician-fixed-inventory/${technicianId}`],
+    enabled: open && !!technicianId,
+  });
+
   const [formData, setFormData] = useState<FixedInventory>({
-    technicianId: user?.id || '',
+    technicianId: technicianId,
     n950Boxes: 0,
     n950Units: 0,
     i9000sBoxes: 0,
@@ -77,25 +82,25 @@ export function EditFixedInventoryModal({
   });
 
   useEffect(() => {
-    if (inventory) {
-      setFormData(inventory);
+    if (existingInventory) {
+      setFormData(existingInventory);
     }
-  }, [inventory]);
+  }, [existingInventory]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
       return await apiRequest(
         "PUT",
-        `/api/technician-fixed-inventory/${user?.id}`,
+        `/api/technician-fixed-inventory/${technicianId}`,
         formData
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/technician-fixed-inventory/${user?.id}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/technician-fixed-inventory/${technicianId}`] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/fixed-inventory-dashboard'] });
       toast({
         title: "✓ تم الحفظ بنجاح",
-        description: "تم حفظ المخزون الثابت",
+        description: `تم حفظ المخزون الثابت لـ ${technicianName}`,
       });
       onClose();
     },
@@ -193,14 +198,20 @@ export function EditFixedInventoryModal({
             <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl">
               <Save className="h-6 w-6 text-white" />
             </div>
-            {inventory ? 'تعديل المخزون الثابت' : 'إضافة مخزون ثابت'}
+            تعديل المخزون الثابت - {technicianName}
           </DialogTitle>
           <DialogDescription className="text-base">
             أدخل الكميات المتوفرة في المخزون الثابت
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 py-4">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 py-4">
           {items.map((item) => {
             const Icon = item.icon;
             const boxes = formData[item.boxesField] as number;
@@ -278,6 +289,8 @@ export function EditFixedInventoryModal({
             {saveMutation.isPending ? "جاري الحفظ..." : "حفظ المخزون"}
           </Button>
         </DialogFooter>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );
