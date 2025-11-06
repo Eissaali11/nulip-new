@@ -265,85 +265,111 @@ export default function UsersPage() {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.4, delay: index * 0.05 }}
-                whileHover={{ y: -5, scale: 1.02 }}
+                whileHover={{ y: -8, scale: 1.03 }}
               >
-                <Card className="bg-white dark:bg-slate-800 border-0 shadow-2xl overflow-hidden">
-                  <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 pb-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-4 flex-1">
-                        <motion.div
-                          whileHover={{ scale: 1.1 }}
-                          className="relative"
+                <Card className="bg-white dark:bg-slate-800 border-0 shadow-2xl overflow-hidden relative">
+                  {/* Profile Image Header */}
+                  <div className="relative h-32 bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500">
+                    <div className="absolute inset-0 bg-black/20"></div>
+                    <div className="absolute top-3 left-3 flex gap-2">
+                      <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(user)}
+                          className="h-9 w-9 bg-white/90 hover:bg-white text-blue-600 shadow-lg backdrop-blur-sm"
+                          data-testid={`button-edit-${user.id}`}
                         >
-                          <Avatar key={user.profileImage || user.id} className="h-16 w-16 border-4 border-white dark:border-slate-700 shadow-lg">
-                            <AvatarImage 
-                              src={user.profileImage || undefined} 
-                              alt={user.fullName}
-                              className="object-cover"
-                            />
-                            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-lg">
-                              {getInitials(user.fullName)}
-                            </AvatarFallback>
-                          </Avatar>
-                          {user.isActive && (
-                            <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white dark:border-slate-800"></div>
-                          )}
-                        </motion.div>
-                        <div className="flex-1">
-                          <h3 className="font-bold text-lg text-slate-800 dark:text-white truncate">{user.fullName}</h3>
-                          <p className="text-sm text-slate-600 dark:text-slate-400">@{user.username}</p>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </motion.div>
+                      <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(user.id)}
+                          className="h-9 w-9 bg-white/90 hover:bg-white text-red-600 shadow-lg backdrop-blur-sm"
+                          data-testid={`button-delete-${user.id}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </motion.div>
+                    </div>
+                  </div>
+                  
+                  {/* Profile Avatar - Overlapping */}
+                  <div className="relative -mt-16 flex justify-center px-6">
+                    <motion.div
+                      whileHover={{ scale: 1.1, rotate: 5 }}
+                      className="relative"
+                    >
+                      <Avatar key={user.profileImage || user.id} className="h-32 w-32 border-[6px] border-white dark:border-slate-800 shadow-2xl ring-4 ring-blue-100 dark:ring-blue-900">
+                        <AvatarImage 
+                          src={user.profileImage || undefined} 
+                          alt={user.fullName}
+                          className="object-cover"
+                        />
+                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-black text-3xl">
+                          {getInitials(user.fullName)}
+                        </AvatarFallback>
+                      </Avatar>
+                      {user.isActive && (
+                        <motion.div 
+                          className="absolute bottom-2 right-2 w-6 h-6 bg-green-500 rounded-full border-4 border-white dark:border-slate-800 shadow-lg"
+                          animate={{ scale: [1, 1.2, 1] }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                        ></motion.div>
+                      )}
+                    </motion.div>
+                  </div>
+
+                  <CardContent className="pt-4 pb-6 space-y-4 text-center">
+                    {/* User Info */}
+                    <div>
+                      <h3 className="font-black text-xl text-slate-800 dark:text-white mb-1">
+                        {user.fullName}
+                      </h3>
+                      <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+                        @{user.username}
+                      </p>
+                    </div>
+
+                    {/* Contact Info */}
+                    <div className="space-y-2 bg-slate-50 dark:bg-slate-900/50 rounded-xl p-3">
+                      <div className="flex items-center justify-center gap-2 text-sm">
+                        <span className="text-slate-600 dark:text-slate-400">📧</span>
+                        <span className="text-slate-700 dark:text-slate-300 font-medium truncate">
+                          {user.email}
+                        </span>
+                      </div>
+                      {user.city && (
+                        <div className="flex items-center justify-center gap-2 text-sm">
+                          <span className="text-slate-600 dark:text-slate-400">📍</span>
+                          <span className="text-slate-700 dark:text-slate-300 font-medium">
+                            {user.city}
+                          </span>
                         </div>
-                      </div>
-                      <div className="flex gap-1">
-                        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(user)}
-                            className="h-8 w-8 hover:bg-blue-100 dark:hover:bg-blue-900 hover:text-blue-600"
-                            data-testid={`button-edit-${user.id}`}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </motion.div>
-                        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(user.id)}
-                            className="h-8 w-8 hover:bg-red-100 dark:hover:bg-red-900 hover:text-red-600"
-                            data-testid={`button-delete-${user.id}`}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </motion.div>
-                      </div>
+                      )}
                     </div>
-                  </CardHeader>
-                  <CardContent className="pt-4 space-y-3">
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-slate-600 dark:text-slate-400">📧</span>
-                      <span className="text-slate-700 dark:text-slate-300 truncate">{user.email}</span>
-                    </div>
-                    {user.city && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="text-slate-600 dark:text-slate-400">📍</span>
-                        <span className="text-slate-700 dark:text-slate-300">{user.city}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2 flex-wrap pt-2">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold
+
+                    {/* Badges */}
+                    <div className="flex items-center justify-center gap-2 flex-wrap">
+                      <motion.span 
+                        whileHover={{ scale: 1.05 }}
+                        className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-bold shadow-lg
                         ${user.role === 'admin' 
-                          ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg' 
-                          : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg'}`}>
+                          ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white' 
+                          : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'}`}>
                         {user.role === 'admin' ? '👑 مدير النظام' : '👨‍💼 فني'}
-                      </span>
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold
+                      </motion.span>
+                      <motion.span 
+                        whileHover={{ scale: 1.05 }}
+                        className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-bold
                         ${user.isActive 
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-                          : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 shadow-md' 
+                          : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 shadow-md'}`}>
                         {user.isActive ? '✓ نشط' : '✗ غير نشط'}
-                      </span>
+                      </motion.span>
                     </div>
                   </CardContent>
                 </Card>
