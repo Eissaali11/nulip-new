@@ -771,7 +771,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/stock-transfer", requireAuth, async (req, res) => {
     try {
       const user = (req as any).user;
-      const { technicianId, n950, i900, rollPaper, stickers, mobilySim, stcSim, zainSim } = req.body;
+      const { technicianId, n950, i9000s, i9100, rollPaper, stickers, newBatteries: newBatteriesAmount, mobilySim, stcSim, zainSim } = req.body;
       
       // Get current fixed inventory
       const fixedInventory = await storage.getTechnicianFixedInventory(technicianId);
@@ -793,9 +793,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             technicianName: techUser?.fullName || 'Unknown',
             city: 'N/A',
             n950Devices: 0,
-            i900Devices: 0,
+            i9000sDevices: 0,
+            i9100Devices: 0,
             rollPaper: 0,
             stickers: 0,
+            newBatteries: 0,
             mobilySim: 0,
             stcSim: 0,
             zainSim: 0,
@@ -808,16 +810,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Calculate total available in fixed inventory
       const totalN950 = fixedInventory.n950Boxes + fixedInventory.n950Units;
-      const totalI900 = fixedInventory.i900Boxes + fixedInventory.i900Units;
+      const totalI9000s = fixedInventory.i9000sBoxes + fixedInventory.i9000sUnits;
+      const totalI9100 = fixedInventory.i9100Boxes + fixedInventory.i9100Units;
       const totalPaper = fixedInventory.rollPaperBoxes + fixedInventory.rollPaperUnits;
       const totalStickers = fixedInventory.stickersBoxes + fixedInventory.stickersUnits;
+      const totalBatteries = fixedInventory.newBatteriesBoxes + fixedInventory.newBatteriesUnits;
       const totalMobily = fixedInventory.mobilySimBoxes + fixedInventory.mobilySimUnits;
       const totalStc = fixedInventory.stcSimBoxes + fixedInventory.stcSimUnits;
       const totalZain = fixedInventory.zainSimBoxes + fixedInventory.zainSimUnits;
 
       // Validate quantities
-      if (n950 > totalN950 || i900 > totalI900 || rollPaper > totalPaper || 
-          stickers > totalStickers || mobilySim > totalMobily || stcSim > totalStc || zainSim > totalZain) {
+      if (n950 > totalN950 || i9000s > totalI9000s || i9100 > totalI9100 || rollPaper > totalPaper || 
+          stickers > totalStickers || newBatteriesAmount > totalBatteries || mobilySim > totalMobily || 
+          stcSim > totalStc || zainSim > totalZain) {
         return res.status(400).json({ message: "Insufficient quantity in fixed inventory" });
       }
 
@@ -846,9 +851,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Calculate new quantities
       const newN950 = subtractFromInventory(fixedInventory.n950Boxes, fixedInventory.n950Units, n950);
-      const newI900 = subtractFromInventory(fixedInventory.i900Boxes, fixedInventory.i900Units, i900);
+      const newI9000s = subtractFromInventory(fixedInventory.i9000sBoxes, fixedInventory.i9000sUnits, i9000s);
+      const newI9100 = subtractFromInventory(fixedInventory.i9100Boxes, fixedInventory.i9100Units, i9100);
       const newPaper = subtractFromInventory(fixedInventory.rollPaperBoxes, fixedInventory.rollPaperUnits, rollPaper);
       const newStickers = subtractFromInventory(fixedInventory.stickersBoxes, fixedInventory.stickersUnits, stickers);
+      const newBatteries = subtractFromInventory(fixedInventory.newBatteriesBoxes, fixedInventory.newBatteriesUnits, newBatteriesAmount);
       const newMobily = subtractFromInventory(fixedInventory.mobilySimBoxes, fixedInventory.mobilySimUnits, mobilySim);
       const newStc = subtractFromInventory(fixedInventory.stcSimBoxes, fixedInventory.stcSimUnits, stcSim);
       const newZain = subtractFromInventory(fixedInventory.zainSimBoxes, fixedInventory.zainSimUnits, zainSim);
@@ -856,12 +863,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateTechnicianFixedInventory(technicianId, {
         n950Boxes: newN950.boxes,
         n950Units: newN950.units,
-        i900Boxes: newI900.boxes,
-        i900Units: newI900.units,
+        i9000sBoxes: newI9000s.boxes,
+        i9000sUnits: newI9000s.units,
+        i9100Boxes: newI9100.boxes,
+        i9100Units: newI9100.units,
         rollPaperBoxes: newPaper.boxes,
         rollPaperUnits: newPaper.units,
         stickersBoxes: newStickers.boxes,
         stickersUnits: newStickers.units,
+        newBatteriesBoxes: newBatteries.boxes,
+        newBatteriesUnits: newBatteries.units,
         mobilySimBoxes: newMobily.boxes,
         mobilySimUnits: newMobily.units,
         stcSimBoxes: newStc.boxes,
@@ -873,9 +884,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update moving inventory (increase)
       await storage.updateTechnicianInventory(technicianId, {
         n950Devices: movingInventory.n950Devices + n950,
-        i900Devices: movingInventory.i900Devices + i900,
+        i9000sDevices: movingInventory.i9000sDevices + i9000s,
+        i9100Devices: movingInventory.i9100Devices + i9100,
         rollPaper: movingInventory.rollPaper + rollPaper,
         stickers: movingInventory.stickers + stickers,
+        newBatteries: movingInventory.newBatteries + newBatteriesAmount,
         mobilySim: movingInventory.mobilySim + mobilySim,
         stcSim: movingInventory.stcSim + stcSim,
         zainSim: movingInventory.zainSim + zainSim,
@@ -896,12 +909,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
           notes: 'Transfer from fixed to moving inventory',
         }));
       }
-      if (i900 > 0) {
+      if (i9000s > 0) {
         movements.push(storage.createStockMovement({
           technicianId,
-          itemType: 'i900',
+          itemType: 'i9000s',
           packagingType: 'unit',
-          quantity: i900,
+          quantity: i9000s,
+          fromInventory: 'fixed',
+          toInventory: 'moving',
+          performedBy: user.id,
+          reason: 'transfer',
+          notes: 'Transfer from fixed to moving inventory',
+        }));
+      }
+      if (i9100 > 0) {
+        movements.push(storage.createStockMovement({
+          technicianId,
+          itemType: 'i9100',
+          packagingType: 'unit',
+          quantity: i9100,
+          fromInventory: 'fixed',
+          toInventory: 'moving',
+          performedBy: user.id,
+          reason: 'transfer',
+          notes: 'Transfer from fixed to moving inventory',
+        }));
+      }
+      if (newBatteriesAmount > 0) {
+        movements.push(storage.createStockMovement({
+          technicianId,
+          itemType: 'newBatteries',
+          packagingType: 'unit',
+          quantity: newBatteriesAmount,
           fromInventory: 'fixed',
           toInventory: 'moving',
           performedBy: user.id,

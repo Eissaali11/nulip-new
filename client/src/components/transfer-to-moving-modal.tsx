@@ -13,13 +13,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { ArrowRight, Package } from "lucide-react";
+import { ArrowRight, Package, Box, Smartphone, FileText, Sticker, Battery } from "lucide-react";
 
 interface TransferData {
   n950: number;
-  i900: number;
+  i9000s: number;
+  i9100: number;
   rollPaper: number;
   stickers: number;
+  newBatteries: number;
   mobilySim: number;
   stcSim: number;
   zainSim: number;
@@ -32,12 +34,16 @@ interface TransferToMovingModalProps {
   fixedInventory: {
     n950Boxes: number;
     n950Units: number;
-    i900Boxes: number;
-    i900Units: number;
+    i9000sBoxes: number;
+    i9000sUnits: number;
+    i9100Boxes: number;
+    i9100Units: number;
     rollPaperBoxes: number;
     rollPaperUnits: number;
     stickersBoxes: number;
     stickersUnits: number;
+    newBatteriesBoxes: number;
+    newBatteriesUnits: number;
     mobilySimBoxes: number;
     mobilySimUnits: number;
     stcSimBoxes: number;
@@ -58,9 +64,11 @@ export function TransferToMovingModal({
 
   const [transfer, setTransfer] = useState<TransferData>({
     n950: 0,
-    i900: 0,
+    i9000s: 0,
+    i9100: 0,
     rollPaper: 0,
     stickers: 0,
+    newBatteries: 0,
     mobilySim: 0,
     stcSim: 0,
     zainSim: 0,
@@ -85,14 +93,16 @@ export function TransferToMovingModal({
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/fixed-inventory-dashboard'] });
       toast({
-        title: "تم النقل بنجاح",
-        description: "تم نقل الكميات من المخزون الثابت إلى المتحرك",
+        title: "✓ Transfer Successful",
+        description: "Quantities transferred from fixed to moving inventory",
       });
       setTransfer({
         n950: 0,
-        i900: 0,
+        i9000s: 0,
+        i9100: 0,
         rollPaper: 0,
         stickers: 0,
+        newBatteries: 0,
         mobilySim: 0,
         stcSim: 0,
         zainSim: 0,
@@ -102,8 +112,8 @@ export function TransferToMovingModal({
     onError: () => {
       toast({
         variant: "destructive",
-        title: "خطأ في النقل",
-        description: "حدث خطأ أثناء نقل الكميات",
+        title: "✗ Transfer Failed",
+        description: "An error occurred while transferring quantities",
       });
     },
   });
@@ -111,30 +121,33 @@ export function TransferToMovingModal({
   const handleTransfer = () => {
     // Validate quantities
     const totalN950 = getTotalAvailable(fixedInventory.n950Boxes, fixedInventory.n950Units);
-    const totalI900 = getTotalAvailable(fixedInventory.i900Boxes, fixedInventory.i900Units);
+    const totalI9000s = getTotalAvailable(fixedInventory.i9000sBoxes, fixedInventory.i9000sUnits);
+    const totalI9100 = getTotalAvailable(fixedInventory.i9100Boxes, fixedInventory.i9100Units);
     const totalPaper = getTotalAvailable(fixedInventory.rollPaperBoxes, fixedInventory.rollPaperUnits);
     const totalStickers = getTotalAvailable(fixedInventory.stickersBoxes, fixedInventory.stickersUnits);
+    const totalBatteries = getTotalAvailable(fixedInventory.newBatteriesBoxes, fixedInventory.newBatteriesUnits);
     const totalMobily = getTotalAvailable(fixedInventory.mobilySimBoxes, fixedInventory.mobilySimUnits);
     const totalStc = getTotalAvailable(fixedInventory.stcSimBoxes, fixedInventory.stcSimUnits);
     const totalZain = getTotalAvailable(fixedInventory.zainSimBoxes, fixedInventory.zainSimUnits);
 
-    if (transfer.n950 > totalN950 || transfer.i900 > totalI900 || 
-        transfer.rollPaper > totalPaper || transfer.stickers > totalStickers ||
+    if (transfer.n950 > totalN950 || transfer.i9000s > totalI9000s || transfer.i9100 > totalI9100 ||
+        transfer.rollPaper > totalPaper || transfer.stickers > totalStickers || transfer.newBatteries > totalBatteries ||
         transfer.mobilySim > totalMobily || transfer.stcSim > totalStc || transfer.zainSim > totalZain) {
       toast({
         variant: "destructive",
-        title: "خطأ في الكمية",
-        description: "الكمية المطلوبة أكبر من المتاح",
+        title: "Quantity Error",
+        description: "Requested quantity exceeds available stock",
       });
       return;
     }
 
-    if (transfer.n950 === 0 && transfer.i900 === 0 && transfer.rollPaper === 0 && 
-        transfer.stickers === 0 && transfer.mobilySim === 0 && transfer.stcSim === 0 && transfer.zainSim === 0) {
+    if (transfer.n950 === 0 && transfer.i9000s === 0 && transfer.i9100 === 0 && transfer.rollPaper === 0 && 
+        transfer.stickers === 0 && transfer.newBatteries === 0 && transfer.mobilySim === 0 && 
+        transfer.stcSim === 0 && transfer.zainSim === 0) {
       toast({
         variant: "destructive",
-        title: "لا توجد كميات للنقل",
-        description: "يرجى إدخال كميات للنقل",
+        title: "No Quantities",
+        description: "Please enter quantities to transfer",
       });
       return;
     }
@@ -142,151 +155,162 @@ export function TransferToMovingModal({
     transferMutation.mutate();
   };
 
+  const items = [
+    {
+      id: 'n950',
+      label: 'N950 Devices',
+      icon: Box,
+      available: getTotalAvailable(fixedInventory.n950Boxes, fixedInventory.n950Units),
+      value: transfer.n950,
+      onChange: (val: number) => setTransfer({ ...transfer, n950: val }),
+      gradient: 'from-blue-500 to-cyan-500',
+    },
+    {
+      id: 'i9000s',
+      label: 'I9000s Devices',
+      icon: Box,
+      available: getTotalAvailable(fixedInventory.i9000sBoxes, fixedInventory.i9000sUnits),
+      value: transfer.i9000s,
+      onChange: (val: number) => setTransfer({ ...transfer, i9000s: val }),
+      gradient: 'from-purple-500 to-pink-500',
+    },
+    {
+      id: 'i9100',
+      label: 'I9100 Devices',
+      icon: Box,
+      available: getTotalAvailable(fixedInventory.i9100Boxes, fixedInventory.i9100Units),
+      value: transfer.i9100,
+      onChange: (val: number) => setTransfer({ ...transfer, i9100: val }),
+      gradient: 'from-indigo-500 to-blue-500',
+    },
+    {
+      id: 'rollPaper',
+      label: 'Roll Sheets',
+      icon: FileText,
+      available: getTotalAvailable(fixedInventory.rollPaperBoxes, fixedInventory.rollPaperUnits),
+      value: transfer.rollPaper,
+      onChange: (val: number) => setTransfer({ ...transfer, rollPaper: val }),
+      gradient: 'from-amber-500 to-orange-500',
+    },
+    {
+      id: 'stickers',
+      label: 'Madai Stickers',
+      icon: Sticker,
+      available: getTotalAvailable(fixedInventory.stickersBoxes, fixedInventory.stickersUnits),
+      value: transfer.stickers,
+      onChange: (val: number) => setTransfer({ ...transfer, stickers: val }),
+      gradient: 'from-rose-500 to-red-500',
+    },
+    {
+      id: 'newBatteries',
+      label: 'New Batteries',
+      icon: Battery,
+      available: getTotalAvailable(fixedInventory.newBatteriesBoxes, fixedInventory.newBatteriesUnits),
+      value: transfer.newBatteries,
+      onChange: (val: number) => setTransfer({ ...transfer, newBatteries: val }),
+      gradient: 'from-emerald-500 to-teal-500',
+    },
+    {
+      id: 'mobilySim',
+      label: 'SIM Mobily',
+      icon: Smartphone,
+      available: getTotalAvailable(fixedInventory.mobilySimBoxes, fixedInventory.mobilySimUnits),
+      value: transfer.mobilySim,
+      onChange: (val: number) => setTransfer({ ...transfer, mobilySim: val }),
+      gradient: 'from-green-500 to-lime-500',
+    },
+    {
+      id: 'stcSim',
+      label: 'SIM STC',
+      icon: Smartphone,
+      available: getTotalAvailable(fixedInventory.stcSimBoxes, fixedInventory.stcSimUnits),
+      value: transfer.stcSim,
+      onChange: (val: number) => setTransfer({ ...transfer, stcSim: val }),
+      gradient: 'from-teal-500 to-cyan-500',
+    },
+    {
+      id: 'zainSim',
+      label: 'SIM Zain',
+      icon: Smartphone,
+      available: getTotalAvailable(fixedInventory.zainSimBoxes, fixedInventory.zainSimUnits),
+      value: transfer.zainSim,
+      onChange: (val: number) => setTransfer({ ...transfer, zainSim: val }),
+      gradient: 'from-violet-500 to-purple-500',
+    },
+  ];
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl">
-            <ArrowRight className="h-5 w-5" />
-            نقل من المخزون الثابت إلى المتحرك
+          <DialogTitle className="flex items-center gap-3 text-xl sm:text-2xl font-bold">
+            <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl">
+              <ArrowRight className="h-6 w-6 text-white" />
+            </div>
+            Transfer to Moving Inventory
           </DialogTitle>
-          <DialogDescription>
-            أدخل الكميات التي تريد نقلها من المخزون الثابت إلى المخزون المتحرك
+          <DialogDescription className="text-base">
+            Enter quantities to transfer from fixed to moving inventory
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          {/* N950 */}
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <Label htmlFor="n950">أجهزة N950</Label>
-              <span className="text-sm text-muted-foreground">
-                المتاح: {getTotalAvailable(fixedInventory.n950Boxes, fixedInventory.n950Units)}
-              </span>
-            </div>
-            <Input
-              id="n950"
-              type="number"
-              min="0"
-              max={getTotalAvailable(fixedInventory.n950Boxes, fixedInventory.n950Units)}
-              value={transfer.n950}
-              onChange={(e) => setTransfer({ ...transfer, n950: Math.max(0, parseInt(e.target.value) || 0) })}
-              data-testid="input-transfer-n950"
-            />
-          </div>
-
-          {/* I900 */}
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <Label htmlFor="i900">أجهزة I900</Label>
-              <span className="text-sm text-muted-foreground">
-                المتاح: {getTotalAvailable(fixedInventory.i900Boxes, fixedInventory.i900Units)}
-              </span>
-            </div>
-            <Input
-              id="i900"
-              type="number"
-              min="0"
-              max={getTotalAvailable(fixedInventory.i900Boxes, fixedInventory.i900Units)}
-              value={transfer.i900}
-              onChange={(e) => setTransfer({ ...transfer, i900: Math.max(0, parseInt(e.target.value) || 0) })}
-              data-testid="input-transfer-i900"
-            />
-          </div>
-
-          {/* Roll Paper */}
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <Label htmlFor="rollPaper">أوراق رول</Label>
-              <span className="text-sm text-muted-foreground">
-                المتاح: {getTotalAvailable(fixedInventory.rollPaperBoxes, fixedInventory.rollPaperUnits)}
-              </span>
-            </div>
-            <Input
-              id="rollPaper"
-              type="number"
-              min="0"
-              max={getTotalAvailable(fixedInventory.rollPaperBoxes, fixedInventory.rollPaperUnits)}
-              value={transfer.rollPaper}
-              onChange={(e) => setTransfer({ ...transfer, rollPaper: Math.max(0, parseInt(e.target.value) || 0) })}
-              data-testid="input-transfer-paper"
-            />
-          </div>
-
-          {/* Stickers */}
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <Label htmlFor="stickers">ملصقات مدى</Label>
-              <span className="text-sm text-muted-foreground">
-                المتاح: {getTotalAvailable(fixedInventory.stickersBoxes, fixedInventory.stickersUnits)}
-              </span>
-            </div>
-            <Input
-              id="stickers"
-              type="number"
-              min="0"
-              max={getTotalAvailable(fixedInventory.stickersBoxes, fixedInventory.stickersUnits)}
-              value={transfer.stickers}
-              onChange={(e) => setTransfer({ ...transfer, stickers: Math.max(0, parseInt(e.target.value) || 0) })}
-              data-testid="input-transfer-stickers"
-            />
-          </div>
-
-          {/* Mobily SIM */}
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <Label htmlFor="mobilySim">شرائح موبايلي</Label>
-              <span className="text-sm text-muted-foreground">
-                المتاح: {getTotalAvailable(fixedInventory.mobilySimBoxes, fixedInventory.mobilySimUnits)}
-              </span>
-            </div>
-            <Input
-              id="mobilySim"
-              type="number"
-              min="0"
-              max={getTotalAvailable(fixedInventory.mobilySimBoxes, fixedInventory.mobilySimUnits)}
-              value={transfer.mobilySim}
-              onChange={(e) => setTransfer({ ...transfer, mobilySim: Math.max(0, parseInt(e.target.value) || 0) })}
-              data-testid="input-transfer-mobily"
-            />
-          </div>
-
-          {/* STC SIM */}
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <Label htmlFor="stcSim">شرائح STC</Label>
-              <span className="text-sm text-muted-foreground">
-                المتاح: {getTotalAvailable(fixedInventory.stcSimBoxes, fixedInventory.stcSimUnits)}
-              </span>
-            </div>
-            <Input
-              id="stcSim"
-              type="number"
-              min="0"
-              max={getTotalAvailable(fixedInventory.stcSimBoxes, fixedInventory.stcSimUnits)}
-              value={transfer.stcSim}
-              onChange={(e) => setTransfer({ ...transfer, stcSim: Math.max(0, parseInt(e.target.value) || 0) })}
-              data-testid="input-transfer-stc"
-            />
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
+          {items.map((item) => {
+            const Icon = item.icon;
+            return (
+              <div 
+                key={item.id}
+                className="space-y-2 p-4 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:shadow-lg transition-shadow"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className={`p-2 bg-gradient-to-r ${item.gradient} rounded-lg`}>
+                      <Icon className="h-4 w-4 text-white" />
+                    </div>
+                    <Label htmlFor={item.id} className="font-semibold">
+                      {item.label}
+                    </Label>
+                  </div>
+                  <span className={`text-sm font-bold bg-gradient-to-r ${item.gradient} bg-clip-text text-transparent`}>
+                    {item.available}
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-xs text-muted-foreground">Available: {item.available}</span>
+                  <Input
+                    id={item.id}
+                    type="number"
+                    min="0"
+                    max={item.available}
+                    value={item.value}
+                    onChange={(e) => item.onChange(Math.max(0, Math.min(item.available, parseInt(e.target.value) || 0)))}
+                    className="h-11 text-lg font-semibold border-2 focus:ring-2"
+                    data-testid={`input-transfer-${item.id}`}
+                  />
+                </div>
+              </div>
+            );
+          })}
         </div>
 
-        <DialogFooter className="flex-col sm:flex-row gap-2">
+        <DialogFooter className="flex-col sm:flex-row gap-2 pt-4 border-t">
           <Button
             variant="outline"
             onClick={onClose}
             disabled={transferMutation.isPending}
+            className="flex-1 sm:flex-initial h-11"
             data-testid="button-cancel-transfer"
           >
-            إلغاء
+            Cancel
           </Button>
           <Button
             onClick={handleTransfer}
             disabled={transferMutation.isPending}
+            className="flex-1 sm:flex-initial bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white h-11 font-semibold"
             data-testid="button-confirm-transfer"
           >
             <Package className="w-4 h-4 ml-2" />
-            نقل الكميات
+            {transferMutation.isPending ? "Transferring..." : "Transfer Quantities"}
           </Button>
         </DialogFooter>
       </DialogContent>
