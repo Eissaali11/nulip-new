@@ -1,13 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Package, Edit, Trash2, Plus, FileDown, Box, Smartphone, FileText, Sticker, Battery, ArrowRightLeft, Sparkles } from "lucide-react";
+import { Package, Edit, Trash2, Plus, FileDown, Box, Smartphone, FileText, Sticker, Battery, ArrowRightLeft, Sparkles, Home, ArrowRight } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useState } from "react";
 import { TransferToMovingModal } from "@/components/transfer-to-moving-modal";
 import { EditFixedInventoryModal } from "@/components/edit-fixed-inventory-modal";
+import { useLocation } from "wouter";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { motion } from "framer-motion";
@@ -42,6 +43,7 @@ export default function MyFixedInventory() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -333,6 +335,26 @@ export default function MyFixedInventory() {
         />
 
         <div className="relative container mx-auto px-4 py-8">
+          {/* Back Button */}
+          <motion.div
+            className="mb-4"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button
+                onClick={() => setLocation('/')}
+                className="bg-white/95 hover:bg-white text-blue-600 font-bold shadow-xl border-2 border-white/50"
+                data-testid="button-back-home"
+              >
+                <Home className="w-5 h-5 ml-2" />
+                الصفحة الرئيسية
+                <ArrowRight className="w-5 h-5 mr-2" />
+              </Button>
+            </motion.div>
+          </motion.div>
+
           <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
             {/* Left Side - Logos Animation */}
             <motion.div 
