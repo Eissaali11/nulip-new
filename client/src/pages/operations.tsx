@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
-import logoPath from "@assets/5fd20532dbfff_cropped-RASSAUDI-Logo_1762460814438.png";
+import bannerImage from "@assets/Gemini_Generated_Image_r9bdc9r9bdc9r9bd_1762462520993.png";
 
 interface WarehouseTransfer {
   id: string;
@@ -182,37 +182,42 @@ export default function OperationsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50/30 to-slate-50" dir="rtl">
-      {/* Animated Logo Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#18B2B0] via-teal-500 to-[#18B2B0] shadow-2xl">
-        <div className="absolute inset-0 bg-black/5"></div>
+      {/* Animated Banner */}
+      <div className="relative overflow-hidden h-64 shadow-2xl">
+        {/* Background Image with Zoom Animation */}
+        <div className="absolute inset-0 animate-[zoom-slow_20s_ease-in-out_infinite]">
+          <img
+            src={bannerImage}
+            alt="RAS Saudi Banner"
+            className="w-full h-full object-cover"
+          />
+        </div>
+
+        {/* Animated Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#18B2B0]/40 via-transparent to-purple-600/30 animate-[gradient-shift_8s_ease-in-out_infinite]"></div>
         
-        {/* Animated logos - Right to Left */}
-        <div className="flex gap-16 py-8 animate-[scroll-rtl_30s_linear_infinite] whitespace-nowrap">
-          {[...Array(10)].map((_, i) => (
-            <img
-              key={`rtl-${i}`}
-              src={logoPath}
-              alt="RAS Saudi Logo"
-              className="h-16 w-auto object-contain opacity-90 hover:opacity-100 transition-opacity"
-            />
+        {/* Shimmer Effect */}
+        <div className="absolute inset-0 opacity-30">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-[shimmer_3s_ease-in-out_infinite]"></div>
+        </div>
+
+        {/* Particles/Dots Effect */}
+        <div className="absolute inset-0 opacity-20">
+          {[...Array(20)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-2 h-2 bg-white rounded-full animate-[float_6s_ease-in-out_infinite]"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 3}s`,
+              }}
+            ></div>
           ))}
         </div>
 
-        {/* Animated logos - Left to Right (reversed) */}
-        <div className="flex gap-16 py-8 animate-[scroll-ltr_25s_linear_infinite] whitespace-nowrap border-t border-white/10">
-          {[...Array(10)].map((_, i) => (
-            <img
-              key={`ltr-${i}`}
-              src={logoPath}
-              alt="RAS Saudi Logo"
-              className="h-16 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity"
-            />
-          ))}
-        </div>
-
-        {/* Overlay gradient for smooth edges */}
-        <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#18B2B0] to-transparent pointer-events-none"></div>
-        <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#18B2B0] to-transparent pointer-events-none"></div>
+        {/* Bottom Gradient */}
+        <div className="absolute bottom-0 inset-x-0 h-20 bg-gradient-to-t from-slate-50 to-transparent"></div>
       </div>
 
       {/* Main Content */}
