@@ -1,7 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { TruckIcon, MinusCircle, ArrowRight, ArrowLeftRight, FileDown, Home, Package, Sparkles } from "lucide-react";
+import { TruckIcon, MinusCircle, ArrowRight, ArrowLeftRight, FileDown, Home, Package, Sparkles, Clock, CheckCircle, XCircle, Warehouse } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useState } from "react";
 import { UpdateMovingInventoryModal } from "@/components/update-moving-inventory-modal";
@@ -13,6 +13,14 @@ import { saveAs } from "file-saver";
 import rasscoLogo from "@assets/image_1762442473114.png";
 import neoleapLogo from "@assets/image_1762442479737.png";
 import madaDevice from "@assets/image_1762442486277.png";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { format } from "date-fns";
+import { ar } from "date-fns/locale";
 
 interface MovingInventory {
   id: string;
@@ -59,11 +67,34 @@ interface FixedInventory {
   zainSimUnits: number;
 }
 
+interface WarehouseTransfer {
+  id: string;
+  warehouseId: string;
+  technicianId: string;
+  itemType: string;
+  packagingType: string;
+  quantity: number;
+  performedBy: string;
+  notes?: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  rejectionReason?: string;
+  respondedAt?: Date;
+  createdAt: Date;
+  warehouseName?: string;
+  technicianName?: string;
+  performedByName?: string;
+  itemNameAr?: string;
+}
+
 export default function MyMovingInventory() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [selectedTransferId, setSelectedTransferId] = useState<string | null>(null);
+  const [rejectionReason, setRejectionReason] = useState("");
 
   const { data: inventory, isLoading } = useQuery<MovingInventory>({
     queryKey: [`/api/technicians/${user?.id}`],
@@ -74,6 +105,67 @@ export default function MyMovingInventory() {
     queryKey: [`/api/technician-fixed-inventory/${user?.id}`],
     enabled: !!user?.id,
   });
+
+  const { data: pendingTransfers } = useQuery<WarehouseTransfer[]>({
+    queryKey: ["/api/warehouse-transfers", user?.id],
+    enabled: !!user?.id,
+    select: (data) => data.filter(t => t.status === 'pending' && t.technicianId === user?.id),
+  });
+
+  const acceptMutation = useMutation({
+    mutationFn: async (transferId: string) => {
+      return apiRequest("POST", `/api/warehouse-transfers/${transferId}/accept`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/warehouse-transfers"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/technicians/${user?.id}`] });
+      toast({
+        title: "تم القبول",
+        description: "تم قبول عملية النقل بنجاح",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "خطأ",
+        description: error.message || "فشل قبول عملية النقل",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: async ({ transferId, reason }: { transferId: string; reason?: string }) => {
+      return apiRequest("POST", `/api/warehouse-transfers/${transferId}/reject`, { reason });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/warehouse-transfers"] });
+      setRejectDialogOpen(false);
+      setSelectedTransferId(null);
+      setRejectionReason("");
+      toast({
+        title: "تم الرفض",
+        description: "تم رفض عملية النقل",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "خطأ",
+        description: error.message || "فشل رفض عملية النقل",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleReject = (transferId: string) => {
+    setSelectedTransferId(transferId);
+    setRejectDialogOpen(true);
+  };
+
+  const handleConfirmReject = () => {
+    if (selectedTransferId) {
+      rejectMutation.mutate({ transferId: selectedTransferId, reason: rejectionReason });
+    }
+  };
 
   const getTotalItems = () => {
     if (!inventory) return 0;
@@ -371,6 +463,91 @@ export default function MyMovingInventory() {
       </div>
 
       <div className="container mx-auto p-4 sm:p-6 space-y-6">
+        {/* Pending Transfers */}
+        {pendingTransfers && pendingTransfers.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Card className="border-[#18B2B0]/20 bg-gradient-to-br from-cyan-50/80 to-white dark:from-slate-800 dark:to-slate-900">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-[#18B2B0]">
+                  <Clock className="h-5 w-5" />
+                  عمليات نقل معلقة ({pendingTransfers.length})
+                </CardTitle>
+                <CardDescription>عمليات نقل من المستودعات تحتاج إلى موافقتك</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-right">المستودع</TableHead>
+                        <TableHead className="text-right">الصنف</TableHead>
+                        <TableHead className="text-right">النوع</TableHead>
+                        <TableHead className="text-right">الكمية</TableHead>
+                        <TableHead className="text-right">التاريخ</TableHead>
+                        <TableHead className="text-right">الإجراءات</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {pendingTransfers.map((transfer) => (
+                        <TableRow key={transfer.id} data-testid={`row-pending-${transfer.id}`}>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Warehouse className="h-4 w-4 text-[#18B2B0]" />
+                              <span>{transfer.warehouseName}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>{transfer.itemNameAr}</TableCell>
+                          <TableCell>
+                            {transfer.packagingType === 'box' ? 'كرتونة' : 'قطعة'}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Package className="h-4 w-4 text-gray-400" />
+                              <span className="font-semibold">{transfer.quantity}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-sm text-gray-500">
+                            {format(new Date(transfer.createdAt), "dd MMM yyyy, HH:mm", { locale: ar })}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="default"
+                                className="bg-green-600 hover:bg-green-700"
+                                onClick={() => acceptMutation.mutate(transfer.id)}
+                                disabled={acceptMutation.isPending}
+                                data-testid={`button-accept-pending-${transfer.id}`}
+                              >
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                قبول
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleReject(transfer.id)}
+                                disabled={rejectMutation.isPending}
+                                data-testid={`button-reject-pending-${transfer.id}`}
+                              >
+                                <XCircle className="h-4 w-4 mr-1" />
+                                رفض
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
         {/* Action Buttons */}
         <motion.div 
           className="flex gap-3 flex-wrap justify-center"
@@ -602,6 +779,42 @@ export default function MyMovingInventory() {
           currentInventory={inventory}
         />
       )}
+
+      {/* Reject Transfer Dialog */}
+      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>رفض عملية النقل</DialogTitle>
+            <DialogDescription>
+              يرجى إدخال سبب الرفض (اختياري)
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            placeholder="سبب الرفض..."
+            value={rejectionReason}
+            onChange={(e) => setRejectionReason(e.target.value)}
+            className="min-h-[100px]"
+            data-testid="textarea-rejection-reason-tech"
+          />
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setRejectDialogOpen(false)}
+              data-testid="button-cancel-reject-tech"
+            >
+              إلغاء
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmReject}
+              disabled={rejectMutation.isPending}
+              data-testid="button-confirm-reject-tech"
+            >
+              تأكيد الرفض
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
