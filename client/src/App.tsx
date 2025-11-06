@@ -16,6 +16,7 @@ import AdminInventoryOverview from "@/pages/admin-inventory-overview";
 import WarehousesPage from "@/pages/warehouses";
 import WarehouseDetailsPage from "@/pages/warehouse-details";
 import OperationsPage from "@/pages/operations";
+import NotificationsPage from "@/pages/notifications";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import { Loader2 } from "lucide-react";
@@ -31,6 +32,7 @@ function AuthenticatedRouter() {
       <Route path="/withdrawn-devices" component={WithdrawnDevicesPage} />
       <Route path="/my-fixed-inventory" component={MyFixedInventory} />
       <Route path="/my-moving-inventory" component={MyMovingInventory} />
+      <Route path="/notifications" component={NotificationsPage} />
       {user?.role === "admin" && (
         <>
           <Route path="/admin" component={AdminPage} />

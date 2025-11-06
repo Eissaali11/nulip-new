@@ -2,16 +2,30 @@ import Header from "@/components/header";
 import TechniciansTable from "@/components/technicians-table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Package, TruckIcon, ArrowRight, LayoutDashboard, Sparkles, Users, Warehouse, ClipboardCheck } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Package, TruckIcon, ArrowRight, LayoutDashboard, Sparkles, Users, Warehouse, ClipboardCheck, Bell } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/lib/auth";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import rasscoLogo from "@assets/image_1762442473114.png";
 import neoleapLogo from "@assets/image_1762442479737.png";
 import madaDevice from "@assets/image_1762442486277.png";
 
+interface WarehouseTransfer {
+  id: string;
+  technicianId: string;
+  status: 'pending' | 'accepted' | 'rejected';
+}
+
 export default function Dashboard() {
   const { user } = useAuth();
+  
+  const { data: pendingTransfers = [] } = useQuery<WarehouseTransfer[]>({
+    queryKey: ["/api/warehouse-transfers", user?.id],
+    enabled: !!user?.id && user?.role !== 'admin',
+    select: (data) => data.filter(t => t.status === 'pending' && t.technicianId === user?.id),
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900" dir="rtl">
@@ -133,7 +147,7 @@ export default function Dashboard() {
       <div className="container mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* Quick Access Cards - Only for non-admin users */}
         {user?.role !== 'admin' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <motion.div
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
@@ -204,6 +218,55 @@ export default function Dashboard() {
                         data-testid="button-go-to-moving-inventory"
                       >
                         الذهاب للمخزون المتحرك
+                        <ArrowRight className="mr-2 h-5 w-5" />
+                      </Button>
+                    </motion.div>
+                  </Link>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              whileHover={{ y: -5, scale: 1.02 }}
+            >
+              <Card className="border-2 border-orange-500/50 hover:shadow-2xl hover:shadow-orange-500/30 transition-all duration-300 bg-gradient-to-br from-orange-50/50 via-amber-50/30 to-orange-50/50 backdrop-blur-sm overflow-hidden h-full">
+                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent"></div>
+                <CardHeader className="relative">
+                  <CardTitle className="flex items-center gap-3 text-xl">
+                    <motion.div 
+                      className="p-3 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl shadow-lg relative"
+                      whileHover={{ rotate: 360 }}
+                      transition={{ duration: 0.6 }}
+                    >
+                      <Bell className="h-6 w-6 text-white drop-shadow-md" />
+                      {pendingTransfers.length > 0 && (
+                        <Badge className="absolute -top-2 -right-2 bg-red-500 text-white min-w-[24px] h-6 flex items-center justify-center rounded-full px-2">
+                          {pendingTransfers.length}
+                        </Badge>
+                      )}
+                    </motion.div>
+                    <span className="font-black">الإشعارات</span>
+                  </CardTitle>
+                  <CardDescription className="text-base">
+                    عمليات النقل التي تحتاج موافقتك من المستودعات
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="relative">
+                  <Link href="/notifications">
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                      <Button 
+                        className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white font-bold shadow-lg shadow-orange-500/50 text-base py-6" 
+                        data-testid="button-go-to-notifications"
+                      >
+                        عرض الإشعارات
+                        {pendingTransfers.length > 0 && (
+                          <Badge className="mr-2 bg-white text-orange-600 font-bold">
+                            {pendingTransfers.length}
+                          </Badge>
+                        )}
                         <ArrowRight className="mr-2 h-5 w-5" />
                       </Button>
                     </motion.div>
