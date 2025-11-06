@@ -16,6 +16,7 @@ import AdminInventoryOverview from "@/pages/admin-inventory-overview";
 import WarehousesPage from "@/pages/warehouses";
 import WarehouseDetailsPage from "@/pages/warehouse-details";
 import OperationsPage from "@/pages/operations";
+import OperationDetailsPage from "@/pages/operation-details";
 import NotificationsPage from "@/pages/notifications";
 import ProfilePage from "@/pages/profile";
 import NotFound from "@/pages/not-found";
@@ -44,6 +45,7 @@ function AuthenticatedRouter() {
           <Route path="/warehouses" component={WarehousesPage} />
           <Route path="/warehouses/:id" component={WarehouseDetailsPage} />
           <Route path="/operations" component={OperationsPage} />
+          <Route path="/operation-details/:groupId" component={OperationDetailsPage} />
         </>
       )}
       <Route component={NotFound} />
