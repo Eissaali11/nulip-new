@@ -117,18 +117,18 @@ export default function Login() {
       {/* Dark Overlay */}
       <div className="absolute inset-0 bg-gray-900/70 backdrop-blur-sm"></div>
 
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-2 gap-12 items-start">
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 py-12">
+        <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Left Side - Features */}
           <motion.div
-            className="space-y-8 order-2 lg:order-1"
+            className="space-y-6 order-2 lg:order-1"
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
           >
             {/* Logo - Desktop Only */}
             <motion.div
-              className="hidden lg:flex justify-start mb-8"
+              className="hidden lg:flex justify-center lg:justify-start"
               initial={{ opacity: 0, y: -20, scale: 0.8 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ duration: 0.8, type: "spring", stiffness: 100 }}
@@ -188,22 +188,22 @@ export default function Login() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-center lg:text-right"
+              className="text-center lg:text-right space-y-3"
             >
-              <h1 className="text-4xl lg:text-5xl font-black text-white mb-4">
+              <h1 className="text-4xl lg:text-5xl font-black text-white leading-tight">
                 StockPro
               </h1>
-              <p className="text-xl lg:text-2xl text-[#18B2B0] font-semibold mb-2">
+              <p className="text-xl lg:text-2xl text-[#18B2B0] font-semibold">
                 نظام إدارة المخزون الاحترافي
               </p>
-              <p className="text-base lg:text-lg text-gray-300">
+              <p className="text-base lg:text-lg text-gray-300 leading-relaxed">
                 حلول متقدمة لإدارة مخزون الفنيين والمستودعات
               </p>
             </motion.div>
 
             {/* Features Grid */}
             <motion.div
-              className="grid gap-4 mt-8"
+              className="grid gap-3"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
@@ -211,18 +211,18 @@ export default function Login() {
               {features.map((feature, index) => (
                 <motion.div
                   key={index}
-                  className="flex gap-4 items-start bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/20 hover:bg-white/15 transition-all duration-300"
+                  className="flex gap-4 items-center bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/20 hover:bg-white/15 transition-all duration-300"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.5 + index * 0.1 }}
                   whileHover={{ scale: 1.02, x: 5 }}
                 >
-                  <div className="p-3 bg-[#18B2B0]/20 rounded-lg border border-[#18B2B0]/30">
+                  <div className="p-3 bg-[#18B2B0]/20 rounded-lg border border-[#18B2B0]/30 shrink-0">
                     <feature.icon className="w-6 h-6 text-[#18B2B0]" />
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-white text-lg mb-1">{feature.title}</h3>
-                    <p className="text-gray-300 text-sm leading-relaxed">{feature.description}</p>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-white text-base lg:text-lg mb-1">{feature.title}</h3>
+                    <p className="text-gray-300 text-xs lg:text-sm leading-relaxed">{feature.description}</p>
                   </div>
                 </motion.div>
               ))}
@@ -234,7 +234,7 @@ export default function Login() {
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
-            className="flex flex-col items-center justify-center order-1 lg:order-2"
+            className="flex flex-col items-center justify-center order-1 lg:order-2 w-full"
           >
             {/* Mobile Logo */}
             <motion.div
@@ -294,7 +294,7 @@ export default function Login() {
             </motion.div>
 
             <Card className="w-full max-w-md bg-white/20 backdrop-blur-xl border-2 border-white/30 shadow-2xl">
-              <CardHeader className="text-center pb-6 pt-8">
+              <CardHeader className="text-center pb-4 pt-8 space-y-4">
                 <div className="flex justify-center mb-6">
                   <div className="p-4 bg-gradient-to-br from-[#18B2B0] to-teal-600 rounded-full shadow-lg">
                     <Shield className="h-12 w-12 text-white" />
@@ -304,9 +304,9 @@ export default function Login() {
                 <p className="text-gray-200">مرحباً بك في نظام StockPro</p>
               </CardHeader>
               
-              <CardContent className="pb-8">
+              <CardContent className="pb-8 px-8">
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
                     <FormField
                       control={form.control}
                       name="username"
