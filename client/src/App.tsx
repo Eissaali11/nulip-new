@@ -17,6 +17,7 @@ import WarehousesPage from "@/pages/warehouses";
 import WarehouseDetailsPage from "@/pages/warehouse-details";
 import OperationsPage from "@/pages/operations";
 import NotificationsPage from "@/pages/notifications";
+import ProfilePage from "@/pages/profile";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import { Loader2 } from "lucide-react";
@@ -33,6 +34,7 @@ function AuthenticatedRouter() {
       <Route path="/my-fixed-inventory" component={MyFixedInventory} />
       <Route path="/my-moving-inventory" component={MyMovingInventory} />
       <Route path="/notifications" component={NotificationsPage} />
+      <Route path="/profile" component={ProfilePage} />
       {user?.role === "admin" && (
         <>
           <Route path="/admin" component={AdminPage} />

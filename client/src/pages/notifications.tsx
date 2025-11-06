@@ -1,9 +1,10 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, CheckCircle, XCircle, Warehouse, Package, Bell, BellOff } from "lucide-react";
+import { Clock, CheckCircle, XCircle, Warehouse, Package, Bell, BellOff, ArrowRight } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useState } from "react";
+import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -140,18 +141,30 @@ export default function NotificationsPage() {
         />
         
         <div className="container mx-auto px-6 py-12 relative z-10">
-          <div className="flex items-center gap-4 mb-2">
-            <div className="p-4 bg-white/20 backdrop-blur-sm rounded-2xl shadow-lg">
-              <Bell className="h-12 w-12 text-white" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-2xl shadow-lg">
+                <Bell className="h-12 w-12 text-white" />
+              </div>
+              <div>
+                <h1 className="text-5xl font-black text-white drop-shadow-lg">
+                  الإشعارات
+                </h1>
+                <p className="text-xl text-white/90 mt-2">
+                  عمليات النقل المعلقة التي تحتاج موافقتك
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-5xl font-black text-white drop-shadow-lg">
-                الإشعارات
-              </h1>
-              <p className="text-xl text-white/90 mt-2">
-                عمليات النقل المعلقة التي تحتاج موافقتك
-              </p>
-            </div>
+            <Link href="/">
+              <Button 
+                variant="outline" 
+                className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30 shadow-lg"
+                data-testid="button-back-home"
+              >
+                <ArrowRight className="h-5 w-5 ml-2" />
+                رجوع
+              </Button>
+            </Link>
           </div>
           
           {pendingTransfers && pendingTransfers.length > 0 && (
