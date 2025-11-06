@@ -95,8 +95,10 @@ export default function NotificationsPage() {
     },
   });
 
-  const handleAccept = (transfer: WarehouseTransfer) => {
-    acceptMutation.mutate(transfer.id);
+  const handleAccept = async (transferGroup: any) => {
+    for (const item of transferGroup.items) {
+      await acceptMutation.mutateAsync(item.id);
+    }
   };
 
   const handleRejectClick = () => {
@@ -104,14 +106,16 @@ export default function NotificationsPage() {
     setRejectDialogOpen(true);
   };
 
-  const handleConfirmReject = () => {
+  const handleConfirmReject = async () => {
     if (selectedTransfer && rejectionReason.trim()) {
-      rejectMutation.mutate({ transferId: selectedTransfer.id, reason: rejectionReason });
+      for (const item of (selectedTransfer as any).items) {
+        await rejectMutation.mutateAsync({ transferId: item.id, reason: rejectionReason });
+      }
     }
   };
 
-  const handleCardClick = (transfer: WarehouseTransfer) => {
-    setSelectedTransfer(transfer);
+  const handleCardClick = (transferGroup: any) => {
+    setSelectedTransfer(transferGroup);
     setDetailsDialogOpen(true);
   };
 
@@ -133,6 +137,31 @@ export default function NotificationsPage() {
   const getItemIcon = (itemType: string) => {
     return <Package className="h-5 w-5" />;
   };
+
+  // Group transfers by warehouse and creation time
+  const groupedTransfers = pendingTransfers?.reduce((acc, transfer) => {
+    const key = `${transfer.warehouseId}-${new Date(transfer.createdAt).getTime()}`;
+    if (!acc[key]) {
+      acc[key] = {
+        id: transfer.id,
+        warehouseId: transfer.warehouseId,
+        warehouseName: transfer.warehouseName,
+        createdAt: transfer.createdAt,
+        notes: transfer.notes,
+        items: [],
+      };
+    }
+    acc[key].items.push({
+      id: transfer.id,
+      itemType: transfer.itemType,
+      itemNameAr: getItemNameAr(transfer.itemType),
+      packagingType: transfer.packagingType,
+      quantity: transfer.quantity,
+    });
+    return acc;
+  }, {} as Record<string, any>);
+
+  const groupedTransfersList = groupedTransfers ? Object.values(groupedTransfers) : [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50/30 to-slate-50" dir="rtl">
@@ -183,7 +212,7 @@ export default function NotificationsPage() {
             </Link>
           </div>
           
-          {pendingTransfers && pendingTransfers.length > 0 && (
+          {groupedTransfersList && groupedTransfersList.length > 0 && (
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -191,7 +220,7 @@ export default function NotificationsPage() {
             >
               <Badge className="bg-white text-orange-600 text-base sm:text-lg px-4 py-2 mt-2 sm:mt-4 shadow-lg" data-testid="badge-pending-count">
                 <Bell className="h-4 w-4 mr-2" />
-                {pendingTransfers.length} طلب معلق
+                {groupedTransfersList.length} طلب معلق
               </Badge>
             </motion.div>
           )}
@@ -205,7 +234,7 @@ export default function NotificationsPage() {
               <Skeleton key={i} className="h-64 w-full rounded-2xl" />
             ))}
           </div>
-        ) : !pendingTransfers || pendingTransfers.length === 0 ? (
+        ) : !groupedTransfersList || groupedTransfersList.length === 0 ? (
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -232,17 +261,17 @@ export default function NotificationsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <AnimatePresence>
-              {pendingTransfers.map((transfer, index) => (
+              {groupedTransfersList.map((transferGroup: any, index: number) => (
                 <motion.div
-                  key={transfer.id}
+                  key={transferGroup.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.3, delay: index * 0.05 }}
                   whileHover={{ y: -8, scale: 1.02 }}
-                  onClick={() => handleCardClick(transfer)}
+                  onClick={() => handleCardClick(transferGroup)}
                   className="cursor-pointer"
-                  data-testid={`card-transfer-${transfer.id}`}
+                  data-testid={`card-transfer-${transferGroup.id}`}
                 >
                   <Card className="h-full border-2 border-orange-200 hover:border-orange-400 hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-white to-orange-50/30 overflow-hidden">
                     <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-orange-400 via-amber-400 to-orange-500"></div>
@@ -255,11 +284,11 @@ export default function NotificationsPage() {
                           </div>
                           <div>
                             <CardTitle className="text-lg font-bold text-gray-900">
-                              {transfer.warehouseName || "مستودع"}
+                              {transferGroup.warehouseName || "مستودع"}
                             </CardTitle>
                             <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
-                              {format(new Date(transfer.createdAt), "d MMMM yyyy", { locale: ar })}
+                              {format(new Date(transferGroup.createdAt), "d MMMM yyyy", { locale: ar })}
                             </p>
                           </div>
                         </div>
@@ -271,31 +300,35 @@ export default function NotificationsPage() {
                     </CardHeader>
 
                     <CardContent className="space-y-3">
-                      <div className="flex items-center justify-between p-3 bg-gradient-to-r from-[#18B2B0]/10 to-teal-50 rounded-xl border border-[#18B2B0]/20">
-                        <div className="flex items-center gap-2">
-                          {getItemIcon(transfer.itemType)}
-                          <span className="font-semibold text-gray-900">
-                            {getItemNameAr(transfer.itemType)}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 font-bold">
-                            {transfer.quantity}
-                          </Badge>
-                          <span className="text-sm text-gray-600">
-                            {transfer.packagingType === 'box' ? 'كرتون' : 'وحدة'}
-                          </span>
-                        </div>
+                      <div className="space-y-2">
+                        {transferGroup.items.map((item: any, idx: number) => (
+                          <div key={idx} className="flex items-center justify-between p-3 bg-gradient-to-r from-[#18B2B0]/10 to-teal-50 rounded-xl border border-[#18B2B0]/20">
+                            <div className="flex items-center gap-2">
+                              {getItemIcon(item.itemType)}
+                              <span className="font-semibold text-gray-900">
+                                {item.itemNameAr}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 font-bold">
+                                {item.quantity}
+                              </Badge>
+                              <span className="text-sm text-gray-600">
+                                {item.packagingType === 'box' ? 'كرتون' : 'وحدة'}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
                       </div>
 
-                      {transfer.notes && (
+                      {transferGroup.notes && (
                         <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
                           <p className="text-xs font-semibold text-gray-600 mb-1 flex items-center gap-1">
                             <Info className="h-3 w-3" />
                             ملاحظات:
                           </p>
                           <p className="text-sm text-gray-700 line-clamp-2">
-                            {transfer.notes}
+                            {transferGroup.notes}
                           </p>
                         </div>
                       )}
@@ -303,7 +336,7 @@ export default function NotificationsPage() {
                       <div className="pt-2">
                         <Button
                           className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold shadow-md"
-                          data-testid={`button-view-details-${transfer.id}`}
+                          data-testid={`button-view-details-${transferGroup.id}`}
                         >
                           <Info className="h-4 w-4 ml-2" />
                           عرض التفاصيل
@@ -343,7 +376,7 @@ export default function NotificationsPage() {
                     <h3 className="text-xl font-bold text-gray-900">المستودع</h3>
                   </div>
                   <p className="text-2xl font-bold text-[#18B2B0]">
-                    {selectedTransfer.warehouseName || "غير محدد"}
+                    {(selectedTransfer as any).warehouseName || "غير محدد"}
                   </p>
                 </div>
 
@@ -353,31 +386,31 @@ export default function NotificationsPage() {
                 <div className="space-y-4">
                   <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                     <Package className="h-5 w-5 text-orange-600" />
-                    تفاصيل الصنف
+                    الأصناف المطلوبة ({(selectedTransfer as any).items?.length || 0})
                   </h3>
                   
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
-                      <p className="text-sm text-gray-600 mb-1">الصنف</p>
-                      <p className="text-xl font-bold text-blue-700">
-                        {getItemNameAr(selectedTransfer.itemType)}
-                      </p>
-                    </div>
-                    
-                    <div className="p-4 bg-purple-50 rounded-xl border border-purple-200">
-                      <p className="text-sm text-gray-600 mb-1">النوع</p>
-                      <p className="text-xl font-bold text-purple-700">
-                        {selectedTransfer.packagingType === 'box' ? 'كرتونة' : 'قطعة'}
-                      </p>
-                    </div>
-                    
-                    <div className="p-4 bg-green-50 rounded-xl border border-green-200 col-span-2">
-                      <p className="text-sm text-gray-600 mb-1">الكمية المطلوبة</p>
-                      <p className="text-3xl font-black text-green-700 flex items-center gap-2">
-                        <Hash className="h-8 w-8" />
-                        {selectedTransfer.quantity}
-                      </p>
-                    </div>
+                  <div className="space-y-3">
+                    {(selectedTransfer as any).items?.map((item: any, idx: number) => (
+                      <div key={idx} className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-white rounded-lg">
+                              <Package className="h-6 w-6 text-blue-600" />
+                            </div>
+                            <div>
+                              <p className="text-xl font-bold text-gray-900">{item.itemNameAr}</p>
+                              <p className="text-sm text-gray-600">
+                                {item.packagingType === 'box' ? 'كرتونة' : 'وحدة'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-left">
+                            <p className="text-sm text-gray-600">الكمية</p>
+                            <p className="text-3xl font-black text-green-700">{item.quantity}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
@@ -390,12 +423,12 @@ export default function NotificationsPage() {
                     <h3 className="text-lg font-bold text-gray-900">تاريخ الطلب</h3>
                   </div>
                   <p className="text-lg text-gray-700">
-                    {format(new Date(selectedTransfer.createdAt), "EEEE، d MMMM yyyy - الساعة h:mm a", { locale: ar })}
+                    {format(new Date((selectedTransfer as any).createdAt), "EEEE، d MMMM yyyy - الساعة h:mm a", { locale: ar })}
                   </p>
                 </div>
 
                 {/* Notes */}
-                {selectedTransfer.notes && (
+                {(selectedTransfer as any).notes && (
                   <>
                     <Separator />
                     <div className="p-4 bg-amber-50 rounded-xl border-2 border-amber-200">
@@ -404,7 +437,7 @@ export default function NotificationsPage() {
                         <h3 className="text-lg font-bold text-gray-900">ملاحظات</h3>
                       </div>
                       <p className="text-base text-gray-700 leading-relaxed">
-                        {selectedTransfer.notes}
+                        {(selectedTransfer as any).notes}
                       </p>
                     </div>
                   </>
@@ -424,7 +457,7 @@ export default function NotificationsPage() {
                   variant="outline"
                   onClick={handleRejectClick}
                   className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
-                  data-testid={`button-reject-details-${selectedTransfer.id}`}
+                  data-testid={`button-reject-details-${(selectedTransfer as any).id}`}
                 >
                   <XCircle className="h-5 w-5 ml-2" />
                   رفض
@@ -433,7 +466,7 @@ export default function NotificationsPage() {
                   onClick={() => handleAccept(selectedTransfer)}
                   disabled={acceptMutation.isPending}
                   className="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg"
-                  data-testid={`button-accept-details-${selectedTransfer.id}`}
+                  data-testid={`button-accept-details-${(selectedTransfer as any).id}`}
                 >
                   <CheckCircle className="h-5 w-5 ml-2" />
                   {acceptMutation.isPending ? "جاري القبول..." : "قبول"}
