@@ -116,8 +116,9 @@ export function AddUserModal({
       };
       return await apiRequest("POST", "/api/users", submitData);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/users"] });
       toast({
         title: "تم الإضافة بنجاح",
         description: "تم إضافة المستخدم الجديد",

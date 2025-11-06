@@ -133,9 +133,10 @@ export function EditUserModal({
       updateData.profileImage = profileImage || undefined;
       return await apiRequest("PATCH", `/api/users/${user?.id}`, updateData);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/users"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
       toast({
         title: "تم التحديث بنجاح",
         description: "تم تحديث بيانات المستخدم",
