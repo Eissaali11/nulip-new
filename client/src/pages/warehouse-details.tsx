@@ -39,7 +39,10 @@ import {
   History,
   RefreshCw,
   Sparkles,
-  TrendingUp
+  TrendingUp,
+  Clock,
+  CheckCircle,
+  XCircle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -90,6 +93,9 @@ interface WarehouseTransferRaw {
   packagingType: string;
   quantity: number;
   notes?: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  rejectionReason?: string;
+  respondedAt?: string;
   createdAt: string;
 }
 
@@ -117,6 +123,9 @@ interface WarehouseTransfer {
   zainSim?: number;
   zainSimPackagingType?: string;
   notes?: string;
+  status?: 'pending' | 'accepted' | 'rejected';
+  rejectionReason?: string;
+  respondedAt?: string;
   createdAt: string;
 }
 
@@ -489,6 +498,7 @@ export default function WarehouseDetailsPage() {
                       <TableHead className="text-right font-bold">التاريخ</TableHead>
                       <TableHead className="text-right font-bold">الفني</TableHead>
                       <TableHead className="text-right font-bold">الأصناف المنقولة</TableHead>
+                      <TableHead className="text-right font-bold">الحالة</TableHead>
                       <TableHead className="text-right font-bold">ملاحظات</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -504,6 +514,38 @@ export default function WarehouseDetailsPage() {
                       if (transfer.mobilySim) items.push(`موبايلي: ${transfer.mobilySim} ${transfer.mobilySimPackagingType === 'box' ? 'كرتون' : 'وحدة'}`);
                       if (transfer.stcSim) items.push(`STC: ${transfer.stcSim} ${transfer.stcSimPackagingType === 'box' ? 'كرتون' : 'وحدة'}`);
                       if (transfer.zainSim) items.push(`زين: ${transfer.zainSim} ${transfer.zainSimPackagingType === 'box' ? 'كرتون' : 'وحدة'}`);
+
+                      const getStatusBadge = (status?: string) => {
+                        switch (status) {
+                          case 'pending':
+                            return (
+                              <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                                <Clock className="h-3 w-3 mr-1" />
+                                قيد الانتظار
+                              </Badge>
+                            );
+                          case 'accepted':
+                            return (
+                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                مقبول
+                              </Badge>
+                            );
+                          case 'rejected':
+                            return (
+                              <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                                <XCircle className="h-3 w-3 mr-1" />
+                                مرفوض
+                              </Badge>
+                            );
+                          default:
+                            return (
+                              <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+                                -
+                              </Badge>
+                            );
+                        }
+                      };
 
                       return (
                         <TableRow key={transfer.id} className="hover:bg-[#18B2B0]/5 transition-colors" data-testid={`transfer-row-${transfer.id}`}>
@@ -523,6 +565,9 @@ export default function WarehouseDetailsPage() {
                                 </Badge>
                               ))}
                             </div>
+                          </TableCell>
+                          <TableCell className="text-right" data-testid={`transfer-status-${transfer.id}`}>
+                            {getStatusBadge(transfer.status)}
                           </TableCell>
                           <TableCell className="text-right text-sm text-gray-600" data-testid={`transfer-notes-${transfer.id}`}>
                             {transfer.notes || "-"}
