@@ -2,7 +2,7 @@ import Header from "@/components/header";
 import TechniciansTable from "@/components/technicians-table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Package, TruckIcon, ArrowRight, LayoutDashboard, Sparkles, Users, Warehouse } from "lucide-react";
+import { Package, TruckIcon, ArrowRight, LayoutDashboard, Sparkles, Users, Warehouse, ClipboardCheck } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { motion } from "framer-motion";
@@ -365,6 +365,45 @@ export default function Dashboard() {
                         data-testid="button-admin-warehouses"
                       >
                         إدارة المستودعات
+                        <ArrowRight className="mr-2 h-5 w-5" />
+                      </Button>
+                    </motion.div>
+                  </Link>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              whileHover={{ y: -5, scale: 1.02 }}
+            >
+              <Card className="border-2 border-[#18B2B0]/50 hover:shadow-2xl hover:shadow-[#18B2B0]/30 transition-all duration-300 bg-gradient-to-br from-cyan-50/50 via-teal-50/30 to-cyan-50/50 backdrop-blur-sm overflow-hidden h-full">
+                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent"></div>
+                <CardHeader className="relative">
+                  <CardTitle className="flex items-center gap-3 text-xl">
+                    <motion.div 
+                      className="p-3 bg-gradient-to-br from-[#18B2B0] to-cyan-600 rounded-2xl shadow-lg"
+                      whileHover={{ rotate: 360 }}
+                      transition={{ duration: 0.6 }}
+                    >
+                      <ClipboardCheck className="h-6 w-6 text-white drop-shadow-md" />
+                    </motion.div>
+                    <span className="font-black">العمليات</span>
+                  </CardTitle>
+                  <CardDescription className="text-base">
+                    إدارة عمليات النقل والموافقات
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="relative">
+                  <Link href="/operations">
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                      <Button 
+                        className="w-full bg-gradient-to-r from-[#18B2B0] to-cyan-600 hover:from-[#159a98] hover:to-cyan-700 text-white font-bold shadow-lg shadow-[#18B2B0]/50 text-base py-6" 
+                        data-testid="button-admin-operations"
+                      >
+                        إدارة العمليات
                         <ArrowRight className="mr-2 h-5 w-5" />
                       </Button>
                     </motion.div>

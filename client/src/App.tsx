@@ -15,6 +15,7 @@ import MyMovingInventory from "@/pages/my-moving-inventory";
 import AdminInventoryOverview from "@/pages/admin-inventory-overview";
 import WarehousesPage from "@/pages/warehouses";
 import WarehouseDetailsPage from "@/pages/warehouse-details";
+import OperationsPage from "@/pages/operations";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import { Loader2 } from "lucide-react";
@@ -38,6 +39,7 @@ function AuthenticatedRouter() {
           <Route path="/admin-inventory-overview" component={AdminInventoryOverview} />
           <Route path="/warehouses" component={WarehousesPage} />
           <Route path="/warehouses/:id" component={WarehouseDetailsPage} />
+          <Route path="/operations" component={OperationsPage} />
         </>
       )}
       <Route component={NotFound} />

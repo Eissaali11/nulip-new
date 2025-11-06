@@ -96,6 +96,8 @@ export interface IStorage {
   // Warehouse Transfers
   transferFromWarehouse(data: InsertWarehouseTransfer): Promise<WarehouseTransfer>;
   getWarehouseTransfers(warehouseId?: string, technicianId?: string, limit?: number): Promise<WarehouseTransferWithDetails[]>;
+  acceptWarehouseTransfer(transferId: string): Promise<WarehouseTransfer>;
+  rejectWarehouseTransfer(transferId: string, reason?: string): Promise<WarehouseTransfer>;
 }
 
 export class MemStorage implements IStorage {

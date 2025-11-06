@@ -1462,70 +1462,12 @@ export class DatabaseStorage implements IStorage {
         throw new Error(`Insufficient stock in warehouse. Available: ${currentStock}, Requested: ${data.quantity}`);
       }
 
-      await tx
-        .update(warehouseInventory)
-        .set({
-          [fieldName]: currentStock - data.quantity,
-          updatedAt: new Date(),
-        })
-        .where(eq(warehouseInventory.warehouseId, data.warehouseId));
-
-      const [techInventory] = await tx
-        .select()
-        .from(techniciansInventory)
-        .where(eq(techniciansInventory.createdBy, data.technicianId));
-
-      if (techInventory) {
-        const techCurrentStock = (techInventory as any)[fieldName] || 0;
-        await tx
-          .update(techniciansInventory)
-          .set({
-            [fieldName]: techCurrentStock + data.quantity,
-            updatedAt: new Date(),
-          })
-          .where(eq(techniciansInventory.createdBy, data.technicianId));
-      } else {
-        const [user] = await tx
-          .select()
-          .from(users)
-          .where(eq(users.id, data.technicianId));
-
-        if (!user) {
-          throw new Error(`Technician with id ${data.technicianId} not found`);
-        }
-
-        await tx
-          .insert(techniciansInventory)
-          .values({
-            technicianName: user.fullName,
-            city: user.city || 'غير محدد',
-            createdBy: data.technicianId,
-            regionId: user.regionId,
-            [fieldName]: data.quantity,
-            n950Boxes: data.itemType === 'n950' && data.packagingType === 'box' ? data.quantity : 0,
-            n950Units: data.itemType === 'n950' && data.packagingType === 'unit' ? data.quantity : 0,
-            i9000sBoxes: data.itemType === 'i9000s' && data.packagingType === 'box' ? data.quantity : 0,
-            i9000sUnits: data.itemType === 'i9000s' && data.packagingType === 'unit' ? data.quantity : 0,
-            i9100Boxes: data.itemType === 'i9100' && data.packagingType === 'box' ? data.quantity : 0,
-            i9100Units: data.itemType === 'i9100' && data.packagingType === 'unit' ? data.quantity : 0,
-            rollPaperBoxes: data.itemType === 'rollPaper' && data.packagingType === 'box' ? data.quantity : 0,
-            rollPaperUnits: data.itemType === 'rollPaper' && data.packagingType === 'unit' ? data.quantity : 0,
-            stickersBoxes: data.itemType === 'stickers' && data.packagingType === 'box' ? data.quantity : 0,
-            stickersUnits: data.itemType === 'stickers' && data.packagingType === 'unit' ? data.quantity : 0,
-            newBatteriesBoxes: data.itemType === 'newBatteries' && data.packagingType === 'box' ? data.quantity : 0,
-            newBatteriesUnits: data.itemType === 'newBatteries' && data.packagingType === 'unit' ? data.quantity : 0,
-            mobilySimBoxes: data.itemType === 'mobilySim' && data.packagingType === 'box' ? data.quantity : 0,
-            mobilySimUnits: data.itemType === 'mobilySim' && data.packagingType === 'unit' ? data.quantity : 0,
-            stcSimBoxes: data.itemType === 'stcSim' && data.packagingType === 'box' ? data.quantity : 0,
-            stcSimUnits: data.itemType === 'stcSim' && data.packagingType === 'unit' ? data.quantity : 0,
-            zainSimBoxes: data.itemType === 'zainSim' && data.packagingType === 'box' ? data.quantity : 0,
-            zainSimUnits: data.itemType === 'zainSim' && data.packagingType === 'unit' ? data.quantity : 0,
-          });
-      }
-
       const [transfer] = await tx
         .insert(warehouseTransfers)
-        .values(data)
+        .values({
+          ...data,
+          status: 'pending',
+        })
         .returning();
 
       return transfer;
@@ -1555,6 +1497,9 @@ export class DatabaseStorage implements IStorage {
         quantity: warehouseTransfers.quantity,
         performedBy: warehouseTransfers.performedBy,
         notes: warehouseTransfers.notes,
+        status: warehouseTransfers.status,
+        rejectionReason: warehouseTransfers.rejectionReason,
+        respondedAt: warehouseTransfers.respondedAt,
         createdAt: warehouseTransfers.createdAt,
         warehouseName: warehouses.name,
         technicianName: users.fullName,
@@ -1591,5 +1536,150 @@ export class DatabaseStorage implements IStorage {
       technicianName: transfer.technicianName || undefined,
       performedByName: transfer.performedByName || undefined,
     }));
+  }
+
+  async acceptWarehouseTransfer(transferId: string): Promise<WarehouseTransfer> {
+    return await db.transaction(async (tx) => {
+      const [transfer] = await tx
+        .select()
+        .from(warehouseTransfers)
+        .where(eq(warehouseTransfers.id, transferId));
+
+      if (!transfer) {
+        throw new Error('Transfer not found');
+      }
+
+      if (transfer.status !== 'pending') {
+        throw new Error(`Transfer already ${transfer.status}`);
+      }
+
+      const fieldMap: Record<string, { boxes: string; units: string }> = {
+        'n950': { boxes: 'n950Boxes', units: 'n950Units' },
+        'i9000s': { boxes: 'i9000sBoxes', units: 'i9000sUnits' },
+        'i9100': { boxes: 'i9100Boxes', units: 'i9100Units' },
+        'rollPaper': { boxes: 'rollPaperBoxes', units: 'rollPaperUnits' },
+        'stickers': { boxes: 'stickersBoxes', units: 'stickersUnits' },
+        'newBatteries': { boxes: 'newBatteriesBoxes', units: 'newBatteriesUnits' },
+        'mobilySim': { boxes: 'mobilySimBoxes', units: 'mobilySimUnits' },
+        'stcSim': { boxes: 'stcSimBoxes', units: 'stcSimUnits' },
+        'zainSim': { boxes: 'zainSimBoxes', units: 'zainSimUnits' },
+      };
+
+      const fields = fieldMap[transfer.itemType];
+      const fieldName = transfer.packagingType === 'box' ? fields.boxes : fields.units;
+
+      const [inventory] = await tx
+        .select()
+        .from(warehouseInventory)
+        .where(eq(warehouseInventory.warehouseId, transfer.warehouseId));
+
+      if (!inventory) {
+        throw new Error('Warehouse inventory not found');
+      }
+
+      const currentStock = (inventory as any)[fieldName] || 0;
+      if (currentStock < transfer.quantity) {
+        throw new Error(`Insufficient stock in warehouse. Available: ${currentStock}, Requested: ${transfer.quantity}`);
+      }
+
+      await tx
+        .update(warehouseInventory)
+        .set({
+          [fieldName]: currentStock - transfer.quantity,
+          updatedAt: new Date(),
+        })
+        .where(eq(warehouseInventory.warehouseId, transfer.warehouseId));
+
+      const [techInventory] = await tx
+        .select()
+        .from(techniciansInventory)
+        .where(eq(techniciansInventory.createdBy, transfer.technicianId));
+
+      if (techInventory) {
+        const techCurrentStock = (techInventory as any)[fieldName] || 0;
+        await tx
+          .update(techniciansInventory)
+          .set({
+            [fieldName]: techCurrentStock + transfer.quantity,
+            updatedAt: new Date(),
+          })
+          .where(eq(techniciansInventory.createdBy, transfer.technicianId));
+      } else {
+        const [user] = await tx
+          .select()
+          .from(users)
+          .where(eq(users.id, transfer.technicianId));
+
+        if (!user) {
+          throw new Error(`Technician with id ${transfer.technicianId} not found`);
+        }
+
+        await tx
+          .insert(techniciansInventory)
+          .values({
+            technicianName: user.fullName,
+            city: user.city || 'غير محدد',
+            createdBy: transfer.technicianId,
+            regionId: user.regionId,
+            [fieldName]: transfer.quantity,
+            n950Boxes: transfer.itemType === 'n950' && transfer.packagingType === 'box' ? transfer.quantity : 0,
+            n950Units: transfer.itemType === 'n950' && transfer.packagingType === 'unit' ? transfer.quantity : 0,
+            i9000sBoxes: transfer.itemType === 'i9000s' && transfer.packagingType === 'box' ? transfer.quantity : 0,
+            i9000sUnits: transfer.itemType === 'i9000s' && transfer.packagingType === 'unit' ? transfer.quantity : 0,
+            i9100Boxes: transfer.itemType === 'i9100' && transfer.packagingType === 'box' ? transfer.quantity : 0,
+            i9100Units: transfer.itemType === 'i9100' && transfer.packagingType === 'unit' ? transfer.quantity : 0,
+            rollPaperBoxes: transfer.itemType === 'rollPaper' && transfer.packagingType === 'box' ? transfer.quantity : 0,
+            rollPaperUnits: transfer.itemType === 'rollPaper' && transfer.packagingType === 'unit' ? transfer.quantity : 0,
+            stickersBoxes: transfer.itemType === 'stickers' && transfer.packagingType === 'box' ? transfer.quantity : 0,
+            stickersUnits: transfer.itemType === 'stickers' && transfer.packagingType === 'unit' ? transfer.quantity : 0,
+            newBatteriesBoxes: transfer.itemType === 'newBatteries' && transfer.packagingType === 'box' ? transfer.quantity : 0,
+            newBatteriesUnits: transfer.itemType === 'newBatteries' && transfer.packagingType === 'unit' ? transfer.quantity : 0,
+            mobilySimBoxes: transfer.itemType === 'mobilySim' && transfer.packagingType === 'box' ? transfer.quantity : 0,
+            mobilySimUnits: transfer.itemType === 'mobilySim' && transfer.packagingType === 'unit' ? transfer.quantity : 0,
+            stcSimBoxes: transfer.itemType === 'stcSim' && transfer.packagingType === 'box' ? transfer.quantity : 0,
+            stcSimUnits: transfer.itemType === 'stcSim' && transfer.packagingType === 'unit' ? transfer.quantity : 0,
+            zainSimBoxes: transfer.itemType === 'zainSim' && transfer.packagingType === 'box' ? transfer.quantity : 0,
+            zainSimUnits: transfer.itemType === 'zainSim' && transfer.packagingType === 'unit' ? transfer.quantity : 0,
+          });
+      }
+
+      const [updatedTransfer] = await tx
+        .update(warehouseTransfers)
+        .set({
+          status: 'accepted',
+          respondedAt: new Date(),
+        })
+        .where(eq(warehouseTransfers.id, transferId))
+        .returning();
+
+      return updatedTransfer;
+    });
+  }
+
+  async rejectWarehouseTransfer(transferId: string, reason?: string): Promise<WarehouseTransfer> {
+    const [transfer] = await db
+      .select()
+      .from(warehouseTransfers)
+      .where(eq(warehouseTransfers.id, transferId));
+
+    if (!transfer) {
+      throw new Error('Transfer not found');
+    }
+
+    if (transfer.status !== 'pending') {
+      throw new Error(`Transfer already ${transfer.status}`);
+    }
+
+    const [updatedTransfer] = await db
+      .update(warehouseTransfers)
+      .set({
+        status: 'rejected',
+        rejectionReason: reason,
+        respondedAt: new Date(),
+      })
+      .where(eq(warehouseTransfers.id, transferId))
+      .returning();
+
+    return updatedTransfer;
   }
 }

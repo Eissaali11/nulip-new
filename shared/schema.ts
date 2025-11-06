@@ -253,6 +253,9 @@ export const warehouseTransfers = pgTable("warehouse_transfers", {
   quantity: integer("quantity").notNull(),
   performedBy: varchar("performed_by").notNull().references(() => users.id),
   notes: text("notes"),
+  status: text("status").notNull().default("pending"), // "pending", "accepted", "rejected"
+  rejectionReason: text("rejection_reason"),
+  respondedAt: timestamp("responded_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

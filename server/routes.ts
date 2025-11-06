@@ -1,9 +1,10 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertInventoryItemSchema, insertTransactionSchema, insertRegionSchema, insertUserSchema, insertTechnicianInventorySchema, insertWithdrawnDeviceSchema, loginSchema, techniciansInventory, insertWarehouseSchema, insertWarehouseInventorySchema, insertWarehouseTransferSchema } from "@shared/schema";
+import { insertInventoryItemSchema, insertTransactionSchema, insertRegionSchema, insertUserSchema, insertTechnicianInventorySchema, insertWithdrawnDeviceSchema, loginSchema, techniciansInventory, insertWarehouseSchema, insertWarehouseInventorySchema, insertWarehouseTransferSchema, warehouseTransfers } from "@shared/schema";
 import { z } from "zod";
 import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 // Simple session store for demo purposes (in production, use proper session store)
 const activeSessions = new Map<string, { userId: string; role: string; username: string; expiry: number }>();
@@ -1249,6 +1250,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching warehouse transfers:", error);
       res.status(500).json({ message: "Failed to fetch warehouse transfers" });
+    }
+  });
+
+  app.post("/api/warehouse-transfers/:id/accept", requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const [transfer] = await db
+        .select()
+        .from(warehouseTransfers)
+        .where(eq(warehouseTransfers.id, req.params.id));
+
+      if (!transfer) {
+        return res.status(404).json({ message: "Transfer not found" });
+      }
+
+      if (user.role !== 'admin' && transfer.technicianId !== user.id) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const updatedTransfer = await storage.acceptWarehouseTransfer(req.params.id);
+      res.json(updatedTransfer);
+    } catch (error) {
+      console.error("Error accepting transfer:", error);
+      if (error instanceof Error) {
+        return res.status(400).json({ message: error.message });
+      }
+      res.status(500).json({ message: "Failed to accept transfer" });
+    }
+  });
+
+  app.post("/api/warehouse-transfers/:id/reject", requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const [transfer] = await db
+        .select()
+        .from(warehouseTransfers)
+        .where(eq(warehouseTransfers.id, req.params.id));
+
+      if (!transfer) {
+        return res.status(404).json({ message: "Transfer not found" });
+      }
+
+      if (user.role !== 'admin' && transfer.technicianId !== user.id) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { reason } = req.body;
+      const updatedTransfer = await storage.rejectWarehouseTransfer(req.params.id, reason);
+      res.json(updatedTransfer);
+    } catch (error) {
+      console.error("Error rejecting transfer:", error);
+      if (error instanceof Error) {
+        return res.status(400).json({ message: error.message });
+      }
+      res.status(500).json({ message: "Failed to reject transfer" });
     }
   });
 
