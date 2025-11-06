@@ -211,9 +211,13 @@ export default function NotificationsPage() {
     return <Package className="h-5 w-5" />;
   };
 
-  // Group transfers by warehouse and creation time (same operation)
+  // Group transfers by warehouse and creation time (rounded to minute)
   const groupedTransfers = pendingTransfers?.reduce((acc, transfer) => {
-    const key = `${transfer.warehouseId}-${new Date(transfer.createdAt).getTime()}`;
+    const date = new Date(transfer.createdAt);
+    // Round to the nearest minute to group operations done at similar times
+    const roundedTime = new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes()).getTime();
+    const key = `${transfer.warehouseId}-${roundedTime}`;
+    
     if (!acc[key]) {
       acc[key] = {
         id: transfer.id,
