@@ -10,7 +10,7 @@ import { useAuth } from '@/lib/auth';
 import { loginSchema, type LoginRequest } from '@shared/schema';
 import { User, Lock, Loader2, Package, TruckIcon, BarChart3, FileText, Users, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
-import rasscoLogo from "@assets/image_1762469285293.png";
+import rasscoLogo from "@assets/image_1762469496838.png";
 import backgroundImage from "@assets/Gemini_Generated_Image_1iknau1iknau1ikn_1762469188250.png";
 
 export default function Login() {
@@ -129,11 +129,58 @@ export default function Login() {
             {/* Logo - Desktop Only */}
             <motion.div
               className="hidden lg:flex justify-start mb-8"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
+              initial={{ opacity: 0, y: -20, scale: 0.8 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.8, type: "spring", stiffness: 100 }}
             >
-              <img src={rasscoLogo} alt="RASSCO" className="h-20 w-auto drop-shadow-2xl" />
+              <motion.div
+                className="relative"
+                animate={{
+                  rotate: [0, 360],
+                }}
+                transition={{
+                  duration: 20,
+                  repeat: Infinity,
+                  ease: "linear"
+                }}
+              >
+                {/* Glow Effect */}
+                <motion.div
+                  className="absolute inset-0 rounded-full bg-[#18B2B0]/30 blur-2xl"
+                  animate={{
+                    scale: [1, 1.2, 1],
+                    opacity: [0.5, 0.8, 0.5]
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                />
+                {/* Logo Container */}
+                <motion.div
+                  className="relative bg-white rounded-full p-6 shadow-2xl border-4 border-[#18B2B0]/50"
+                  whileHover={{ scale: 1.1 }}
+                  animate={{
+                    boxShadow: [
+                      "0 0 20px rgba(24, 178, 176, 0.3)",
+                      "0 0 40px rgba(24, 178, 176, 0.6)",
+                      "0 0 20px rgba(24, 178, 176, 0.3)"
+                    ]
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                >
+                  <img 
+                    src={rasscoLogo} 
+                    alt="RASSCO" 
+                    className="h-20 w-20 object-contain"
+                  />
+                </motion.div>
+              </motion.div>
             </motion.div>
 
             {/* Title */}
@@ -191,12 +238,59 @@ export default function Login() {
           >
             {/* Mobile Logo */}
             <motion.div
-              className="lg:hidden mb-8"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
+              className="lg:hidden mb-8 flex justify-center"
+              initial={{ opacity: 0, y: -20, scale: 0.8 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.8, type: "spring", stiffness: 100 }}
             >
-              <img src={rasscoLogo} alt="RASSCO" className="h-16 w-auto mx-auto drop-shadow-2xl" />
+              <motion.div
+                className="relative"
+                animate={{
+                  rotate: [0, 360],
+                }}
+                transition={{
+                  duration: 20,
+                  repeat: Infinity,
+                  ease: "linear"
+                }}
+              >
+                {/* Glow Effect */}
+                <motion.div
+                  className="absolute inset-0 rounded-full bg-[#18B2B0]/30 blur-xl"
+                  animate={{
+                    scale: [1, 1.2, 1],
+                    opacity: [0.5, 0.8, 0.5]
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                />
+                {/* Logo Container */}
+                <motion.div
+                  className="relative bg-white rounded-full p-5 shadow-2xl border-4 border-[#18B2B0]/50"
+                  whileHover={{ scale: 1.1 }}
+                  animate={{
+                    boxShadow: [
+                      "0 0 20px rgba(24, 178, 176, 0.3)",
+                      "0 0 40px rgba(24, 178, 176, 0.6)",
+                      "0 0 20px rgba(24, 178, 176, 0.3)"
+                    ]
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                >
+                  <img 
+                    src={rasscoLogo} 
+                    alt="RASSCO" 
+                    className="h-16 w-16 object-contain"
+                  />
+                </motion.div>
+              </motion.div>
             </motion.div>
 
             <Card className="w-full max-w-md bg-white/95 backdrop-blur-xl border-2 border-white/30 shadow-2xl">
