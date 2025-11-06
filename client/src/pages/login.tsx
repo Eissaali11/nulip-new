@@ -10,7 +10,7 @@ import { useAuth } from '@/lib/auth';
 import { loginSchema, type LoginRequest } from '@shared/schema';
 import { User, Lock, Loader2, Package, TruckIcon, BarChart3, FileText, Users, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
-import rasscoLogo from "@assets/image_1762469496838.png";
+import rasscoLogo from "@assets/39bff80c-2b7d-48a8-80ed-34b372af4da3_transparent_1762470013152.png";
 import backgroundImage from "@assets/Gemini_Generated_Image_1iknau1iknau1ikn_1762469188250.png";
 
 export default function Login() {
