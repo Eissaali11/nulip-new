@@ -17,6 +17,7 @@ import {
   Sparkles
 } from "lucide-react";
 import CreateWarehouseModal from "@/components/create-warehouse-modal";
+import bannerImage from "@assets/Gemini_Generated_Image_jt32tojt32tojt32_1762464288242.png";
 
 interface WarehouseInventory {
   id: string;
@@ -114,93 +115,72 @@ export default function WarehousesPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50/30 to-slate-50" dir="rtl">
-      {/* Header Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#18B2B0] via-teal-500 to-cyan-500 shadow-2xl">
-        <div className="absolute inset-0 bg-grid-white/5"></div>
-        
-        <motion.div
-          className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl"
-          animate={{
-            x: [0, 100, 0],
-            y: [0, 50, 0],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-        
-        <div className="relative px-6 py-12">
-          <Link href="/admin">
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="inline-block"
-            >
-              <Button 
-                variant="secondary" 
-                className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30 shadow-lg"
-                data-testid="button-back-admin"
-              >
-                <ArrowRight className="h-4 w-4 ml-2" />
-                <LayoutDashboard className="h-4 w-4 ml-2" />
-                العودة للوحة الإدارة
-              </Button>
-            </motion.div>
-          </Link>
-          
-          <motion.div 
-            className="text-center mt-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <div className="inline-flex items-center justify-center gap-4 mb-4">
-              <motion.div
-                animate={{ 
-                  rotate: [0, 5, -5, 0],
-                  scale: [1, 1.1, 1]
-                }}
-                transition={{ 
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              >
-                <Warehouse className="h-16 w-16 text-white drop-shadow-2xl" />
-              </motion.div>
-            </div>
-            <h1 className="text-5xl font-black text-white mb-3 drop-shadow-lg">
-              إدارة المستودعات
-            </h1>
-            <p className="text-xl text-white/90 font-medium">
-              تحكم كامل في مستودعاتك ومخزونك
-            </p>
-            
-            <motion.div 
-              className="mt-8"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Button 
-                onClick={() => setShowCreateModal(true)}
-                size="lg"
-                className="bg-white text-[#18B2B0] hover:bg-white/90 shadow-2xl font-bold text-lg px-8 py-6"
-                data-testid="button-create-warehouse"
-              >
-                <Plus className="h-6 w-6 ml-2" />
-                إضافة مستودع جديد
-              </Button>
-            </motion.div>
-          </motion.div>
+      {/* Animated Banner */}
+      <div className="relative overflow-hidden h-80 shadow-2xl">
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <img
+            src={bannerImage}
+            alt="Warehouses Banner"
+            className="w-full h-full object-cover"
+          />
         </div>
-        
-        <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-slate-50 to-transparent"></div>
+
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#18B2B0]/60 via-slate-900/30 to-slate-900/50"></div>
+
+        {/* Content Section */}
+        <div className="relative h-full flex flex-col justify-between px-6 py-6">
+          {/* Top Section - Back Button */}
+          <div>
+            <Link href="/admin">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="inline-block"
+              >
+                <Button 
+                  variant="secondary" 
+                  className="bg-white/20 backdrop-blur-md border-2 border-white/30 text-white hover:bg-white/30 shadow-2xl transition-all duration-300"
+                  data-testid="button-back-admin"
+                >
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                  <LayoutDashboard className="h-4 w-4 ml-2" />
+                  العودة للوحة الإدارة
+                </Button>
+              </motion.div>
+            </Link>
+          </div>
+
+
+          {/* Spacer for layout */}
+          <div></div>
+        </div>
+
+        {/* Bottom Gradient */}
+        <div className="absolute bottom-0 inset-x-0 h-24 bg-gradient-to-t from-slate-50 to-transparent"></div>
       </div>
 
       {/* Warehouses Content */}
       <div className="max-w-7xl mx-auto px-6 py-10">
+        {/* Add Warehouse Button */}
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900">إدارة المستودعات</h2>
+            <p className="text-gray-600 mt-1">تحكم كامل في مستودعاتك ومخزونك</p>
+          </div>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button 
+              onClick={() => setShowCreateModal(true)}
+              className="bg-gradient-to-r from-[#18B2B0] to-teal-500 hover:from-[#16a09e] hover:to-teal-600 shadow-xl text-white"
+              data-testid="button-create-warehouse"
+            >
+              <Plus className="h-5 w-5 ml-2" />
+              إضافة مستودع جديد
+            </Button>
+          </motion.div>
+        </div>
+
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
