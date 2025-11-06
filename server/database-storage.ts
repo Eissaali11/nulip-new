@@ -897,6 +897,12 @@ export class DatabaseStorage implements IStorage {
     return inventory;
   }
 
+  async deleteTechnicianFixedInventory(technicianId: string): Promise<void> {
+    await db
+      .delete(technicianFixedInventories)
+      .where(eq(technicianFixedInventories.technicianId, technicianId));
+  }
+
   async getAllTechniciansWithFixedInventory(): Promise<TechnicianWithFixedInventory[]> {
     const technicians = await db
       .select({
@@ -915,11 +921,14 @@ export class DatabaseStorage implements IStorage {
       if (tech.fixedInventory) {
         const totalItems = 
           tech.fixedInventory.n950Boxes + tech.fixedInventory.n950Units +
-          tech.fixedInventory.i900Boxes + tech.fixedInventory.i900Units +
+          tech.fixedInventory.i9000sBoxes + tech.fixedInventory.i9000sUnits +
+          tech.fixedInventory.i9100Boxes + tech.fixedInventory.i9100Units +
+          tech.fixedInventory.newBatteriesBoxes + tech.fixedInventory.newBatteriesUnits +
           tech.fixedInventory.rollPaperBoxes + tech.fixedInventory.rollPaperUnits +
           tech.fixedInventory.stickersBoxes + tech.fixedInventory.stickersUnits +
           tech.fixedInventory.mobilySimBoxes + tech.fixedInventory.mobilySimUnits +
-          tech.fixedInventory.stcSimBoxes + tech.fixedInventory.stcSimUnits;
+          tech.fixedInventory.stcSimBoxes + tech.fixedInventory.stcSimUnits +
+          tech.fixedInventory.zainSimBoxes + tech.fixedInventory.zainSimUnits;
         
         const threshold = tech.fixedInventory.criticalStockThreshold || 70;
         const lowThreshold = tech.fixedInventory.lowStockThreshold || 30;
@@ -950,7 +959,7 @@ export class DatabaseStorage implements IStorage {
 
     const summary = inventories.reduce((acc, inv) => {
       acc.totalN950 += (inv.n950Boxes || 0) + (inv.n950Units || 0);
-      acc.totalI900 += (inv.i900Boxes || 0) + (inv.i900Units || 0);
+      acc.totalI900 += (inv.i9000sBoxes || 0) + (inv.i9000sUnits || 0) + (inv.i9100Boxes || 0) + (inv.i9100Units || 0);
       acc.totalRollPaper += (inv.rollPaperBoxes || 0) + (inv.rollPaperUnits || 0);
       acc.totalStickers += (inv.stickersBoxes || 0) + (inv.stickersUnits || 0);
       acc.totalMobilySim += (inv.mobilySimBoxes || 0) + (inv.mobilySimUnits || 0);
@@ -959,7 +968,9 @@ export class DatabaseStorage implements IStorage {
 
       const totalItems = 
         (inv.n950Boxes || 0) + (inv.n950Units || 0) +
-        (inv.i900Boxes || 0) + (inv.i900Units || 0) +
+        (inv.i9000sBoxes || 0) + (inv.i9000sUnits || 0) +
+        (inv.i9100Boxes || 0) + (inv.i9100Units || 0) +
+        (inv.newBatteriesBoxes || 0) + (inv.newBatteriesUnits || 0) +
         (inv.rollPaperBoxes || 0) + (inv.rollPaperUnits || 0) +
         (inv.stickersBoxes || 0) + (inv.stickersUnits || 0) +
         (inv.mobilySimBoxes || 0) + (inv.mobilySimUnits || 0) +
@@ -1020,11 +1031,14 @@ export class DatabaseStorage implements IStorage {
         if (tech.fixedInventory) {
           const totalItems = 
             tech.fixedInventory.n950Boxes + tech.fixedInventory.n950Units +
-            tech.fixedInventory.i900Boxes + tech.fixedInventory.i900Units +
+            tech.fixedInventory.i9000sBoxes + tech.fixedInventory.i9000sUnits +
+            tech.fixedInventory.i9100Boxes + tech.fixedInventory.i9100Units +
+            tech.fixedInventory.newBatteriesBoxes + tech.fixedInventory.newBatteriesUnits +
             tech.fixedInventory.rollPaperBoxes + tech.fixedInventory.rollPaperUnits +
             tech.fixedInventory.stickersBoxes + tech.fixedInventory.stickersUnits +
             tech.fixedInventory.mobilySimBoxes + tech.fixedInventory.mobilySimUnits +
-            tech.fixedInventory.stcSimBoxes + tech.fixedInventory.stcSimUnits;
+            tech.fixedInventory.stcSimBoxes + tech.fixedInventory.stcSimUnits +
+            tech.fixedInventory.zainSimBoxes + tech.fixedInventory.zainSimUnits;
           
           const threshold = tech.fixedInventory.criticalStockThreshold || 70;
           const lowThreshold = tech.fixedInventory.lowStockThreshold || 30;
@@ -1141,8 +1155,12 @@ export class DatabaseStorage implements IStorage {
         technicianId,
         n950Boxes: 0,
         n950Units: 0,
-        i900Boxes: 0,
-        i900Units: 0,
+        i9000sBoxes: 0,
+        i9000sUnits: 0,
+        i9100Boxes: 0,
+        i9100Units: 0,
+        newBatteriesBoxes: 0,
+        newBatteriesUnits: 0,
         rollPaperBoxes: 0,
         rollPaperUnits: 0,
         stickersBoxes: 0,
@@ -1151,6 +1169,8 @@ export class DatabaseStorage implements IStorage {
         mobilySimUnits: 0,
         stcSimBoxes: 0,
         stcSimUnits: 0,
+        zainSimBoxes: 0,
+        zainSimUnits: 0,
       });
     }
 

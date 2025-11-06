@@ -62,6 +62,7 @@ export interface IStorage {
   getTechnicianFixedInventory(technicianId: string): Promise<TechnicianFixedInventory | undefined>;
   createTechnicianFixedInventory(inventory: InsertTechnicianFixedInventory): Promise<TechnicianFixedInventory>;
   updateTechnicianFixedInventory(technicianId: string, updates: Partial<InsertTechnicianFixedInventory>): Promise<TechnicianFixedInventory>;
+  deleteTechnicianFixedInventory(technicianId: string): Promise<void>;
   getAllTechniciansWithFixedInventory(): Promise<TechnicianWithFixedInventory[]>;
   getFixedInventorySummary(): Promise<FixedInventorySummary>;
   getAllTechniciansWithBothInventories(): Promise<any[]>;
@@ -625,6 +626,15 @@ export class MemStorage implements IStorage {
     };
     this.technicianFixedInventories.set(existingInventory.id, updatedInventory);
     return updatedInventory;
+  }
+
+  async deleteTechnicianFixedInventory(technicianId: string): Promise<void> {
+    const existingInventory = Array.from(this.technicianFixedInventories.values())
+      .find(inv => inv.technicianId === technicianId);
+    
+    if (existingInventory) {
+      this.technicianFixedInventories.delete(existingInventory.id);
+    }
   }
 
   async getAllTechniciansWithFixedInventory(): Promise<TechnicianWithFixedInventory[]> {

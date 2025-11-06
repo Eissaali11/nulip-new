@@ -768,6 +768,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/technician-fixed-inventory/:technicianId", requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const technicianId = req.params.technicianId;
+      
+      // Allow technician to delete only their own inventory, or admin to delete any
+      if (user.role !== 'admin' && user.id !== technicianId) {
+        return res.status(403).json({ message: "Forbidden: You can only delete your own inventory" });
+      }
+      
+      const existingInventory = await storage.getTechnicianFixedInventory(technicianId);
+      if (!existingInventory) {
+        return res.status(404).json({ message: "Fixed inventory not found" });
+      }
+      
+      await storage.deleteTechnicianFixedInventory(technicianId);
+      res.json({ message: "Fixed inventory deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting fixed inventory:", error);
+      res.status(500).json({ message: "Failed to delete fixed inventory" });
+    }
+  });
+
   app.post("/api/stock-transfer", requireAuth, async (req, res) => {
     try {
       const user = (req as any).user;
