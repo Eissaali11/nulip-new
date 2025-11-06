@@ -812,7 +812,7 @@ export class DatabaseStorage implements IStorage {
         ...updates,
         updatedAt: new Date(),
       })
-      .where(eq(techniciansInventory.id, id))
+      .where(eq(techniciansInventory.createdBy, id))
       .returning();
     
     if (!tech) {
