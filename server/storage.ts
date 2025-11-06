@@ -1,4 +1,4 @@
-import { type InventoryItem, type InsertInventoryItem, type Transaction, type InsertTransaction, type InventoryItemWithStatus, type DashboardStats, type Region, type InsertRegion, type User, type InsertUser, type UserSafe, type RegionWithStats, type AdminStats, type TransactionWithDetails, type WithdrawnDevice, type InsertWithdrawnDevice, type TechnicianFixedInventory, type InsertTechnicianFixedInventory, type StockMovement, type InsertStockMovement, type TechnicianWithFixedInventory, type FixedInventorySummary, type StockMovementWithDetails } from "@shared/schema";
+import { type InventoryItem, type InsertInventoryItem, type Transaction, type InsertTransaction, type InventoryItemWithStatus, type DashboardStats, type Region, type InsertRegion, type User, type InsertUser, type UserSafe, type RegionWithStats, type AdminStats, type TransactionWithDetails, type WithdrawnDevice, type InsertWithdrawnDevice, type TechnicianFixedInventory, type InsertTechnicianFixedInventory, type StockMovement, type InsertStockMovement, type TechnicianWithFixedInventory, type FixedInventorySummary, type StockMovementWithDetails, type Warehouse, type WarehouseInventory, type WarehouseTransfer, type InsertWarehouse, type InsertWarehouseInventory, type InsertWarehouseTransfer, type WarehouseWithStats, type WarehouseWithInventory, type WarehouseTransferWithDetails } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -81,6 +81,21 @@ export interface IStorage {
     reason?: string;
     notes?: string;
   }): Promise<{ movement: StockMovement; updatedInventory: TechnicianFixedInventory }>;
+  
+  // Warehouses
+  getWarehouses(): Promise<WarehouseWithStats[]>;
+  getWarehouse(id: string): Promise<WarehouseWithInventory | undefined>;
+  createWarehouse(warehouse: InsertWarehouse): Promise<Warehouse>;
+  updateWarehouse(id: string, updates: Partial<InsertWarehouse>): Promise<Warehouse>;
+  deleteWarehouse(id: string): Promise<boolean>;
+  
+  // Warehouse Inventory
+  getWarehouseInventory(warehouseId: string): Promise<WarehouseInventory | undefined>;
+  updateWarehouseInventory(warehouseId: string, updates: Partial<InsertWarehouseInventory>): Promise<WarehouseInventory>;
+  
+  // Warehouse Transfers
+  transferFromWarehouse(data: InsertWarehouseTransfer): Promise<WarehouseTransfer>;
+  getWarehouseTransfers(warehouseId?: string, technicianId?: string, limit?: number): Promise<WarehouseTransferWithDetails[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -803,6 +818,55 @@ export class MemStorage implements IStorage {
     }
     
     return { movement, updatedInventory: inventory };
+  }
+
+  // Warehouses (stub implementations for MemStorage)
+  async getWarehouses(): Promise<WarehouseWithStats[]> {
+    return [];
+  }
+
+  async getWarehouse(id: string): Promise<WarehouseWithInventory | undefined> {
+    return undefined;
+  }
+
+  async createWarehouse(warehouse: InsertWarehouse): Promise<Warehouse> {
+    const id = randomUUID();
+    const newWarehouse: Warehouse = {
+      id,
+      name: warehouse.name,
+      location: warehouse.location,
+      description: warehouse.description ?? null,
+      isActive: warehouse.isActive ?? true,
+      createdBy: warehouse.createdBy,
+      regionId: warehouse.regionId ?? null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    return newWarehouse;
+  }
+
+  async updateWarehouse(id: string, updates: Partial<InsertWarehouse>): Promise<Warehouse> {
+    throw new Error("MemStorage does not support warehouse operations. Use DatabaseStorage instead.");
+  }
+
+  async deleteWarehouse(id: string): Promise<boolean> {
+    return false;
+  }
+
+  async getWarehouseInventory(warehouseId: string): Promise<WarehouseInventory | undefined> {
+    return undefined;
+  }
+
+  async updateWarehouseInventory(warehouseId: string, updates: Partial<InsertWarehouseInventory>): Promise<WarehouseInventory> {
+    throw new Error("MemStorage does not support warehouse operations. Use DatabaseStorage instead.");
+  }
+
+  async transferFromWarehouse(data: InsertWarehouseTransfer): Promise<WarehouseTransfer> {
+    throw new Error("MemStorage does not support warehouse operations. Use DatabaseStorage instead.");
+  }
+
+  async getWarehouseTransfers(warehouseId?: string, technicianId?: string, limit?: number): Promise<WarehouseTransferWithDetails[]> {
+    return [];
   }
 }
 

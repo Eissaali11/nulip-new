@@ -2,7 +2,7 @@ import Header from "@/components/header";
 import TechniciansTable from "@/components/technicians-table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Package, TruckIcon, ArrowRight, LayoutDashboard, Sparkles, Users } from "lucide-react";
+import { Package, TruckIcon, ArrowRight, LayoutDashboard, Sparkles, Users, Warehouse } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { motion } from "framer-motion";
@@ -216,7 +216,7 @@ export default function Dashboard() {
 
         {/* Admin Quick Access */}
         {user?.role === 'admin' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <motion.div
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
@@ -326,6 +326,45 @@ export default function Dashboard() {
                         data-testid="button-admin-overview"
                       >
                         عرض لوحة الفنيين
+                        <ArrowRight className="mr-2 h-5 w-5" />
+                      </Button>
+                    </motion.div>
+                  </Link>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              whileHover={{ y: -5, scale: 1.02 }}
+            >
+              <Card className="border-2 border-orange-500/50 hover:shadow-2xl hover:shadow-orange-500/30 transition-all duration-300 bg-gradient-to-br from-orange-50/50 via-amber-50/30 to-orange-50/50 backdrop-blur-sm overflow-hidden h-full">
+                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent"></div>
+                <CardHeader className="relative">
+                  <CardTitle className="flex items-center gap-3 text-xl">
+                    <motion.div 
+                      className="p-3 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl shadow-lg"
+                      whileHover={{ rotate: 360 }}
+                      transition={{ duration: 0.6 }}
+                    >
+                      <Warehouse className="h-6 w-6 text-white drop-shadow-md" />
+                    </motion.div>
+                    <span className="font-black">المستودعات</span>
+                  </CardTitle>
+                  <CardDescription className="text-base">
+                    إدارة المستودعات ونقل الكميات للفنيين
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="relative">
+                  <Link href="/warehouses">
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                      <Button 
+                        className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white font-bold shadow-lg shadow-orange-500/50 text-base py-6" 
+                        data-testid="button-admin-warehouses"
+                      >
+                        إدارة المستودعات
                         <ArrowRight className="mr-2 h-5 w-5" />
                       </Button>
                     </motion.div>

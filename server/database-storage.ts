@@ -24,6 +24,15 @@ import {
   type TechnicianWithFixedInventory,
   type FixedInventorySummary,
   type StockMovementWithDetails,
+  type Warehouse,
+  type WarehouseInventory,
+  type WarehouseTransfer,
+  type InsertWarehouse,
+  type InsertWarehouseInventory,
+  type InsertWarehouseTransfer,
+  type WarehouseWithStats,
+  type WarehouseWithInventory,
+  type WarehouseTransferWithDetails,
   regions,
   users,
   inventoryItems,
@@ -31,7 +40,10 @@ import {
   transactions,
   withdrawnDevices,
   technicianFixedInventories,
-  stockMovements
+  stockMovements,
+  warehouses,
+  warehouseInventory,
+  warehouseTransfers
 } from "@shared/schema";
 import { IStorage } from "./storage";
 import { db } from "./db";
@@ -959,9 +971,11 @@ export class DatabaseStorage implements IStorage {
 
     const summary = inventories.reduce((acc, inv) => {
       acc.totalN950 += (inv.n950Boxes || 0) + (inv.n950Units || 0);
-      acc.totalI900 += (inv.i9000sBoxes || 0) + (inv.i9000sUnits || 0) + (inv.i9100Boxes || 0) + (inv.i9100Units || 0);
+      acc.totalI9000s += (inv.i9000sBoxes || 0) + (inv.i9000sUnits || 0);
+      acc.totalI9100 += (inv.i9100Boxes || 0) + (inv.i9100Units || 0);
       acc.totalRollPaper += (inv.rollPaperBoxes || 0) + (inv.rollPaperUnits || 0);
       acc.totalStickers += (inv.stickersBoxes || 0) + (inv.stickersUnits || 0);
+      acc.totalNewBatteries += (inv.newBatteriesBoxes || 0) + (inv.newBatteriesUnits || 0);
       acc.totalMobilySim += (inv.mobilySimBoxes || 0) + (inv.mobilySimUnits || 0);
       acc.totalStcSim += (inv.stcSimBoxes || 0) + (inv.stcSimUnits || 0);
       acc.totalZainSim += (inv.zainSimBoxes || 0) + (inv.zainSimUnits || 0);
@@ -991,9 +1005,11 @@ export class DatabaseStorage implements IStorage {
       return acc;
     }, {
       totalN950: 0,
-      totalI900: 0,
+      totalI9000s: 0,
+      totalI9100: 0,
       totalRollPaper: 0,
       totalStickers: 0,
+      totalNewBatteries: 0,
       totalMobilySim: 0,
       totalStcSim: 0,
       totalZainSim: 0,
@@ -1230,5 +1246,350 @@ export class DatabaseStorage implements IStorage {
     });
 
     return { movement, updatedInventory };
+  }
+
+  // Warehouses
+  async getWarehouses(): Promise<WarehouseWithStats[]> {
+    const warehousesList = await db
+      .select({
+        id: warehouses.id,
+        name: warehouses.name,
+        location: warehouses.location,
+        description: warehouses.description,
+        isActive: warehouses.isActive,
+        createdBy: warehouses.createdBy,
+        regionId: warehouses.regionId,
+        createdAt: warehouses.createdAt,
+        updatedAt: warehouses.updatedAt,
+        creatorName: users.fullName,
+      })
+      .from(warehouses)
+      .leftJoin(users, eq(warehouses.createdBy, users.id));
+
+    const result: WarehouseWithStats[] = [];
+    for (const warehouse of warehousesList) {
+      const [inventory] = await db
+        .select()
+        .from(warehouseInventory)
+        .where(eq(warehouseInventory.warehouseId, warehouse.id));
+
+      const totalItems = inventory
+        ? (inventory.n950Boxes || 0) + (inventory.n950Units || 0) +
+          (inventory.i9000sBoxes || 0) + (inventory.i9000sUnits || 0) +
+          (inventory.i9100Boxes || 0) + (inventory.i9100Units || 0) +
+          (inventory.rollPaperBoxes || 0) + (inventory.rollPaperUnits || 0) +
+          (inventory.stickersBoxes || 0) + (inventory.stickersUnits || 0) +
+          (inventory.newBatteriesBoxes || 0) + (inventory.newBatteriesUnits || 0) +
+          (inventory.mobilySimBoxes || 0) + (inventory.mobilySimUnits || 0) +
+          (inventory.stcSimBoxes || 0) + (inventory.stcSimUnits || 0) +
+          (inventory.zainSimBoxes || 0) + (inventory.zainSimUnits || 0)
+        : 0;
+
+      let lowStockItemsCount = 0;
+      if (inventory) {
+        if ((inventory.n950Boxes || 0) + (inventory.n950Units || 0) < 10) lowStockItemsCount++;
+        if ((inventory.i9000sBoxes || 0) + (inventory.i9000sUnits || 0) < 10) lowStockItemsCount++;
+        if ((inventory.i9100Boxes || 0) + (inventory.i9100Units || 0) < 10) lowStockItemsCount++;
+        if ((inventory.rollPaperBoxes || 0) + (inventory.rollPaperUnits || 0) < 10) lowStockItemsCount++;
+        if ((inventory.stickersBoxes || 0) + (inventory.stickersUnits || 0) < 10) lowStockItemsCount++;
+        if ((inventory.newBatteriesBoxes || 0) + (inventory.newBatteriesUnits || 0) < 10) lowStockItemsCount++;
+        if ((inventory.mobilySimBoxes || 0) + (inventory.mobilySimUnits || 0) < 10) lowStockItemsCount++;
+        if ((inventory.stcSimBoxes || 0) + (inventory.stcSimUnits || 0) < 10) lowStockItemsCount++;
+        if ((inventory.zainSimBoxes || 0) + (inventory.zainSimUnits || 0) < 10) lowStockItemsCount++;
+      }
+
+      result.push({
+        ...warehouse,
+        inventory: inventory || null,
+        totalItems,
+        lowStockItemsCount,
+        creatorName: warehouse.creatorName || undefined,
+      });
+    }
+
+    return result;
+  }
+
+  async getWarehouse(id: string): Promise<WarehouseWithInventory | undefined> {
+    const [warehouse] = await db
+      .select({
+        id: warehouses.id,
+        name: warehouses.name,
+        location: warehouses.location,
+        description: warehouses.description,
+        isActive: warehouses.isActive,
+        createdBy: warehouses.createdBy,
+        regionId: warehouses.regionId,
+        createdAt: warehouses.createdAt,
+        updatedAt: warehouses.updatedAt,
+        creatorName: users.fullName,
+      })
+      .from(warehouses)
+      .leftJoin(users, eq(warehouses.createdBy, users.id))
+      .where(eq(warehouses.id, id));
+
+    if (!warehouse) {
+      return undefined;
+    }
+
+    const [inventory] = await db
+      .select()
+      .from(warehouseInventory)
+      .where(eq(warehouseInventory.warehouseId, id));
+
+    return {
+      ...warehouse,
+      inventory: inventory || null,
+      creatorName: warehouse.creatorName || undefined,
+    };
+  }
+
+  async createWarehouse(insertWarehouse: InsertWarehouse): Promise<Warehouse> {
+    const [warehouse] = await db
+      .insert(warehouses)
+      .values({
+        ...insertWarehouse,
+        isActive: insertWarehouse.isActive ?? true,
+      })
+      .returning();
+
+    await db
+      .insert(warehouseInventory)
+      .values({
+        warehouseId: warehouse.id,
+        n950Boxes: 0,
+        n950Units: 0,
+        i9000sBoxes: 0,
+        i9000sUnits: 0,
+        i9100Boxes: 0,
+        i9100Units: 0,
+        rollPaperBoxes: 0,
+        rollPaperUnits: 0,
+        stickersBoxes: 0,
+        stickersUnits: 0,
+        newBatteriesBoxes: 0,
+        newBatteriesUnits: 0,
+        mobilySimBoxes: 0,
+        mobilySimUnits: 0,
+        stcSimBoxes: 0,
+        stcSimUnits: 0,
+        zainSimBoxes: 0,
+        zainSimUnits: 0,
+      });
+
+    return warehouse;
+  }
+
+  async updateWarehouse(id: string, updates: Partial<InsertWarehouse>): Promise<Warehouse> {
+    const [warehouse] = await db
+      .update(warehouses)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(warehouses.id, id))
+      .returning();
+
+    if (!warehouse) {
+      throw new Error(`Warehouse with id ${id} not found`);
+    }
+    return warehouse;
+  }
+
+  async deleteWarehouse(id: string): Promise<boolean> {
+    const result = await db
+      .delete(warehouses)
+      .where(eq(warehouses.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async getWarehouseInventory(warehouseId: string): Promise<WarehouseInventory | undefined> {
+    const [inventory] = await db
+      .select()
+      .from(warehouseInventory)
+      .where(eq(warehouseInventory.warehouseId, warehouseId));
+    return inventory || undefined;
+  }
+
+  async updateWarehouseInventory(warehouseId: string, updates: Partial<InsertWarehouseInventory>): Promise<WarehouseInventory> {
+    const [inventory] = await db
+      .update(warehouseInventory)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(warehouseInventory.warehouseId, warehouseId))
+      .returning();
+
+    if (!inventory) {
+      throw new Error(`Warehouse inventory for warehouse ${warehouseId} not found`);
+    }
+    return inventory;
+  }
+
+  async transferFromWarehouse(data: InsertWarehouseTransfer): Promise<WarehouseTransfer> {
+    return await db.transaction(async (tx) => {
+      const [inventory] = await tx
+        .select()
+        .from(warehouseInventory)
+        .where(eq(warehouseInventory.warehouseId, data.warehouseId));
+
+      if (!inventory) {
+        throw new Error(`Warehouse inventory not found`);
+      }
+
+      const fieldMap: Record<string, { boxes: string; units: string }> = {
+        'n950': { boxes: 'n950Boxes', units: 'n950Units' },
+        'i9000s': { boxes: 'i9000sBoxes', units: 'i9000sUnits' },
+        'i9100': { boxes: 'i9100Boxes', units: 'i9100Units' },
+        'rollPaper': { boxes: 'rollPaperBoxes', units: 'rollPaperUnits' },
+        'stickers': { boxes: 'stickersBoxes', units: 'stickersUnits' },
+        'newBatteries': { boxes: 'newBatteriesBoxes', units: 'newBatteriesUnits' },
+        'mobilySim': { boxes: 'mobilySimBoxes', units: 'mobilySimUnits' },
+        'stcSim': { boxes: 'stcSimBoxes', units: 'stcSimUnits' },
+        'zainSim': { boxes: 'zainSimBoxes', units: 'zainSimUnits' },
+      };
+
+      const fields = fieldMap[data.itemType];
+      if (!fields) {
+        throw new Error(`Invalid item type: ${data.itemType}`);
+      }
+
+      const fieldName = data.packagingType === 'box' ? fields.boxes : fields.units;
+      const currentStock = (inventory as any)[fieldName] || 0;
+
+      if (currentStock < data.quantity) {
+        throw new Error(`Insufficient stock in warehouse. Available: ${currentStock}, Requested: ${data.quantity}`);
+      }
+
+      await tx
+        .update(warehouseInventory)
+        .set({
+          [fieldName]: currentStock - data.quantity,
+          updatedAt: new Date(),
+        })
+        .where(eq(warehouseInventory.warehouseId, data.warehouseId));
+
+      const [techInventory] = await tx
+        .select()
+        .from(techniciansInventory)
+        .where(eq(techniciansInventory.createdBy, data.technicianId));
+
+      if (techInventory) {
+        const techCurrentStock = (techInventory as any)[fieldName] || 0;
+        await tx
+          .update(techniciansInventory)
+          .set({
+            [fieldName]: techCurrentStock + data.quantity,
+            updatedAt: new Date(),
+          })
+          .where(eq(techniciansInventory.createdBy, data.technicianId));
+      } else {
+        const [user] = await tx
+          .select()
+          .from(users)
+          .where(eq(users.id, data.technicianId));
+
+        if (!user) {
+          throw new Error(`Technician with id ${data.technicianId} not found`);
+        }
+
+        await tx
+          .insert(techniciansInventory)
+          .values({
+            technicianName: user.fullName,
+            city: user.city || 'غير محدد',
+            createdBy: data.technicianId,
+            regionId: user.regionId,
+            [fieldName]: data.quantity,
+            n950Boxes: data.itemType === 'n950' && data.packagingType === 'box' ? data.quantity : 0,
+            n950Units: data.itemType === 'n950' && data.packagingType === 'unit' ? data.quantity : 0,
+            i9000sBoxes: data.itemType === 'i9000s' && data.packagingType === 'box' ? data.quantity : 0,
+            i9000sUnits: data.itemType === 'i9000s' && data.packagingType === 'unit' ? data.quantity : 0,
+            i9100Boxes: data.itemType === 'i9100' && data.packagingType === 'box' ? data.quantity : 0,
+            i9100Units: data.itemType === 'i9100' && data.packagingType === 'unit' ? data.quantity : 0,
+            rollPaperBoxes: data.itemType === 'rollPaper' && data.packagingType === 'box' ? data.quantity : 0,
+            rollPaperUnits: data.itemType === 'rollPaper' && data.packagingType === 'unit' ? data.quantity : 0,
+            stickersBoxes: data.itemType === 'stickers' && data.packagingType === 'box' ? data.quantity : 0,
+            stickersUnits: data.itemType === 'stickers' && data.packagingType === 'unit' ? data.quantity : 0,
+            newBatteriesBoxes: data.itemType === 'newBatteries' && data.packagingType === 'box' ? data.quantity : 0,
+            newBatteriesUnits: data.itemType === 'newBatteries' && data.packagingType === 'unit' ? data.quantity : 0,
+            mobilySimBoxes: data.itemType === 'mobilySim' && data.packagingType === 'box' ? data.quantity : 0,
+            mobilySimUnits: data.itemType === 'mobilySim' && data.packagingType === 'unit' ? data.quantity : 0,
+            stcSimBoxes: data.itemType === 'stcSim' && data.packagingType === 'box' ? data.quantity : 0,
+            stcSimUnits: data.itemType === 'stcSim' && data.packagingType === 'unit' ? data.quantity : 0,
+            zainSimBoxes: data.itemType === 'zainSim' && data.packagingType === 'box' ? data.quantity : 0,
+            zainSimUnits: data.itemType === 'zainSim' && data.packagingType === 'unit' ? data.quantity : 0,
+          });
+      }
+
+      const [transfer] = await tx
+        .insert(warehouseTransfers)
+        .values(data)
+        .returning();
+
+      return transfer;
+    });
+  }
+
+  async getWarehouseTransfers(warehouseId?: string, technicianId?: string, limit?: number): Promise<WarehouseTransferWithDetails[]> {
+    const itemNameMap: Record<string, string> = {
+      'n950': 'N950',
+      'i9000s': 'I9000s',
+      'i9100': 'I9100',
+      'rollPaper': 'ورق حراري',
+      'stickers': 'ملصقات',
+      'newBatteries': 'بطاريات جديدة',
+      'mobilySim': 'شريحة موبايلي',
+      'stcSim': 'شريحة STC',
+      'zainSim': 'شريحة زين',
+    };
+
+    let query = db
+      .select({
+        id: warehouseTransfers.id,
+        warehouseId: warehouseTransfers.warehouseId,
+        technicianId: warehouseTransfers.technicianId,
+        itemType: warehouseTransfers.itemType,
+        packagingType: warehouseTransfers.packagingType,
+        quantity: warehouseTransfers.quantity,
+        performedBy: warehouseTransfers.performedBy,
+        notes: warehouseTransfers.notes,
+        createdAt: warehouseTransfers.createdAt,
+        warehouseName: warehouses.name,
+        technicianName: users.fullName,
+        performedByName: sql<string>`performer.full_name`,
+      })
+      .from(warehouseTransfers)
+      .leftJoin(warehouses, eq(warehouseTransfers.warehouseId, warehouses.id))
+      .leftJoin(users, eq(warehouseTransfers.technicianId, users.id))
+      .leftJoin(sql`${users} as performer`, sql`${warehouseTransfers.performedBy} = performer.id`)
+      .orderBy(desc(warehouseTransfers.createdAt));
+
+    const conditions = [];
+    if (warehouseId) {
+      conditions.push(eq(warehouseTransfers.warehouseId, warehouseId));
+    }
+    if (technicianId) {
+      conditions.push(eq(warehouseTransfers.technicianId, technicianId));
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as any;
+    }
+
+    if (limit) {
+      query = query.limit(limit) as any;
+    }
+
+    const transfers = await query;
+
+    return transfers.map(transfer => ({
+      ...transfer,
+      itemNameAr: itemNameMap[transfer.itemType] || transfer.itemType,
+      warehouseName: transfer.warehouseName || undefined,
+      technicianName: transfer.technicianName || undefined,
+      performedByName: transfer.performedByName || undefined,
+    }));
   }
 }

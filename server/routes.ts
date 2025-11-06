@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertInventoryItemSchema, insertTransactionSchema, insertRegionSchema, insertUserSchema, insertTechnicianInventorySchema, insertWithdrawnDeviceSchema, loginSchema, techniciansInventory } from "@shared/schema";
+import { insertInventoryItemSchema, insertTransactionSchema, insertRegionSchema, insertUserSchema, insertTechnicianInventorySchema, insertWithdrawnDeviceSchema, loginSchema, techniciansInventory, insertWarehouseSchema, insertWarehouseInventorySchema, insertWarehouseTransferSchema } from "@shared/schema";
 import { z } from "zod";
 import { db } from "./db";
 
@@ -1084,6 +1084,142 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(movements);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch stock movements" });
+    }
+  });
+
+  // Warehouse Routes
+  app.get("/api/warehouses", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const warehouses = await storage.getWarehouses();
+      res.json(warehouses);
+    } catch (error) {
+      console.error("Error fetching warehouses:", error);
+      res.status(500).json({ message: "Failed to fetch warehouses" });
+    }
+  });
+
+  app.post("/api/warehouses", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const validatedData = insertWarehouseSchema.parse(req.body);
+      const warehouse = await storage.createWarehouse({
+        ...validatedData,
+        createdBy: user.id,
+      });
+      res.status(201).json(warehouse);
+    } catch (error) {
+      console.error("Error creating warehouse:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create warehouse" });
+    }
+  });
+
+  app.get("/api/warehouses/:id", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const warehouse = await storage.getWarehouse(req.params.id);
+      if (!warehouse) {
+        return res.status(404).json({ message: "Warehouse not found" });
+      }
+      res.json(warehouse);
+    } catch (error) {
+      console.error("Error fetching warehouse:", error);
+      res.status(500).json({ message: "Failed to fetch warehouse" });
+    }
+  });
+
+  app.put("/api/warehouses/:id", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const updates = insertWarehouseSchema.partial().parse(req.body);
+      const warehouse = await storage.updateWarehouse(req.params.id, updates);
+      res.json(warehouse);
+    } catch (error) {
+      console.error("Error updating warehouse:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      if (error instanceof Error && error.message.includes("not found")) {
+        return res.status(404).json({ message: "Warehouse not found" });
+      }
+      res.status(500).json({ message: "Failed to update warehouse" });
+    }
+  });
+
+  app.delete("/api/warehouses/:id", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const deleted = await storage.deleteWarehouse(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Warehouse not found" });
+      }
+      res.json({ message: "Warehouse deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting warehouse:", error);
+      res.status(500).json({ message: "Failed to delete warehouse" });
+    }
+  });
+
+  app.get("/api/warehouse-inventory/:warehouseId", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const inventory = await storage.getWarehouseInventory(req.params.warehouseId);
+      if (!inventory) {
+        return res.status(404).json({ message: "Warehouse inventory not found" });
+      }
+      res.json(inventory);
+    } catch (error) {
+      console.error("Error fetching warehouse inventory:", error);
+      res.status(500).json({ message: "Failed to fetch warehouse inventory" });
+    }
+  });
+
+  app.put("/api/warehouse-inventory/:warehouseId", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const validatedData = insertWarehouseInventorySchema.parse(req.body);
+      const inventory = await storage.updateWarehouseInventory(req.params.warehouseId, validatedData);
+      res.json(inventory);
+    } catch (error) {
+      console.error("Error updating warehouse inventory:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      if (error instanceof Error && error.message.includes("not found")) {
+        return res.status(404).json({ message: "Warehouse inventory not found" });
+      }
+      res.status(500).json({ message: "Failed to update warehouse inventory" });
+    }
+  });
+
+  app.post("/api/warehouse-transfers", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const validatedData = insertWarehouseTransferSchema.parse(req.body);
+      await storage.transferFromWarehouse({
+        ...validatedData,
+        performedBy: user.id,
+      });
+      res.json({ success: true, message: "Transfer completed successfully" });
+    } catch (error) {
+      console.error("Error creating warehouse transfer:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      if (error instanceof Error) {
+        return res.status(400).json({ message: error.message });
+      }
+      res.status(500).json({ message: "Failed to create warehouse transfer" });
+    }
+  });
+
+  app.get("/api/warehouse-transfers", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const warehouseId = req.query.warehouseId as string | undefined;
+      const technicianId = req.query.technicianId as string | undefined;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+      const transfers = await storage.getWarehouseTransfers(warehouseId, technicianId, limit);
+      res.json(transfers);
+    } catch (error) {
+      console.error("Error fetching warehouse transfers:", error);
+      res.status(500).json({ message: "Failed to fetch warehouse transfers" });
     }
   });
 

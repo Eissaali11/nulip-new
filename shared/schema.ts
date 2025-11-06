@@ -186,6 +186,76 @@ export const stockMovements = pgTable("stock_movements", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Warehouses - المستودعات الرئيسية لتخزين المخزون
+export const warehouses = pgTable("warehouses", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  location: text("location").notNull(),
+  description: text("description"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdBy: varchar("created_by").notNull().references(() => users.id),
+  regionId: varchar("region_id").references(() => regions.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Warehouse Inventory - مخزون المستودع (يتتبع الكراتين والوحدات منفصلة)
+export const warehouseInventory = pgTable("warehouse_inventory", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  warehouseId: varchar("warehouse_id").notNull().references(() => warehouses.id, { onDelete: 'cascade' }),
+  
+  // N950 devices
+  n950Boxes: integer("n950_boxes").notNull().default(0),
+  n950Units: integer("n950_units").notNull().default(0),
+  
+  // I9000s devices
+  i9000sBoxes: integer("i9000s_boxes").notNull().default(0),
+  i9000sUnits: integer("i9000s_units").notNull().default(0),
+  
+  // I9100 devices
+  i9100Boxes: integer("i9100_boxes").notNull().default(0),
+  i9100Units: integer("i9100_units").notNull().default(0),
+  
+  // Roll Paper
+  rollPaperBoxes: integer("roll_paper_boxes").notNull().default(0),
+  rollPaperUnits: integer("roll_paper_units").notNull().default(0),
+  
+  // Stickers
+  stickersBoxes: integer("stickers_boxes").notNull().default(0),
+  stickersUnits: integer("stickers_units").notNull().default(0),
+  
+  // New Batteries
+  newBatteriesBoxes: integer("new_batteries_boxes").notNull().default(0),
+  newBatteriesUnits: integer("new_batteries_units").notNull().default(0),
+  
+  // Mobily SIM
+  mobilySimBoxes: integer("mobily_sim_boxes").notNull().default(0),
+  mobilySimUnits: integer("mobily_sim_units").notNull().default(0),
+  
+  // STC SIM
+  stcSimBoxes: integer("stc_sim_boxes").notNull().default(0),
+  stcSimUnits: integer("stc_sim_units").notNull().default(0),
+  
+  // Zain SIM
+  zainSimBoxes: integer("zain_sim_boxes").notNull().default(0),
+  zainSimUnits: integer("zain_sim_units").notNull().default(0),
+  
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Warehouse Transfers - سجل نقل البضائع من المستودع إلى الفني
+export const warehouseTransfers = pgTable("warehouse_transfers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  warehouseId: varchar("warehouse_id").notNull().references(() => warehouses.id),
+  technicianId: varchar("technician_id").notNull().references(() => users.id),
+  itemType: text("item_type").notNull(), // "n950", "i9000s", "i9100", "rollPaper", "stickers", "newBatteries", "mobilySim", "stcSim", "zainSim"
+  packagingType: text("packaging_type").notNull(), // "box", "unit"
+  quantity: integer("quantity").notNull(),
+  performedBy: varchar("performed_by").notNull().references(() => users.id),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Schema for regions
 export const insertRegionSchema = createInsertSchema(regions).omit({
   id: true,
@@ -234,6 +304,22 @@ export const insertStockMovementSchema = createInsertSchema(stockMovements).omit
   createdAt: true,
 });
 
+export const insertWarehouseSchema = createInsertSchema(warehouses).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertWarehouseInventorySchema = createInsertSchema(warehouseInventory).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export const insertWarehouseTransferSchema = createInsertSchema(warehouseTransfers).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type InsertRegion = z.infer<typeof insertRegionSchema>;
 export type Region = typeof regions.$inferSelect;
@@ -251,6 +337,12 @@ export type InsertTechnicianFixedInventory = z.infer<typeof insertTechnicianFixe
 export type TechnicianFixedInventory = typeof technicianFixedInventories.$inferSelect;
 export type InsertStockMovement = z.infer<typeof insertStockMovementSchema>;
 export type StockMovement = typeof stockMovements.$inferSelect;
+export type InsertWarehouse = z.infer<typeof insertWarehouseSchema>;
+export type Warehouse = typeof warehouses.$inferSelect;
+export type InsertWarehouseInventory = z.infer<typeof insertWarehouseInventorySchema>;
+export type WarehouseInventory = typeof warehouseInventory.$inferSelect;
+export type InsertWarehouseTransfer = z.infer<typeof insertWarehouseTransferSchema>;
+export type WarehouseTransfer = typeof warehouseTransfers.$inferSelect;
 
 // Additional types for API responses
 export type InventoryItemWithStatus = InventoryItem & {
@@ -309,9 +401,11 @@ export type FixedInventoryItemStatus = {
 
 export type FixedInventorySummary = {
   totalN950: number;
-  totalI900: number;
+  totalI9000s: number;
+  totalI9100: number;
   totalRollPaper: number;
   totalStickers: number;
+  totalNewBatteries: number;
   totalMobilySim: number;
   totalStcSim: number;
   totalZainSim: number;
@@ -321,6 +415,26 @@ export type FixedInventorySummary = {
 };
 
 export type StockMovementWithDetails = StockMovement & {
+  technicianName?: string;
+  performedByName?: string;
+  itemNameAr?: string;
+};
+
+// Warehouse Types
+export type WarehouseWithInventory = Warehouse & {
+  inventory: WarehouseInventory | null;
+  creatorName?: string;
+};
+
+export type WarehouseWithStats = Warehouse & {
+  inventory: WarehouseInventory | null;
+  totalItems: number;
+  lowStockItemsCount: number;
+  creatorName?: string;
+};
+
+export type WarehouseTransferWithDetails = WarehouseTransfer & {
+  warehouseName?: string;
   technicianName?: string;
   performedByName?: string;
   itemNameAr?: string;
