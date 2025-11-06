@@ -4,7 +4,7 @@ import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CheckCircle, XCircle, Clock, Package, User, Warehouse, TrendingUp, AlertCircle, Activity, ChevronLeft, Calendar, Eye } from "lucide-react";
+import { CheckCircle, XCircle, Clock, Package, User, Warehouse, TrendingUp, AlertCircle, Activity, ChevronLeft, Calendar, Eye, ArrowRight, LayoutDashboard } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -182,55 +182,80 @@ export default function OperationsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50/30 to-slate-50" dir="rtl">
-      {/* Animated Banner */}
-      <div className="relative overflow-hidden h-64 shadow-2xl">
-        {/* Background Image with Zoom Animation */}
-        <div className="absolute inset-0 animate-[zoom-slow_20s_ease-in-out_infinite]">
+      {/* Elegant Professional Banner */}
+      <div className="relative overflow-hidden h-80 shadow-2xl">
+        {/* Background Image */}
+        <div className="absolute inset-0">
           <img
             src={bannerImage}
-            alt="RAS Saudi Banner"
+            alt="Operations Banner"
             className="w-full h-full object-cover"
           />
         </div>
 
-        {/* Animated Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#18B2B0]/40 via-transparent to-purple-600/30 animate-[gradient-shift_8s_ease-in-out_infinite]"></div>
+        {/* Multi-Layer Gradient Overlays for Depth */}
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-900/85 via-[#18B2B0]/30 to-slate-900/75"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-slate-900/50"></div>
+
+        {/* Elegant Decorative Glow Effects */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#18B2B0]/20 rounded-full blur-3xl opacity-60"></div>
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-teal-400/15 rounded-full blur-3xl opacity-50"></div>
+
+        {/* Top Premium Border Accent */}
+        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-[#18B2B0] to-transparent"></div>
+
+        {/* Content Section */}
+        <div className="relative h-full flex flex-col justify-between px-6 py-6">
+          {/* Top Section - Back Button */}
+          <div>
+            <Link href="/admin">
+              <Button 
+                variant="secondary" 
+                className="bg-white/10 backdrop-blur-xl border-2 border-white/20 text-white hover:bg-white/20 hover:border-[#18B2B0]/60 hover:shadow-[0_0_20px_rgba(24,178,176,0.3)] shadow-2xl transition-all duration-300"
+                data-testid="button-back-admin"
+              >
+                <ArrowRight className="h-4 w-4 ml-2" />
+                <LayoutDashboard className="h-4 w-4 ml-2" />
+                العودة للقائمة الرئيسية
+              </Button>
+            </Link>
+          </div>
+
+          {/* Center Premium Content */}
+          <div className="flex flex-col items-center justify-center text-center">
+            <div className="relative">
+              {/* Static Elegant Glow Effect */}
+              <div className="absolute inset-0 bg-[#18B2B0]/30 rounded-full blur-2xl"></div>
+              
+              {/* Premium Glass Card with Icon */}
+              <div className="relative bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl p-8 rounded-3xl border-2 border-white/30 shadow-[0_8px_32px_rgba(0,0,0,0.3)] mb-6">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#18B2B0]/10 to-transparent rounded-3xl"></div>
+                <Activity className="relative h-20 w-20 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]" />
+              </div>
+            </div>
+
+            {/* Title and Description */}
+            <h1 className="text-5xl font-black text-white mb-3 drop-shadow-2xl tracking-tight">
+              إدارة العمليات
+            </h1>
+            <p className="text-xl text-white/95 font-semibold drop-shadow-lg">
+              متابعة وإدارة عمليات النقل من المستودعات إلى الفنيين
+            </p>
+          </div>
+
+          {/* Bottom Spacer */}
+          <div></div>
+        </div>
+
+        {/* Elegant Bottom Gradient Fade */}
+        <div className="absolute bottom-0 inset-x-0 h-32 bg-gradient-to-t from-slate-50 via-slate-50/60 to-transparent"></div>
         
-        {/* Shimmer Effect */}
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-[shimmer_3s_ease-in-out_infinite]"></div>
-        </div>
-
-        {/* Particles/Dots Effect */}
-        <div className="absolute inset-0 opacity-20">
-          {[...Array(20)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-2 h-2 bg-white rounded-full animate-[float_6s_ease-in-out_infinite]"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 3}s`,
-              }}
-            ></div>
-          ))}
-        </div>
-
-        {/* Bottom Gradient */}
-        <div className="absolute bottom-0 inset-x-0 h-20 bg-gradient-to-t from-slate-50 to-transparent"></div>
+        {/* Bottom Premium Border Accent */}
+        <div className="absolute bottom-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-[#18B2B0]/60 to-transparent"></div>
       </div>
 
       {/* Main Content */}
       <div className="p-6 space-y-6 max-w-7xl mx-auto">
-        {/* Page Header */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-[#18B2B0]/20">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-[#18B2B0] via-teal-600 to-cyan-600 bg-clip-text text-transparent" data-testid="text-page-title">
-            إدارة العمليات
-          </h1>
-          <p className="text-gray-600 mt-2 text-lg" data-testid="text-page-description">
-            متابعة وإدارة عمليات النقل من المستودعات إلى الفنيين
-          </p>
-        </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
