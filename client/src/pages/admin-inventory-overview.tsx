@@ -1223,12 +1223,7 @@ export default function AdminInventoryOverview() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800" dir="rtl">
       <div className="container mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="space-y-4"
-        >
+        <div className="space-y-4">
           {/* Header and Back Button */}
           <div className="flex items-center gap-3">
             <Button
@@ -1243,13 +1238,9 @@ export default function AdminInventoryOverview() {
             
             <div className="flex-1">
               <h1 className="text-xl sm:text-3xl lg:text-4xl font-black text-slate-800 dark:text-white flex items-center gap-2 sm:gap-3">
-                <motion.div
-                  className="p-2 sm:p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl sm:rounded-2xl shadow-xl"
-                  animate={{ rotate: [0, 5, 0, -5, 0] }}
-                  transition={{ duration: 4, repeat: Infinity }}
-                >
+                <div className="p-2 sm:p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl sm:rounded-2xl shadow-xl">
                   <BarChart3 className="h-5 w-5 sm:h-7 sm:w-7 lg:h-8 lg:w-8 text-white drop-shadow-lg" />
-                </motion.div>
+                </div>
                 <span className="hidden sm:inline">لوحة مخزون الفنيين</span>
                 <span className="sm:hidden">مخزون الفنيين</span>
               </h1>
@@ -1268,7 +1259,7 @@ export default function AdminInventoryOverview() {
             <FileDown className="w-4 h-4 sm:w-5 sm:h-5 ml-2" />
             تصدير Excel
           </Button>
-        </motion.div>
+        </div>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
