@@ -105,6 +105,7 @@ interface WarehouseTransferRaw {
 
 interface WarehouseTransfer {
   id: string;
+  allIds: string[];
   warehouseId: string;
   technicianId: string;
   technicianName: string;
@@ -165,6 +166,7 @@ export default function WarehouseDetailsPage() {
       if (!acc[key]) {
         acc[key] = {
           id: transfer.id,
+          allIds: [],
           warehouseId: transfer.warehouseId,
           technicianId: transfer.technicianId,
           technicianName: transfer.technicianName,
@@ -176,6 +178,7 @@ export default function WarehouseDetailsPage() {
         } as WarehouseTransfer;
       }
       
+      acc[key].allIds.push(transfer.id);
       (acc[key] as any)[transfer.itemType] = transfer.quantity;
       (acc[key] as any)[`${transfer.itemType}PackagingType`] = transfer.packagingType;
       
@@ -210,6 +213,28 @@ export default function WarehouseDetailsPage() {
       toast({
         title: "خطأ في الحذف",
         description: error.message || "حدث خطأ أثناء حذف المستودع",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteTransfersMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      return await apiRequest("DELETE", "/api/warehouse-transfers", { ids });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/warehouse-transfers"] });
+      setSelectedTransferIds(new Set());
+      setShowDeleteTransfersDialog(false);
+      toast({
+        title: "تم الحذف بنجاح",
+        description: "تم حذف السجلات المحددة",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "خطأ في الحذف",
+        description: error.message || "حدث خطأ أثناء حذف السجلات",
         variant: "destructive",
       });
     },
@@ -516,9 +541,7 @@ export default function WarehouseDetailsPage() {
                 
                 {selectedTransferIds.size > 0 && (
                   <Button
-                    onClick={() => {
-                      /* سنضيف دالة الحذف قريباً */
-                    }}
+                    onClick={() => setShowDeleteTransfersDialog(true)}
                     variant="destructive"
                     className="flex items-center gap-2"
                     data-testid="button-delete-selected-transfers"
@@ -708,6 +731,32 @@ export default function WarehouseDetailsPage() {
               data-testid="button-confirm-delete"
             >
               {deleteWarehouseMutation.isPending ? "جاري الحذف..." : "حذف"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showDeleteTransfersDialog} onOpenChange={setShowDeleteTransfersDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-2xl">تأكيد حذف السجلات</AlertDialogTitle>
+            <AlertDialogDescription className="text-lg">
+              هل أنت متأكد من حذف {selectedTransferIds.size} سجل نقل؟ هذا الإجراء لا يمكن التراجع عنه.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-delete-transfers">إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                const allIdsToDelete = allTransfers
+                  .filter(t => selectedTransferIds.has(t.id))
+                  .flatMap(t => t.allIds);
+                deleteTransfersMutation.mutate(allIdsToDelete);
+              }}
+              className="bg-destructive hover:bg-destructive/90"
+              data-testid="button-confirm-delete-transfers"
+            >
+              {deleteTransfersMutation.isPending ? "جاري الحذف..." : "حذف"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

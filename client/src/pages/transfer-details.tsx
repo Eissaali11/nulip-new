@@ -101,12 +101,22 @@ export default function TransferDetailsPage() {
         const mainTransfer = allTransfers.find(t => t.id === transferId);
         if (!mainTransfer) return null;
 
+        const mainDate = new Date(mainTransfer.createdAt);
+        const mainDayKey = `${mainDate.getFullYear()}-${mainDate.getMonth()}-${mainDate.getDate()}`;
+
         const relatedTransfers = allTransfers.filter(
-          t =>
-            t.technicianId === mainTransfer.technicianId &&
-            t.warehouseId === mainTransfer.warehouseId &&
-            new Date(t.createdAt).getTime() === new Date(mainTransfer.createdAt).getTime() &&
-            (t.notes || '') === (mainTransfer.notes || '')
+          t => {
+            const tDate = new Date(t.createdAt);
+            const tDayKey = `${tDate.getFullYear()}-${tDate.getMonth()}-${tDate.getDate()}`;
+            return (
+              t.technicianId === mainTransfer.technicianId &&
+              t.warehouseId === mainTransfer.warehouseId &&
+              tDayKey === mainDayKey &&
+              t.performedBy === mainTransfer.performedBy &&
+              t.status === mainTransfer.status &&
+              (t.notes || '') === (mainTransfer.notes || '')
+            );
+          }
         );
 
         return {
@@ -170,10 +180,22 @@ export default function TransferDetailsPage() {
 
     worksheet.addRow([]);
 
+    const operationDate = new Date(transferDetail.createdAt);
+    const arabicOperationDate = operationDate.toLocaleDateString('ar-SA', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric'
+    });
+    const operationTime = operationDate.toLocaleTimeString('ar-SA', { 
+      hour: '2-digit', 
+      minute: '2-digit'
+    });
+
     const infoSection = [
       ['المستودع:', transferDetail.warehouseName, 'الفني:', transferDetail.technicianName],
       ['المنفذ:', transferDetail.performedByName, 'الحالة:', transferDetail.status === 'accepted' ? 'مقبول' : transferDetail.status === 'rejected' ? 'مرفوض' : 'قيد الانتظار'],
-      ['تاريخ العملية:', new Date(transferDetail.createdAt).toLocaleString('ar-SA'), '', ''],
+      ['تاريخ العملية:', `${arabicOperationDate} - ${operationTime}`, '', ''],
     ];
 
     infoSection.forEach(rowData => {
@@ -390,10 +412,26 @@ export default function TransferDetailsPage() {
               تفاصيل عملية النقل
             </h1>
             
-            <p className="text-lg text-gray-600 flex items-center gap-2 justify-center">
-              <Calendar className="h-5 w-5" />
-              {formatDistanceToNow(new Date(transferDetail.createdAt), { addSuffix: true, locale: ar })}
-            </p>
+            <div className="flex flex-col items-center gap-2">
+              <p className="text-lg text-gray-600 flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                التاريخ: {new Date(transferDetail.createdAt).toLocaleDateString('ar-SA', { 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric'
+                })}
+              </p>
+              <p className="text-lg text-gray-600 flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                الوقت: {new Date(transferDetail.createdAt).toLocaleTimeString('ar-SA', { 
+                  hour: '2-digit', 
+                  minute: '2-digit'
+                })}
+              </p>
+              <p className="text-sm text-gray-500">
+                ({formatDistanceToNow(new Date(transferDetail.createdAt), { addSuffix: true, locale: ar })})
+              </p>
+            </div>
           </div>
         </div>
       </div>
