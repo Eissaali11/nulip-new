@@ -4,9 +4,11 @@ import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CheckCircle, XCircle, Package, User, Warehouse, ArrowRight, Calendar, Clock } from "lucide-react";
+import { CheckCircle, XCircle, Package, User, Warehouse, ArrowRight, Calendar, Clock, Download } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 import bannerImage from "@assets/Gemini_Generated_Image_r9bdc9r9bdc9r9bd_1762462520993.png";
 
 interface WarehouseTransfer {
@@ -138,6 +140,200 @@ export default function OperationDetailsPage() {
     }
   };
 
+  const exportToExcel = async () => {
+    if (!operationGroup) return;
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('تفاصيل العملية');
+    worksheet.views = [{ rightToLeft: true }];
+
+    const currentDate = new Date();
+    const reportDate = currentDate.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric'
+    });
+    const reportTime = currentDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+    worksheet.mergeCells('A1:E1');
+    const titleCell = worksheet.getCell('A1');
+    titleCell.value = 'تقرير تفاصيل العملية';
+    titleCell.font = { size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    titleCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF4472C4' }
+    };
+    worksheet.getRow(1).height = 30;
+
+    worksheet.mergeCells('A2:E2');
+    const dateCell = worksheet.getCell('A2');
+    dateCell.value = `تاريخ التقرير: ${reportDate} | ${reportTime}`;
+    dateCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    dateCell.font = { bold: true, size: 10 };
+    worksheet.getRow(2).height = 20;
+
+    worksheet.addRow([]);
+
+    const createdDate = new Date(operationGroup.createdAt);
+    const createdDateStr = createdDate.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric'
+    });
+    const createdTimeStr = createdDate.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true
+    });
+
+    const infoSection = [
+      ['المستودع:', operationGroup.warehouseName, 'الفني:', operationGroup.technicianName],
+      ['الحالة:', operationGroup.status === 'accepted' ? 'مقبول' : operationGroup.status === 'rejected' ? 'مرفوض' : 'قيد الانتظار', '', ''],
+      ['تاريخ الطلب:', `${createdDateStr} - ${createdTimeStr}`, '', ''],
+    ];
+
+    if (operationGroup.respondedAt) {
+      const respondedDate = new Date(operationGroup.respondedAt);
+      const respondedDateStr = respondedDate.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric'
+      });
+      const respondedTimeStr = respondedDate.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true
+      });
+      infoSection.push(['تاريخ المعالجة:', `${respondedDateStr} - ${respondedTimeStr}`, '', '']);
+    }
+
+    infoSection.forEach(rowData => {
+      const row = worksheet.addRow(rowData);
+      row.alignment = { horizontal: 'center', vertical: 'middle' };
+      row.height = 25;
+      row.eachCell((cell, colNumber) => {
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FF000000' } },
+          left: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } },
+          right: { style: 'thin', color: { argb: 'FF000000' } }
+        };
+        if (colNumber === 1 || colNumber === 3) {
+          cell.font = { bold: true };
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFE7F3FF' }
+          };
+        }
+      });
+    });
+
+    worksheet.addRow([]);
+    worksheet.addRow([]);
+
+    const headerRow = worksheet.addRow(['#', 'اسم المنتج', 'نوع التغليف', 'الكمية']);
+    headerRow.font = { bold: true, size: 11, color: { argb: 'FFFFFFFF' } };
+    headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    headerRow.height = 25;
+    headerRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF4472C4' }
+      };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+
+    let totalQuantity = 0;
+    operationGroup.items.forEach((item: any, index: number) => {
+      const row = worksheet.addRow([
+        index + 1,
+        item.itemNameAr,
+        item.packagingType === 'box' ? 'كرتونة' : 'قطعة',
+        item.quantity
+      ]);
+      row.alignment = { horizontal: 'center', vertical: 'middle' };
+      row.height = 20;
+      row.eachCell((cell) => {
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+          left: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+          bottom: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+          right: { style: 'thin', color: { argb: 'FFD1D5DB' } }
+        };
+      });
+      totalQuantity += item.quantity;
+    });
+
+    const totalRow = worksheet.addRow(['', '', 'الإجمالي', totalQuantity]);
+    totalRow.font = { bold: true, size: 11 };
+    totalRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    totalRow.height = 25;
+    totalRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF92D050' }
+      };
+      cell.border = {
+        top: { style: 'medium', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'medium', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+
+    if (operationGroup.notes) {
+      worksheet.addRow([]);
+      worksheet.addRow([]);
+      const notesRow = worksheet.addRow(['ملاحظات:', operationGroup.notes]);
+      worksheet.mergeCells(notesRow.number, 2, notesRow.number, 4);
+      notesRow.alignment = { horizontal: 'right', vertical: 'middle' };
+      notesRow.getCell(1).font = { bold: true };
+      notesRow.getCell(1).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFE7F3FF' }
+      };
+    }
+
+    if (operationGroup.status === 'rejected' && operationGroup.rejectionReason) {
+      worksheet.addRow([]);
+      const rejectionRow = worksheet.addRow(['سبب الرفض:', operationGroup.rejectionReason]);
+      worksheet.mergeCells(rejectionRow.number, 2, rejectionRow.number, 4);
+      rejectionRow.alignment = { horizontal: 'right', vertical: 'middle' };
+      rejectionRow.getCell(1).font = { bold: true };
+      rejectionRow.getCell(1).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFFECACA' }
+      };
+    }
+
+    worksheet.columns = [
+      { width: 8 },
+      { width: 25 },
+      { width: 20 },
+      { width: 15 },
+      { width: 15 }
+    ];
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    saveAs(blob, `تفاصيل_العملية_${operationGroup.warehouseName}_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50/30 to-slate-50" dir="rtl">
       {/* Animated Banner */}
@@ -189,7 +385,17 @@ export default function OperationDetailsPage() {
                 العودة للعمليات
               </Button>
             </Link>
-            {getStatusBadge(operationGroup.status)}
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={exportToExcel}
+                className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 shadow-lg"
+                data-testid="button-export-excel"
+              >
+                <Download className="h-4 w-4 ml-2" />
+                تصدير Excel
+              </Button>
+              {getStatusBadge(operationGroup.status)}
+            </div>
           </div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-[#18B2B0] via-teal-600 to-cyan-600 bg-clip-text text-transparent">
             تفاصيل العملية
@@ -236,7 +442,15 @@ export default function OperationDetailsPage() {
                 <div>
                   <p className="text-sm text-gray-600">تاريخ الطلب</p>
                   <p className="text-lg font-bold text-gray-800">
-                    {format(new Date(operationGroup.createdAt), "dd MMMM yyyy, HH:mm", { locale: ar })}
+                    {new Date(operationGroup.createdAt).toLocaleDateString('en-US', { 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric'
+                    })}, {new Date(operationGroup.createdAt).toLocaleTimeString('en-US', { 
+                      hour: '2-digit', 
+                      minute: '2-digit',
+                      hour12: true
+                    })}
                   </p>
                 </div>
               </div>
@@ -250,7 +464,15 @@ export default function OperationDetailsPage() {
                   <div>
                     <p className="text-sm text-gray-600">تاريخ المعالجة</p>
                     <p className="text-lg font-bold text-gray-800">
-                      {format(new Date(operationGroup.respondedAt), "dd MMMM yyyy, HH:mm", { locale: ar })}
+                      {new Date(operationGroup.respondedAt).toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric'
+                      })}, {new Date(operationGroup.respondedAt).toLocaleTimeString('en-US', { 
+                        hour: '2-digit', 
+                        minute: '2-digit',
+                        hour12: true
+                      })}
                     </p>
                   </div>
                 </div>
