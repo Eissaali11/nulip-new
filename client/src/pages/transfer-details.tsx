@@ -151,13 +151,13 @@ export default function TransferDetailsPage() {
     worksheet.views = [{ rightToLeft: true }];
 
     const currentDate = new Date();
-    const arabicDate = currentDate.toLocaleDateString('ar-SA', { 
+    const arabicDate = currentDate.toLocaleDateString('en-US', { 
       weekday: 'long', 
       year: 'numeric', 
       month: 'long', 
       day: 'numeric'
     });
-    const time = currentDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+    const time = currentDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
 
     worksheet.mergeCells('A1:E1');
     const titleCell = worksheet.getCell('A1');
@@ -181,15 +181,16 @@ export default function TransferDetailsPage() {
     worksheet.addRow([]);
 
     const operationDate = new Date(transferDetail.createdAt);
-    const arabicOperationDate = operationDate.toLocaleDateString('ar-SA', { 
+    const arabicOperationDate = operationDate.toLocaleDateString('en-US', { 
       weekday: 'long', 
       year: 'numeric', 
       month: 'long', 
       day: 'numeric'
     });
-    const operationTime = operationDate.toLocaleTimeString('ar-SA', { 
+    const operationTime = operationDate.toLocaleTimeString('en-US', { 
       hour: '2-digit', 
-      minute: '2-digit'
+      minute: '2-digit',
+      hour12: true
     });
 
     const infoSection = [
@@ -415,7 +416,7 @@ export default function TransferDetailsPage() {
             <div className="flex flex-col items-center gap-2">
               <p className="text-lg text-gray-600 flex items-center gap-2">
                 <Calendar className="h-5 w-5" />
-                التاريخ: {new Date(transferDetail.createdAt).toLocaleDateString('ar-SA', { 
+                التاريخ: {new Date(transferDetail.createdAt).toLocaleDateString('en-US', { 
                   year: 'numeric', 
                   month: 'long', 
                   day: 'numeric'
@@ -423,9 +424,10 @@ export default function TransferDetailsPage() {
               </p>
               <p className="text-lg text-gray-600 flex items-center gap-2">
                 <Clock className="h-5 w-5" />
-                الوقت: {new Date(transferDetail.createdAt).toLocaleTimeString('ar-SA', { 
+                الوقت: {new Date(transferDetail.createdAt).toLocaleTimeString('en-US', { 
                   hour: '2-digit', 
-                  minute: '2-digit'
+                  minute: '2-digit',
+                  hour12: true
                 })}
               </p>
               <p className="text-sm text-gray-500">
