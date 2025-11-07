@@ -3,8 +3,9 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CheckCircle, XCircle, Clock, Package, User, Warehouse, TrendingUp, AlertCircle, Activity, ChevronLeft, Calendar, Eye, ArrowRight, LayoutDashboard } from "lucide-react";
+import { CheckCircle, XCircle, Clock, Package, User, Warehouse, TrendingUp, AlertCircle, Activity, ChevronLeft, Calendar, Eye, ArrowRight, LayoutDashboard, Search, X, FileDown } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -13,6 +14,8 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 import bannerImage from "@assets/Gemini_Generated_Image_r9bdc9r9bdc9r9bd_1762462520993.png";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 
 interface WarehouseTransfer {
   id: string;
@@ -38,9 +41,15 @@ export default function OperationsPage() {
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [selectedTransferId, setSelectedTransferId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
+  const [searchTechnician, setSearchTechnician] = useState("");
 
-  const { data: transfers, isLoading } = useQuery<WarehouseTransfer[]>({
+  const { data: allTransfers, isLoading } = useQuery<WarehouseTransfer[]>({
     queryKey: ["/api/warehouse-transfers"],
+  });
+
+  const transfers = allTransfers?.filter(transfer => {
+    if (searchTechnician === "") return true;
+    return transfer.technicianName?.toLowerCase().includes(searchTechnician.toLowerCase());
   });
 
   const acceptMutation = useMutation({
@@ -179,6 +188,130 @@ export default function OperationsPage() {
   }, {} as Record<string, any>);
 
   const groupedProcessedTransfersList = groupedProcessedTransfers ? Object.values(groupedProcessedTransfers) : [];
+
+  const exportToExcel = async () => {
+    if (!transfers || transfers.length === 0) {
+      toast({
+        title: "لا توجد بيانات",
+        description: "لا توجد عمليات لتصديرها",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('العمليات');
+    worksheet.views = [{ rightToLeft: true }];
+
+    const currentDate = new Date();
+    const arabicDate = currentDate.toLocaleDateString('ar-SA', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    const time = currentDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+
+    worksheet.mergeCells('A1:H1');
+    const titleCell = worksheet.getCell('A1');
+    titleCell.value = 'تقرير العمليات - Operations Report';
+    titleCell.font = { size: 18, bold: true, color: { argb: 'FFFFFFFF' } };
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    titleCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF18B2B0' }
+    };
+
+    worksheet.mergeCells('A2:H2');
+    const dateCell = worksheet.getCell('A2');
+    dateCell.value = `${arabicDate} - ${time}`;
+    dateCell.font = { size: 12, bold: true };
+    dateCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    dateCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFE0F7F7' }
+    };
+
+    worksheet.addRow([]);
+
+    const headerRow = worksheet.addRow(['#', 'المستودع', 'الفني', 'الصنف', 'نوع التغليف', 'الكمية', 'الحالة', 'التاريخ']);
+    headerRow.font = { bold: true, size: 12, color: { argb: 'FFFFFFFF' } };
+    headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    headerRow.height = 30;
+    headerRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF18B2B0' }
+      };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+
+    transfers.forEach((transfer, index) => {
+      const statusText = transfer.status === 'accepted' ? 'مقبول' : 
+                        transfer.status === 'rejected' ? 'مرفوض' : 'قيد الانتظار';
+      
+      const row = worksheet.addRow([
+        index + 1,
+        transfer.warehouseName || 'غير محدد',
+        transfer.technicianName || 'غير محدد',
+        getItemNameAr(transfer.itemType),
+        transfer.packagingType === 'boxes' ? 'كرتون' : 'مفرد',
+        transfer.quantity,
+        statusText,
+        format(new Date(transfer.createdAt), 'PPp', { locale: ar })
+      ]);
+
+      row.alignment = { horizontal: 'center', vertical: 'middle' };
+      row.height = 25;
+      
+      const bgColor = transfer.status === 'accepted' ? 'FFD1FAE5' : 
+                      transfer.status === 'rejected' ? 'FFFECACA' : 'FFFEF3C7';
+      row.eachCell((cell) => {
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: bgColor }
+        };
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+          left: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+          bottom: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+          right: { style: 'thin', color: { argb: 'FFD1D5DB' } }
+        };
+      });
+    });
+
+    worksheet.columns = [
+      { width: 8 },
+      { width: 20 },
+      { width: 20 },
+      { width: 15 },
+      { width: 15 },
+      { width: 12 },
+      { width: 12 },
+      { width: 25 }
+    ];
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const fileName = searchTechnician 
+      ? `العمليات_${searchTechnician}_${new Date().toISOString().split('T')[0]}.xlsx`
+      : `العمليات_${new Date().toISOString().split('T')[0]}.xlsx`;
+    saveAs(blob, fileName);
+
+    toast({
+      title: "تم التصدير",
+      description: `تم تصدير ${transfers.length} عملية بنجاح`,
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50/30 to-slate-50" dir="rtl">
@@ -327,6 +460,54 @@ export default function OperationsPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Search and Export Section */}
+        <Card className="shadow-xl border-[#18B2B0]/20 bg-white/80 backdrop-blur-sm">
+          <CardContent className="p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex-1 w-full sm:max-w-md">
+                <div className="flex items-center gap-2 mb-2">
+                  <Search className="h-5 w-5 text-[#18B2B0]" />
+                  <h3 className="text-lg font-bold text-gray-900">البحث</h3>
+                </div>
+                <div className="relative">
+                  <Input
+                    type="text"
+                    placeholder="ابحث باسم الفني..."
+                    value={searchTechnician}
+                    onChange={(e) => setSearchTechnician(e.target.value)}
+                    className="pr-10 h-12 border-gray-300 focus:border-[#18B2B0] focus:ring-[#18B2B0]"
+                    data-testid="input-search-technician"
+                  />
+                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  {searchTechnician && (
+                    <button
+                      onClick={() => setSearchTechnician("")}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      data-testid="button-clear-search"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+                {searchTechnician && (
+                  <div className="mt-2 text-sm text-gray-600">
+                    النتائج: {transfers?.length || 0} عملية (منها {pendingTransfers.length} قيد الانتظار)
+                  </div>
+                )}
+              </div>
+              
+              <Button
+                onClick={exportToExcel}
+                className="bg-[#18B2B0] hover:bg-[#16a09e] text-white font-medium h-12 px-6 shadow-lg"
+                data-testid="button-export-operations"
+              >
+                <FileDown className="h-4 w-4 ml-2" />
+                تصدير إلى Excel
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Pending Transfers Table */}
         <Card className="shadow-xl border-[#18B2B0]/20 bg-white/80 backdrop-blur-sm">

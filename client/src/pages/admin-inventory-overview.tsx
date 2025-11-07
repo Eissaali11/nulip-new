@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Home, ArrowRight, AlertTriangle, CheckCircle, XCircle, Package, TrendingUp, User, BarChart3, FileDown } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Home, ArrowRight, AlertTriangle, CheckCircle, XCircle, Package, TrendingUp, User, BarChart3, FileDown, Search, X } from "lucide-react";
 import { useLocation } from "wouter";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
@@ -67,12 +69,20 @@ interface TechnicianInventoryData {
 
 export default function AdminInventoryOverview() {
   const [, setLocation] = useLocation();
+  const [searchName, setSearchName] = useState("");
+  const [searchCity, setSearchCity] = useState("");
 
   const { data, isLoading } = useQuery<{ technicians: TechnicianInventoryData[] }>({
     queryKey: ['/api/admin/all-technicians-inventory'],
   });
 
-  const technicians = data?.technicians || [];
+  const allTechnicians = data?.technicians || [];
+  
+  const technicians = allTechnicians.filter(tech => {
+    const nameMatch = searchName === "" || tech.technicianName.toLowerCase().includes(searchName.toLowerCase());
+    const cityMatch = searchCity === "" || tech.city.toLowerCase().includes(searchCity.toLowerCase());
+    return nameMatch && cityMatch;
+  });
 
   const getAlertBadge = (level: 'good' | 'warning' | 'critical') => {
     if (level === 'critical') {
@@ -366,6 +376,61 @@ export default function AdminInventoryOverview() {
               </button>
             </div>
           </div>
+        </div>
+
+        {/* Search Section */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Search className="h-5 w-5 text-[#18B2B0]" />
+            <h2 className="text-lg font-bold text-gray-900">البحث والتصفية</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="relative">
+              <Input
+                type="text"
+                placeholder="ابحث باسم الفني..."
+                value={searchName}
+                onChange={(e) => setSearchName(e.target.value)}
+                className="pr-10 h-12 border-gray-300 focus:border-[#18B2B0] focus:ring-[#18B2B0]"
+                data-testid="input-search-name"
+              />
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              {searchName && (
+                <button
+                  onClick={() => setSearchName("")}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  data-testid="button-clear-name"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            <div className="relative">
+              <Input
+                type="text"
+                placeholder="ابحث بالمنطقة/المدينة..."
+                value={searchCity}
+                onChange={(e) => setSearchCity(e.target.value)}
+                className="pr-10 h-12 border-gray-300 focus:border-[#18B2B0] focus:ring-[#18B2B0]"
+                data-testid="input-search-city"
+              />
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              {searchCity && (
+                <button
+                  onClick={() => setSearchCity("")}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  data-testid="button-clear-city"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          </div>
+          {(searchName || searchCity) && (
+            <div className="mt-3 text-sm text-gray-600">
+              النتائج: {technicians.length} من {allTechnicians.length} فني
+            </div>
+          )}
         </div>
 
         {/* Summary Cards */}
