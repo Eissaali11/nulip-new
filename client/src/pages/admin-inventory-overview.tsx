@@ -1250,15 +1250,16 @@ export default function AdminInventoryOverview() {
             </div>
           </div>
 
-          {/* Export Button */}
-          <Button
+          {/* Export Button - Mobile Optimized */}
+          <button
             onClick={exportToExcel}
-            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold shadow-lg transition-all hover:shadow-xl w-full sm:w-auto text-sm sm:text-base"
+            className="w-full sm:w-auto px-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 active:from-green-800 active:to-emerald-800 text-white font-bold rounded-lg shadow-lg hover:shadow-xl active:shadow-md transition-all duration-200 flex items-center justify-center gap-3 touch-manipulation"
+            style={{ WebkitTapHighlightColor: 'transparent' }}
             data-testid="button-export-all"
           >
-            <FileDown className="w-4 h-4 sm:w-5 sm:h-5 ml-2" />
-            تصدير Excel
-          </Button>
+            <FileDown className="w-5 h-5 sm:w-6 sm:h-6" />
+            <span className="text-base sm:text-lg">تصدير Excel</span>
+          </button>
         </div>
 
         {/* Summary Cards */}
