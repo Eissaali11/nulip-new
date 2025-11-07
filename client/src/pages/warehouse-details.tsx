@@ -143,37 +143,40 @@ export default function WarehouseDetailsPage() {
     enabled: !!warehouseId,
   });
 
-  const { data: transfers = [], isLoading: transfersLoading } = useQuery<WarehouseTransfer[]>({
+  const { data: rawTransfers, isLoading: transfersLoading } = useQuery<WarehouseTransferRaw[]>({
     queryKey: ["/api/warehouse-transfers"],
-    select: (rawData: WarehouseTransferRaw[]) => {
-      const filtered = rawData.filter((t) => t.warehouseId === warehouseId);
-      
-      const grouped = filtered.reduce((acc, transfer) => {
-        const key = `${transfer.technicianId}-${transfer.createdAt}-${transfer.notes || ''}`;
-        
-        if (!acc[key]) {
-          acc[key] = {
-            id: transfer.id,
-            warehouseId: transfer.warehouseId,
-            technicianId: transfer.technicianId,
-            technicianName: transfer.technicianName,
-            notes: transfer.notes,
-            status: transfer.status,
-            rejectionReason: transfer.rejectionReason,
-            respondedAt: transfer.respondedAt,
-            createdAt: transfer.createdAt,
-          };
-        }
-        
-        acc[key][transfer.itemType] = transfer.quantity;
-        acc[key][`${transfer.itemType}PackagingType`] = transfer.packagingType;
-        
-        return acc;
-      }, {} as Record<string, WarehouseTransfer>);
-      
-      return Object.values(grouped);
-    },
   });
+
+  const transfers: WarehouseTransfer[] = rawTransfers ? (() => {
+    const filtered = rawTransfers.filter((t) => t.warehouseId === warehouseId);
+    
+    const grouped = filtered.reduce((acc, transfer) => {
+      const date = new Date(transfer.createdAt);
+      const dayKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+      const key = `${transfer.technicianId}-${dayKey}-${transfer.performedBy}-${transfer.status}-${transfer.notes || 'no-notes'}`;
+      
+      if (!acc[key]) {
+        acc[key] = {
+          id: transfer.id,
+          warehouseId: transfer.warehouseId,
+          technicianId: transfer.technicianId,
+          technicianName: transfer.technicianName,
+          notes: transfer.notes,
+          status: transfer.status,
+          rejectionReason: transfer.rejectionReason,
+          respondedAt: transfer.respondedAt,
+          createdAt: transfer.createdAt,
+        } as WarehouseTransfer;
+      }
+      
+      (acc[key] as any)[transfer.itemType] = transfer.quantity;
+      (acc[key] as any)[`${transfer.itemType}PackagingType`] = transfer.packagingType;
+      
+      return acc;
+    }, {} as Record<string, WarehouseTransfer>);
+    
+    return Object.values(grouped);
+  })() : [];
 
   const deleteWarehouseMutation = useMutation({
     mutationFn: async () => {
@@ -494,92 +497,113 @@ export default function WarehouseDetailsPage() {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-gradient-to-r from-[#18B2B0]/5 to-teal-50/50">
-                      <TableHead className="text-right font-bold">التاريخ</TableHead>
-                      <TableHead className="text-right font-bold">الفني</TableHead>
-                      <TableHead className="text-right font-bold">الأصناف المنقولة</TableHead>
-                      <TableHead className="text-right font-bold">الحالة</TableHead>
-                      <TableHead className="text-right font-bold">ملاحظات</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {transfers.map((transfer) => {
-                      const items: string[] = [];
-                      if (transfer.n950) items.push(`N950: ${transfer.n950} ${transfer.n950PackagingType === 'box' ? 'كرتون' : 'وحدة'}`);
-                      if (transfer.i9000s) items.push(`I9000s: ${transfer.i9000s} ${transfer.i9000sPackagingType === 'box' ? 'كرتون' : 'وحدة'}`);
-                      if (transfer.i9100) items.push(`I9100: ${transfer.i9100} ${transfer.i9100PackagingType === 'box' ? 'كرتون' : 'وحدة'}`);
-                      if (transfer.rollPaper) items.push(`ورق: ${transfer.rollPaper} ${transfer.rollPaperPackagingType === 'box' ? 'كرتون' : 'وحدة'}`);
-                      if (transfer.stickers) items.push(`ملصقات: ${transfer.stickers} ${transfer.stickersPackagingType === 'box' ? 'كرتون' : 'وحدة'}`);
-                      if (transfer.newBatteries) items.push(`بطاريات: ${transfer.newBatteries} ${transfer.newBatteriesPackagingType === 'box' ? 'كرتون' : 'وحدة'}`);
-                      if (transfer.mobilySim) items.push(`موبايلي: ${transfer.mobilySim} ${transfer.mobilySimPackagingType === 'box' ? 'كرتون' : 'وحدة'}`);
-                      if (transfer.stcSim) items.push(`STC: ${transfer.stcSim} ${transfer.stcSimPackagingType === 'box' ? 'كرتون' : 'وحدة'}`);
-                      if (transfer.zainSim) items.push(`زين: ${transfer.zainSim} ${transfer.zainSimPackagingType === 'box' ? 'كرتون' : 'وحدة'}`);
+              <div className="grid grid-cols-1 gap-4">
+                {transfers.map((transfer, index) => {
+                  const items: Array<{name: string, quantity: number, type: string}> = [];
+                  if (transfer.n950) items.push({name: 'N950', quantity: transfer.n950, type: transfer.n950PackagingType || 'box'});
+                  if (transfer.i9000s) items.push({name: 'I9000s', quantity: transfer.i9000s, type: transfer.i9000sPackagingType || 'box'});
+                  if (transfer.i9100) items.push({name: 'I9100', quantity: transfer.i9100, type: transfer.i9100PackagingType || 'box'});
+                  if (transfer.rollPaper) items.push({name: 'ورق', quantity: transfer.rollPaper, type: transfer.rollPaperPackagingType || 'box'});
+                  if (transfer.stickers) items.push({name: 'ملصقات', quantity: transfer.stickers, type: transfer.stickersPackagingType || 'box'});
+                  if (transfer.newBatteries) items.push({name: 'بطاريات', quantity: transfer.newBatteries, type: transfer.newBatteriesPackagingType || 'box'});
+                  if (transfer.mobilySim) items.push({name: 'موبايلي', quantity: transfer.mobilySim, type: transfer.mobilySimPackagingType || 'box'});
+                  if (transfer.stcSim) items.push({name: 'STC', quantity: transfer.stcSim, type: transfer.stcSimPackagingType || 'box'});
+                  if (transfer.zainSim) items.push({name: 'زين', quantity: transfer.zainSim, type: transfer.zainSimPackagingType || 'box'});
 
-                      const getStatusBadge = (status?: string) => {
-                        switch (status) {
-                          case 'pending':
-                            return (
-                              <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-                                <Clock className="h-3 w-3 mr-1" />
-                                قيد الانتظار
-                              </Badge>
-                            );
-                          case 'accepted':
-                            return (
-                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                                <CheckCircle className="h-3 w-3 mr-1" />
-                                مقبول
-                              </Badge>
-                            );
-                          case 'rejected':
-                            return (
-                              <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-                                <XCircle className="h-3 w-3 mr-1" />
-                                مرفوض
-                              </Badge>
-                            );
-                          default:
-                            return (
-                              <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
-                                -
-                              </Badge>
-                            );
-                        }
-                      };
+                  const getStatusColor = (status?: string) => {
+                    switch (status) {
+                      case 'pending':
+                        return {bg: 'from-yellow-50 to-amber-50', border: 'border-yellow-200', icon: 'text-yellow-600', badge: 'bg-yellow-100 text-yellow-700'};
+                      case 'accepted':
+                        return {bg: 'from-green-50 to-emerald-50', border: 'border-green-200', icon: 'text-green-600', badge: 'bg-green-100 text-green-700'};
+                      case 'rejected':
+                        return {bg: 'from-red-50 to-rose-50', border: 'border-red-200', icon: 'text-red-600', badge: 'bg-red-100 text-red-700'};
+                      default:
+                        return {bg: 'from-gray-50 to-slate-50', border: 'border-gray-200', icon: 'text-gray-600', badge: 'bg-gray-100 text-gray-700'};
+                    }
+                  };
 
-                      return (
-                        <TableRow key={transfer.id} className="hover:bg-[#18B2B0]/5 transition-colors" data-testid={`transfer-row-${transfer.id}`}>
-                          <TableCell className="text-right" data-testid={`transfer-date-${transfer.id}`}>
-                            <Badge variant="outline" className="font-mono">
-                              {formatDistanceToNow(new Date(transfer.createdAt), { addSuffix: true, locale: ar })}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right font-semibold" data-testid={`transfer-technician-${transfer.id}`}>
-                            {transfer.technicianName}
-                          </TableCell>
-                          <TableCell className="text-right" data-testid={`transfer-items-${transfer.id}`}>
-                            <div className="flex flex-wrap gap-1">
-                              {items.map((item, idx) => (
-                                <Badge key={idx} className="bg-[#18B2B0]/10 text-[#18B2B0] border-[#18B2B0]/20">
-                                  {item}
-                                </Badge>
-                              ))}
+                  const statusColor = getStatusColor(transfer.status);
+                  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+
+                  return (
+                    <Link 
+                      key={transfer.id} 
+                      href={`/transfer-details/${transfer.id}`}
+                    >
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        whileHover={{ scale: 1.01, y: -2 }}
+                        className={`relative overflow-hidden rounded-xl border-2 ${statusColor.border} bg-gradient-to-r ${statusColor.bg} p-5 shadow-md hover:shadow-xl transition-all cursor-pointer group`}
+                        data-testid={`transfer-card-${transfer.id}`}
+                      >
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#18B2B0] via-teal-400 to-cyan-400"></div>
+                        
+                        <div className="flex items-start justify-between gap-4 mb-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <div className={`p-2.5 rounded-lg bg-white/70 ${statusColor.icon} shadow-sm`}>
+                                <Send className="h-5 w-5" />
+                              </div>
+                              <div>
+                                <h3 className="text-lg font-bold text-gray-800">{transfer.technicianName}</h3>
+                                <p className="text-sm text-gray-600 flex items-center gap-1.5 mt-0.5">
+                                  <Clock className="h-3.5 w-3.5" />
+                                  {formatDistanceToNow(new Date(transfer.createdAt), { addSuffix: true, locale: ar })}
+                                </p>
+                              </div>
                             </div>
-                          </TableCell>
-                          <TableCell className="text-right" data-testid={`transfer-status-${transfer.id}`}>
-                            {getStatusBadge(transfer.status)}
-                          </TableCell>
-                          <TableCell className="text-right text-sm text-gray-600" data-testid={`transfer-notes-${transfer.id}`}>
-                            {transfer.notes || "-"}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+                          </div>
+                          
+                          <div className="flex flex-col items-end gap-2">
+                            <Badge className={`${statusColor.badge} text-sm px-3 py-1 shadow-sm`}>
+                              {transfer.status === 'pending' && <><Clock className="h-3.5 w-3.5 mr-1.5" />قيد الانتظار</>}
+                              {transfer.status === 'accepted' && <><CheckCircle className="h-3.5 w-3.5 mr-1.5" />مقبول</>}
+                              {transfer.status === 'rejected' && <><XCircle className="h-3.5 w-3.5 mr-1.5" />مرفوض</>}
+                            </Badge>
+                            <Badge variant="outline" className="bg-white/70 border-[#18B2B0]/30 text-[#18B2B0] font-bold shadow-sm">
+                              <Package className="h-3.5 w-3.5 mr-1.5" />
+                              {totalItems} قطعة
+                            </Badge>
+                          </div>
+                        </div>
+
+                        <div className="bg-white/70 rounded-lg p-4 border border-gray-200/50 shadow-sm mb-3">
+                          <p className="text-xs font-semibold text-gray-500 mb-2.5">الأصناف المنقولة</p>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                            {items.map((item, idx) => (
+                              <div key={idx} className="flex items-center gap-2 p-2 rounded-lg bg-gradient-to-br from-[#18B2B0]/5 to-teal-50/50 border border-[#18B2B0]/10">
+                                <Package className="h-4 w-4 text-[#18B2B0] flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-bold text-[#18B2B0] truncate">{item.name}</p>
+                                  <p className="text-xs text-gray-600">
+                                    {item.quantity} {item.type === 'box' ? 'كرتون' : 'وحدة'}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {transfer.notes && (
+                          <div className="bg-white/70 rounded-lg p-3 border border-gray-200/50 shadow-sm">
+                            <p className="text-xs font-semibold text-gray-500 mb-1.5">ملاحظات</p>
+                            <p className="text-sm text-gray-700">{transfer.notes}</p>
+                          </div>
+                        )}
+
+                        <div className="absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Badge className="bg-[#18B2B0] text-white text-xs shadow-md">
+                            <ArrowRight className="h-3 w-3 mr-1" />
+                            عرض التفاصيل
+                          </Badge>
+                        </div>
+                      </motion.div>
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </CardContent>
