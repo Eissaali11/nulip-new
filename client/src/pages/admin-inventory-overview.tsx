@@ -147,7 +147,207 @@ export default function AdminInventoryOverview() {
   const warningTechs = technicians.filter(t => t.alertLevel === 'warning').length;
   const goodTechs = technicians.filter(t => t.alertLevel === 'good').length;
 
-  const createWorksheet = (workbook: ExcelJS.Workbook, sheetName: string, dataType: 'total' | 'fixed' | 'moving') => {
+  const createDetailedWorksheet = (workbook: ExcelJS.Workbook, sheetName: string, dataType: 'fixed' | 'moving') => {
+    const worksheet = workbook.addWorksheet(sheetName);
+    worksheet.views = [{ rightToLeft: true }];
+
+    const currentDate = new Date();
+    const arabicDate = currentDate.toLocaleDateString('ar-SA', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric'
+    });
+    const englishDate = currentDate.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric'
+    });
+    const time = currentDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+
+    const numCols = 30;
+    worksheet.mergeCells(1, 1, 1, numCols);
+    const titleCell = worksheet.getCell(1, 1);
+    titleCell.value = 'Technician Inventory Management System';
+    titleCell.font = { size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    titleCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF4472C4' }
+    };
+    worksheet.getRow(1).height = 30;
+
+    worksheet.mergeCells(2, 1, 2, numCols);
+    const dateCell = worksheet.getCell(2, 1);
+    dateCell.value = `تاريخ التقرير: ${arabicDate} | Report Date: ${englishDate} | ${time}`;
+    dateCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    dateCell.font = { bold: true, size: 10 };
+    worksheet.getRow(2).height = 20;
+
+    worksheet.addRow([]);
+
+    const headerRow = worksheet.addRow([
+      '#',
+      'Technician Name',
+      'City',
+      'N950 Box',
+      'N950 Unit',
+      'I9000s Box',
+      'I9000s Unit',
+      'I9100 Box',
+      'I9100 Unit',
+      'Roll Box',
+      'Roll Unit',
+      'Sticker Box',
+      'Sticker Unit',
+      'Battery Box',
+      'Battery Unit',
+      'Mobily Box',
+      'Mobily Unit',
+      'STC Box',
+      'STC Unit',
+      'Zain Box',
+      'Zain Unit'
+    ]);
+    
+    headerRow.font = { bold: true, size: 9, color: { argb: 'FFFFFFFF' } };
+    headerRow.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    headerRow.height = 30;
+    headerRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF4472C4' }
+      };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+
+    let totals = {
+      n950Box: 0, n950Unit: 0,
+      i9000sBox: 0, i9000sUnit: 0,
+      i9100Box: 0, i9100Unit: 0,
+      rollBox: 0, rollUnit: 0,
+      stickerBox: 0, stickerUnit: 0,
+      batteryBox: 0, batteryUnit: 0,
+      mobilyBox: 0, mobilyUnit: 0,
+      stcBox: 0, stcUnit: 0,
+      zainBox: 0, zainUnit: 0
+    };
+
+    technicians.forEach((tech, index) => {
+      const inv = dataType === 'fixed' ? tech.fixedInventory : tech.movingInventory;
+      
+      const data = [
+        index + 1,
+        tech.technicianName,
+        tech.city,
+        inv?.n950Boxes || 0,
+        inv?.n950Units || 0,
+        inv?.i9000sBoxes || 0,
+        inv?.i9000sUnits || 0,
+        inv?.i9100Boxes || 0,
+        inv?.i9100Units || 0,
+        inv?.rollPaperBoxes || 0,
+        inv?.rollPaperUnits || 0,
+        inv?.stickersBoxes || 0,
+        inv?.stickersUnits || 0,
+        inv?.newBatteriesBoxes || 0,
+        inv?.newBatteriesUnits || 0,
+        inv?.mobilySimBoxes || 0,
+        inv?.mobilySimUnits || 0,
+        inv?.stcSimBoxes || 0,
+        inv?.stcSimUnits || 0,
+        inv?.zainSimBoxes || 0,
+        inv?.zainSimUnits || 0
+      ];
+
+      totals.n950Box += Number(data[3]);
+      totals.n950Unit += Number(data[4]);
+      totals.i9000sBox += Number(data[5]);
+      totals.i9000sUnit += Number(data[6]);
+      totals.i9100Box += Number(data[7]);
+      totals.i9100Unit += Number(data[8]);
+      totals.rollBox += Number(data[9]);
+      totals.rollUnit += Number(data[10]);
+      totals.stickerBox += Number(data[11]);
+      totals.stickerUnit += Number(data[12]);
+      totals.batteryBox += Number(data[13]);
+      totals.batteryUnit += Number(data[14]);
+      totals.mobilyBox += Number(data[15]);
+      totals.mobilyUnit += Number(data[16]);
+      totals.stcBox += Number(data[17]);
+      totals.stcUnit += Number(data[18]);
+      totals.zainBox += Number(data[19]);
+      totals.zainUnit += Number(data[20]);
+
+      const row = worksheet.addRow(data);
+      row.alignment = { horizontal: 'center', vertical: 'middle' };
+      row.height = 20;
+      
+      row.eachCell((cell, colNumber) => {
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+          left: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+          bottom: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+          right: { style: 'thin', color: { argb: 'FFD1D5DB' } }
+        };
+        if (colNumber === 1) cell.font = { bold: true };
+      });
+    });
+
+    const totalRow = worksheet.addRow([
+      '',
+      'Total',
+      '',
+      totals.n950Box,
+      totals.n950Unit,
+      totals.i9000sBox,
+      totals.i9000sUnit,
+      totals.i9100Box,
+      totals.i9100Unit,
+      totals.rollBox,
+      totals.rollUnit,
+      totals.stickerBox,
+      totals.stickerUnit,
+      totals.batteryBox,
+      totals.batteryUnit,
+      totals.mobilyBox,
+      totals.mobilyUnit,
+      totals.stcBox,
+      totals.stcUnit,
+      totals.zainBox,
+      totals.zainUnit
+    ]);
+    totalRow.font = { bold: true, size: 11 };
+    totalRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    totalRow.height = 25;
+    totalRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF92D050' }
+      };
+      cell.border = {
+        top: { style: 'medium', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'medium', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+
+    worksheet.columns = Array(21).fill({ width: 12 });
+    worksheet.getColumn(2).width = 25;
+    worksheet.getColumn(3).width = 15;
+  };
+
+  const createTotalWorksheet = (workbook: ExcelJS.Workbook, sheetName: string) => {
     const worksheet = workbook.addWorksheet(sheetName);
     worksheet.views = [{ rightToLeft: true }];
 
@@ -232,91 +432,57 @@ export default function AdminInventoryOverview() {
     };
 
     technicians.forEach((tech, index) => {
-      let data: any[];
-      
-      if (dataType === 'total') {
-        data = [
-          index + 1,
-          tech.technicianName,
-          tech.city,
-          getTotalForItem(
-            (tech.fixedInventory?.n950Boxes || 0) + (tech.movingInventory?.n950Boxes || 0),
-            (tech.fixedInventory?.n950Units || 0) + (tech.movingInventory?.n950Units || 0)
-          ),
-          getTotalForItem(
-            (tech.fixedInventory?.i9000sBoxes || 0) + (tech.movingInventory?.i9000sBoxes || 0),
-            (tech.fixedInventory?.i9000sUnits || 0) + (tech.movingInventory?.i9000sUnits || 0)
-          ),
-          getTotalForItem(
-            (tech.fixedInventory?.i9100Boxes || 0) + (tech.movingInventory?.i9100Boxes || 0),
-            (tech.fixedInventory?.i9100Units || 0) + (tech.movingInventory?.i9100Units || 0)
-          ),
-          getTotalForItem(
-            (tech.fixedInventory?.rollPaperBoxes || 0) + (tech.movingInventory?.rollPaperBoxes || 0),
-            (tech.fixedInventory?.rollPaperUnits || 0) + (tech.movingInventory?.rollPaperUnits || 0)
-          ),
-          getTotalForItem(
-            (tech.fixedInventory?.stickersBoxes || 0) + (tech.movingInventory?.stickersBoxes || 0),
-            (tech.fixedInventory?.stickersUnits || 0) + (tech.movingInventory?.stickersUnits || 0)
-          ),
-          getTotalForItem(
-            (tech.fixedInventory?.newBatteriesBoxes || 0) + (tech.movingInventory?.newBatteriesBoxes || 0),
-            (tech.fixedInventory?.newBatteriesUnits || 0) + (tech.movingInventory?.newBatteriesUnits || 0)
-          ),
-          getTotalForItem(
-            (tech.fixedInventory?.mobilySimBoxes || 0) + (tech.movingInventory?.mobilySimBoxes || 0),
-            (tech.fixedInventory?.mobilySimUnits || 0) + (tech.movingInventory?.mobilySimUnits || 0)
-          ),
-          getTotalForItem(
-            (tech.fixedInventory?.stcSimBoxes || 0) + (tech.movingInventory?.stcSimBoxes || 0),
-            (tech.fixedInventory?.stcSimUnits || 0) + (tech.movingInventory?.stcSimUnits || 0)
-          ),
-          getTotalForItem(
-            (tech.fixedInventory?.zainSimBoxes || 0) + (tech.movingInventory?.zainSimBoxes || 0),
-            (tech.fixedInventory?.zainSimUnits || 0) + (tech.movingInventory?.zainSimUnits || 0)
-          )
-        ];
-      } else if (dataType === 'fixed') {
-        data = [
-          index + 1,
-          tech.technicianName,
-          tech.city,
-          getTotalForItem(tech.fixedInventory?.n950Boxes || 0, tech.fixedInventory?.n950Units || 0),
-          getTotalForItem(tech.fixedInventory?.i9000sBoxes || 0, tech.fixedInventory?.i9000sUnits || 0),
-          getTotalForItem(tech.fixedInventory?.i9100Boxes || 0, tech.fixedInventory?.i9100Units || 0),
-          getTotalForItem(tech.fixedInventory?.rollPaperBoxes || 0, tech.fixedInventory?.rollPaperUnits || 0),
-          getTotalForItem(tech.fixedInventory?.stickersBoxes || 0, tech.fixedInventory?.stickersUnits || 0),
-          getTotalForItem(tech.fixedInventory?.newBatteriesBoxes || 0, tech.fixedInventory?.newBatteriesUnits || 0),
-          getTotalForItem(tech.fixedInventory?.mobilySimBoxes || 0, tech.fixedInventory?.mobilySimUnits || 0),
-          getTotalForItem(tech.fixedInventory?.stcSimBoxes || 0, tech.fixedInventory?.stcSimUnits || 0),
-          getTotalForItem(tech.fixedInventory?.zainSimBoxes || 0, tech.fixedInventory?.zainSimUnits || 0)
-        ];
-      } else {
-        data = [
-          index + 1,
-          tech.technicianName,
-          tech.city,
-          getTotalForItem(tech.movingInventory?.n950Boxes || 0, tech.movingInventory?.n950Units || 0),
-          getTotalForItem(tech.movingInventory?.i9000sBoxes || 0, tech.movingInventory?.i9000sUnits || 0),
-          getTotalForItem(tech.movingInventory?.i9100Boxes || 0, tech.movingInventory?.i9100Units || 0),
-          getTotalForItem(tech.movingInventory?.rollPaperBoxes || 0, tech.movingInventory?.rollPaperUnits || 0),
-          getTotalForItem(tech.movingInventory?.stickersBoxes || 0, tech.movingInventory?.stickersUnits || 0),
-          getTotalForItem(tech.movingInventory?.newBatteriesBoxes || 0, tech.movingInventory?.newBatteriesUnits || 0),
-          getTotalForItem(tech.movingInventory?.mobilySimBoxes || 0, tech.movingInventory?.mobilySimUnits || 0),
-          getTotalForItem(tech.movingInventory?.stcSimBoxes || 0, tech.movingInventory?.stcSimUnits || 0),
-          getTotalForItem(tech.movingInventory?.zainSimBoxes || 0, tech.movingInventory?.zainSimUnits || 0)
-        ];
-      }
+      const data = [
+        index + 1,
+        tech.technicianName,
+        tech.city,
+        getTotalForItem(
+          (tech.fixedInventory?.n950Boxes || 0) + (tech.movingInventory?.n950Boxes || 0),
+          (tech.fixedInventory?.n950Units || 0) + (tech.movingInventory?.n950Units || 0)
+        ),
+        getTotalForItem(
+          (tech.fixedInventory?.i9000sBoxes || 0) + (tech.movingInventory?.i9000sBoxes || 0),
+          (tech.fixedInventory?.i9000sUnits || 0) + (tech.movingInventory?.i9000sUnits || 0)
+        ),
+        getTotalForItem(
+          (tech.fixedInventory?.i9100Boxes || 0) + (tech.movingInventory?.i9100Boxes || 0),
+          (tech.fixedInventory?.i9100Units || 0) + (tech.movingInventory?.i9100Units || 0)
+        ),
+        getTotalForItem(
+          (tech.fixedInventory?.rollPaperBoxes || 0) + (tech.movingInventory?.rollPaperBoxes || 0),
+          (tech.fixedInventory?.rollPaperUnits || 0) + (tech.movingInventory?.rollPaperUnits || 0)
+        ),
+        getTotalForItem(
+          (tech.fixedInventory?.stickersBoxes || 0) + (tech.movingInventory?.stickersBoxes || 0),
+          (tech.fixedInventory?.stickersUnits || 0) + (tech.movingInventory?.stickersUnits || 0)
+        ),
+        getTotalForItem(
+          (tech.fixedInventory?.newBatteriesBoxes || 0) + (tech.movingInventory?.newBatteriesBoxes || 0),
+          (tech.fixedInventory?.newBatteriesUnits || 0) + (tech.movingInventory?.newBatteriesUnits || 0)
+        ),
+        getTotalForItem(
+          (tech.fixedInventory?.mobilySimBoxes || 0) + (tech.movingInventory?.mobilySimBoxes || 0),
+          (tech.fixedInventory?.mobilySimUnits || 0) + (tech.movingInventory?.mobilySimUnits || 0)
+        ),
+        getTotalForItem(
+          (tech.fixedInventory?.stcSimBoxes || 0) + (tech.movingInventory?.stcSimBoxes || 0),
+          (tech.fixedInventory?.stcSimUnits || 0) + (tech.movingInventory?.stcSimUnits || 0)
+        ),
+        getTotalForItem(
+          (tech.fixedInventory?.zainSimBoxes || 0) + (tech.movingInventory?.zainSimBoxes || 0),
+          (tech.fixedInventory?.zainSimUnits || 0) + (tech.movingInventory?.zainSimUnits || 0)
+        )
+      ];
 
-      totals.n950 += data[3];
-      totals.i9000s += data[4];
-      totals.i9100 += data[5];
-      totals.rollPaper += data[6];
-      totals.stickers += data[7];
-      totals.newBatteries += data[8];
-      totals.mobilySim += data[9];
-      totals.stcSim += data[10];
-      totals.zainSim += data[11];
+      totals.n950 += Number(data[3]);
+      totals.i9000s += Number(data[4]);
+      totals.i9100 += Number(data[5]);
+      totals.rollPaper += Number(data[6]);
+      totals.stickers += Number(data[7]);
+      totals.newBatteries += Number(data[8]);
+      totals.mobilySim += Number(data[9]);
+      totals.stcSim += Number(data[10]);
+      totals.zainSim += Number(data[11]);
 
       const row = worksheet.addRow(data);
       row.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -429,9 +595,9 @@ export default function AdminInventoryOverview() {
 
     const workbook = new ExcelJS.Workbook();
     
-    createWorksheet(workbook, 'مخزون شامل - Total', 'total');
-    createWorksheet(workbook, 'مخزون ثابت - Fixed', 'fixed');
-    createWorksheet(workbook, 'مخزون متحرك - Moving', 'moving');
+    createTotalWorksheet(workbook, 'مخزون شامل - Total');
+    createDetailedWorksheet(workbook, 'مخزون ثابت - Fixed', 'fixed');
+    createDetailedWorksheet(workbook, 'مخزون متحرك - Moving', 'moving');
 
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
