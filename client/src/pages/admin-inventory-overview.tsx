@@ -370,43 +370,52 @@ export default function AdminInventoryOverview() {
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-red-100 rounded-lg">
-                <XCircle className="w-5 h-5 text-red-600" />
+          <div className="relative overflow-hidden bg-gradient-to-br from-red-50 via-white to-red-50/30 rounded-xl shadow-lg border border-red-100 p-5 backdrop-blur-sm">
+            <div className="absolute top-0 left-0 w-32 h-32 bg-red-500/5 rounded-full blur-2xl"></div>
+            <div className="relative">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg shadow-md">
+                  <XCircle className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-sm font-medium text-gray-700">حالة حرجة</h3>
               </div>
-              <h3 className="text-sm font-medium text-gray-600">حالة حرجة</h3>
+              <p className="text-3xl font-bold text-red-600" data-testid="text-critical-count">
+                {criticalTechs}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">فني</p>
             </div>
-            <p className="text-3xl font-bold text-red-600" data-testid="text-critical-count">
-              {criticalTechs}
-            </p>
-            <p className="text-xs text-gray-500 mt-1">فني</p>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-amber-100 rounded-lg">
-                <AlertTriangle className="w-5 h-5 text-amber-600" />
+          <div className="relative overflow-hidden bg-gradient-to-br from-amber-50 via-white to-amber-50/30 rounded-xl shadow-lg border border-amber-100 p-5 backdrop-blur-sm">
+            <div className="absolute top-0 left-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl"></div>
+            <div className="relative">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg shadow-md">
+                  <AlertTriangle className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-sm font-medium text-gray-700">تحذير</h3>
               </div>
-              <h3 className="text-sm font-medium text-gray-600">تحذير</h3>
+              <p className="text-3xl font-bold text-amber-600" data-testid="text-warning-count">
+                {warningTechs}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">فني</p>
             </div>
-            <p className="text-3xl font-bold text-amber-600" data-testid="text-warning-count">
-              {warningTechs}
-            </p>
-            <p className="text-xs text-gray-500 mt-1">فني</p>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <CheckCircle className="w-5 h-5 text-green-600" />
+          <div className="relative overflow-hidden bg-gradient-to-br from-[#E0F7F7] via-white to-[#E0F7F7]/30 rounded-xl shadow-lg border border-[#18B2B0]/20 p-5 backdrop-blur-sm">
+            <div className="absolute top-0 left-0 w-32 h-32 bg-[#18B2B0]/10 rounded-full blur-2xl"></div>
+            <div className="relative">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-gradient-to-br from-[#18B2B0] to-[#16a09e] rounded-lg shadow-md">
+                  <CheckCircle className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-sm font-medium text-gray-700">جيد</h3>
               </div>
-              <h3 className="text-sm font-medium text-gray-600">جيد</h3>
+              <p className="text-3xl font-bold text-[#18B2B0]" data-testid="text-good-count">
+                {goodTechs}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">فني</p>
             </div>
-            <p className="text-3xl font-bold text-green-600" data-testid="text-good-count">
-              {goodTechs}
-            </p>
-            <p className="text-xs text-gray-500 mt-1">فني</p>
           </div>
         </div>
 

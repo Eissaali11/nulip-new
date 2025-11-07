@@ -418,52 +418,64 @@ export default function MyMovingInventory() {
 
         {/* Summary Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="p-1.5 bg-blue-100 rounded-lg">
-                <Package className="w-4 h-4 text-blue-600" />
+          <div className="relative overflow-hidden bg-gradient-to-br from-[#E0F7F7] via-white to-[#E0F7F7]/30 rounded-xl shadow-lg border border-[#18B2B0]/20 p-4 backdrop-blur-sm">
+            <div className="absolute top-0 left-0 w-24 h-24 bg-[#18B2B0]/10 rounded-full blur-2xl"></div>
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="p-1.5 bg-gradient-to-br from-[#18B2B0] to-[#16a09e] rounded-lg shadow-md">
+                  <Package className="w-4 h-4 text-white" />
+                </div>
+                <h3 className="text-xs font-medium text-gray-700">إجمالي العناصر</h3>
               </div>
-              <h3 className="text-xs font-medium text-gray-600">إجمالي العناصر</h3>
+              <p className="text-2xl sm:text-3xl font-bold text-[#18B2B0]" data-testid="text-total-items">
+                {getTotalItems()}
+              </p>
             </div>
-            <p className="text-2xl sm:text-3xl font-bold text-blue-600" data-testid="text-total-items">
-              {getTotalItems()}
-            </p>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="p-1.5 bg-purple-100 rounded-lg">
-                <TruckIcon className="w-4 h-4 text-purple-600" />
+          <div className="relative overflow-hidden bg-gradient-to-br from-purple-50 via-white to-purple-50/30 rounded-xl shadow-lg border border-purple-100 p-4 backdrop-blur-sm">
+            <div className="absolute top-0 left-0 w-24 h-24 bg-purple-500/5 rounded-full blur-2xl"></div>
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="p-1.5 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-md">
+                  <TruckIcon className="w-4 h-4 text-white" />
+                </div>
+                <h3 className="text-xs font-medium text-gray-700">الأجهزة</h3>
               </div>
-              <h3 className="text-xs font-medium text-gray-600">الأجهزة</h3>
+              <p className="text-2xl sm:text-3xl font-bold text-purple-600" data-testid="text-total-devices">
+                {(inventory.n950Boxes || 0) + (inventory.n950Units || 0) + (inventory.i9000sBoxes || 0) + (inventory.i9000sUnits || 0) + (inventory.i9100Boxes || 0) + (inventory.i9100Units || 0)}
+              </p>
             </div>
-            <p className="text-2xl sm:text-3xl font-bold text-purple-600" data-testid="text-total-devices">
-              {(inventory.n950Boxes || 0) + (inventory.n950Units || 0) + (inventory.i9000sBoxes || 0) + (inventory.i9000sUnits || 0) + (inventory.i9100Boxes || 0) + (inventory.i9100Units || 0)}
-            </p>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="p-1.5 bg-amber-100 rounded-lg">
-                <Package className="w-4 h-4 text-amber-600" />
+          <div className="relative overflow-hidden bg-gradient-to-br from-amber-50 via-white to-amber-50/30 rounded-xl shadow-lg border border-amber-100 p-4 backdrop-blur-sm">
+            <div className="absolute top-0 left-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl"></div>
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="p-1.5 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg shadow-md">
+                  <Package className="w-4 h-4 text-white" />
+                </div>
+                <h3 className="text-xs font-medium text-gray-700">الملحقات</h3>
               </div>
-              <h3 className="text-xs font-medium text-gray-600">الملحقات</h3>
+              <p className="text-2xl sm:text-3xl font-bold text-amber-600" data-testid="text-total-accessories">
+                {(inventory.rollPaperBoxes || 0) + (inventory.rollPaperUnits || 0) + (inventory.stickersBoxes || 0) + (inventory.stickersUnits || 0) + (inventory.newBatteriesBoxes || 0) + (inventory.newBatteriesUnits || 0)}
+              </p>
             </div>
-            <p className="text-2xl sm:text-3xl font-bold text-amber-600" data-testid="text-total-accessories">
-              {(inventory.rollPaperBoxes || 0) + (inventory.rollPaperUnits || 0) + (inventory.stickersBoxes || 0) + (inventory.stickersUnits || 0) + (inventory.newBatteriesBoxes || 0) + (inventory.newBatteriesUnits || 0)}
-            </p>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="p-1.5 bg-green-100 rounded-lg">
-                <Package className="w-4 h-4 text-green-600" />
+          <div className="relative overflow-hidden bg-gradient-to-br from-green-50 via-white to-green-50/30 rounded-xl shadow-lg border border-green-100 p-4 backdrop-blur-sm">
+            <div className="absolute top-0 left-0 w-24 h-24 bg-green-500/5 rounded-full blur-2xl"></div>
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="p-1.5 bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-md">
+                  <Package className="w-4 h-4 text-white" />
+                </div>
+                <h3 className="text-xs font-medium text-gray-700">الشرائح</h3>
               </div>
-              <h3 className="text-xs font-medium text-gray-600">الشرائح</h3>
+              <p className="text-2xl sm:text-3xl font-bold text-green-600" data-testid="text-total-sims">
+                {(inventory.mobilySimBoxes || 0) + (inventory.mobilySimUnits || 0) + (inventory.stcSimBoxes || 0) + (inventory.stcSimUnits || 0) + (inventory.zainSimBoxes || 0) + (inventory.zainSimUnits || 0)}
+              </p>
             </div>
-            <p className="text-2xl sm:text-3xl font-bold text-green-600" data-testid="text-total-sims">
-              {(inventory.mobilySimBoxes || 0) + (inventory.mobilySimUnits || 0) + (inventory.stcSimBoxes || 0) + (inventory.stcSimUnits || 0) + (inventory.zainSimBoxes || 0) + (inventory.zainSimUnits || 0)}
-            </p>
           </div>
         </div>
 
@@ -519,42 +531,50 @@ export default function MyMovingInventory() {
 
         {/* Detailed Inventory */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">تفاصيل المخزون</h2>
+          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <div className="p-2 bg-gradient-to-br from-[#18B2B0] to-[#16a09e] rounded-lg">
+              <Package className="h-4 w-4 text-white" />
+            </div>
+            تفاصيل المخزون
+          </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {[
-              { label: 'أجهزة N950', boxes: inventory.n950Boxes || 0, units: inventory.n950Units || 0, color: 'blue', icon: '📱' },
-              { label: 'أجهزة I9000s', boxes: inventory.i9000sBoxes || 0, units: inventory.i9000sUnits || 0, color: 'purple', icon: '📱' },
-              { label: 'أجهزة I9100', boxes: inventory.i9100Boxes || 0, units: inventory.i9100Units || 0, color: 'indigo', icon: '📱' },
-              { label: 'أوراق رول', boxes: inventory.rollPaperBoxes || 0, units: inventory.rollPaperUnits || 0, color: 'amber', icon: '📄' },
-              { label: 'ملصقات مداى', boxes: inventory.stickersBoxes || 0, units: inventory.stickersUnits || 0, color: 'orange', icon: '🏷️' },
-              { label: 'بطاريات جديدة', boxes: inventory.newBatteriesBoxes || 0, units: inventory.newBatteriesUnits || 0, color: 'yellow', icon: '🔋' },
-              { label: 'شرائح موبايلي', boxes: inventory.mobilySimBoxes || 0, units: inventory.mobilySimUnits || 0, color: 'green', icon: '📶' },
-              { label: 'شرائح STC', boxes: inventory.stcSimBoxes || 0, units: inventory.stcSimUnits || 0, color: 'teal', icon: '📶' },
-              { label: 'شرائح زين', boxes: inventory.zainSimBoxes || 0, units: inventory.zainSimUnits || 0, color: 'cyan', icon: '📶' },
+              { label: 'أجهزة N950', boxes: inventory.n950Boxes || 0, units: inventory.n950Units || 0, colorFrom: '[#E0F7F7]', colorTo: 'white', textColor: '[#18B2B0]', borderColor: '[#18B2B0]/20', bgGlow: '[#18B2B0]/10', icon: '📱' },
+              { label: 'أجهزة I9000s', boxes: inventory.i9000sBoxes || 0, units: inventory.i9000sUnits || 0, colorFrom: 'purple-50', colorTo: 'white', textColor: 'purple-600', borderColor: 'purple-100', bgGlow: 'purple-500/5', icon: '📱' },
+              { label: 'أجهزة I9100', boxes: inventory.i9100Boxes || 0, units: inventory.i9100Units || 0, colorFrom: 'indigo-50', colorTo: 'white', textColor: 'indigo-600', borderColor: 'indigo-100', bgGlow: 'indigo-500/5', icon: '📱' },
+              { label: 'أوراق رول', boxes: inventory.rollPaperBoxes || 0, units: inventory.rollPaperUnits || 0, colorFrom: 'amber-50', colorTo: 'white', textColor: 'amber-600', borderColor: 'amber-100', bgGlow: 'amber-500/5', icon: '📄' },
+              { label: 'ملصقات مداى', boxes: inventory.stickersBoxes || 0, units: inventory.stickersUnits || 0, colorFrom: 'orange-50', colorTo: 'white', textColor: 'orange-600', borderColor: 'orange-100', bgGlow: 'orange-500/5', icon: '🏷️' },
+              { label: 'بطاريات جديدة', boxes: inventory.newBatteriesBoxes || 0, units: inventory.newBatteriesUnits || 0, colorFrom: 'yellow-50', colorTo: 'white', textColor: 'yellow-600', borderColor: 'yellow-100', bgGlow: 'yellow-500/5', icon: '🔋' },
+              { label: 'شرائح موبايلي', boxes: inventory.mobilySimBoxes || 0, units: inventory.mobilySimUnits || 0, colorFrom: 'green-50', colorTo: 'white', textColor: 'green-600', borderColor: 'green-100', bgGlow: 'green-500/5', icon: '📶' },
+              { label: 'شرائح STC', boxes: inventory.stcSimBoxes || 0, units: inventory.stcSimUnits || 0, colorFrom: 'teal-50', colorTo: 'white', textColor: 'teal-600', borderColor: 'teal-100', bgGlow: 'teal-500/5', icon: '📶' },
+              { label: 'شرائح زين', boxes: inventory.zainSimBoxes || 0, units: inventory.zainSimUnits || 0, colorFrom: 'cyan-50', colorTo: 'white', textColor: 'cyan-600', borderColor: 'cyan-100', bgGlow: 'cyan-500/5', icon: '📶' },
             ].map((item, index) => (
               <div
                 key={index}
-                className="bg-gray-50 rounded-xl p-4 border border-gray-200"
+                className={`relative overflow-hidden bg-gradient-to-br from-${item.colorFrom} via-white to-${item.colorTo}/30 rounded-xl p-4 border border-${item.borderColor} shadow-md backdrop-blur-sm`}
               >
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-2xl">{item.icon}</span>
-                  <h3 className="font-medium text-gray-900">{item.label}</h3>
-                </div>
-                <div className="space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">كراتين:</span>
-                    <span className="font-bold text-gray-900">{item.boxes}</span>
+                <div className={`absolute top-0 right-0 w-20 h-20 bg-${item.bgGlow} rounded-full blur-2xl`}></div>
+                <div className="relative">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-2xl">{item.icon}</span>
+                    <h3 className="font-medium text-gray-900">{item.label}</h3>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">مفرد:</span>
-                    <span className="font-bold text-gray-900">{item.units}</span>
-                  </div>
-                  <div className="pt-2 mt-2 border-t border-gray-200">
-                    <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-700">الإجمالي:</span>
-                      <span className={`text-lg font-bold text-${item.color}-600`}>
-                        {item.boxes + item.units}
-                      </span>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">كراتين:</span>
+                      <span className="font-bold text-gray-900">{item.boxes}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">مفرد:</span>
+                      <span className="font-bold text-gray-900">{item.units}</span>
+                    </div>
+                    <div className="pt-2 mt-2 border-t border-gray-200">
+                      <div className="flex justify-between">
+                        <span className="text-sm font-medium text-gray-700">الإجمالي:</span>
+                        <span className={`text-lg font-bold text-${item.textColor}`}>
+                          {item.boxes + item.units}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
