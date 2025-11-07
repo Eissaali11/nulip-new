@@ -131,71 +131,32 @@ export default function Dashboard() {
             </DropdownMenu>
           </div>
 
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
-            {/* Left Side - Logo Animation */}
-            <motion.div 
-              className="flex items-center gap-8"
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-            >
-              <motion.div
-                className="bg-white/95 backdrop-blur-sm rounded-2xl p-4 shadow-2xl"
-                whileHover={{ scale: 1.05, rotate: 2 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <img src={rasscoLogo} alt="RASSCO" className="h-16 w-auto" />
-              </motion.div>
-            </motion.div>
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-4 sm:gap-6 lg:gap-8">
+            {/* Left Side - Logo */}
+            <div className="flex items-center gap-4">
+              <div className="bg-white/95 backdrop-blur-sm rounded-xl sm:rounded-2xl p-2 sm:p-4 shadow-2xl">
+                <img src={rasscoLogo} alt="RASSCO" className="h-12 sm:h-16 w-auto" />
+              </div>
+            </div>
 
             {/* Center - Title */}
-            <motion.div 
-              className="text-center flex-1"
-              initial={{ opacity: 0, y: -30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-            >
-              <motion.div
-                animate={{ 
-                  scale: [1, 1.02, 1],
-                }}
-                transition={{ 
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              >
-                <h1 className="text-4xl lg:text-5xl font-black text-white mb-2 drop-shadow-2xl flex items-center justify-center gap-3">
-                  <Sparkles className="h-10 w-10 text-yellow-300 animate-pulse" />
-                  نظام إدارة المخزون
-                  <Sparkles className="h-10 w-10 text-yellow-300 animate-pulse" />
-                </h1>
-                <p className="text-white/90 text-lg font-semibold">مرحباً بك، {user?.fullName}</p>
-              </motion.div>
-            </motion.div>
+            <div className="text-center flex-1">
+              <h1 className="text-2xl sm:text-3xl lg:text-5xl font-black text-white mb-2 drop-shadow-2xl flex items-center justify-center gap-2 sm:gap-3">
+                <Sparkles className="h-6 w-6 sm:h-8 sm:w-8 lg:h-10 lg:w-10 text-yellow-300 animate-pulse" />
+                <span className="hidden sm:inline">نظام إدارة المخزون</span>
+                <span className="sm:hidden">المخزون</span>
+                <Sparkles className="h-6 w-6 sm:h-8 sm:w-8 lg:h-10 lg:w-10 text-yellow-300 animate-pulse" />
+              </h1>
+              <p className="text-white/90 text-sm sm:text-base lg:text-lg font-semibold">مرحباً بك، {user?.fullName}</p>
+            </div>
 
             {/* Right Side - Device Image */}
-            <motion.div
-              className="relative"
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-            >
-              <motion.div
-                animate={{ 
-                  y: [0, -10, 0],
-                }}
-                transition={{ 
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-                className="relative"
-              >
+            <div className="relative hidden lg:block">
+              <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-3xl blur-xl opacity-50"></div>
-                <img src={madaDevice} alt="MADA Device" className="h-48 w-auto relative z-10 drop-shadow-2xl" />
-              </motion.div>
-            </motion.div>
+                <img src={madaDevice} alt="MADA Device" className="h-40 lg:h-48 w-auto relative z-10 drop-shadow-2xl" />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -236,15 +197,13 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent className="relative">
                   <Link href="/my-fixed-inventory">
-                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                      <Button 
-                        className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold shadow-lg shadow-blue-500/50 text-base py-6" 
-                        data-testid="button-go-to-fixed-inventory"
-                      >
-                        الذهاب للمخزون الثابت
-                        <ArrowRight className="mr-2 h-5 w-5" />
-                      </Button>
-                    </motion.div>
+                    <Button 
+                      className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold shadow-lg shadow-blue-500/50 text-base py-6 transition-all hover:shadow-xl" 
+                      data-testid="button-go-to-fixed-inventory"
+                    >
+                      الذهاب للمخزون الثابت
+                      <ArrowRight className="mr-2 h-5 w-5" />
+                    </Button>
                   </Link>
                 </CardContent>
               </Card>
@@ -275,15 +234,13 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent className="relative">
                   <Link href="/my-moving-inventory">
-                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                      <Button 
-                        className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold shadow-lg shadow-green-500/50 text-base py-6" 
-                        data-testid="button-go-to-moving-inventory"
-                      >
-                        الذهاب للمخزون المتحرك
-                        <ArrowRight className="mr-2 h-5 w-5" />
-                      </Button>
-                    </motion.div>
+                    <Button 
+                      className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold shadow-lg shadow-green-500/50 text-base py-6 transition-all hover:shadow-xl" 
+                      data-testid="button-go-to-moving-inventory"
+                    >
+                      الذهاب للمخزون المتحرك
+                      <ArrowRight className="mr-2 h-5 w-5" />
+                    </Button>
                   </Link>
                 </CardContent>
               </Card>
@@ -319,20 +276,18 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent className="relative">
                   <Link href="/notifications">
-                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                      <Button 
-                        className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white font-bold shadow-lg shadow-orange-500/50 text-base py-6" 
-                        data-testid="button-go-to-notifications"
-                      >
-                        عرض الإشعارات
-                        {pendingTransfers.length > 0 && (
-                          <Badge className="mr-2 bg-white text-orange-600 font-bold">
-                            {pendingTransfers.length}
-                          </Badge>
-                        )}
-                        <ArrowRight className="mr-2 h-5 w-5" />
-                      </Button>
-                    </motion.div>
+                    <Button 
+                      className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white font-bold shadow-lg shadow-orange-500/50 text-base py-6 transition-all hover:shadow-xl" 
+                      data-testid="button-go-to-notifications"
+                    >
+                      عرض الإشعارات
+                      {pendingTransfers.length > 0 && (
+                        <Badge className="mr-2 bg-white text-orange-600 font-bold">
+                          {pendingTransfers.length}
+                        </Badge>
+                      )}
+                      <ArrowRight className="mr-2 h-5 w-5" />
+                    </Button>
                   </Link>
                 </CardContent>
               </Card>
@@ -368,15 +323,13 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent className="relative">
                   <Link href="/my-fixed-inventory">
-                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                      <Button 
-                        className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold shadow-lg shadow-blue-500/50 text-base py-6" 
-                        data-testid="button-admin-fixed-inventory"
-                      >
-                        الذهاب للمخزون الثابت
-                        <ArrowRight className="mr-2 h-5 w-5" />
-                      </Button>
-                    </motion.div>
+                    <Button 
+                      className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold shadow-lg shadow-blue-500/50 text-base py-6 transition-all hover:shadow-xl" 
+                      data-testid="button-admin-fixed-inventory"
+                    >
+                      الذهاب للمخزون الثابت
+                      <ArrowRight className="mr-2 h-5 w-5" />
+                    </Button>
                   </Link>
                 </CardContent>
               </Card>
@@ -407,15 +360,13 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent className="relative">
                   <Link href="/my-moving-inventory">
-                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                      <Button 
-                        className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold shadow-lg shadow-green-500/50 text-base py-6" 
-                        data-testid="button-admin-moving-inventory"
-                      >
-                        الذهاب للمخزون المتحرك
-                        <ArrowRight className="mr-2 h-5 w-5" />
-                      </Button>
-                    </motion.div>
+                    <Button 
+                      className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold shadow-lg shadow-green-500/50 text-base py-6 transition-all hover:shadow-xl" 
+                      data-testid="button-admin-moving-inventory"
+                    >
+                      الذهاب للمخزون المتحرك
+                      <ArrowRight className="mr-2 h-5 w-5" />
+                    </Button>
                   </Link>
                 </CardContent>
               </Card>
@@ -446,15 +397,13 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent className="relative">
                   <Link href="/admin-inventory-overview">
-                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                      <Button 
-                        className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold shadow-lg shadow-purple-500/50 text-base py-6" 
-                        data-testid="button-admin-overview"
-                      >
-                        عرض لوحة الفنيين
-                        <ArrowRight className="mr-2 h-5 w-5" />
-                      </Button>
-                    </motion.div>
+                    <Button 
+                      className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold shadow-lg shadow-purple-500/50 text-base py-6 transition-all hover:shadow-xl" 
+                      data-testid="button-admin-overview"
+                    >
+                      عرض لوحة الفنيين
+                      <ArrowRight className="mr-2 h-5 w-5" />
+                    </Button>
                   </Link>
                 </CardContent>
               </Card>
@@ -485,15 +434,13 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent className="relative">
                   <Link href="/warehouses">
-                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                      <Button 
-                        className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white font-bold shadow-lg shadow-orange-500/50 text-base py-6" 
-                        data-testid="button-admin-warehouses"
-                      >
-                        إدارة المستودعات
-                        <ArrowRight className="mr-2 h-5 w-5" />
-                      </Button>
-                    </motion.div>
+                    <Button 
+                      className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white font-bold shadow-lg shadow-orange-500/50 text-base py-6 transition-all hover:shadow-xl" 
+                      data-testid="button-admin-warehouses"
+                    >
+                      إدارة المستودعات
+                      <ArrowRight className="mr-2 h-5 w-5" />
+                    </Button>
                   </Link>
                 </CardContent>
               </Card>
@@ -524,15 +471,13 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent className="relative">
                   <Link href="/operations">
-                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                      <Button 
-                        className="w-full bg-gradient-to-r from-[#18B2B0] to-cyan-600 hover:from-[#159a98] hover:to-cyan-700 text-white font-bold shadow-lg shadow-[#18B2B0]/50 text-base py-6" 
-                        data-testid="button-admin-operations"
-                      >
-                        إدارة العمليات
-                        <ArrowRight className="mr-2 h-5 w-5" />
-                      </Button>
-                    </motion.div>
+                    <Button 
+                      className="w-full bg-gradient-to-r from-[#18B2B0] to-cyan-600 hover:from-[#159a98] hover:to-cyan-700 text-white font-bold shadow-lg shadow-[#18B2B0]/50 text-base py-6 transition-all hover:shadow-xl" 
+                      data-testid="button-admin-operations"
+                    >
+                      إدارة العمليات
+                      <ArrowRight className="mr-2 h-5 w-5" />
+                    </Button>
                   </Link>
                 </CardContent>
               </Card>
