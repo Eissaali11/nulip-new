@@ -147,7 +147,12 @@ export default function AdminInventoryOverview() {
   const warningTechs = technicians.filter(t => t.alertLevel === 'warning').length;
   const goodTechs = technicians.filter(t => t.alertLevel === 'good').length;
 
-  const createDetailedWorksheet = (workbook: ExcelJS.Workbook, sheetName: string, dataType: 'fixed' | 'moving') => {
+  const createInventoryWorksheet = (
+    workbook: ExcelJS.Workbook, 
+    sheetName: string, 
+    inventoryType: 'fixed' | 'moving',
+    metric: 'boxes' | 'units'
+  ) => {
     const worksheet = workbook.addWorksheet(sheetName);
     worksheet.views = [{ rightToLeft: true }];
 
@@ -166,7 +171,7 @@ export default function AdminInventoryOverview() {
     });
     const time = currentDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
 
-    const numCols = 30;
+    const numCols = 12;
     worksheet.mergeCells(1, 1, 1, numCols);
     const titleCell = worksheet.getCell(1, 1);
     titleCell.value = 'Technician Inventory Management System';
@@ -188,31 +193,23 @@ export default function AdminInventoryOverview() {
 
     worksheet.addRow([]);
 
+    const metricLabel = metric === 'boxes' ? 'Box' : 'Unit';
     const headerRow = worksheet.addRow([
       '#',
       'Technician Name',
       'City',
-      'N950 Box',
-      'N950 Unit',
-      'I9000s Box',
-      'I9000s Unit',
-      'I9100 Box',
-      'I9100 Unit',
-      'Roll Box',
-      'Roll Unit',
-      'Sticker Box',
-      'Sticker Unit',
-      'Battery Box',
-      'Battery Unit',
-      'Mobily Box',
-      'Mobily Unit',
-      'STC Box',
-      'STC Unit',
-      'Zain Box',
-      'Zain Unit'
+      `N950 ${metricLabel}`,
+      `I9000s ${metricLabel}`,
+      `I9100 ${metricLabel}`,
+      `Roll ${metricLabel}`,
+      `Sticker ${metricLabel}`,
+      `Battery ${metricLabel}`,
+      `Mobily ${metricLabel}`,
+      `STC ${metricLabel}`,
+      `Zain ${metricLabel}`
     ]);
     
-    headerRow.font = { bold: true, size: 9, color: { argb: 'FFFFFFFF' } };
+    headerRow.font = { bold: true, size: 10, color: { argb: 'FFFFFFFF' } };
     headerRow.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
     headerRow.height = 30;
     headerRow.eachCell((cell) => {
@@ -230,62 +227,44 @@ export default function AdminInventoryOverview() {
     });
 
     let totals = {
-      n950Box: 0, n950Unit: 0,
-      i9000sBox: 0, i9000sUnit: 0,
-      i9100Box: 0, i9100Unit: 0,
-      rollBox: 0, rollUnit: 0,
-      stickerBox: 0, stickerUnit: 0,
-      batteryBox: 0, batteryUnit: 0,
-      mobilyBox: 0, mobilyUnit: 0,
-      stcBox: 0, stcUnit: 0,
-      zainBox: 0, zainUnit: 0
+      n950: 0,
+      i9000s: 0,
+      i9100: 0,
+      roll: 0,
+      sticker: 0,
+      battery: 0,
+      mobily: 0,
+      stc: 0,
+      zain: 0
     };
 
     technicians.forEach((tech, index) => {
-      const inv = dataType === 'fixed' ? tech.fixedInventory : tech.movingInventory;
+      const inv = inventoryType === 'fixed' ? tech.fixedInventory : tech.movingInventory;
       
       const data = [
         index + 1,
         tech.technicianName,
         tech.city,
-        inv?.n950Boxes || 0,
-        inv?.n950Units || 0,
-        inv?.i9000sBoxes || 0,
-        inv?.i9000sUnits || 0,
-        inv?.i9100Boxes || 0,
-        inv?.i9100Units || 0,
-        inv?.rollPaperBoxes || 0,
-        inv?.rollPaperUnits || 0,
-        inv?.stickersBoxes || 0,
-        inv?.stickersUnits || 0,
-        inv?.newBatteriesBoxes || 0,
-        inv?.newBatteriesUnits || 0,
-        inv?.mobilySimBoxes || 0,
-        inv?.mobilySimUnits || 0,
-        inv?.stcSimBoxes || 0,
-        inv?.stcSimUnits || 0,
-        inv?.zainSimBoxes || 0,
-        inv?.zainSimUnits || 0
+        metric === 'boxes' ? (inv?.n950Boxes || 0) : (inv?.n950Units || 0),
+        metric === 'boxes' ? (inv?.i9000sBoxes || 0) : (inv?.i9000sUnits || 0),
+        metric === 'boxes' ? (inv?.i9100Boxes || 0) : (inv?.i9100Units || 0),
+        metric === 'boxes' ? (inv?.rollPaperBoxes || 0) : (inv?.rollPaperUnits || 0),
+        metric === 'boxes' ? (inv?.stickersBoxes || 0) : (inv?.stickersUnits || 0),
+        metric === 'boxes' ? (inv?.newBatteriesBoxes || 0) : (inv?.newBatteriesUnits || 0),
+        metric === 'boxes' ? (inv?.mobilySimBoxes || 0) : (inv?.mobilySimUnits || 0),
+        metric === 'boxes' ? (inv?.stcSimBoxes || 0) : (inv?.stcSimUnits || 0),
+        metric === 'boxes' ? (inv?.zainSimBoxes || 0) : (inv?.zainSimUnits || 0)
       ];
 
-      totals.n950Box += Number(data[3]);
-      totals.n950Unit += Number(data[4]);
-      totals.i9000sBox += Number(data[5]);
-      totals.i9000sUnit += Number(data[6]);
-      totals.i9100Box += Number(data[7]);
-      totals.i9100Unit += Number(data[8]);
-      totals.rollBox += Number(data[9]);
-      totals.rollUnit += Number(data[10]);
-      totals.stickerBox += Number(data[11]);
-      totals.stickerUnit += Number(data[12]);
-      totals.batteryBox += Number(data[13]);
-      totals.batteryUnit += Number(data[14]);
-      totals.mobilyBox += Number(data[15]);
-      totals.mobilyUnit += Number(data[16]);
-      totals.stcBox += Number(data[17]);
-      totals.stcUnit += Number(data[18]);
-      totals.zainBox += Number(data[19]);
-      totals.zainUnit += Number(data[20]);
+      totals.n950 += Number(data[3]);
+      totals.i9000s += Number(data[4]);
+      totals.i9100 += Number(data[5]);
+      totals.roll += Number(data[6]);
+      totals.sticker += Number(data[7]);
+      totals.battery += Number(data[8]);
+      totals.mobily += Number(data[9]);
+      totals.stc += Number(data[10]);
+      totals.zain += Number(data[11]);
 
       const row = worksheet.addRow(data);
       row.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -306,24 +285,15 @@ export default function AdminInventoryOverview() {
       '',
       'Total',
       '',
-      totals.n950Box,
-      totals.n950Unit,
-      totals.i9000sBox,
-      totals.i9000sUnit,
-      totals.i9100Box,
-      totals.i9100Unit,
-      totals.rollBox,
-      totals.rollUnit,
-      totals.stickerBox,
-      totals.stickerUnit,
-      totals.batteryBox,
-      totals.batteryUnit,
-      totals.mobilyBox,
-      totals.mobilyUnit,
-      totals.stcBox,
-      totals.stcUnit,
-      totals.zainBox,
-      totals.zainUnit
+      totals.n950,
+      totals.i9000s,
+      totals.i9100,
+      totals.roll,
+      totals.sticker,
+      totals.battery,
+      totals.mobily,
+      totals.stc,
+      totals.zain
     ]);
     totalRow.font = { bold: true, size: 11 };
     totalRow.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -342,9 +312,20 @@ export default function AdminInventoryOverview() {
       };
     });
 
-    worksheet.columns = Array(21).fill({ width: 12 });
-    worksheet.getColumn(2).width = 25;
-    worksheet.getColumn(3).width = 15;
+    worksheet.columns = [
+      { width: 5 },
+      { width: 25 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 }
+    ];
   };
 
   const createTotalWorksheet = (workbook: ExcelJS.Workbook, sheetName: string) => {
@@ -596,8 +577,10 @@ export default function AdminInventoryOverview() {
     const workbook = new ExcelJS.Workbook();
     
     createTotalWorksheet(workbook, 'مخزون شامل - Total');
-    createDetailedWorksheet(workbook, 'مخزون ثابت - Fixed', 'fixed');
-    createDetailedWorksheet(workbook, 'مخزون متحرك - Moving', 'moving');
+    createInventoryWorksheet(workbook, 'ثابت كراتين - Fixed Boxes', 'fixed', 'boxes');
+    createInventoryWorksheet(workbook, 'ثابت مفردات - Fixed Units', 'fixed', 'units');
+    createInventoryWorksheet(workbook, 'متحرك كراتين - Moving Boxes', 'moving', 'boxes');
+    createInventoryWorksheet(workbook, 'متحرك مفردات - Moving Units', 'moving', 'units');
 
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
