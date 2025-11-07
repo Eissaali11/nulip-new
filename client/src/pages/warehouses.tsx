@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { 
   Warehouse, 
   Plus, 
@@ -15,9 +16,12 @@ import {
   ArrowRight,
   LayoutDashboard,
   Sparkles,
-  Download
+  Download,
+  Search,
+  Edit
 } from "lucide-react";
 import CreateWarehouseModal from "@/components/create-warehouse-modal";
+import EditWarehouseModal from "@/components/edit-warehouse-modal";
 import bannerImage from "@assets/Gemini_Generated_Image_1iknau1iknau1ikn_1762464877305.png";
 import { exportWarehousesToExcel } from "@/lib/exportToExcel";
 import { useToast } from "@/hooks/use-toast";
@@ -57,11 +61,19 @@ interface WarehouseData {
 
 export default function WarehousesPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedWarehouse, setSelectedWarehouse] = useState<WarehouseData | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
 
-  const { data: warehouses = [], isLoading } = useQuery<WarehouseData[]>({
+  const { data: allWarehouses = [], isLoading } = useQuery<WarehouseData[]>({
     queryKey: ["/api/warehouses"],
   });
+
+  const warehouses = allWarehouses.filter(warehouse => 
+    warehouse.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    warehouse.location.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleExportWarehouses = async () => {
     if (warehouses && warehouses.length > 0) {
@@ -270,6 +282,21 @@ export default function WarehousesPage() {
           </div>
         </div>
 
+        {/* Search Bar */}
+        <div className="mb-6">
+          <div className="relative">
+            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <Input
+              type="text"
+              placeholder="ابحث عن مستودع بالاسم أو الموقع..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pr-10 border-2 border-gray-200 focus:border-[#18B2B0] focus:ring-[#18B2B0] rounded-xl shadow-sm text-right"
+              data-testid="input-search-warehouses"
+            />
+          </div>
+        </div>
+
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
@@ -380,13 +407,30 @@ export default function WarehousesPage() {
                         </div>
 
                         <div className="flex justify-between items-center pt-4 border-t-2 border-gray-100">
-                          <Badge 
-                            variant={warehouse.isActive ? "default" : "secondary"}
-                            className={warehouse.isActive ? "bg-gradient-to-r from-[#18B2B0] to-teal-500 shadow-md text-white" : ""}
-                            data-testid={`badge-status-${warehouse.id}`}
-                          >
-                            {warehouse.isActive ? "● نشط" : "○ غير نشط"}
-                          </Badge>
+                          <div className="flex gap-2">
+                            <Badge 
+                              variant={warehouse.isActive ? "default" : "secondary"}
+                              className={warehouse.isActive ? "bg-gradient-to-r from-[#18B2B0] to-teal-500 shadow-md text-white" : ""}
+                              data-testid={`badge-status-${warehouse.id}`}
+                            >
+                              {warehouse.isActive ? "● نشط" : "○ غير نشط"}
+                            </Badge>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setSelectedWarehouse(warehouse);
+                                setShowEditModal(true);
+                              }}
+                              className="border-[#18B2B0] text-[#18B2B0] hover:bg-[#18B2B0] hover:text-white h-6 px-3"
+                              data-testid={`button-edit-warehouse-${warehouse.id}`}
+                            >
+                              <Edit className="h-3 w-3 ml-1" />
+                              تعديل
+                            </Button>
+                          </div>
                           <span className="text-sm text-[#18B2B0] font-bold group-hover:translate-x-[-4px] transition-transform flex items-center gap-2">
                             عرض التفاصيل
                             <Sparkles className="h-4 w-4" />
@@ -405,6 +449,12 @@ export default function WarehousesPage() {
       <CreateWarehouseModal 
         open={showCreateModal}
         onOpenChange={setShowCreateModal}
+      />
+
+      <EditWarehouseModal 
+        open={showEditModal}
+        onOpenChange={setShowEditModal}
+        warehouse={selectedWarehouse}
       />
     </div>
   );

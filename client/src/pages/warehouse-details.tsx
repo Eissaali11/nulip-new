@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,7 +44,8 @@ import {
   TrendingUp,
   Clock,
   CheckCircle,
-  XCircle
+  XCircle,
+  Search
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -92,6 +95,7 @@ interface WarehouseTransferRaw {
   itemType: string;
   packagingType: string;
   quantity: number;
+  performedBy: string;
   notes?: string;
   status: 'pending' | 'accepted' | 'rejected';
   rejectionReason?: string;
@@ -137,6 +141,9 @@ export default function WarehouseDetailsPage() {
   const [showUpdateInventoryModal, setShowUpdateInventoryModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showDeleteTransfersDialog, setShowDeleteTransfersDialog] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTransferIds, setSelectedTransferIds] = useState<Set<string>>(new Set());
 
   const { data: warehouse, isLoading: warehouseLoading } = useQuery<WarehouseData>({
     queryKey: ["/api/warehouses", warehouseId],
@@ -147,7 +154,7 @@ export default function WarehouseDetailsPage() {
     queryKey: ["/api/warehouse-transfers"],
   });
 
-  const transfers: WarehouseTransfer[] = rawTransfers ? (() => {
+  const allTransfers: WarehouseTransfer[] = rawTransfers ? (() => {
     const filtered = rawTransfers.filter((t) => t.warehouseId === warehouseId);
     
     const grouped = filtered.reduce((acc, transfer) => {
@@ -177,6 +184,15 @@ export default function WarehouseDetailsPage() {
     
     return Object.values(grouped);
   })() : [];
+
+  const transfers = allTransfers.filter(transfer => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      transfer.technicianName.toLowerCase().includes(query) ||
+      (transfer.notes && transfer.notes.toLowerCase().includes(query))
+    );
+  });
 
   const deleteWarehouseMutation = useMutation({
     mutationFn: async () => {
@@ -476,13 +492,43 @@ export default function WarehouseDetailsPage() {
       <div className="max-w-7xl mx-auto px-6 pb-10">
         <Card className="border-2 border-[#18B2B0]/20 shadow-xl bg-white/90 backdrop-blur-sm">
           <CardHeader className="border-b-2 border-[#18B2B0]/10 bg-gradient-to-r from-[#18B2B0]/5 to-teal-50/50">
-            <CardTitle className="flex items-center gap-3 text-right text-2xl">
-              <div className="p-2 rounded-lg bg-gradient-to-r from-[#18B2B0] to-teal-500 text-white">
-                <History className="h-6 w-6" />
+            <div className="flex flex-col gap-4">
+              <CardTitle className="flex items-center gap-3 text-right text-2xl">
+                <div className="p-2 rounded-lg bg-gradient-to-r from-[#18B2B0] to-teal-500 text-white">
+                  <History className="h-6 w-6" />
+                </div>
+                سجل النقل
+                <Badge className="mr-auto bg-[#18B2B0]">{allTransfers.length} عملية</Badge>
+              </CardTitle>
+              
+              <div className="flex gap-3 items-center">
+                <div className="relative flex-1">
+                  <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    type="text"
+                    placeholder="ابحث عن عملية بالفني أو الملاحظات..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pr-10 border-2 border-gray-200 focus:border-[#18B2B0] focus:ring-[#18B2B0] rounded-xl shadow-sm text-right"
+                    data-testid="input-search-transfers"
+                  />
+                </div>
+                
+                {selectedTransferIds.size > 0 && (
+                  <Button
+                    onClick={() => {
+                      /* سنضيف دالة الحذف قريباً */
+                    }}
+                    variant="destructive"
+                    className="flex items-center gap-2"
+                    data-testid="button-delete-selected-transfers"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    حذف ({selectedTransferIds.size})
+                  </Button>
+                )}
               </div>
-              سجل النقل
-              <Badge className="mr-auto bg-[#18B2B0]">{transfers.length} عملية</Badge>
-            </CardTitle>
+            </div>
           </CardHeader>
           <CardContent className="p-6">
             {transfersLoading ? (
@@ -525,50 +571,70 @@ export default function WarehouseDetailsPage() {
 
                   const statusColor = getStatusColor(transfer.status);
                   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+                  const isSelected = selectedTransferIds.has(transfer.id);
 
                   return (
-                    <Link 
-                      key={transfer.id} 
-                      href={`/transfer-details/${transfer.id}`}
+                    <motion.div
+                      key={transfer.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className={`relative overflow-hidden rounded-xl border-2 ${statusColor.border} bg-gradient-to-r ${statusColor.bg} p-5 shadow-md hover:shadow-xl transition-all ${isSelected ? 'ring-2 ring-[#18B2B0]' : ''}`}
+                      data-testid={`transfer-card-${transfer.id}`}
                     >
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        whileHover={{ scale: 1.01, y: -2 }}
-                        className={`relative overflow-hidden rounded-xl border-2 ${statusColor.border} bg-gradient-to-r ${statusColor.bg} p-5 shadow-md hover:shadow-xl transition-all cursor-pointer group`}
-                        data-testid={`transfer-card-${transfer.id}`}
-                      >
-                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#18B2B0] via-teal-400 to-cyan-400"></div>
-                        
-                        <div className="flex items-start justify-between gap-4 mb-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <div className={`p-2.5 rounded-lg bg-white/70 ${statusColor.icon} shadow-sm`}>
-                                <Send className="h-5 w-5" />
-                              </div>
-                              <div>
-                                <h3 className="text-lg font-bold text-gray-800">{transfer.technicianName}</h3>
-                                <p className="text-sm text-gray-600 flex items-center gap-1.5 mt-0.5">
-                                  <Clock className="h-3.5 w-3.5" />
-                                  {formatDistanceToNow(new Date(transfer.createdAt), { addSuffix: true, locale: ar })}
-                                </p>
-                              </div>
+                      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#18B2B0] via-teal-400 to-cyan-400"></div>
+                      
+                      <div className="flex items-start justify-between gap-4 mb-4">
+                        <div className="flex items-center gap-3 flex-1">
+                          <div 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const newSelected = new Set(selectedTransferIds);
+                              if (isSelected) {
+                                newSelected.delete(transfer.id);
+                              } else {
+                                newSelected.add(transfer.id);
+                              }
+                              setSelectedTransferIds(newSelected);
+                            }}
+                            className="cursor-pointer"
+                          >
+                            <Checkbox 
+                              checked={isSelected}
+                              className="h-5 w-5 border-2"
+                              data-testid={`checkbox-transfer-${transfer.id}`}
+                            />
+                          </div>
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className={`p-2.5 rounded-lg bg-white/70 ${statusColor.icon} shadow-sm`}>
+                              <Send className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-bold text-gray-800">{transfer.technicianName}</h3>
+                              <p className="text-sm text-gray-600 flex items-center gap-1.5 mt-0.5">
+                                <Clock className="h-3.5 w-3.5" />
+                                {formatDistanceToNow(new Date(transfer.createdAt), { addSuffix: true, locale: ar })}
+                              </p>
                             </div>
                           </div>
-                          
-                          <div className="flex flex-col items-end gap-2">
-                            <Badge className={`${statusColor.badge} text-sm px-3 py-1 shadow-sm`}>
-                              {transfer.status === 'pending' && <><Clock className="h-3.5 w-3.5 mr-1.5" />قيد الانتظار</>}
-                              {transfer.status === 'accepted' && <><CheckCircle className="h-3.5 w-3.5 mr-1.5" />مقبول</>}
-                              {transfer.status === 'rejected' && <><XCircle className="h-3.5 w-3.5 mr-1.5" />مرفوض</>}
-                            </Badge>
-                            <Badge variant="outline" className="bg-white/70 border-[#18B2B0]/30 text-[#18B2B0] font-bold shadow-sm">
-                              <Package className="h-3.5 w-3.5 mr-1.5" />
-                              {totalItems} قطعة
-                            </Badge>
-                          </div>
                         </div>
+                        
+                        <div className="flex flex-col items-end gap-2">
+                          <Badge className={`${statusColor.badge} text-sm px-3 py-1 shadow-sm`}>
+                            {transfer.status === 'pending' && <><Clock className="h-3.5 w-3.5 mr-1.5" />قيد الانتظار</>}
+                            {transfer.status === 'accepted' && <><CheckCircle className="h-3.5 w-3.5 mr-1.5" />مقبول</>}
+                            {transfer.status === 'rejected' && <><XCircle className="h-3.5 w-3.5 mr-1.5" />مرفوض</>}
+                          </Badge>
+                          <Badge variant="outline" className="bg-white/70 border-[#18B2B0]/30 text-[#18B2B0] font-bold shadow-sm">
+                            <Package className="h-3.5 w-3.5 mr-1.5" />
+                            {totalItems} قطعة
+                          </Badge>
+                        </div>
+                      </div>
+
+                      <Link href={`/transfer-details/${transfer.id}`}>
+                        <div className="cursor-pointer group">
 
                         <div className="bg-white/70 rounded-lg p-4 border border-gray-200/50 shadow-sm mb-3">
                           <p className="text-xs font-semibold text-gray-500 mb-2.5">الأصناف المنقولة</p>
@@ -594,14 +660,15 @@ export default function WarehouseDetailsPage() {
                           </div>
                         )}
 
-                        <div className="absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Badge className="bg-[#18B2B0] text-white text-xs shadow-md">
-                            <ArrowRight className="h-3 w-3 mr-1" />
-                            عرض التفاصيل
-                          </Badge>
+                          <div className="absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Badge className="bg-[#18B2B0] text-white text-xs shadow-md">
+                              <ArrowRight className="h-3 w-3 mr-1" />
+                              عرض التفاصيل
+                            </Badge>
+                          </div>
                         </div>
-                      </motion.div>
-                    </Link>
+                      </Link>
+                    </motion.div>
                   );
                 })}
               </div>

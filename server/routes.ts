@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { insertInventoryItemSchema, insertTransactionSchema, insertRegionSchema, insertUserSchema, insertTechnicianInventorySchema, insertWithdrawnDeviceSchema, loginSchema, techniciansInventory, insertWarehouseSchema, insertWarehouseInventorySchema, insertWarehouseTransferSchema, warehouseTransfers } from "@shared/schema";
 import { z } from "zod";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 // Simple session store for demo purposes (in production, use proper session store)
 const activeSessions = new Map<string, { userId: string; role: string; username: string; expiry: number }>();
@@ -1311,6 +1311,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: error.message });
       }
       res.status(500).json({ message: "Failed to reject transfer" });
+    }
+  });
+
+  app.delete("/api/warehouse-transfers", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const { ids } = req.body;
+      
+      if (!ids || !Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ message: "Invalid or empty IDs array" });
+      }
+
+      await db
+        .delete(warehouseTransfers)
+        .where(inArray(warehouseTransfers.id, ids));
+
+      res.json({ message: "Transfers deleted successfully", count: ids.length });
+    } catch (error) {
+      console.error("Error deleting transfers:", error);
+      res.status(500).json({ message: "Failed to delete transfers" });
     }
   });
 
