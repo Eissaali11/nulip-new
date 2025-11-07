@@ -336,8 +336,9 @@ export default function AdminInventoryOverview() {
       <div className="container mx-auto p-4 sm:p-6 max-w-7xl">
         
         {/* Header Section */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="relative overflow-hidden bg-gradient-to-br from-[#E0F7F7] via-white to-[#E0F7F7]/50 rounded-2xl shadow-lg border border-[#18B2B0]/20 p-4 sm:p-6 mb-6 backdrop-blur-sm">
+          <div className="absolute top-0 right-0 w-40 h-40 bg-[#18B2B0]/10 rounded-full blur-3xl"></div>
+          <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-[#18B2B0] rounded-xl">
                 <BarChart3 className="h-6 w-6 text-white" />
@@ -379,12 +380,14 @@ export default function AdminInventoryOverview() {
         </div>
 
         {/* Search Section */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Search className="h-5 w-5 text-[#18B2B0]" />
-            <h2 className="text-lg font-bold text-gray-900">البحث والتصفية</h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="relative overflow-hidden bg-gradient-to-br from-[#E0F7F7] via-white to-[#E0F7F7]/50 rounded-2xl shadow-lg border border-[#18B2B0]/20 p-4 sm:p-6 mb-6 backdrop-blur-sm">
+          <div className="absolute top-0 left-0 w-40 h-40 bg-[#18B2B0]/10 rounded-full blur-3xl"></div>
+          <div className="relative">
+            <div className="flex items-center gap-2 mb-4">
+              <Search className="h-5 w-5 text-[#18B2B0]" />
+              <h2 className="text-lg font-bold text-gray-900">البحث والتصفية</h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="relative">
               <Input
                 type="text"
@@ -425,12 +428,13 @@ export default function AdminInventoryOverview() {
                 </button>
               )}
             </div>
-          </div>
-          {(searchName || searchCity) && (
-            <div className="mt-3 text-sm text-gray-600">
-              النتائج: {technicians.length} من {allTechnicians.length} فني
             </div>
-          )}
+            {(searchName || searchCity) && (
+              <div className="mt-3 text-sm text-gray-600">
+                النتائج: {technicians.length} من {allTechnicians.length} فني
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Summary Cards */}
@@ -485,17 +489,19 @@ export default function AdminInventoryOverview() {
         </div>
 
         {/* Technicians List */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2.5 bg-[#18B2B0] rounded-xl">
-              <User className="h-5 w-5 text-white" />
+        <div className="relative overflow-hidden bg-gradient-to-br from-[#E0F7F7] via-white to-[#E0F7F7]/50 rounded-2xl shadow-lg border border-[#18B2B0]/20 p-4 sm:p-6 backdrop-blur-sm">
+          <div className="absolute bottom-0 left-0 w-40 h-40 bg-[#18B2B0]/10 rounded-full blur-3xl"></div>
+          <div className="relative">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2.5 bg-[#18B2B0] rounded-xl">
+                <User className="h-5 w-5 text-white" />
+              </div>
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+                قائمة الفنيين ({technicians.length})
+              </h2>
             </div>
-            <h2 className="text-lg sm:text-xl font-bold text-gray-900">
-              قائمة الفنيين ({technicians.length})
-            </h2>
-          </div>
 
-          <Accordion type="multiple" className="w-full space-y-3">
+            <Accordion type="multiple" className="w-full space-y-3">
             {technicians.map((tech, index) => (
               <AccordionItem 
                 key={tech.technicianId}
@@ -694,7 +700,8 @@ export default function AdminInventoryOverview() {
                 </AccordionContent>
               </AccordionItem>
             ))}
-          </Accordion>
+            </Accordion>
+          </div>
         </div>
       </div>
     </div>
