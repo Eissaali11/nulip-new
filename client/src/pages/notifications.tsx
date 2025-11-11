@@ -354,10 +354,10 @@ export default function Notifications() {
                     <div className="flex items-start justify-between mb-5">
                       <div className="flex items-start gap-4">
                         <div className="relative">
-                          <div className="p-4 bg-gradient-to-br from-[#18B2B0] via-teal-500 to-[#18B2B0] rounded-2xl shadow-lg shadow-[#18B2B0]/20 group-hover:shadow-[#18B2B0]/40 transition-all duration-300">
-                            <User className="h-6 w-6 text-white" />
+                          <div className="p-4 bg-gradient-to-br from-[#0f0f15] via-[#1a1a24] to-[#0f0f15] rounded-2xl border-2 border-[#18B2B0]/40 shadow-lg shadow-[#18B2B0]/30 group-hover:shadow-[#18B2B0]/50 group-hover:border-[#18B2B0]/60 transition-all duration-300">
+                            <User className="h-6 w-6 text-[#18B2B0] group-hover:text-teal-400 transition-colors duration-300" />
                           </div>
-                          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-gradient-to-br from-[#18B2B0] to-teal-400 rounded-full border-2 border-[#0f0f15]" />
+                          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-gradient-to-br from-[#18B2B0] to-teal-400 rounded-full border-2 border-[#0f0f15] shadow-md shadow-[#18B2B0]/50 animate-pulse" />
                         </div>
                         <div className="flex-1">
                           <h3 className="text-xl font-bold text-white mb-2 group-hover:text-[#18B2B0] transition-colors duration-300">
