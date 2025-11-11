@@ -45,6 +45,7 @@ import { InventoryPieCard } from "@/components/dashboard/InventoryPieCard";
 import { InventoryBarCard } from "@/components/dashboard/InventoryBarCard";
 import { TechnicianDashboardCard } from "@/components/dashboard/TechnicianDashboardCard";
 import { WarehouseDashboardCard } from "@/components/dashboard/WarehouseDashboardCard";
+import RequestInventoryModal from "@/components/request-inventory-modal";
 
 interface WarehouseTransfer {
   id: string;
@@ -56,6 +57,7 @@ export default function Dashboard() {
   const { user, logout } = useAuth();
   const [, setLocation] = useLocation();
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [showRequestInventoryModal, setShowRequestInventoryModal] = useState(false);
 
   const { data: pendingTransfers = [] } = useQuery<WarehouseTransfer[]>({
     queryKey: ["/api/warehouse-transfers", user?.id],
@@ -392,6 +394,25 @@ export default function Dashboard() {
           <p className="text-gray-400 text-sm sm:text-base">
             {user?.role === 'admin' ? 'لوحة التحكم الإدارية' : 'لوحة التحكم الشخصية'}
           </p>
+          
+          {/* زر طلب مخزون للفنيين فقط */}
+          {user?.role !== 'admin' && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2 }}
+              className="mt-6"
+            >
+              <Button
+                onClick={() => setShowRequestInventoryModal(true)}
+                className="bg-gradient-to-r from-[#18B2B0] to-teal-500 hover:from-[#16a09e] hover:to-teal-600 text-white px-8 py-6 text-lg shadow-lg shadow-[#18B2B0]/20"
+                data-testid="button-request-inventory"
+              >
+                <Package className="h-5 w-5 ml-2" />
+                طلب مخزون
+              </Button>
+            </motion.div>
+          )}
         </motion.div>
 
         {/* نظرة عامة على النظام */}
@@ -783,6 +804,12 @@ export default function Dashboard() {
           </motion.div>
         )}
       </div>
+      
+      {/* Request Inventory Modal */}
+      <RequestInventoryModal 
+        open={showRequestInventoryModal} 
+        onOpenChange={setShowRequestInventoryModal} 
+      />
     </div>
   );
 }
