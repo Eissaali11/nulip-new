@@ -44,6 +44,7 @@ import { Navbar } from "@/components/dashboard/Navbar";
 import { InventoryPieCard } from "@/components/dashboard/InventoryPieCard";
 import { InventoryBarCard } from "@/components/dashboard/InventoryBarCard";
 import { TechnicianDashboardCard } from "@/components/dashboard/TechnicianDashboardCard";
+import { WarehouseDashboardCard } from "@/components/dashboard/WarehouseDashboardCard";
 
 interface WarehouseTransfer {
   id: string;
@@ -592,23 +593,13 @@ export default function Dashboard() {
                 </Link>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-8 justify-items-center">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                 {warehousesData.slice(0, 4).map((warehouse, index) => (
-                  <div key={warehouse.id} className="flex flex-col items-center p-4">
-                    <CircularProgress
-                      percentage={Math.min(100, (getWarehouseTotalUnits(warehouse) / 1000) * 100)}
-                      label={warehouse.name}
-                      value={getWarehouseTotalUnits(warehouse).toString()}
-                      color={index === 0 ? "#f97316" : index === 1 ? "#fb923c" : index === 2 ? "#fdba74" : "#fed7aa"}
-                      size={140}
-                    />
-                    {warehouse.lowStockItemsCount > 0 && (
-                      <Badge className="mt-3 bg-red-500/20 text-red-400 border-red-500/30">
-                        <AlertTriangle className="h-3 w-3 ml-1" />
-                        {warehouse.lowStockItemsCount} منخفض
-                      </Badge>
-                    )}
-                  </div>
+                  <WarehouseDashboardCard
+                    key={warehouse.id}
+                    warehouse={warehouse}
+                    index={index}
+                  />
                 ))}
               </div>
             </div>
