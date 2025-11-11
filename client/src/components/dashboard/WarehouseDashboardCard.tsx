@@ -132,7 +132,7 @@ export const WarehouseDashboardCard = ({ warehouse, index }: WarehouseDashboardC
 
   return (
     <TooltipProvider>
-      <Link href={`/warehouse/${warehouse.id}`}>
+      <Link href={`/warehouses/${warehouse.id}`}>
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
