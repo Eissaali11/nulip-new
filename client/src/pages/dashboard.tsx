@@ -36,7 +36,7 @@ import {
   Warehouse,
   Zap
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Link, useLocation } from "wouter";
 import { CircularProgress } from "@/components/dashboard/CircularProgress";
 import { GridBackground } from "@/components/dashboard/GridBackground";
@@ -99,6 +99,26 @@ export default function Dashboard() {
 
   // حساب إجمالي المخزون الثابت
   const getFixedInventoryTotal = () => {
+    // إذا كان المستخدم Admin، احسب إجمالي المخزون الثابت لجميع الفنيين
+    if (user?.role === 'admin' && techniciansData?.technicians) {
+      return techniciansData.technicians.reduce((total, tech) => {
+        if (!tech.fixedInventory) return total;
+        const inv = tech.fixedInventory;
+        return total + (
+          (inv.n950Boxes || 0) + (inv.n950Units || 0) +
+          (inv.i9000sBoxes || 0) + (inv.i9000sUnits || 0) +
+          (inv.i9100Boxes || 0) + (inv.i9100Units || 0) +
+          (inv.rollPaperBoxes || 0) + (inv.rollPaperUnits || 0) +
+          (inv.stickersBoxes || 0) + (inv.stickersUnits || 0) +
+          (inv.newBatteriesBoxes || 0) + (inv.newBatteriesUnits || 0) +
+          (inv.mobilySimBoxes || 0) + (inv.mobilySimUnits || 0) +
+          (inv.stcSimBoxes || 0) + (inv.stcSimUnits || 0) +
+          (inv.zainSimBoxes || 0) + (inv.zainSimUnits || 0)
+        );
+      }, 0);
+    }
+    
+    // للفنيين، احسب المخزون الشخصي
     if (!myFixedInventory) return 0;
     const inv = myFixedInventory;
     return (
@@ -116,6 +136,26 @@ export default function Dashboard() {
 
   // حساب إجمالي المخزون المتحرك
   const getMovingInventoryTotal = () => {
+    // إذا كان المستخدم Admin، احسب إجمالي المخزون المتحرك لجميع الفنيين
+    if (user?.role === 'admin' && techniciansData?.technicians) {
+      return techniciansData.technicians.reduce((total, tech) => {
+        if (!tech.movingInventory) return total;
+        const inv = tech.movingInventory;
+        return total + (
+          (inv.n950Boxes || 0) + (inv.n950Units || 0) +
+          (inv.i9000sBoxes || 0) + (inv.i9000sUnits || 0) +
+          (inv.i9100Boxes || 0) + (inv.i9100Units || 0) +
+          (inv.rollPaperBoxes || 0) + (inv.rollPaperUnits || 0) +
+          (inv.stickersBoxes || 0) + (inv.stickersUnits || 0) +
+          (inv.newBatteriesBoxes || 0) + (inv.newBatteriesUnits || 0) +
+          (inv.mobilySimBoxes || 0) + (inv.mobilySimUnits || 0) +
+          (inv.stcSimBoxes || 0) + (inv.stcSimUnits || 0) +
+          (inv.zainSimBoxes || 0) + (inv.zainSimUnits || 0)
+        );
+      }, 0);
+    }
+    
+    // للفنيين، احسب المخزون الشخصي
     if (!myMovingInventory) return 0;
     const inv = myMovingInventory;
     return (
@@ -130,6 +170,68 @@ export default function Dashboard() {
       (inv.zainSimBoxes || 0) + (inv.zainSimUnits || 0)
     );
   };
+
+  // إنشاء object مجمّع لجميع المخزون الثابت (للأدمن) - مع memoization
+  const aggregatedFixedInventory = useMemo(() => {
+    if (user?.role === 'admin' && techniciansData?.technicians) {
+      return techniciansData.technicians.reduce((agg, tech) => {
+        if (!tech.fixedInventory) return agg;
+        const inv = tech.fixedInventory;
+        return {
+          n950Boxes: (agg.n950Boxes || 0) + (inv.n950Boxes || 0),
+          n950Units: (agg.n950Units || 0) + (inv.n950Units || 0),
+          i9000sBoxes: (agg.i9000sBoxes || 0) + (inv.i9000sBoxes || 0),
+          i9000sUnits: (agg.i9000sUnits || 0) + (inv.i9000sUnits || 0),
+          i9100Boxes: (agg.i9100Boxes || 0) + (inv.i9100Boxes || 0),
+          i9100Units: (agg.i9100Units || 0) + (inv.i9100Units || 0),
+          rollPaperBoxes: (agg.rollPaperBoxes || 0) + (inv.rollPaperBoxes || 0),
+          rollPaperUnits: (agg.rollPaperUnits || 0) + (inv.rollPaperUnits || 0),
+          stickersBoxes: (agg.stickersBoxes || 0) + (inv.stickersBoxes || 0),
+          stickersUnits: (agg.stickersUnits || 0) + (inv.stickersUnits || 0),
+          newBatteriesBoxes: (agg.newBatteriesBoxes || 0) + (inv.newBatteriesBoxes || 0),
+          newBatteriesUnits: (agg.newBatteriesUnits || 0) + (inv.newBatteriesUnits || 0),
+          mobilySimBoxes: (agg.mobilySimBoxes || 0) + (inv.mobilySimBoxes || 0),
+          mobilySimUnits: (agg.mobilySimUnits || 0) + (inv.mobilySimUnits || 0),
+          stcSimBoxes: (agg.stcSimBoxes || 0) + (inv.stcSimBoxes || 0),
+          stcSimUnits: (agg.stcSimUnits || 0) + (inv.stcSimUnits || 0),
+          zainSimBoxes: (agg.zainSimBoxes || 0) + (inv.zainSimBoxes || 0),
+          zainSimUnits: (agg.zainSimUnits || 0) + (inv.zainSimUnits || 0),
+        } as Partial<TechnicianFixedInventory>;
+      }, {} as Partial<TechnicianFixedInventory>);
+    }
+    return myFixedInventory;
+  }, [user?.role, techniciansData?.technicians, myFixedInventory]);
+
+  // إنشاء object مجمّع لجميع المخزون المتحرك (للأدمن) - مع memoization
+  const aggregatedMovingInventory = useMemo(() => {
+    if (user?.role === 'admin' && techniciansData?.technicians) {
+      return techniciansData.technicians.reduce((agg, tech) => {
+        if (!tech.movingInventory) return agg;
+        const inv = tech.movingInventory;
+        return {
+          n950Boxes: (agg.n950Boxes || 0) + (inv.n950Boxes || 0),
+          n950Units: (agg.n950Units || 0) + (inv.n950Units || 0),
+          i9000sBoxes: (agg.i9000sBoxes || 0) + (inv.i9000sBoxes || 0),
+          i9000sUnits: (agg.i9000sUnits || 0) + (inv.i9000sUnits || 0),
+          i9100Boxes: (agg.i9100Boxes || 0) + (inv.i9100Boxes || 0),
+          i9100Units: (agg.i9100Units || 0) + (inv.i9100Units || 0),
+          rollPaperBoxes: (agg.rollPaperBoxes || 0) + (inv.rollPaperBoxes || 0),
+          rollPaperUnits: (agg.rollPaperUnits || 0) + (inv.rollPaperUnits || 0),
+          stickersBoxes: (agg.stickersBoxes || 0) + (inv.stickersBoxes || 0),
+          stickersUnits: (agg.stickersUnits || 0) + (inv.stickersUnits || 0),
+          newBatteriesBoxes: (agg.newBatteriesBoxes || 0) + (inv.newBatteriesBoxes || 0),
+          newBatteriesUnits: (agg.newBatteriesUnits || 0) + (inv.newBatteriesUnits || 0),
+          mobilySimBoxes: (agg.mobilySimBoxes || 0) + (inv.mobilySimBoxes || 0),
+          mobilySimUnits: (agg.mobilySimUnits || 0) + (inv.mobilySimUnits || 0),
+          stcSimBoxes: (agg.stcSimBoxes || 0) + (inv.stcSimBoxes || 0),
+          stcSimUnits: (agg.stcSimUnits || 0) + (inv.stcSimUnits || 0),
+          zainSimBoxes: (agg.zainSimBoxes || 0) + (inv.zainSimBoxes || 0),
+          zainSimUnits: (agg.zainSimUnits || 0) + (inv.zainSimUnits || 0),
+        } as Partial<TechnicianInventory>;
+      }, {} as Partial<TechnicianInventory>);
+    }
+    return myMovingInventory;
+  }, [user?.role, techniciansData?.technicians, myMovingInventory]);
 
   // حساب كفاءة الفنيين (بناءً على المجموع الكلي: ثابت + متحرك)
   const getTechnicianEfficiency = (tech: TechnicianWithBothInventories) => {
@@ -613,9 +715,9 @@ export default function Dashboard() {
             movingTotal={getMovingInventoryTotal()}
           />
           <InventoryBarCard
-            fixedInventory={myFixedInventory}
-            movingInventory={myMovingInventory}
-            title="تفاصيل المخزون حسب الفئة"
+            fixedInventory={aggregatedFixedInventory}
+            movingInventory={aggregatedMovingInventory}
+            title={user?.role === 'admin' ? "توزيع المخزون لجميع الفنيين" : "تفاصيل المخزون حسب الفئة"}
           />
         </div>
 
