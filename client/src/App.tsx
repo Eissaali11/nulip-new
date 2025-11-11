@@ -20,6 +20,7 @@ import OperationsPage from "@/pages/operations";
 import OperationDetailsPage from "@/pages/operation-details";
 import NotificationsPage from "@/pages/notifications";
 import ProfilePage from "@/pages/profile";
+import TechnicianDetailsPage from "@/pages/technician-details";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import { Loader2 } from "lucide-react";
@@ -39,6 +40,7 @@ function AuthenticatedRouter() {
       <Route path="/my-moving-inventory" component={MyMovingInventory} />
       <Route path="/notifications" component={NotificationsPage} />
       <Route path="/profile" component={ProfilePage} />
+      <Route path="/technician-details/:id" component={TechnicianDetailsPage} />
       {user?.role === "admin" && (
         <>
           <Route path="/admin" component={AdminPage} />
