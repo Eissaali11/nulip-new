@@ -846,12 +846,15 @@ export default function WarehouseDetailsPage() {
         open={showUpdateInventoryModal}
         onOpenChange={setShowUpdateInventoryModal}
         warehouseId={warehouseId}
+        currentInventory={warehouse.inventory}
       />
 
       <TransferFromWarehouseModal
         open={showTransferModal}
         onOpenChange={setShowTransferModal}
         warehouseId={warehouseId}
+        warehouseName={warehouse.name}
+        currentInventory={warehouse.inventory}
       />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
