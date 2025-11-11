@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertInventoryItemSchema, insertTransactionSchema, insertRegionSchema, insertUserSchema, insertTechnicianInventorySchema, insertWithdrawnDeviceSchema, loginSchema, techniciansInventory, insertWarehouseSchema, insertWarehouseInventorySchema, insertWarehouseTransferSchema, warehouseTransfers } from "@shared/schema";
+import { insertInventoryItemSchema, insertTransactionSchema, insertRegionSchema, insertUserSchema, insertTechnicianInventorySchema, insertWithdrawnDeviceSchema, loginSchema, techniciansInventory, insertWarehouseSchema, insertWarehouseInventorySchema, insertWarehouseTransferSchema, warehouseTransfers, warehouseInventory } from "@shared/schema";
 import { z } from "zod";
 import { db } from "./db";
 import { eq, inArray } from "drizzle-orm";
@@ -1322,13 +1322,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid or empty IDs array" });
       }
 
-      await db
-        .delete(warehouseTransfers)
-        .where(inArray(warehouseTransfers.id, ids));
+      // استخدام transaction لضمان سلامة البيانات
+      await db.transaction(async (tx) => {
+        // قراءة بيانات العمليات المراد حذفها لإرجاع المخزون
+        const transfersToDelete = await tx
+          .select()
+          .from(warehouseTransfers)
+          .where(inArray(warehouseTransfers.id, ids));
 
-      res.json({ message: "Transfers deleted successfully", count: ids.length });
+        if (transfersToDelete.length === 0) {
+          throw new Error("No transfers found with the provided IDs");
+        }
+
+        // تجميع الكميات حسب المستودع
+        const warehouseUpdates = new Map<string, any>();
+
+        for (const transfer of transfersToDelete) {
+          if (!warehouseUpdates.has(transfer.warehouseId)) {
+            warehouseUpdates.set(transfer.warehouseId, {
+              n950Boxes: 0,
+              n950Units: 0,
+              i9000sBoxes: 0,
+              i9000sUnits: 0,
+              i9100Boxes: 0,
+              i9100Units: 0,
+              rollPaperBoxes: 0,
+              rollPaperUnits: 0,
+              stickersBoxes: 0,
+              stickersUnits: 0,
+              newBatteriesBoxes: 0,
+              newBatteriesUnits: 0,
+              mobilySimBoxes: 0,
+              mobilySimUnits: 0,
+              stcSimBoxes: 0,
+              stcSimUnits: 0,
+              zainSimBoxes: 0,
+              zainSimUnits: 0,
+            });
+          }
+
+          const updates = warehouseUpdates.get(transfer.warehouseId);
+          
+          // إضافة الكميات المنقولة حسب نوع التغليف
+          if (transfer.packagingType === 'box') {
+            updates[`${transfer.itemType}Boxes`] += transfer.quantity;
+          } else {
+            updates[`${transfer.itemType}Units`] += transfer.quantity;
+          }
+        }
+
+        // إرجاع المخزون إلى المستودعات
+        for (const [warehouseId, updates] of Array.from(warehouseUpdates.entries())) {
+          // الحصول على المخزون الحالي
+          const [currentInventory] = await tx
+            .select()
+            .from(warehouseInventory)
+            .where(eq(warehouseInventory.warehouseId, warehouseId));
+
+          if (!currentInventory) {
+            // إذا لم يكن هناك مخزون للمستودع، نرمي خطأ لإيقاف العملية
+            throw new Error(`Warehouse inventory not found for warehouse ID: ${warehouseId}`);
+          }
+
+          // تحديث المخزون بإضافة الكميات المرتجعة
+          await tx
+            .update(warehouseInventory)
+            .set({
+              n950Boxes: currentInventory.n950Boxes + updates.n950Boxes,
+              n950Units: currentInventory.n950Units + updates.n950Units,
+              i9000sBoxes: currentInventory.i9000sBoxes + updates.i9000sBoxes,
+              i9000sUnits: currentInventory.i9000sUnits + updates.i9000sUnits,
+              i9100Boxes: currentInventory.i9100Boxes + updates.i9100Boxes,
+              i9100Units: currentInventory.i9100Units + updates.i9100Units,
+              rollPaperBoxes: currentInventory.rollPaperBoxes + updates.rollPaperBoxes,
+              rollPaperUnits: currentInventory.rollPaperUnits + updates.rollPaperUnits,
+              stickersBoxes: currentInventory.stickersBoxes + updates.stickersBoxes,
+              stickersUnits: currentInventory.stickersUnits + updates.stickersUnits,
+              newBatteriesBoxes: currentInventory.newBatteriesBoxes + updates.newBatteriesBoxes,
+              newBatteriesUnits: currentInventory.newBatteriesUnits + updates.newBatteriesUnits,
+              mobilySimBoxes: currentInventory.mobilySimBoxes + updates.mobilySimBoxes,
+              mobilySimUnits: currentInventory.mobilySimUnits + updates.mobilySimUnits,
+              stcSimBoxes: currentInventory.stcSimBoxes + updates.stcSimBoxes,
+              stcSimUnits: currentInventory.stcSimUnits + updates.stcSimUnits,
+              zainSimBoxes: currentInventory.zainSimBoxes + updates.zainSimBoxes,
+              zainSimUnits: currentInventory.zainSimUnits + updates.zainSimUnits,
+            })
+            .where(eq(warehouseInventory.warehouseId, warehouseId));
+        }
+
+        // حذف السجلات بعد إرجاع المخزون بنجاح
+        await tx
+          .delete(warehouseTransfers)
+          .where(inArray(warehouseTransfers.id, ids));
+      });
+
+      res.json({ 
+        message: "Transfers deleted successfully and inventory returned to warehouse", 
+        count: ids.length
+      });
     } catch (error) {
       console.error("Error deleting transfers:", error);
+      if (error instanceof Error) {
+        return res.status(400).json({ message: error.message });
+      }
       res.status(500).json({ message: "Failed to delete transfers" });
     }
   });
