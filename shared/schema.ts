@@ -263,6 +263,7 @@ export const warehouseTransfers = pgTable("warehouse_transfers", {
 export const inventoryRequests = pgTable("inventory_requests", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   technicianId: varchar("technician_id").notNull().references(() => users.id),
+  warehouseId: varchar("warehouse_id").references(() => warehouses.id),
   
   // Items requested
   n950Boxes: integer("n950_boxes").default(0),

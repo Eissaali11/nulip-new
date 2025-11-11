@@ -1437,6 +1437,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: inventoryRequests.id,
           technicianId: inventoryRequests.technicianId,
           technicianName: users.fullName,
+          technicianUsername: users.username,
+          technicianCity: users.city,
           n950Boxes: inventoryRequests.n950Boxes,
           n950Units: inventoryRequests.n950Units,
           i9000sBoxes: inventoryRequests.i9000sBoxes,
@@ -1534,24 +1536,123 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/inventory-requests/:id/approve", requireAuth, requireAdmin, async (req, res) => {
     try {
       const user = (req as any).user;
-      const { adminNotes } = req.body;
+      const { adminNotes, warehouseId } = req.body;
 
-      const [updatedRequest] = await db
-        .update(inventoryRequests)
-        .set({
-          status: "approved",
-          adminNotes,
-          respondedBy: user.id,
-          respondedAt: new Date(),
-        })
+      if (!warehouseId) {
+        return res.status(400).json({ message: "Warehouse ID is required" });
+      }
+
+      const request = await db
+        .select()
+        .from(inventoryRequests)
         .where(eq(inventoryRequests.id, req.params.id))
-        .returning();
+        .limit(1);
 
-      if (!updatedRequest) {
+      if (!request || request.length === 0) {
         return res.status(404).json({ message: "Request not found" });
       }
 
-      res.json(updatedRequest);
+      const inventoryRequest = request[0];
+
+      if (inventoryRequest.status !== 'pending') {
+        return res.status(400).json({ message: "Request is not pending" });
+      }
+
+      await db.transaction(async (tx) => {
+        await tx
+          .update(inventoryRequests)
+          .set({
+            status: "approved",
+            adminNotes,
+            warehouseId,
+            respondedBy: user.id,
+            respondedAt: new Date(),
+          })
+          .where(eq(inventoryRequests.id, req.params.id));
+
+        const itemsToTransfer = [
+          { type: 'n950', boxes: inventoryRequest.n950Boxes, units: inventoryRequest.n950Units },
+          { type: 'i9000s', boxes: inventoryRequest.i9000sBoxes, units: inventoryRequest.i9000sUnits },
+          { type: 'i9100', boxes: inventoryRequest.i9100Boxes, units: inventoryRequest.i9100Units },
+          { type: 'rollPaper', boxes: inventoryRequest.rollPaperBoxes, units: inventoryRequest.rollPaperUnits },
+          { type: 'stickers', boxes: inventoryRequest.stickersBoxes, units: inventoryRequest.stickersUnits },
+          { type: 'newBatteries', boxes: inventoryRequest.newBatteriesBoxes, units: inventoryRequest.newBatteriesUnits },
+          { type: 'mobilySim', boxes: inventoryRequest.mobilySimBoxes, units: inventoryRequest.mobilySimUnits },
+          { type: 'stcSim', boxes: inventoryRequest.stcSimBoxes, units: inventoryRequest.stcSimUnits },
+          { type: 'zainSim', boxes: inventoryRequest.zainSimBoxes, units: inventoryRequest.zainSimUnits },
+        ];
+
+        for (const item of itemsToTransfer) {
+          if (item.boxes > 0) {
+            await tx.insert(warehouseTransfers).values({
+              warehouseId,
+              technicianId: inventoryRequest.technicianId,
+              itemType: item.type,
+              packagingType: 'box',
+              quantity: item.boxes,
+              performedBy: user.id,
+              notes: `تم إنشاؤه من طلب مخزون ${inventoryRequest.notes ? ': ' + inventoryRequest.notes : ''}`,
+              status: 'pending',
+            });
+          }
+          if (item.units > 0) {
+            await tx.insert(warehouseTransfers).values({
+              warehouseId,
+              technicianId: inventoryRequest.technicianId,
+              itemType: item.type,
+              packagingType: 'unit',
+              quantity: item.units,
+              performedBy: user.id,
+              notes: `تم إنشاؤه من طلب مخزون ${inventoryRequest.notes ? ': ' + inventoryRequest.notes : ''}`,
+              status: 'pending',
+            });
+          }
+        }
+
+        const warehouseInv = await tx
+          .select()
+          .from(warehouseInventory)
+          .where(eq(warehouseInventory.warehouseId, warehouseId))
+          .limit(1);
+
+        if (!warehouseInv || warehouseInv.length === 0) {
+          throw new Error("Warehouse inventory not found");
+        }
+
+        const currentInv = warehouseInv[0];
+
+        await tx
+          .update(warehouseInventory)
+          .set({
+            n950Boxes: (currentInv.n950Boxes || 0) - (inventoryRequest.n950Boxes || 0),
+            n950Units: (currentInv.n950Units || 0) - (inventoryRequest.n950Units || 0),
+            i9000sBoxes: (currentInv.i9000sBoxes || 0) - (inventoryRequest.i9000sBoxes || 0),
+            i9000sUnits: (currentInv.i9000sUnits || 0) - (inventoryRequest.i9000sUnits || 0),
+            i9100Boxes: (currentInv.i9100Boxes || 0) - (inventoryRequest.i9100Boxes || 0),
+            i9100Units: (currentInv.i9100Units || 0) - (inventoryRequest.i9100Units || 0),
+            rollPaperBoxes: (currentInv.rollPaperBoxes || 0) - (inventoryRequest.rollPaperBoxes || 0),
+            rollPaperUnits: (currentInv.rollPaperUnits || 0) - (inventoryRequest.rollPaperUnits || 0),
+            stickersBoxes: (currentInv.stickersBoxes || 0) - (inventoryRequest.stickersBoxes || 0),
+            stickersUnits: (currentInv.stickersUnits || 0) - (inventoryRequest.stickersUnits || 0),
+            newBatteriesBoxes: (currentInv.newBatteriesBoxes || 0) - (inventoryRequest.newBatteriesBoxes || 0),
+            newBatteriesUnits: (currentInv.newBatteriesUnits || 0) - (inventoryRequest.newBatteriesUnits || 0),
+            mobilySimBoxes: (currentInv.mobilySimBoxes || 0) - (inventoryRequest.mobilySimBoxes || 0),
+            mobilySimUnits: (currentInv.mobilySimUnits || 0) - (inventoryRequest.mobilySimUnits || 0),
+            stcSimBoxes: (currentInv.stcSimBoxes || 0) - (inventoryRequest.stcSimBoxes || 0),
+            stcSimUnits: (currentInv.stcSimUnits || 0) - (inventoryRequest.stcSimUnits || 0),
+            zainSimBoxes: (currentInv.zainSimBoxes || 0) - (inventoryRequest.zainSimBoxes || 0),
+            zainSimUnits: (currentInv.zainSimUnits || 0) - (inventoryRequest.zainSimUnits || 0),
+          })
+          .where(eq(warehouseInventory.warehouseId, warehouseId));
+      });
+
+      const updatedRequest = await db
+        .select()
+        .from(inventoryRequests)
+        .where(eq(inventoryRequests.id, req.params.id))
+        .limit(1);
+
+      res.json(updatedRequest[0]);
     } catch (error) {
       console.error("Error approving request:", error);
       res.status(500).json({ message: "Failed to approve request" });

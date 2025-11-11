@@ -30,11 +30,21 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 interface InventoryRequest {
   id: string;
   technicianId: string;
   technicianName: string;
+  technicianUsername?: string;
+  technicianCity?: string;
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
   notes?: string;
@@ -59,28 +69,46 @@ interface InventoryRequest {
   zainSimUnits: number;
 }
 
+interface Warehouse {
+  id: string;
+  name: string;
+}
+
 export default function Notifications() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<InventoryRequest | null>(null);
   const [adminNotes, setAdminNotes] = useState("");
+  const [selectedWarehouseId, setSelectedWarehouseId] = useState("");
 
   const { data: requests = [], isLoading } = useQuery<InventoryRequest[]>({
     queryKey: ["/api/inventory-requests"],
     enabled: user?.role === 'admin',
   });
 
+  const { data: warehouses = [] } = useQuery<Warehouse[]>({
+    queryKey: ["/api/warehouses"],
+    enabled: user?.role === 'admin',
+  });
+
   const approveMutation = useMutation({
-    mutationFn: async (id: string) => {
-      return await apiRequest("PATCH", `/api/inventory-requests/${id}/approve`, {});
+    mutationFn: async ({ id, warehouseId }: { id: string; warehouseId: string }) => {
+      return await apiRequest("PATCH", `/api/inventory-requests/${id}/approve`, { warehouseId });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inventory-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/warehouses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/warehouse-transfers"] });
+      setApproveDialogOpen(false);
+      setSelectedRequest(null);
+      setSelectedWarehouseId("");
       toast({
         title: "تم قبول الطلب بنجاح",
+        description: "تم إنشاء طلبات النقل من المستودع",
       });
     },
     onError: (error: any) => {
@@ -162,6 +190,26 @@ export default function Notifications() {
         return <Badge className="bg-red-500/20 text-red-400 border-red-500/30">مرفوض</Badge>;
       default:
         return null;
+    }
+  };
+
+  const handleApproveClick = (request: InventoryRequest) => {
+    setSelectedRequest(request);
+    setApproveDialogOpen(true);
+  };
+
+  const handleConfirmApprove = () => {
+    if (!selectedWarehouseId) {
+      toast({
+        title: "خطأ",
+        description: "يجب اختيار المستودع",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (selectedRequest) {
+      approveMutation.mutate({ id: selectedRequest.id, warehouseId: selectedWarehouseId });
     }
   };
 
@@ -291,14 +339,26 @@ export default function Notifications() {
                         </div>
                         <div>
                           <h3 className="text-lg font-bold text-white">{request.technicianName}</h3>
-                          <div className="flex items-center gap-2 text-sm text-gray-400">
-                            <Calendar className="h-4 w-4" />
-                            <span>
-                              {formatDistanceToNow(new Date(request.createdAt), { 
-                                addSuffix: true, 
-                                locale: ar 
-                              })}
-                            </span>
+                          <div className="flex flex-col gap-1 mt-1">
+                            {request.technicianUsername && (
+                              <p className="text-sm text-gray-400">
+                                المعرف: @{request.technicianUsername}
+                              </p>
+                            )}
+                            {request.technicianCity && (
+                              <p className="text-sm text-gray-400">
+                                المدينة: {request.technicianCity}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-2 text-sm text-gray-400">
+                              <Calendar className="h-4 w-4" />
+                              <span>
+                                {formatDistanceToNow(new Date(request.createdAt), { 
+                                  addSuffix: true, 
+                                  locale: ar 
+                                })}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -347,7 +407,7 @@ export default function Notifications() {
                     {request.status === 'pending' && (
                       <div className="flex gap-2 mt-4">
                         <Button
-                          onClick={() => approveMutation.mutate(request.id)}
+                          onClick={() => handleApproveClick(request)}
                           disabled={approveMutation.isPending}
                           className="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white"
                           data-testid={`button-approve-${request.id}`}
@@ -374,6 +434,65 @@ export default function Notifications() {
           </div>
         )}
       </div>
+
+      {/* Approve Dialog */}
+      <Dialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
+        <DialogContent className="sm:max-w-md bg-[#0f0f15] border-[#18B2B0]/20 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-xl">قبول الطلب</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              اختر المستودع الذي سيتم السحب منه
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            {selectedRequest && (
+              <div className="p-3 bg-white/5 rounded-lg border border-white/10">
+                <p className="text-sm text-gray-400 mb-1">الفني:</p>
+                <p className="text-white font-bold">{selectedRequest.technicianName}</p>
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label className="text-white">المستودع</Label>
+              <Select value={selectedWarehouseId} onValueChange={setSelectedWarehouseId}>
+                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                  <SelectValue placeholder="اختر المستودع" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#0f0f15] border-[#18B2B0]/20">
+                  {warehouses.map((warehouse) => (
+                    <SelectItem 
+                      key={warehouse.id} 
+                      value={warehouse.id}
+                      className="text-white hover:bg-white/10"
+                    >
+                      {warehouse.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setApproveDialogOpen(false);
+                setSelectedWarehouseId("");
+              }}
+              className="bg-white/5 border-white/10 text-gray-300 hover:bg-white/10"
+            >
+              إلغاء
+            </Button>
+            <Button
+              onClick={handleConfirmApprove}
+              disabled={!selectedWarehouseId || approveMutation.isPending}
+              className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white"
+              data-testid="button-confirm-approve"
+            >
+              تأكيد القبول
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Reject Dialog */}
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
