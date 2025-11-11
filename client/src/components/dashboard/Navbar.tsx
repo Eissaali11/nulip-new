@@ -32,6 +32,10 @@ interface WarehouseTransfer {
   status: 'pending' | 'accepted' | 'rejected';
 }
 
+interface PendingCountResponse {
+  count: number;
+}
+
 export const Navbar = () => {
   const [location] = useLocation();
   const { user } = useAuth();
@@ -42,6 +46,15 @@ export const Navbar = () => {
     enabled: !!user?.id && user?.role !== 'admin',
     select: (data) => data.filter(t => t.status === 'pending' && t.technicianId === user?.id),
   });
+
+  const { data: pendingRequestsCount } = useQuery<PendingCountResponse>({
+    queryKey: ["/api/inventory-requests/pending/count"],
+    enabled: !!user?.id && user?.role === 'admin',
+  });
+
+  const notificationsBadgeCount = user?.role === 'admin' 
+    ? (pendingRequestsCount?.count || 0)
+    : pendingTransfers.length;
 
   const navItems: NavItem[] = [
     {
@@ -75,7 +88,7 @@ export const Navbar = () => {
       href: "/notifications",
       icon: Bell,
       gradient: "from-orange-500 to-amber-600",
-      badge: pendingTransfers.length > 0 ? pendingTransfers.length : undefined,
+      badge: notificationsBadgeCount > 0 ? notificationsBadgeCount : undefined,
     },
     {
       title: "المستخدمين",
