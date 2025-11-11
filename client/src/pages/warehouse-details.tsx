@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { motion } from "framer-motion";
@@ -40,12 +40,11 @@ import {
   Send,
   History,
   RefreshCw,
-  Sparkles,
   TrendingUp,
-  Clock,
   CheckCircle,
   XCircle,
-  Search
+  Search,
+  AlertTriangle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -53,6 +52,21 @@ import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
 import UpdateWarehouseInventoryModal from "@/components/update-warehouse-inventory-modal";
 import TransferFromWarehouseModal from "@/components/transfer-from-warehouse-modal";
+import { GridBackground } from "@/components/dashboard/GridBackground";
+import { Navbar } from "@/components/dashboard/Navbar";
+import { CircularProgress } from "@/components/dashboard/CircularProgress";
+import dashboardBg from "@assets/image_1762515061799.png";
+import rasscoLogo from "@assets/image_1762442473114.png";
+import { useAuth } from "@/lib/auth";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { User, UserCircle, LogOut } from "lucide-react";
 
 interface WarehouseInventory {
   id: string;
@@ -138,6 +152,8 @@ export default function WarehouseDetailsPage() {
   const [, params] = useRoute("/warehouses/:id");
   const warehouseId = params?.id || "";
   const { toast } = useToast();
+  const { user, logout } = useAuth();
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   const [showUpdateInventoryModal, setShowUpdateInventoryModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
@@ -145,6 +161,16 @@ export default function WarehouseDetailsPage() {
   const [showDeleteTransfersDialog, setShowDeleteTransfersDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTransferIds, setSelectedTransferIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const handleLogout = async () => {
+    await logout();
+    window.location.href = "/";
+  };
 
   const { data: warehouse, isLoading: warehouseLoading } = useQuery<WarehouseData>({
     queryKey: ["/api/warehouses", warehouseId],
@@ -242,77 +268,109 @@ export default function WarehouseDetailsPage() {
 
   const inventoryItems = [
     { 
-      name: "أجهزة N950", 
+      name: "N950", 
+      nameAr: "N950",
       boxes: warehouse?.inventory?.n950Boxes || 0,
       units: warehouse?.inventory?.n950Units || 0,
-      icon: Box,
-      gradient: "from-[#18B2B0] to-teal-500"
+      icon: Smartphone,
+      color: "#3b82f6",
+      gradient: "from-blue-500 to-blue-600"
     },
     { 
-      name: "أجهزة I9000s", 
+      name: "I9000S", 
+      nameAr: "I9000S",
       boxes: warehouse?.inventory?.i9000sBoxes || 0,
       units: warehouse?.inventory?.i9000sUnits || 0,
-      icon: Box,
-      gradient: "from-purple-500 to-pink-500"
+      icon: Smartphone,
+      color: "#8b5cf6",
+      gradient: "from-purple-500 to-violet-600"
     },
     { 
-      name: "أجهزة I9100", 
+      name: "I9100", 
+      nameAr: "I9100",
       boxes: warehouse?.inventory?.i9100Boxes || 0,
       units: warehouse?.inventory?.i9100Units || 0,
-      icon: Box,
-      gradient: "from-indigo-500 to-blue-500"
+      icon: Smartphone,
+      color: "#ec4899",
+      gradient: "from-pink-500 to-rose-600"
     },
     { 
-      name: "ورق الطباعة", 
+      name: "Roll Paper", 
+      nameAr: "ورق الطباعة",
       boxes: warehouse?.inventory?.rollPaperBoxes || 0,
       units: warehouse?.inventory?.rollPaperUnits || 0,
       icon: FileText,
-      gradient: "from-amber-500 to-orange-500"
+      color: "#f59e0b",
+      gradient: "from-amber-500 to-orange-600"
     },
     { 
-      name: "الملصقات", 
+      name: "Stickers", 
+      nameAr: "الملصقات",
       boxes: warehouse?.inventory?.stickersBoxes || 0,
       units: warehouse?.inventory?.stickersUnits || 0,
       icon: Sticker,
-      gradient: "from-pink-500 to-rose-500"
+      color: "#14b8a6",
+      gradient: "from-teal-500 to-cyan-600"
     },
     { 
-      name: "البطاريات الجديدة", 
+      name: "Batteries", 
+      nameAr: "البطاريات",
       boxes: warehouse?.inventory?.newBatteriesBoxes || 0,
       units: warehouse?.inventory?.newBatteriesUnits || 0,
       icon: Battery,
-      gradient: "from-green-500 to-emerald-500"
+      color: "#10b981",
+      gradient: "from-emerald-500 to-green-600"
     },
     { 
-      name: "شرائح موبايلي", 
+      name: "Mobily SIM", 
+      nameAr: "موبايلي",
       boxes: warehouse?.inventory?.mobilySimBoxes || 0,
       units: warehouse?.inventory?.mobilySimUnits || 0,
       icon: Smartphone,
-      gradient: "from-teal-500 to-cyan-500"
+      color: "#06b6d4",
+      gradient: "from-cyan-500 to-sky-600"
     },
     { 
-      name: "شرائح STC", 
+      name: "STC SIM", 
+      nameAr: "STC",
       boxes: warehouse?.inventory?.stcSimBoxes || 0,
       units: warehouse?.inventory?.stcSimUnits || 0,
       icon: Smartphone,
-      gradient: "from-blue-600 to-indigo-600"
+      color: "#6366f1",
+      gradient: "from-indigo-500 to-blue-600"
     },
     { 
-      name: "شرائح زين", 
+      name: "Zain SIM", 
+      nameAr: "زين",
       boxes: warehouse?.inventory?.zainSimBoxes || 0,
       units: warehouse?.inventory?.zainSimUnits || 0,
       icon: Smartphone,
-      gradient: "from-purple-600 to-violet-600"
+      color: "#f97316",
+      gradient: "from-orange-500 to-red-600"
     },
   ];
 
   if (warehouseLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50/30 to-slate-50 p-6">
-        <div className="max-w-7xl mx-auto space-y-6">
-          <Skeleton className="h-20 w-full" />
-          <Skeleton className="h-96 w-full" />
-          <Skeleton className="h-96 w-full" />
+      <div
+        className="min-h-screen text-white overflow-hidden relative"
+        dir="rtl"
+        style={{
+          backgroundImage: `url(${dashboardBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          backgroundAttachment: 'fixed'
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-[#050508]/90 via-[#050508]/85 to-[#050508]/90 backdrop-blur-[2px] z-0" />
+        <GridBackground />
+        <div className="relative z-10 container mx-auto px-4 py-8">
+          <div className="space-y-6">
+            <Skeleton className="h-20 w-full bg-white/10" />
+            <Skeleton className="h-96 w-full bg-white/10" />
+            <Skeleton className="h-96 w-full bg-white/10" />
+          </div>
         </div>
       </div>
     );
@@ -320,12 +378,24 @@ export default function WarehouseDetailsPage() {
 
   if (!warehouse) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50/30 to-slate-50 flex items-center justify-center">
-        <div className="text-center">
+      <div
+        className="min-h-screen text-white overflow-hidden relative flex items-center justify-center"
+        dir="rtl"
+        style={{
+          backgroundImage: `url(${dashboardBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          backgroundAttachment: 'fixed'
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-[#050508]/90 via-[#050508]/85 to-[#050508]/90 backdrop-blur-[2px] z-0" />
+        <GridBackground />
+        <div className="relative z-10 text-center">
           <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-r from-[#18B2B0] to-teal-500 text-white mb-6">
             <Warehouse className="h-12 w-12" />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">المستودع غير موجود</h2>
+          <h2 className="text-3xl font-bold text-white mb-4">المستودع غير موجود</h2>
           <Link href="/warehouses">
             <Button className="bg-gradient-to-r from-[#18B2B0] to-teal-500" data-testid="button-back-warehouses">
               العودة للمستودعات
@@ -339,192 +409,309 @@ export default function WarehouseDetailsPage() {
   const totalInventory = inventoryItems.reduce((sum, item) => sum + item.boxes + item.units, 0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50/30 to-slate-50" dir="rtl">
-      {/* Header Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#18B2B0] via-teal-500 to-cyan-500 shadow-2xl">
-        <div className="absolute inset-0 bg-grid-white/5"></div>
-        
+    <div
+      className="min-h-screen text-white overflow-hidden relative"
+      dir="rtl"
+      style={{
+        backgroundImage: `url(${dashboardBg})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed'
+      }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-b from-[#050508]/90 via-[#050508]/85 to-[#050508]/90 backdrop-blur-[2px] z-0" />
+      <GridBackground />
+
+      {/* Header */}
+      <div className="relative z-10 border-b border-[#18B2B0]/20 bg-gradient-to-r from-[#0a0a0f]/90 via-[#0f0f15]/90 to-[#0a0a0f]/90 backdrop-blur-md">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <motion.div
+                className="relative p-3 bg-gradient-to-br from-[#18B2B0] to-[#0ea5a3] rounded-lg"
+                animate={{
+                  boxShadow: [
+                    "0 0 20px rgba(24, 178, 176, 0.3)",
+                    "0 0 40px rgba(24, 178, 176, 0.5)",
+                    "0 0 20px rgba(24, 178, 176, 0.3)"
+                  ]
+                }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                <img src={rasscoLogo} alt="RASSCO" className="h-8 w-auto" />
+              </motion.div>
+              <div>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-[#18B2B0] via-[#0ea5a3] to-[#18B2B0] bg-clip-text text-transparent">
+                  STOCKPRO نظام إدارة المخزون
+                </h1>
+                <p className="text-xs text-gray-400 font-mono">
+                  {currentTime.toLocaleTimeString('ar-SA', { hour12: false })} • النظام متصل
+                </p>
+              </div>
+            </div>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <motion.button
+                  className="flex items-center gap-3 bg-white/5 hover:bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2 transition-all border border-[#18B2B0]/20"
+                  whileHover={{ scale: 1.05, borderColor: "rgba(24, 178, 176, 0.5)" }}
+                  whileTap={{ scale: 0.95 }}
+                  data-testid="button-user-avatar"
+                >
+                  <UserCircle className="h-5 w-5 text-[#18B2B0]" />
+                  <div className="hidden sm:block text-right">
+                    <p className="text-white font-semibold text-sm">{user?.fullName}</p>
+                    <p className="text-gray-400 text-xs">
+                      {user?.role === 'admin' ? 'مدير' : 'فني'}
+                    </p>
+                  </div>
+                </motion.button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56 bg-[#0f0f15] border-[#18B2B0]/20 backdrop-blur-xl" align="start">
+                <DropdownMenuLabel className="text-white">الحساب</DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-[#18B2B0]/20" />
+                <DropdownMenuItem className="cursor-default focus:bg-white/5">
+                  <div className="flex items-center gap-2 w-full">
+                    <User className="h-4 w-4 text-[#18B2B0]" />
+                    <div className="flex-1 text-right">
+                      <p className="text-sm font-medium text-white">{user?.fullName}</p>
+                      <p className="text-xs text-gray-400">@{user?.username}</p>
+                    </div>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer text-right focus:bg-red-500/20 text-red-400"
+                  onClick={handleLogout}
+                  data-testid="dropdown-logout"
+                >
+                  <div className="flex items-center gap-2 w-full justify-end">
+                    <span className="font-medium">تسجيل الخروج</span>
+                    <LogOut className="h-4 w-4" />
+                  </div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </div>
+
+      {/* Navbar */}
+      <Navbar />
+
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 relative z-10">
+        {/* Warehouse Hero Section */}
         <motion.div
-          className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl"
-          animate={{
-            x: [0, -100, 0],
-            y: [0, 50, 0],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-        
-        <div className="relative px-6 py-8">
-          <Link href="/warehouses">
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="inline-block"
-            >
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl rounded-3xl border border-[#18B2B0]/30 p-8 overflow-hidden shadow-2xl mb-8"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-[#18B2B0]/10 to-transparent" />
+          
+          <motion.div
+            className="absolute inset-0 rounded-3xl"
+            animate={{
+              boxShadow: [
+                "0 0 30px rgba(24, 178, 176, 0.1)",
+                "0 0 50px rgba(24, 178, 176, 0.2)",
+                "0 0 30px rgba(24, 178, 176, 0.1)",
+              ]
+            }}
+            transition={{ duration: 3, repeat: Infinity }}
+          />
+
+          <div className="relative">
+            <Link href="/warehouses">
               <Button 
                 variant="secondary" 
-                className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30 shadow-lg"
+                className="mb-6 bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white/20"
                 data-testid="button-back-warehouses"
               >
                 <ArrowRight className="h-4 w-4 ml-2" />
                 <Warehouse className="h-4 w-4 ml-2" />
                 العودة للمستودعات
               </Button>
-            </motion.div>
-          </Link>
-          
-          <motion.div 
-            className="text-center mt-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <div className="flex items-center justify-center gap-4 mb-3">
-              <Badge 
-                variant={warehouse.isActive ? "default" : "secondary"}
-                className={warehouse.isActive ? "bg-white/20 backdrop-blur-sm text-white border-white/30 shadow-lg text-lg px-4 py-2" : "text-lg px-4 py-2"}
-                data-testid="badge-warehouse-status"
-              >
-                {warehouse.isActive ? "● نشط" : "○ غير نشط"}
-              </Badge>
-            </div>
-            <h1 className="text-5xl font-black text-white mb-3 drop-shadow-lg" data-testid="text-warehouse-name">
-              {warehouse.name}
-            </h1>
-            <div className="flex items-center gap-2 justify-center text-white/90 text-lg mb-2">
-              <MapPin className="h-5 w-5" />
-              <span data-testid="text-warehouse-location">{warehouse.location}</span>
-            </div>
-            {warehouse.description && (
-              <p className="mt-2 text-white/80 max-w-2xl mx-auto text-lg" data-testid="text-warehouse-description">
-                {warehouse.description}
-              </p>
-            )}
-            
-            <div className="mt-6 inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-6 py-3 text-white">
-              <TrendingUp className="h-5 w-5" />
-              <span className="font-bold text-lg">إجمالي المخزون:</span>
-              <span className="text-2xl font-black">{totalInventory}</span>
-              <span>قطعة</span>
-            </div>
-          </motion.div>
-        </div>
-        
-        <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-slate-50 to-transparent"></div>
-      </div>
+            </Link>
 
-      {/* Action Buttons */}
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="flex gap-3 justify-center flex-wrap">
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button
-              onClick={() => setShowUpdateInventoryModal(true)}
-              size="lg"
-              className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 shadow-lg text-lg"
-              data-testid="button-update-inventory"
-            >
-              <RefreshCw className="h-5 w-5 ml-2" />
-              تحديث المخزون
-            </Button>
-          </motion.div>
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button
-              onClick={() => setShowTransferModal(true)}
-              size="lg"
-              className="bg-gradient-to-r from-[#18B2B0] to-teal-500 hover:from-[#16a09e] hover:to-teal-600 shadow-lg text-lg"
-              data-testid="button-transfer-to-technician"
-            >
-              <Send className="h-5 w-5 ml-2" />
-              نقل إلى فني
-            </Button>
-          </motion.div>
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button
-              size="lg"
-              variant="destructive"
-              onClick={() => setShowDeleteDialog(true)}
-              className="shadow-lg text-lg"
-              data-testid="button-delete-warehouse"
-            >
-              <Trash2 className="h-5 w-5 ml-2" />
-              حذف المستودع
-            </Button>
-          </motion.div>
-        </div>
-      </div>
-
-      {/* Inventory Grid */}
-      <div className="max-w-7xl mx-auto px-6 pb-6">
-        <Card className="border-2 border-[#18B2B0]/20 shadow-xl bg-white/90 backdrop-blur-sm">
-          <CardHeader className="border-b-2 border-[#18B2B0]/10 bg-gradient-to-r from-[#18B2B0]/5 to-teal-50/50">
-            <CardTitle className="flex items-center gap-3 text-right text-2xl">
-              <div className="p-2 rounded-lg bg-gradient-to-r from-[#18B2B0] to-teal-500 text-white">
-                <Package className="h-6 w-6" />
+            <div className="flex flex-col lg:flex-row items-center gap-8">
+              {/* Circular Progress */}
+              <div className="flex-shrink-0">
+                <CircularProgress
+                  percentage={Math.min(100, (totalInventory / 1000) * 100)}
+                  label={warehouse.name}
+                  value={totalInventory.toString()}
+                  color="#f97316"
+                  size={180}
+                />
               </div>
-              المخزون الحالي
-              <Sparkles className="h-5 w-5 text-[#18B2B0] mr-auto" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <motion.div 
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
+
+              {/* Warehouse Info */}
+              <div className="flex-1 text-center lg:text-right">
+                <div className="flex items-center justify-center lg:justify-start gap-3 mb-3">
+                  <Warehouse className="h-8 w-8 text-[#18B2B0]" />
+                  <h1 className="text-4xl font-bold text-white" data-testid="text-warehouse-name">
+                    {warehouse.name}
+                  </h1>
+                  <Badge 
+                    className={warehouse.isActive 
+                      ? "bg-green-500/20 text-green-400 border-green-500/30" 
+                      : "bg-gray-500/20 text-gray-400 border-gray-500/30"}
+                    data-testid="badge-warehouse-status"
+                  >
+                    {warehouse.isActive ? "● نشط" : "○ غير نشط"}
+                  </Badge>
+                </div>
+                
+                <div className="flex items-center justify-center lg:justify-start gap-2 text-gray-400 mb-3">
+                  <MapPin className="h-4 w-4" />
+                  <span data-testid="text-warehouse-location">{warehouse.location}</span>
+                </div>
+
+                {warehouse.description && (
+                  <p className="text-gray-300 mb-4 max-w-2xl" data-testid="text-warehouse-description">
+                    {warehouse.description}
+                  </p>
+                )}
+
+                <div className="flex items-center justify-center lg:justify-start gap-2 text-[#18B2B0]">
+                  <TrendingUp className="h-5 w-5" />
+                  <span className="font-bold">إجمالي المخزون:</span>
+                  <span className="text-2xl font-black">{totalInventory}</span>
+                  <span>قطعة</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 justify-center flex-wrap mt-8">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  onClick={() => setShowUpdateInventoryModal(true)}
+                  className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700"
+                  data-testid="button-update-inventory"
+                >
+                  <RefreshCw className="h-4 w-4 ml-2" />
+                  تحديث المخزون
+                </Button>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  onClick={() => setShowTransferModal(true)}
+                  className="bg-gradient-to-r from-[#18B2B0] to-teal-500 hover:from-[#16a09e] hover:to-teal-600"
+                  data-testid="button-transfer-to-technician"
+                >
+                  <Send className="h-4 w-4 ml-2" />
+                  نقل إلى فني
+                </Button>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  variant="destructive"
+                  onClick={() => setShowDeleteDialog(true)}
+                  data-testid="button-delete-warehouse"
+                >
+                  <Trash2 className="h-4 w-4 ml-2" />
+                  حذف المستودع
+                </Button>
+              </motion.div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Inventory Grid */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="relative bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl rounded-3xl border border-[#18B2B0]/30 p-8 overflow-hidden shadow-2xl mb-8"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-[#18B2B0]/10 to-transparent" />
+          
+          <div className="relative">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 rounded-lg bg-gradient-to-r from-[#18B2B0] to-teal-500">
+                <Package className="h-6 w-6 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-white">المخزون الحالي</h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {inventoryItems.map((item, index) => (
                 <motion.div
                   key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: index * 0.05 }}
                   whileHover={{ scale: 1.03, y: -5 }}
-                  className="p-5 rounded-xl border-2 border-gray-100 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 shadow-lg hover:shadow-xl transition-all"
+                  className="group relative bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur-sm rounded-2xl border border-white/10 p-6 overflow-hidden shadow-lg hover:shadow-2xl hover:border-[#18B2B0]/40 transition-all"
                   data-testid={`inventory-item-${index}`}
                 >
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className={`p-3 rounded-xl bg-gradient-to-r ${item.gradient} text-white shadow-md`}>
-                      <item.icon className="h-6 w-6" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#18B2B0]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  
+                  <motion.div
+                    className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"
+                    animate={{
+                      boxShadow: [
+                        `0 0 20px ${item.color}20`,
+                        `0 0 40px ${item.color}40`,
+                        `0 0 20px ${item.color}20`,
+                      ]
+                    }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  />
+
+                  <div className="relative">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className={`p-3 rounded-xl bg-gradient-to-r ${item.gradient} text-white shadow-md`}>
+                        <item.icon className="h-6 w-6" />
+                      </div>
+                      <h4 className="font-bold text-lg text-white">{item.nameAr}</h4>
                     </div>
-                    <h4 className="font-bold text-lg">{item.name}</h4>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="text-center p-3 rounded-lg bg-gradient-to-br from-blue-50 to-cyan-50 dark:bg-blue-900/20 border border-blue-100">
-                      <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold mb-1">كراتين</p>
-                      <p className="text-2xl font-black text-blue-600" data-testid={`boxes-${index}`}>{item.boxes}</p>
+
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      <div className="text-center p-3 rounded-lg bg-gradient-to-br from-blue-500/10 to-blue-600/10 border border-blue-500/20">
+                        <p className="text-xs text-gray-400 font-semibold mb-1">كراتين</p>
+                        <p className="text-2xl font-black text-blue-400" data-testid={`boxes-${index}`}>{item.boxes}</p>
+                      </div>
+                      <div className="text-center p-3 rounded-lg bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/20">
+                        <p className="text-xs text-gray-400 font-semibold mb-1">وحدات</p>
+                        <p className="text-2xl font-black text-purple-400" data-testid={`units-${index}`}>{item.units}</p>
+                      </div>
                     </div>
-                    <div className="text-center p-3 rounded-lg bg-gradient-to-br from-purple-50 to-pink-50 dark:bg-purple-900/20 border border-purple-100">
-                      <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold mb-1">وحدات</p>
-                      <p className="text-2xl font-black text-purple-600" data-testid={`units-${index}`}>{item.units}</p>
+
+                    <div className="pt-3 border-t border-white/10 text-center">
+                      <p className="text-xs text-gray-400 font-semibold mb-1">الإجمالي</p>
+                      <p className="text-3xl font-black bg-gradient-to-r from-[#18B2B0] to-teal-500 bg-clip-text text-transparent" data-testid={`total-${index}`}>
+                        {item.boxes + item.units}
+                      </p>
                     </div>
-                  </div>
-                  <div className="mt-3 pt-3 border-t-2 border-gray-100 text-center">
-                    <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold mb-1">الإجمالي</p>
-                    <p className="text-3xl font-black bg-gradient-to-r from-[#18B2B0] to-teal-500 bg-clip-text text-transparent" data-testid={`total-${index}`}>
-                      {item.boxes + item.units}
-                    </p>
                   </div>
                 </motion.div>
               ))}
-            </motion.div>
-          </CardContent>
-        </Card>
-      </div>
+            </div>
+          </div>
+        </motion.div>
 
-      {/* Transfer History */}
-      <div className="max-w-7xl mx-auto px-6 pb-10">
-        <Card className="border-2 border-[#18B2B0]/20 shadow-xl bg-white/90 backdrop-blur-sm">
-          <CardHeader className="border-b-2 border-[#18B2B0]/10 bg-gradient-to-r from-[#18B2B0]/5 to-teal-50/50">
-            <div className="flex flex-col gap-4">
-              <CardTitle className="flex items-center gap-3 text-right text-2xl">
-                <div className="p-2 rounded-lg bg-gradient-to-r from-[#18B2B0] to-teal-500 text-white">
-                  <History className="h-6 w-6" />
+        {/* Transfer History */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="relative bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl rounded-3xl border border-[#18B2B0]/30 p-8 overflow-hidden shadow-2xl"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-[#18B2B0]/10 to-transparent" />
+          
+          <div className="relative">
+            <div className="flex flex-col gap-4 mb-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-gradient-to-r from-[#18B2B0] to-teal-500">
+                    <History className="h-6 w-6 text-white" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-white">سجل النقل</h2>
                 </div>
-                سجل النقل
-                <Badge className="mr-auto bg-[#18B2B0]">{allTransfers.length} عملية</Badge>
-              </CardTitle>
+                <Badge className="bg-[#18B2B0] text-white">{allTransfers.length} عملية</Badge>
+              </div>
               
               <div className="flex gap-3 items-center">
                 <div className="relative flex-1">
@@ -534,7 +721,7 @@ export default function WarehouseDetailsPage() {
                     placeholder="ابحث عن عملية بالفني أو الملاحظات..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pr-10 border-2 border-gray-200 focus:border-[#18B2B0] focus:ring-[#18B2B0] rounded-xl shadow-sm text-right"
+                    className="pr-10 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[#18B2B0] focus:ring-[#18B2B0]"
                     data-testid="input-search-transfers"
                   />
                 </div>
@@ -552,211 +739,156 @@ export default function WarehouseDetailsPage() {
                 )}
               </div>
             </div>
-          </CardHeader>
-          <CardContent className="p-6">
+
             {transfersLoading ? (
-              <Skeleton className="h-64 w-full" />
+              <Skeleton className="h-64 w-full bg-white/10" />
             ) : transfers.length === 0 ? (
               <div className="text-center py-16">
-                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-r from-gray-100 to-gray-200 mb-4">
+                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-r from-white/10 to-white/5 mb-4">
                   <History className="h-10 w-10 text-gray-400" />
                 </div>
-                <p className="text-lg text-gray-500 dark:text-gray-400 font-semibold">
+                <p className="text-lg text-gray-400 font-semibold">
                   لا توجد عمليات نقل حتى الآن
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-4">
-                {transfers.map((transfer, index) => {
-                  const items: Array<{name: string, quantity: number, type: string}> = [];
-                  if (transfer.n950) items.push({name: 'N950', quantity: transfer.n950, type: transfer.n950PackagingType || 'box'});
-                  if (transfer.i9000s) items.push({name: 'I9000s', quantity: transfer.i9000s, type: transfer.i9000sPackagingType || 'box'});
-                  if (transfer.i9100) items.push({name: 'I9100', quantity: transfer.i9100, type: transfer.i9100PackagingType || 'box'});
-                  if (transfer.rollPaper) items.push({name: 'ورق', quantity: transfer.rollPaper, type: transfer.rollPaperPackagingType || 'box'});
-                  if (transfer.stickers) items.push({name: 'ملصقات', quantity: transfer.stickers, type: transfer.stickersPackagingType || 'box'});
-                  if (transfer.newBatteries) items.push({name: 'بطاريات', quantity: transfer.newBatteries, type: transfer.newBatteriesPackagingType || 'box'});
-                  if (transfer.mobilySim) items.push({name: 'موبايلي', quantity: transfer.mobilySim, type: transfer.mobilySimPackagingType || 'box'});
-                  if (transfer.stcSim) items.push({name: 'STC', quantity: transfer.stcSim, type: transfer.stcSimPackagingType || 'box'});
-                  if (transfer.zainSim) items.push({name: 'زين', quantity: transfer.zainSim, type: transfer.zainSimPackagingType || 'box'});
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-white/10 hover:bg-white/5">
+                      <TableHead className="text-right text-gray-400 w-12"></TableHead>
+                      <TableHead className="text-right text-gray-400">الفني</TableHead>
+                      <TableHead className="text-right text-gray-400">الأصناف</TableHead>
+                      <TableHead className="text-right text-gray-400">الحالة</TableHead>
+                      <TableHead className="text-right text-gray-400">التاريخ</TableHead>
+                      <TableHead className="text-right text-gray-400">الملاحظات</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {transfers.map((transfer) => {
+                      const items: Array<{name: string, quantity: number, type: string}> = [];
+                      if (transfer.n950) items.push({name: 'N950', quantity: transfer.n950, type: transfer.n950PackagingType || 'box'});
+                      if (transfer.i9000s) items.push({name: 'I9000s', quantity: transfer.i9000s, type: transfer.i9000sPackagingType || 'box'});
+                      if (transfer.i9100) items.push({name: 'I9100', quantity: transfer.i9100, type: transfer.i9100PackagingType || 'box'});
+                      if (transfer.rollPaper) items.push({name: 'ورق', quantity: transfer.rollPaper, type: transfer.rollPaperPackagingType || 'box'});
+                      if (transfer.stickers) items.push({name: 'ملصقات', quantity: transfer.stickers, type: transfer.stickersPackagingType || 'box'});
+                      if (transfer.newBatteries) items.push({name: 'بطاريات', quantity: transfer.newBatteries, type: transfer.newBatteriesPackagingType || 'box'});
+                      if (transfer.mobilySim) items.push({name: 'موبايلي', quantity: transfer.mobilySim, type: transfer.mobilySimPackagingType || 'box'});
+                      if (transfer.stcSim) items.push({name: 'STC', quantity: transfer.stcSim, type: transfer.stcSimPackagingType || 'box'});
+                      if (transfer.zainSim) items.push({name: 'زين', quantity: transfer.zainSim, type: transfer.zainSimPackagingType || 'box'});
 
-                  const getStatusColor = (status?: string) => {
-                    switch (status) {
-                      case 'pending':
-                        return {bg: 'from-yellow-50 to-amber-50', border: 'border-yellow-200', icon: 'text-yellow-600', badge: 'bg-yellow-100 text-yellow-700'};
-                      case 'accepted':
-                        return {bg: 'from-green-50 to-emerald-50', border: 'border-green-200', icon: 'text-green-600', badge: 'bg-green-100 text-green-700'};
-                      case 'rejected':
-                        return {bg: 'from-red-50 to-rose-50', border: 'border-red-200', icon: 'text-red-600', badge: 'bg-red-100 text-red-700'};
-                      default:
-                        return {bg: 'from-gray-50 to-slate-50', border: 'border-gray-200', icon: 'text-gray-600', badge: 'bg-gray-100 text-gray-700'};
-                    }
-                  };
-
-                  const statusColor = getStatusColor(transfer.status);
-                  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-                  const isSelected = selectedTransferIds.has(transfer.id);
-
-                  return (
-                    <motion.div
-                      key={transfer.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className={`relative overflow-hidden rounded-xl border-2 ${statusColor.border} bg-gradient-to-r ${statusColor.bg} p-5 shadow-md hover:shadow-xl transition-all ${isSelected ? 'ring-2 ring-[#18B2B0]' : ''}`}
-                      data-testid={`transfer-card-${transfer.id}`}
-                    >
-                      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#18B2B0] via-teal-400 to-cyan-400"></div>
-                      
-                      <div className="flex items-start justify-between gap-4 mb-4">
-                        <div className="flex items-center gap-3 flex-1">
-                          <div 
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              const newSelected = new Set(selectedTransferIds);
-                              if (isSelected) {
-                                newSelected.delete(transfer.id);
-                              } else {
-                                newSelected.add(transfer.id);
-                              }
-                              setSelectedTransferIds(newSelected);
-                            }}
-                            className="cursor-pointer"
-                          >
-                            <Checkbox 
-                              checked={isSelected}
-                              className="h-5 w-5 border-2"
-                              data-testid={`checkbox-transfer-${transfer.id}`}
+                      return (
+                        <TableRow key={transfer.id} className="border-white/10 hover:bg-white/5 transition-colors">
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedTransferIds.has(transfer.id)}
+                              onCheckedChange={(checked) => {
+                                const newSet = new Set(selectedTransferIds);
+                                if (checked) {
+                                  transfer.allIds.forEach(id => newSet.add(id));
+                                } else {
+                                  transfer.allIds.forEach(id => newSet.delete(id));
+                                }
+                                setSelectedTransferIds(newSet);
+                              }}
+                              className="border-white/20"
                             />
-                          </div>
-                          <div className="flex items-center gap-3 mb-2">
-                            <div className={`p-2.5 rounded-lg bg-white/70 ${statusColor.icon} shadow-sm`}>
-                              <Send className="h-5 w-5" />
+                          </TableCell>
+                          <TableCell className="text-white font-medium">{transfer.technicianName}</TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                              {items.map((item, idx) => (
+                                <Badge key={idx} className="bg-[#18B2B0]/20 text-[#18B2B0] border-[#18B2B0]/30 text-xs">
+                                  {item.name}: {item.quantity} {item.type === 'box' ? 'كرتون' : 'قطعة'}
+                                </Badge>
+                              ))}
                             </div>
-                            <div>
-                              <h3 className="text-lg font-bold text-gray-800">{transfer.technicianName}</h3>
-                              <p className="text-sm text-gray-600 flex items-center gap-1.5 mt-0.5">
-                                <Clock className="h-3.5 w-3.5" />
-                                {formatDistanceToNow(new Date(transfer.createdAt), { addSuffix: true, locale: ar })}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="flex flex-col items-end gap-2">
-                          <Badge className={`${statusColor.badge} text-sm px-3 py-1 shadow-sm`}>
-                            {transfer.status === 'pending' && <><Clock className="h-3.5 w-3.5 mr-1.5" />قيد الانتظار</>}
-                            {transfer.status === 'accepted' && <><CheckCircle className="h-3.5 w-3.5 mr-1.5" />مقبول</>}
-                            {transfer.status === 'rejected' && <><XCircle className="h-3.5 w-3.5 mr-1.5" />مرفوض</>}
-                          </Badge>
-                          <Badge variant="outline" className="bg-white/70 border-[#18B2B0]/30 text-[#18B2B0] font-bold shadow-sm">
-                            <Package className="h-3.5 w-3.5 mr-1.5" />
-                            {totalItems} قطعة
-                          </Badge>
-                        </div>
-                      </div>
-
-                      <Link href={`/transfer-details/${transfer.id}`}>
-                        <div className="cursor-pointer group">
-
-                        <div className="bg-white/70 rounded-lg p-4 border border-gray-200/50 shadow-sm mb-3">
-                          <p className="text-xs font-semibold text-gray-500 mb-2.5">الأصناف المنقولة</p>
-                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                            {items.map((item, idx) => (
-                              <div key={idx} className="flex items-center gap-2 p-2 rounded-lg bg-gradient-to-br from-[#18B2B0]/5 to-teal-50/50 border border-[#18B2B0]/10">
-                                <Package className="h-4 w-4 text-[#18B2B0] flex-shrink-0" />
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs font-bold text-[#18B2B0] truncate">{item.name}</p>
-                                  <p className="text-xs text-gray-600">
-                                    {item.quantity} {item.type === 'box' ? 'كرتون' : 'وحدة'}
-                                  </p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {transfer.notes && (
-                          <div className="bg-white/70 rounded-lg p-3 border border-gray-200/50 shadow-sm">
-                            <p className="text-xs font-semibold text-gray-500 mb-1.5">ملاحظات</p>
-                            <p className="text-sm text-gray-700">{transfer.notes}</p>
-                          </div>
-                        )}
-
-                          <div className="absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Badge className="bg-[#18B2B0] text-white text-xs shadow-md">
-                              <ArrowRight className="h-3 w-3 mr-1" />
-                              عرض التفاصيل
-                            </Badge>
-                          </div>
-                        </div>
-                      </Link>
-                    </motion.div>
-                  );
-                })}
+                          </TableCell>
+                          <TableCell>
+                            {transfer.status === 'pending' && (
+                              <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+                                <AlertTriangle className="h-3 w-3 ml-1" />
+                                معلقة
+                              </Badge>
+                            )}
+                            {transfer.status === 'accepted' && (
+                              <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                                <CheckCircle className="h-3 w-3 ml-1" />
+                                مقبولة
+                              </Badge>
+                            )}
+                            {transfer.status === 'rejected' && (
+                              <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
+                                <XCircle className="h-3 w-3 ml-1" />
+                                مرفوضة
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-gray-400 text-sm">
+                            {formatDistanceToNow(new Date(transfer.createdAt), { addSuffix: true, locale: ar })}
+                          </TableCell>
+                          <TableCell className="text-gray-400 text-sm max-w-xs truncate">
+                            {transfer.notes || '-'}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </motion.div>
       </div>
 
+      {/* Modals */}
       <UpdateWarehouseInventoryModal
         open={showUpdateInventoryModal}
         onOpenChange={setShowUpdateInventoryModal}
         warehouseId={warehouseId}
-        currentInventory={warehouse.inventory}
       />
 
       <TransferFromWarehouseModal
         open={showTransferModal}
         onOpenChange={setShowTransferModal}
         warehouseId={warehouseId}
-        warehouseName={warehouse.name}
-        currentInventory={warehouse.inventory}
       />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-[#0f0f15] border-[#18B2B0]/20 text-white">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-2xl">هل أنت متأكد من حذف المستودع؟</AlertDialogTitle>
-            <AlertDialogDescription className="text-lg">
-              سيتم حذف المستودع "{warehouse.name}" وجميع بياناته بشكل نهائي. هذا الإجراء لا يمكن التراجع عنه.
+            <AlertDialogTitle>هل أنت متأكد؟</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-400">
+              سيتم حذف المستودع نهائياً ولن يمكن استرجاعه.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel data-testid="button-cancel-delete">إلغاء</AlertDialogCancel>
+            <AlertDialogCancel className="bg-white/10 text-white hover:bg-white/20">إلغاء</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteWarehouseMutation.mutate()}
-              className="bg-destructive hover:bg-destructive/90"
-              data-testid="button-confirm-delete"
+              className="bg-red-600 hover:bg-red-700"
             >
-              {deleteWarehouseMutation.isPending ? "جاري الحذف..." : "حذف"}
+              حذف
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       <AlertDialog open={showDeleteTransfersDialog} onOpenChange={setShowDeleteTransfersDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-[#0f0f15] border-[#18B2B0]/20 text-white">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-2xl">تأكيد حذف السجلات</AlertDialogTitle>
-            <AlertDialogDescription className="text-lg">
-              هل أنت متأكد من حذف {selectedTransferIds.size} سجل نقل؟ هذا الإجراء لا يمكن التراجع عنه.
+            <AlertDialogTitle>حذف السجلات المحددة</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-400">
+              سيتم حذف {selectedTransferIds.size} سجل نهائياً.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel data-testid="button-cancel-delete-transfers">إلغاء</AlertDialogCancel>
+            <AlertDialogCancel className="bg-white/10 text-white hover:bg-white/20">إلغاء</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
-                const allIdsToDelete = allTransfers
-                  .filter(t => selectedTransferIds.has(t.id))
-                  .flatMap(t => t.allIds);
-                deleteTransfersMutation.mutate(allIdsToDelete);
-              }}
-              className="bg-destructive hover:bg-destructive/90"
-              data-testid="button-confirm-delete-transfers"
+              onClick={() => deleteTransfersMutation.mutate(Array.from(selectedTransferIds))}
+              className="bg-red-600 hover:bg-red-700"
             >
-              {deleteTransfersMutation.isPending ? "جاري الحذف..." : "حذف"}
+              حذف
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
