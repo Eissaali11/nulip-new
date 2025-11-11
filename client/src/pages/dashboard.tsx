@@ -42,6 +42,8 @@ import { Link, useLocation } from "wouter";
 import { CircularProgress } from "@/components/dashboard/CircularProgress";
 import { GridBackground } from "@/components/dashboard/GridBackground";
 import { Navbar } from "@/components/dashboard/Navbar";
+import { InventoryPieCard } from "@/components/dashboard/InventoryPieCard";
+import { InventoryBarCard } from "@/components/dashboard/InventoryBarCard";
 
 interface WarehouseTransfer {
   id: string;
@@ -171,82 +173,6 @@ export default function Dashboard() {
     );
   };
 
-  const quickAccessCards = user?.role === 'admin' ? [
-    {
-      title: "المخزون الثابت",
-      description: "أدخل وأدر المخزون الأساسي لديك (كرتون + مفرد)",
-      href: "/my-fixed-inventory",
-      icon: Package,
-      gradient: "from-[#18B2B0] to-[#0ea5a3]",
-      testId: "button-admin-fixed-inventory",
-    },
-    {
-      title: "المخزون المتحرك",
-      description: "تتبع وحدّث المخزون العملي الذي تستخدمه يومياً",
-      href: "/my-moving-inventory",
-      icon: TruckIcon,
-      gradient: "from-emerald-500 to-green-600",
-      testId: "button-admin-moving-inventory",
-    },
-    {
-      title: "لوحة مخزون الفنيين",
-      description: "عرض شامل لمخزون جميع الفنيين مع التنبيهات",
-      href: "/admin-inventory-overview",
-      icon: LayoutDashboard,
-      gradient: "from-purple-500 to-pink-600",
-      testId: "button-admin-overview",
-    },
-    {
-      title: "المستودعات",
-      description: "إدارة المستودعات ونقل الكميات للفنيين",
-      href: "/warehouses",
-      icon: Warehouse,
-      gradient: "from-orange-500 to-amber-600",
-      testId: "button-admin-warehouses",
-    },
-    {
-      title: "العمليات",
-      description: "متابعة عمليات النقل والإدارة",
-      href: "/operations",
-      icon: ClipboardCheck,
-      gradient: "from-[#18B2B0] to-cyan-600",
-      testId: "button-admin-operations",
-    },
-    {
-      title: "المستخدمين",
-      description: "إدارة حسابات الفنيين والمستخدمين",
-      href: "/users",
-      icon: Users,
-      gradient: "from-blue-500 to-indigo-600",
-      testId: "button-admin-users",
-    },
-  ] : [
-    {
-      title: "المخزون الثابت",
-      description: "أدخل وأدر المخزون الأساسي لديك (كرتون + مفرد)",
-      href: "/my-fixed-inventory",
-      icon: Package,
-      gradient: "from-[#18B2B0] to-[#0ea5a3]",
-      testId: "button-go-to-fixed-inventory",
-    },
-    {
-      title: "المخزون المتحرك",
-      description: "تتبع وحدّث المخزون العملي الذي تستخدمه يومياً",
-      href: "/my-moving-inventory",
-      icon: TruckIcon,
-      gradient: "from-emerald-500 to-green-600",
-      testId: "button-go-to-moving-inventory",
-    },
-    {
-      title: "الإشعارات",
-      description: "عمليات النقل التي تحتاج موافقتك من المستودعات",
-      href: "/notifications",
-      icon: Bell,
-      gradient: "from-orange-500 to-amber-600",
-      testId: "button-go-to-notifications",
-      badge: pendingTransfers.length > 0 ? pendingTransfers.length : undefined,
-    },
-  ];
 
   return (
     <div
@@ -678,66 +604,17 @@ export default function Dashboard() {
           </motion.div>
         )}
 
-        {/* Quick Access Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {quickAccessCards.map((card, index) => {
-            const Icon = card.icon;
-            return (
-              <motion.div
-                key={card.href}
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
-                whileHover={{ y: -5, scale: 1.02 }}
-              >
-                <Link href={card.href}>
-                  <div className="group relative overflow-hidden rounded-2xl border border-[#18B2B0]/20 hover:border-[#18B2B0]/40 transition-all duration-300 h-full">
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#18B2B0]/10 via-[#0ea5a3]/10 to-[#18B2B0]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    
-                    <div className="relative p-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <motion.div 
-                          className={`p-3 bg-gradient-to-br ${card.gradient} rounded-xl shadow-lg relative`}
-                          whileHover={{ rotate: 12, scale: 1.1 }}
-                          transition={{ duration: 0.3 }}
-                        >
-                          <Icon className="h-6 w-6 text-white" />
-                          {card.badge && (
-                            <Badge className="absolute -top-2 -right-2 bg-red-500 text-white min-w-[24px] h-6 flex items-center justify-center rounded-full px-2">
-                              {card.badge}
-                            </Badge>
-                          )}
-                        </motion.div>
-                        
-                        <motion.div
-                          animate={{ x: [0, 4, 0] }}
-                          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                        >
-                          <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-[#18B2B0] transition-colors" />
-                        </motion.div>
-                      </div>
-
-                      <h3 className="text-xl font-bold text-white mb-2 group-hover:text-[#18B2B0] transition-colors">
-                        {card.title}
-                      </h3>
-                      <p className="text-gray-400 text-sm leading-relaxed">
-                        {card.description}
-                      </p>
-
-                      <Button 
-                        className={`w-full mt-4 bg-gradient-to-r ${card.gradient} hover:opacity-90 text-white font-bold shadow-lg text-sm py-5 transition-all`}
-                        data-testid={card.testId}
-                      >
-                        الانتقال
-                        <ArrowRight className="mr-2 h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
-            );
-          })}
+        {/* Analytics Dashboard - Charts */}
+        <div className="grid lg:grid-cols-2 gap-8 mb-8">
+          <InventoryPieCard 
+            fixedTotal={getFixedInventoryTotal()}
+            movingTotal={getMovingInventoryTotal()}
+          />
+          <InventoryBarCard
+            fixedInventory={myFixedInventory}
+            movingInventory={myMovingInventory}
+            title="تفاصيل المخزون حسب الفئة"
+          />
         </div>
 
         {/* Technicians Table */}

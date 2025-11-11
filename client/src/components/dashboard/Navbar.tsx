@@ -7,11 +7,15 @@ import {
   ClipboardCheck, 
   Warehouse,
   Menu,
-  X
+  X,
+  Bell,
+  Smartphone
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
+import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
 
 interface NavItem {
   title: string;
@@ -19,12 +23,25 @@ interface NavItem {
   icon: any;
   gradient: string;
   adminOnly?: boolean;
+  badge?: number;
+}
+
+interface WarehouseTransfer {
+  id: string;
+  technicianId: string;
+  status: 'pending' | 'accepted' | 'rejected';
 }
 
 export const Navbar = () => {
   const [location] = useLocation();
   const { user } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const { data: pendingTransfers = [] } = useQuery<WarehouseTransfer[]>({
+    queryKey: ["/api/warehouse-transfers", user?.id],
+    enabled: !!user?.id && user?.role !== 'admin',
+    select: (data) => data.filter(t => t.status === 'pending' && t.technicianId === user?.id),
+  });
 
   const navItems: NavItem[] = [
     {
@@ -45,6 +62,20 @@ export const Navbar = () => {
       href: "/my-fixed-inventory",
       icon: Package,
       gradient: "from-[#18B2B0] to-[#0ea5a3]",
+    },
+    {
+      title: "الأجهزة",
+      href: "/devices",
+      icon: Smartphone,
+      gradient: "from-indigo-500 to-purple-600",
+      adminOnly: true,
+    },
+    {
+      title: "الإشعارات",
+      href: "/notifications",
+      icon: Bell,
+      gradient: "from-orange-500 to-amber-600",
+      badge: pendingTransfers.length > 0 ? pendingTransfers.length : undefined,
     },
     {
       title: "المستخدمين",
@@ -132,8 +163,14 @@ export const Navbar = () => {
                         <motion.div
                           whileHover={{ rotate: 12, scale: 1.1 }}
                           transition={{ duration: 0.3 }}
+                          className="relative"
                         >
                           <Icon className={`h-5 w-5 ${active ? 'text-white' : 'text-[#18B2B0]'}`} />
+                          {item.badge && item.badge > 0 && (
+                            <Badge className="absolute -top-2 -right-2 bg-red-500 text-white min-w-[20px] h-5 flex items-center justify-center rounded-full px-1.5 text-xs">
+                              {item.badge}
+                            </Badge>
+                          )}
                         </motion.div>
                         <span className={`font-bold text-sm whitespace-nowrap ${active ? 'text-white' : 'text-gray-300'}`}>
                           {item.title}
@@ -210,8 +247,13 @@ export const Navbar = () => {
                     data-testid={`mobile-nav-link-${item.href.replace('/', '')}`}
                   >
                     <div className="flex items-center gap-4">
-                      <div className={`p-2 rounded-lg ${active ? 'bg-white/20' : 'bg-[#18B2B0]/20'}`}>
+                      <div className={`p-2 rounded-lg ${active ? 'bg-white/20' : 'bg-[#18B2B0]/20'} relative`}>
                         <Icon className={`h-5 w-5 ${active ? 'text-white' : 'text-[#18B2B0]'}`} />
+                        {item.badge && item.badge > 0 && (
+                          <Badge className="absolute -top-1 -right-1 bg-red-500 text-white min-w-[18px] h-4 flex items-center justify-center rounded-full px-1 text-xs">
+                            {item.badge}
+                          </Badge>
+                        )}
                       </div>
                       <div className="flex-1">
                         <p className={`font-bold ${active ? 'text-white' : 'text-gray-300'}`}>
