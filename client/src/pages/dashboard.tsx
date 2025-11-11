@@ -41,6 +41,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { CircularProgress } from "@/components/dashboard/CircularProgress";
 import { GridBackground } from "@/components/dashboard/GridBackground";
+import { Navbar } from "@/components/dashboard/Navbar";
 
 interface WarehouseTransfer {
   id: string;
@@ -334,6 +335,9 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Navbar */}
+      <Navbar />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 relative z-10">
         {/* Welcome Section */}
