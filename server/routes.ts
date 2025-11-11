@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertInventoryItemSchema, insertTransactionSchema, insertRegionSchema, insertUserSchema, insertTechnicianInventorySchema, insertWithdrawnDeviceSchema, loginSchema, techniciansInventory, insertWarehouseSchema, insertWarehouseInventorySchema, insertWarehouseTransferSchema, warehouseTransfers, warehouseInventory } from "@shared/schema";
+import { insertInventoryItemSchema, insertTransactionSchema, insertRegionSchema, insertUserSchema, insertTechnicianInventorySchema, insertWithdrawnDeviceSchema, loginSchema, techniciansInventory, insertWarehouseSchema, insertWarehouseInventorySchema, insertWarehouseTransferSchema, warehouseTransfers, warehouseInventory, inventoryRequests, insertInventoryRequestSchema, users } from "@shared/schema";
 import { z } from "zod";
 import { db } from "./db";
 import { eq, inArray } from "drizzle-orm";
@@ -1426,6 +1426,166 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: error.message });
       }
       res.status(500).json({ message: "Failed to delete transfers" });
+    }
+  });
+
+  // Inventory Requests routes
+  app.get("/api/inventory-requests", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const requests = await db
+        .select({
+          id: inventoryRequests.id,
+          technicianId: inventoryRequests.technicianId,
+          technicianName: users.fullName,
+          n950Boxes: inventoryRequests.n950Boxes,
+          n950Units: inventoryRequests.n950Units,
+          i9000sBoxes: inventoryRequests.i9000sBoxes,
+          i9000sUnits: inventoryRequests.i9000sUnits,
+          i9100Boxes: inventoryRequests.i9100Boxes,
+          i9100Units: inventoryRequests.i9100Units,
+          rollPaperBoxes: inventoryRequests.rollPaperBoxes,
+          rollPaperUnits: inventoryRequests.rollPaperUnits,
+          stickersBoxes: inventoryRequests.stickersBoxes,
+          stickersUnits: inventoryRequests.stickersUnits,
+          newBatteriesBoxes: inventoryRequests.newBatteriesBoxes,
+          newBatteriesUnits: inventoryRequests.newBatteriesUnits,
+          mobilySimBoxes: inventoryRequests.mobilySimBoxes,
+          mobilySimUnits: inventoryRequests.mobilySimUnits,
+          stcSimBoxes: inventoryRequests.stcSimBoxes,
+          stcSimUnits: inventoryRequests.stcSimUnits,
+          zainSimBoxes: inventoryRequests.zainSimBoxes,
+          zainSimUnits: inventoryRequests.zainSimUnits,
+          notes: inventoryRequests.notes,
+          status: inventoryRequests.status,
+          adminNotes: inventoryRequests.adminNotes,
+          respondedBy: inventoryRequests.respondedBy,
+          respondedAt: inventoryRequests.respondedAt,
+          createdAt: inventoryRequests.createdAt,
+        })
+        .from(inventoryRequests)
+        .leftJoin(users, eq(inventoryRequests.technicianId, users.id))
+        .orderBy(inventoryRequests.createdAt);
+      
+      res.json(requests);
+    } catch (error) {
+      console.error("Error fetching inventory requests:", error);
+      res.status(500).json({ message: "Failed to fetch inventory requests" });
+    }
+  });
+
+  app.get("/api/inventory-requests/my", requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const requests = await db
+        .select()
+        .from(inventoryRequests)
+        .where(eq(inventoryRequests.technicianId, user.id))
+        .orderBy(inventoryRequests.createdAt);
+      
+      res.json(requests);
+    } catch (error) {
+      console.error("Error fetching my inventory requests:", error);
+      res.status(500).json({ message: "Failed to fetch inventory requests" });
+    }
+  });
+
+  app.get("/api/inventory-requests/pending/count", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const pendingRequests = await db
+        .select()
+        .from(inventoryRequests)
+        .where(eq(inventoryRequests.status, "pending"));
+      
+      res.json({ count: pendingRequests.length });
+    } catch (error) {
+      console.error("Error fetching pending count:", error);
+      res.status(500).json({ message: "Failed to fetch pending count" });
+    }
+  });
+
+  app.post("/api/inventory-requests", requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      
+      if (user.role === 'admin') {
+        return res.status(403).json({ message: "Admins cannot create inventory requests" });
+      }
+
+      const validatedData = insertInventoryRequestSchema.parse({
+        ...req.body,
+        technicianId: user.id,
+      });
+
+      const [newRequest] = await db
+        .insert(inventoryRequests)
+        .values(validatedData)
+        .returning();
+
+      res.json(newRequest);
+    } catch (error) {
+      console.error("Error creating inventory request:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid request data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create inventory request" });
+    }
+  });
+
+  app.patch("/api/inventory-requests/:id/approve", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { adminNotes } = req.body;
+
+      const [updatedRequest] = await db
+        .update(inventoryRequests)
+        .set({
+          status: "approved",
+          adminNotes,
+          respondedBy: user.id,
+          respondedAt: new Date(),
+        })
+        .where(eq(inventoryRequests.id, req.params.id))
+        .returning();
+
+      if (!updatedRequest) {
+        return res.status(404).json({ message: "Request not found" });
+      }
+
+      res.json(updatedRequest);
+    } catch (error) {
+      console.error("Error approving request:", error);
+      res.status(500).json({ message: "Failed to approve request" });
+    }
+  });
+
+  app.patch("/api/inventory-requests/:id/reject", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { adminNotes } = req.body;
+
+      if (!adminNotes) {
+        return res.status(400).json({ message: "Admin notes are required for rejection" });
+      }
+
+      const [updatedRequest] = await db
+        .update(inventoryRequests)
+        .set({
+          status: "rejected",
+          adminNotes,
+          respondedBy: user.id,
+          respondedAt: new Date(),
+        })
+        .where(eq(inventoryRequests.id, req.params.id))
+        .returning();
+
+      if (!updatedRequest) {
+        return res.status(404).json({ message: "Request not found" });
+      }
+
+      res.json(updatedRequest);
+    } catch (error) {
+      console.error("Error rejecting request:", error);
+      res.status(500).json({ message: "Failed to reject request" });
     }
   });
 

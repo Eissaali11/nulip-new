@@ -259,6 +259,39 @@ export const warehouseTransfers = pgTable("warehouse_transfers", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Inventory Requests - طلبات المخزون من الفنيين
+export const inventoryRequests = pgTable("inventory_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  technicianId: varchar("technician_id").notNull().references(() => users.id),
+  
+  // Items requested
+  n950Boxes: integer("n950_boxes").default(0),
+  n950Units: integer("n950_units").default(0),
+  i9000sBoxes: integer("i9000s_boxes").default(0),
+  i9000sUnits: integer("i9000s_units").default(0),
+  i9100Boxes: integer("i9100_boxes").default(0),
+  i9100Units: integer("i9100_units").default(0),
+  rollPaperBoxes: integer("roll_paper_boxes").default(0),
+  rollPaperUnits: integer("roll_paper_units").default(0),
+  stickersBoxes: integer("stickers_boxes").default(0),
+  stickersUnits: integer("stickers_units").default(0),
+  newBatteriesBoxes: integer("new_batteries_boxes").default(0),
+  newBatteriesUnits: integer("new_batteries_units").default(0),
+  mobilySimBoxes: integer("mobily_sim_boxes").default(0),
+  mobilySimUnits: integer("mobily_sim_units").default(0),
+  stcSimBoxes: integer("stc_sim_boxes").default(0),
+  stcSimUnits: integer("stc_sim_units").default(0),
+  zainSimBoxes: integer("zain_sim_boxes").default(0),
+  zainSimUnits: integer("zain_sim_units").default(0),
+  
+  notes: text("notes"),
+  status: text("status").notNull().default("pending"), // "pending", "approved", "rejected"
+  adminNotes: text("admin_notes"),
+  respondedBy: varchar("responded_by").references(() => users.id),
+  respondedAt: timestamp("responded_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Schema for regions
 export const insertRegionSchema = createInsertSchema(regions).omit({
   id: true,
@@ -325,6 +358,13 @@ export const insertWarehouseTransferSchema = createInsertSchema(warehouseTransfe
   createdAt: true,
 });
 
+export const insertInventoryRequestSchema = createInsertSchema(inventoryRequests).omit({
+  id: true,
+  createdAt: true,
+  respondedBy: true,
+  respondedAt: true,
+});
+
 // Types
 export type InsertRegion = z.infer<typeof insertRegionSchema>;
 export type Region = typeof regions.$inferSelect;
@@ -348,6 +388,8 @@ export type InsertWarehouseInventory = z.infer<typeof insertWarehouseInventorySc
 export type WarehouseInventory = typeof warehouseInventory.$inferSelect;
 export type InsertWarehouseTransfer = z.infer<typeof insertWarehouseTransferSchema>;
 export type WarehouseTransfer = typeof warehouseTransfers.$inferSelect;
+export type InsertInventoryRequest = z.infer<typeof insertInventoryRequestSchema>;
+export type InventoryRequest = typeof inventoryRequests.$inferSelect;
 
 // Additional types for API responses
 export type InventoryItemWithStatus = InventoryItem & {
