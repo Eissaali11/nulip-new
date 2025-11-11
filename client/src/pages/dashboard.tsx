@@ -12,7 +12,7 @@ import {
 import { useAuth } from "@/lib/auth";
 import dashboardBg from "@assets/image_1762515061799.png";
 import rasscoLogo from "@assets/image_1762442473114.png";
-import type { DashboardStats, TechnicianWithFixedInventory, WarehouseWithStats, TechnicianFixedInventory, TechnicianInventory } from "@shared/schema";
+import type { DashboardStats, TechnicianWithBothInventories, WarehouseWithStats, TechnicianFixedInventory, TechnicianInventory } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
@@ -66,7 +66,7 @@ export default function Dashboard() {
     queryKey: ["/api/dashboard"],
   });
 
-  const { data: techniciansData } = useQuery<{ technicians: TechnicianWithFixedInventory[] }>({
+  const { data: techniciansData } = useQuery<{ technicians: TechnicianWithBothInventories[] }>({
     queryKey: ["/api/admin/all-technicians-inventory"],
     enabled: user?.role === 'admin',
   });
@@ -130,21 +130,32 @@ export default function Dashboard() {
     );
   };
 
-  // حساب كفاءة الفنيين
-  const getTechnicianEfficiency = (tech: TechnicianWithFixedInventory) => {
-    if (!tech.fixedInventory) return 0;
+  // حساب كفاءة الفنيين (بناءً على المجموع الكلي: ثابت + متحرك)
+  const getTechnicianEfficiency = (tech: TechnicianWithBothInventories) => {
+    const fixedInv = tech.fixedInventory;
+    const movingInv = tech.movingInventory;
+    
     const totalItems =
-      (tech.fixedInventory.n950Boxes || 0) + (tech.fixedInventory.n950Units || 0) +
-      (tech.fixedInventory.i9000sBoxes || 0) + (tech.fixedInventory.i9000sUnits || 0) +
-      (tech.fixedInventory.i9100Boxes || 0) + (tech.fixedInventory.i9100Units || 0) +
-      (tech.fixedInventory.rollPaperBoxes || 0) + (tech.fixedInventory.rollPaperUnits || 0) +
-      (tech.fixedInventory.stickersBoxes || 0) + (tech.fixedInventory.stickersUnits || 0) +
-      (tech.fixedInventory.newBatteriesBoxes || 0) + (tech.fixedInventory.newBatteriesUnits || 0) +
-      (tech.fixedInventory.mobilySimBoxes || 0) + (tech.fixedInventory.mobilySimUnits || 0) +
-      (tech.fixedInventory.stcSimBoxes || 0) + (tech.fixedInventory.stcSimUnits || 0) +
-      (tech.fixedInventory.zainSimBoxes || 0) + (tech.fixedInventory.zainSimUnits || 0);
+      (fixedInv?.n950Boxes || 0) + (fixedInv?.n950Units || 0) +
+      (fixedInv?.i9000sBoxes || 0) + (fixedInv?.i9000sUnits || 0) +
+      (fixedInv?.i9100Boxes || 0) + (fixedInv?.i9100Units || 0) +
+      (fixedInv?.rollPaperBoxes || 0) + (fixedInv?.rollPaperUnits || 0) +
+      (fixedInv?.stickersBoxes || 0) + (fixedInv?.stickersUnits || 0) +
+      (fixedInv?.newBatteriesBoxes || 0) + (fixedInv?.newBatteriesUnits || 0) +
+      (fixedInv?.mobilySimBoxes || 0) + (fixedInv?.mobilySimUnits || 0) +
+      (fixedInv?.stcSimBoxes || 0) + (fixedInv?.stcSimUnits || 0) +
+      (fixedInv?.zainSimBoxes || 0) + (fixedInv?.zainSimUnits || 0) +
+      (movingInv?.n950Boxes || 0) + (movingInv?.n950Units || 0) +
+      (movingInv?.i9000sBoxes || 0) + (movingInv?.i9000sUnits || 0) +
+      (movingInv?.i9100Boxes || 0) + (movingInv?.i9100Units || 0) +
+      (movingInv?.rollPaperBoxes || 0) + (movingInv?.rollPaperUnits || 0) +
+      (movingInv?.stickersBoxes || 0) + (movingInv?.stickersUnits || 0) +
+      (movingInv?.newBatteriesBoxes || 0) + (movingInv?.newBatteriesUnits || 0) +
+      (movingInv?.mobilySimBoxes || 0) + (movingInv?.mobilySimUnits || 0) +
+      (movingInv?.stcSimBoxes || 0) + (movingInv?.stcSimUnits || 0) +
+      (movingInv?.zainSimBoxes || 0) + (movingInv?.zainSimUnits || 0);
 
-    const threshold = tech.fixedInventory.criticalStockThreshold || 100;
+    const threshold = fixedInv?.criticalStockThreshold || 100;
     return Math.min(100, Math.round((totalItems / threshold) * 100));
   };
 

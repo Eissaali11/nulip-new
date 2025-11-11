@@ -395,6 +395,16 @@ export type TechnicianWithFixedInventory = {
   alertLevel: 'good' | 'warning' | 'critical'; // Overall alert level
 };
 
+export type TechnicianWithBothInventories = {
+  technicianId: string;
+  technicianName: string;
+  city: string;
+  regionId?: string | null;
+  fixedInventory: TechnicianFixedInventory | null;
+  movingInventory: TechnicianInventory | null;
+  alertLevel: 'good' | 'warning' | 'critical'; // Overall alert level
+};
+
 export type FixedInventoryItemStatus = {
   itemType: string;
   itemNameAr: string;
