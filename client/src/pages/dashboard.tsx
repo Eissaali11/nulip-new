@@ -1,4 +1,3 @@
-import TechniciansTable from "@/components/technicians-table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -44,6 +43,7 @@ import { GridBackground } from "@/components/dashboard/GridBackground";
 import { Navbar } from "@/components/dashboard/Navbar";
 import { InventoryPieCard } from "@/components/dashboard/InventoryPieCard";
 import { InventoryBarCard } from "@/components/dashboard/InventoryBarCard";
+import { TechnicianDashboardCard } from "@/components/dashboard/TechnicianDashboardCard";
 
 interface WarehouseTransfer {
   id: string;
@@ -617,30 +617,67 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* Technicians Table */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.7 }}
-        >
-          <Card className="border-2 border-[#18B2B0]/30 bg-white/5 backdrop-blur-xl shadow-2xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-2xl text-white">
-                <motion.div 
-                  className="p-3 bg-gradient-to-br from-[#18B2B0] to-[#0ea5a3] rounded-2xl shadow-lg"
-                  animate={{ rotate: [0, 5, 0, -5, 0] }}
-                  transition={{ duration: 4, repeat: Infinity }}
-                >
-                  <Users className="h-7 w-7 text-white drop-shadow-md" />
-                </motion.div>
-                <span className="font-black">جدول الفنيين</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <TechniciansTable />
-            </CardContent>
-          </Card>
-        </motion.div>
+        {/* Technicians Dashboard */}
+        {user?.role === 'admin' && techniciansData?.technicians && (
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="relative bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl rounded-3xl border border-[#18B2B0]/30 p-8 overflow-hidden shadow-2xl mb-8"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-[#18B2B0]/10 to-transparent" />
+            
+            <motion.div
+              className="absolute inset-0 rounded-3xl"
+              animate={{
+                boxShadow: [
+                  "0 0 30px rgba(24, 178, 176, 0.1)",
+                  "0 0 50px rgba(24, 178, 176, 0.2)",
+                  "0 0 30px rgba(24, 178, 176, 0.1)",
+                ]
+              }}
+              transition={{ duration: 3, repeat: Infinity }}
+            />
+
+            <div className="relative">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-3">
+                  <motion.div 
+                    className="p-3 bg-gradient-to-br from-[#18B2B0] to-[#0ea5a3] rounded-2xl shadow-lg"
+                    animate={{ rotate: [0, 5, 0, -5, 0] }}
+                    transition={{ duration: 4, repeat: Infinity }}
+                  >
+                    <Users className="h-7 w-7 text-white drop-shadow-md" />
+                  </motion.div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">لوحة الفنيين</h2>
+                    <p className="text-gray-400 text-sm">نظرة شاملة على مخزون جميع الفنيين</p>
+                  </div>
+                </div>
+                <Badge className="bg-[#18B2B0]/20 text-[#18B2B0] border-[#18B2B0]/30 px-4 py-2">
+                  {techniciansData.technicians.length} فني
+                </Badge>
+              </div>
+
+              <div className="space-y-4">
+                {techniciansData.technicians.map((tech, index) => (
+                  <TechnicianDashboardCard 
+                    key={tech.technicianId} 
+                    technician={tech} 
+                    index={index}
+                  />
+                ))}
+              </div>
+
+              {techniciansData.technicians.length === 0 && (
+                <div className="text-center py-12">
+                  <Users className="h-16 w-16 text-gray-500 mx-auto mb-4" />
+                  <p className="text-gray-400 text-lg">لا يوجد فنيين مسجلين في النظام</p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
       </div>
     </div>
   );
