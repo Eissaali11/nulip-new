@@ -61,9 +61,11 @@ export default function AdminPage() {
     queryKey: ["/api/users"],
   });
 
-  const { data: recentTransactions = [] } = useQuery<TransactionWithDetails[]>({
+  const { data: transactionsData } = useQuery<{ transactions: TransactionWithDetails[] }>({
     queryKey: ["/api/transactions"],
   });
+
+  const recentTransactions = transactionsData?.transactions || [];
 
   const regionForm = useForm<z.infer<typeof regionFormSchema>>({
     resolver: zodResolver(regionFormSchema),
