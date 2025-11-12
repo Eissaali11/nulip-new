@@ -41,7 +41,9 @@ import { InventoryPieCard } from "@/components/dashboard/InventoryPieCard";
 import { InventoryBarCard } from "@/components/dashboard/InventoryBarCard";
 import { TechnicianDashboardCard } from "@/components/dashboard/TechnicianDashboardCard";
 import { WarehouseDashboardCard } from "@/components/dashboard/WarehouseDashboardCard";
+import { ProductCard } from "@/components/dashboard/ProductCard";
 import RequestInventoryModal from "@/components/request-inventory-modal";
+import { CreditCard, FileText, Sticker } from "lucide-react";
 
 interface WarehouseTransfer {
   id: string;
@@ -372,190 +374,269 @@ export default function Dashboard() {
 
         {/* مخزوني الشخصي - للفني */}
         {user?.role === 'technician' && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8"
-          >
+          <>
             {/* المخزون الثابت */}
-            <div className="relative bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl rounded-3xl border border-[#18B2B0]/30 p-8 overflow-hidden shadow-2xl">
-              <div className="absolute inset-0 bg-gradient-to-br from-[#18B2B0]/10 to-transparent" />
-              
-              <div className="relative">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <Package className="h-6 w-6 text-[#18B2B0]" />
-                    <h3 className="text-xl font-bold text-white">المخزون الثابت</h3>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="mb-8"
+            >
+              <div className="relative bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl rounded-3xl border border-[#18B2B0]/30 p-8 overflow-hidden shadow-2xl mb-6">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#18B2B0]/10 to-transparent" />
+                
+                <div className="relative flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <motion.div
+                      animate={{ rotate: [0, 5, 0, -5, 0] }}
+                      transition={{ duration: 4, repeat: Infinity }}
+                      className="p-4 bg-gradient-to-br from-[#18B2B0] to-teal-600 rounded-2xl shadow-lg"
+                    >
+                      <Package className="h-8 w-8 text-white" />
+                    </motion.div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-white">المخزون الثابت</h3>
+                      <p className="text-gray-400 text-sm">جميع المنتجات المخزنة بشكل دائم</p>
+                    </div>
                   </div>
                   <Link href="/my-fixed-inventory">
-                    <Button size="sm" className="bg-[#18B2B0] hover:bg-[#159a98]">
-                      عرض التفاصيل
-                      <ArrowRight className="mr-2 h-4 w-4" />
+                    <Button size="lg" className="bg-[#18B2B0] hover:bg-[#159a98] shadow-lg">
+                      عرض التفاصيل الكاملة
+                      <ArrowRight className="mr-2 h-5 w-5" />
                     </Button>
                   </Link>
                 </div>
+              </div>
 
-                <div className="flex justify-center py-8">
-                  <CircularProgress
-                    percentage={myFixedInventory ? Math.min(100, (getFixedInventoryTotal() / 500) * 100) : 0}
-                    label="إجمالي الوحدات"
-                    value={getFixedInventoryTotal().toString()}
-                    color="#18B2B0"
-                    size={180}
+              {fixedLoading ? (
+                <div className="text-center py-16">
+                  <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#18B2B0]"></div>
+                  <p className="text-gray-400 text-sm mt-4">جاري تحميل المنتجات...</p>
+                </div>
+              ) : myFixedInventory && getFixedInventoryTotal() > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  <ProductCard
+                    icon={<Smartphone className="h-6 w-6" />}
+                    title="جهاز N950"
+                    boxes={myFixedInventory.n950Boxes || 0}
+                    units={myFixedInventory.n950Units || 0}
+                    color="#3b82f6"
+                    gradient="from-blue-500/20 via-blue-600/10 to-transparent"
+                    index={0}
+                  />
+                  <ProductCard
+                    icon={<Smartphone className="h-6 w-6" />}
+                    title="جهاز i9000S"
+                    boxes={myFixedInventory.i9000sBoxes || 0}
+                    units={myFixedInventory.i9000sUnits || 0}
+                    color="#8b5cf6"
+                    gradient="from-violet-500/20 via-violet-600/10 to-transparent"
+                    index={1}
+                  />
+                  <ProductCard
+                    icon={<Smartphone className="h-6 w-6" />}
+                    title="جهاز i9100"
+                    boxes={myFixedInventory.i9100Boxes || 0}
+                    units={myFixedInventory.i9100Units || 0}
+                    color="#06b6d4"
+                    gradient="from-cyan-500/20 via-cyan-600/10 to-transparent"
+                    index={2}
+                  />
+                  <ProductCard
+                    icon={<FileText className="h-6 w-6" />}
+                    title="ورق حراري"
+                    boxes={myFixedInventory.rollPaperBoxes || 0}
+                    units={myFixedInventory.rollPaperUnits || 0}
+                    color="#10b981"
+                    gradient="from-emerald-500/20 via-emerald-600/10 to-transparent"
+                    index={3}
+                  />
+                  <ProductCard
+                    icon={<Sticker className="h-6 w-6" />}
+                    title="ملصقات"
+                    boxes={myFixedInventory.stickersBoxes || 0}
+                    units={myFixedInventory.stickersUnits || 0}
+                    color="#f59e0b"
+                    gradient="from-amber-500/20 via-amber-600/10 to-transparent"
+                    index={4}
+                  />
+                  <ProductCard
+                    icon={<Battery className="h-6 w-6" />}
+                    title="بطاريات جديدة"
+                    boxes={myFixedInventory.newBatteriesBoxes || 0}
+                    units={myFixedInventory.newBatteriesUnits || 0}
+                    color="#eab308"
+                    gradient="from-yellow-500/20 via-yellow-600/10 to-transparent"
+                    index={5}
+                  />
+                  <ProductCard
+                    icon={<CreditCard className="h-6 w-6" />}
+                    title="شريحة موبايلي"
+                    boxes={myFixedInventory.mobilySimBoxes || 0}
+                    units={myFixedInventory.mobilySimUnits || 0}
+                    color="#22c55e"
+                    gradient="from-green-500/20 via-green-600/10 to-transparent"
+                    index={6}
+                  />
+                  <ProductCard
+                    icon={<CreditCard className="h-6 w-6" />}
+                    title="شريحة STC"
+                    boxes={myFixedInventory.stcSimBoxes || 0}
+                    units={myFixedInventory.stcSimUnits || 0}
+                    color="#a855f7"
+                    gradient="from-purple-500/20 via-purple-600/10 to-transparent"
+                    index={7}
+                  />
+                  <ProductCard
+                    icon={<CreditCard className="h-6 w-6" />}
+                    title="شريحة زين"
+                    boxes={myFixedInventory.zainSimBoxes || 0}
+                    units={myFixedInventory.zainSimUnits || 0}
+                    color="#ec4899"
+                    gradient="from-pink-500/20 via-pink-600/10 to-transparent"
+                    index={8}
                   />
                 </div>
-
-                {fixedLoading ? (
-                  <div className="mt-6 text-center py-8">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#18B2B0]"></div>
-                    <p className="text-gray-400 text-sm mt-4">جاري تحميل البيانات...</p>
-                  </div>
-                ) : myFixedInventory && getFixedInventoryTotal() > 0 ? (
-                  <div className="grid grid-cols-2 gap-3 mt-6">
-                    <div className="bg-gradient-to-br from-blue-500/10 to-transparent border border-blue-500/20 rounded-lg p-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Smartphone className="h-4 w-4 text-blue-400" />
-                        <p className="text-xs text-gray-400">أجهزة POS</p>
-                      </div>
-                      <p className="text-lg font-bold text-white">
-                        {(myFixedInventory.n950Boxes || 0) + (myFixedInventory.n950Units || 0) +
-                         (myFixedInventory.i9000sBoxes || 0) + (myFixedInventory.i9000sUnits || 0) +
-                         (myFixedInventory.i9100Boxes || 0) + (myFixedInventory.i9100Units || 0)}
-                      </p>
-                    </div>
-
-                    <div className="bg-gradient-to-br from-purple-500/10 to-transparent border border-purple-500/20 rounded-lg p-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <CheckCircle className="h-4 w-4 text-purple-400" />
-                        <p className="text-xs text-gray-400">شرائح SIM</p>
-                      </div>
-                      <p className="text-lg font-bold text-white">
-                        {(myFixedInventory.mobilySimBoxes || 0) + (myFixedInventory.mobilySimUnits || 0) +
-                         (myFixedInventory.stcSimBoxes || 0) + (myFixedInventory.stcSimUnits || 0) +
-                         (myFixedInventory.zainSimBoxes || 0) + (myFixedInventory.zainSimUnits || 0)}
-                      </p>
-                    </div>
-
-                    <div className="bg-gradient-to-br from-green-500/10 to-transparent border border-green-500/20 rounded-lg p-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Activity className="h-4 w-4 text-green-400" />
-                        <p className="text-xs text-gray-400">مستلزمات</p>
-                      </div>
-                      <p className="text-lg font-bold text-white">
-                        {(myFixedInventory.rollPaperBoxes || 0) + (myFixedInventory.rollPaperUnits || 0) +
-                         (myFixedInventory.stickersBoxes || 0) + (myFixedInventory.stickersUnits || 0)}
-                      </p>
-                    </div>
-
-                    <div className="bg-gradient-to-br from-yellow-500/10 to-transparent border border-yellow-500/20 rounded-lg p-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Battery className="h-4 w-4 text-yellow-400" />
-                        <p className="text-xs text-gray-400">بطاريات</p>
-                      </div>
-                      <p className="text-lg font-bold text-white">
-                        {(myFixedInventory.newBatteriesBoxes || 0) + (myFixedInventory.newBatteriesUnits || 0)}
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="mt-6 text-center py-8">
-                    <p className="text-gray-400 text-sm">لا يوجد مخزون ثابت حالياً</p>
-                    <p className="text-gray-500 text-xs mt-2">يمكنك طلب مخزون جديد من خلال زر "طلب مخزون" أعلاه</p>
-                  </div>
-                )}
-              </div>
-            </div>
+              ) : (
+                <div className="text-center py-16 bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10">
+                  <Package className="h-16 w-16 text-gray-500 mx-auto mb-4" />
+                  <p className="text-gray-400 text-lg font-medium">لا يوجد مخزون ثابت حالياً</p>
+                  <p className="text-gray-500 text-sm mt-2">يمكنك طلب مخزون جديد من خلال زر "طلب مخزون" أعلاه</p>
+                </div>
+              )}
+            </motion.div>
 
             {/* المخزون المتحرك */}
-            <div className="relative bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl rounded-3xl border border-emerald-500/30 p-8 overflow-hidden shadow-2xl">
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent" />
-              
-              <div className="relative">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <TruckIcon className="h-6 w-6 text-emerald-500" />
-                    <h3 className="text-xl font-bold text-white">المخزون المتحرك</h3>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="mb-8"
+            >
+              <div className="relative bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl rounded-3xl border border-emerald-500/30 p-8 overflow-hidden shadow-2xl mb-6">
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent" />
+                
+                <div className="relative flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <motion.div
+                      animate={{ rotate: [0, 5, 0, -5, 0] }}
+                      transition={{ duration: 4, repeat: Infinity, delay: 0.5 }}
+                      className="p-4 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl shadow-lg"
+                    >
+                      <TruckIcon className="h-8 w-8 text-white" />
+                    </motion.div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-white">المخزون المتحرك</h3>
+                      <p className="text-gray-400 text-sm">المنتجات الجاهزة للعمليات الميدانية</p>
+                    </div>
                   </div>
                   <Link href="/my-moving-inventory">
-                    <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600">
-                      عرض التفاصيل
-                      <ArrowRight className="mr-2 h-4 w-4" />
+                    <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600 shadow-lg">
+                      عرض التفاصيل الكاملة
+                      <ArrowRight className="mr-2 h-5 w-5" />
                     </Button>
                   </Link>
                 </div>
+              </div>
 
-                <div className="flex justify-center py-8">
-                  <CircularProgress
-                    percentage={myMovingInventory ? Math.min(100, (getMovingInventoryTotal() / 200) * 100) : 0}
-                    label="إجمالي الوحدات"
-                    value={getMovingInventoryTotal().toString()}
-                    color="#10b981"
-                    size={180}
+              {movingLoading ? (
+                <div className="text-center py-16">
+                  <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
+                  <p className="text-gray-400 text-sm mt-4">جاري تحميل المنتجات...</p>
+                </div>
+              ) : myMovingInventory && getMovingInventoryTotal() > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  <ProductCard
+                    icon={<Smartphone className="h-6 w-6" />}
+                    title="جهاز N950"
+                    boxes={myMovingInventory.n950Boxes || 0}
+                    units={myMovingInventory.n950Units || 0}
+                    color="#14b8a6"
+                    gradient="from-teal-500/20 via-teal-600/10 to-transparent"
+                    index={0}
+                  />
+                  <ProductCard
+                    icon={<Smartphone className="h-6 w-6" />}
+                    title="جهاز i9000S"
+                    boxes={myMovingInventory.i9000sBoxes || 0}
+                    units={myMovingInventory.i9000sUnits || 0}
+                    color="#06b6d4"
+                    gradient="from-cyan-500/20 via-cyan-600/10 to-transparent"
+                    index={1}
+                  />
+                  <ProductCard
+                    icon={<Smartphone className="h-6 w-6" />}
+                    title="جهاز i9100"
+                    boxes={myMovingInventory.i9100Boxes || 0}
+                    units={myMovingInventory.i9100Units || 0}
+                    color="#0ea5e9"
+                    gradient="from-sky-500/20 via-sky-600/10 to-transparent"
+                    index={2}
+                  />
+                  <ProductCard
+                    icon={<FileText className="h-6 w-6" />}
+                    title="ورق حراري"
+                    boxes={myMovingInventory.rollPaperBoxes || 0}
+                    units={myMovingInventory.rollPaperUnits || 0}
+                    color="#84cc16"
+                    gradient="from-lime-500/20 via-lime-600/10 to-transparent"
+                    index={3}
+                  />
+                  <ProductCard
+                    icon={<Sticker className="h-6 w-6" />}
+                    title="ملصقات"
+                    boxes={myMovingInventory.stickersBoxes || 0}
+                    units={myMovingInventory.stickersUnits || 0}
+                    color="#fb923c"
+                    gradient="from-orange-400/20 via-orange-500/10 to-transparent"
+                    index={4}
+                  />
+                  <ProductCard
+                    icon={<Battery className="h-6 w-6" />}
+                    title="بطاريات جديدة"
+                    boxes={myMovingInventory.newBatteriesBoxes || 0}
+                    units={myMovingInventory.newBatteriesUnits || 0}
+                    color="#facc15"
+                    gradient="from-yellow-400/20 via-yellow-500/10 to-transparent"
+                    index={5}
+                  />
+                  <ProductCard
+                    icon={<CreditCard className="h-6 w-6" />}
+                    title="شريحة موبايلي"
+                    boxes={myMovingInventory.mobilySimBoxes || 0}
+                    units={myMovingInventory.mobilySimUnits || 0}
+                    color="#4ade80"
+                    gradient="from-green-400/20 via-green-500/10 to-transparent"
+                    index={6}
+                  />
+                  <ProductCard
+                    icon={<CreditCard className="h-6 w-6" />}
+                    title="شريحة STC"
+                    boxes={myMovingInventory.stcSimBoxes || 0}
+                    units={myMovingInventory.stcSimUnits || 0}
+                    color="#c084fc"
+                    gradient="from-purple-400/20 via-purple-500/10 to-transparent"
+                    index={7}
+                  />
+                  <ProductCard
+                    icon={<CreditCard className="h-6 w-6" />}
+                    title="شريحة زين"
+                    boxes={myMovingInventory.zainSimBoxes || 0}
+                    units={myMovingInventory.zainSimUnits || 0}
+                    color="#f472b6"
+                    gradient="from-pink-400/20 via-pink-500/10 to-transparent"
+                    index={8}
                   />
                 </div>
-
-                {movingLoading ? (
-                  <div className="mt-6 text-center py-8">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
-                    <p className="text-gray-400 text-sm mt-4">جاري تحميل البيانات...</p>
-                  </div>
-                ) : myMovingInventory && getMovingInventoryTotal() > 0 ? (
-                  <div className="grid grid-cols-2 gap-3 mt-6">
-                    <div className="bg-gradient-to-br from-emerald-500/10 to-transparent border border-emerald-500/20 rounded-lg p-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Smartphone className="h-4 w-4 text-emerald-400" />
-                        <p className="text-xs text-gray-400">أجهزة POS</p>
-                      </div>
-                      <p className="text-lg font-bold text-white">
-                        {(myMovingInventory.n950Boxes || 0) + (myMovingInventory.n950Units || 0) +
-                         (myMovingInventory.i9000sBoxes || 0) + (myMovingInventory.i9000sUnits || 0) +
-                         (myMovingInventory.i9100Boxes || 0) + (myMovingInventory.i9100Units || 0)}
-                      </p>
-                    </div>
-
-                    <div className="bg-gradient-to-br from-teal-500/10 to-transparent border border-teal-500/20 rounded-lg p-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <CheckCircle className="h-4 w-4 text-teal-400" />
-                        <p className="text-xs text-gray-400">شرائح SIM</p>
-                      </div>
-                      <p className="text-lg font-bold text-white">
-                        {(myMovingInventory.mobilySimBoxes || 0) + (myMovingInventory.mobilySimUnits || 0) +
-                         (myMovingInventory.stcSimBoxes || 0) + (myMovingInventory.stcSimUnits || 0) +
-                         (myMovingInventory.zainSimBoxes || 0) + (myMovingInventory.zainSimUnits || 0)}
-                      </p>
-                    </div>
-
-                    <div className="bg-gradient-to-br from-cyan-500/10 to-transparent border border-cyan-500/20 rounded-lg p-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Activity className="h-4 w-4 text-cyan-400" />
-                        <p className="text-xs text-gray-400">مستلزمات</p>
-                      </div>
-                      <p className="text-lg font-bold text-white">
-                        {(myMovingInventory.rollPaperBoxes || 0) + (myMovingInventory.rollPaperUnits || 0) +
-                         (myMovingInventory.stickersBoxes || 0) + (myMovingInventory.stickersUnits || 0)}
-                      </p>
-                    </div>
-
-                    <div className="bg-gradient-to-br from-lime-500/10 to-transparent border border-lime-500/20 rounded-lg p-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Battery className="h-4 w-4 text-lime-400" />
-                        <p className="text-xs text-gray-400">بطاريات</p>
-                      </div>
-                      <p className="text-lg font-bold text-white">
-                        {(myMovingInventory.newBatteriesBoxes || 0) + (myMovingInventory.newBatteriesUnits || 0)}
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="mt-6 text-center py-8">
-                    <p className="text-gray-400 text-sm">لا يوجد مخزون متحرك حالياً</p>
-                    <p className="text-gray-500 text-xs mt-2">سيظهر المخزون المتحرك بعد قبول طلبات النقل من المستودعات</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </motion.div>
+              ) : (
+                <div className="text-center py-16 bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10">
+                  <TruckIcon className="h-16 w-16 text-gray-500 mx-auto mb-4" />
+                  <p className="text-gray-400 text-lg font-medium">لا يوجد مخزون متحرك حالياً</p>
+                  <p className="text-gray-500 text-sm mt-2">سيظهر المخزون المتحرك بعد قبول طلبات النقل من المستودعات</p>
+                </div>
+              )}
+            </motion.div>
+          </>
         )}
 
         {/* المستودعات - للأدمن فقط */}
