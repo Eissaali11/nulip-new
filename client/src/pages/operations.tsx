@@ -159,6 +159,38 @@ export default function OperationsPage() {
   const rejectedCount = transfers?.filter(t => t.status === 'rejected').length || 0;
   const totalTransfers = transfers?.length || 0;
 
+  // Group pending transfers by warehouse + technician + day + notes
+  const groupedPendingTransfers = pendingTransfers?.reduce((acc, transfer) => {
+    const date = new Date(transfer.createdAt);
+    const dayKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+    const key = `${transfer.warehouseId}-${dayKey}-${transfer.performedBy}-${transfer.notes || 'no-notes'}`;
+    
+    if (!acc[key]) {
+      acc[key] = {
+        groupId: key,
+        warehouseId: transfer.warehouseId,
+        warehouseName: transfer.warehouseName,
+        technicianName: transfer.technicianName,
+        technicianId: transfer.technicianId,
+        createdAt: transfer.createdAt,
+        notes: transfer.notes,
+        status: transfer.status,
+        performedBy: transfer.performedBy,
+        items: [],
+      };
+    }
+    acc[key].items.push({
+      id: transfer.id,
+      itemType: transfer.itemType,
+      itemNameAr: getItemNameAr(transfer.itemType),
+      packagingType: transfer.packagingType,
+      quantity: transfer.quantity,
+    });
+    return acc;
+  }, {} as Record<string, any>);
+
+  const groupedPendingTransfersList = groupedPendingTransfers ? Object.values(groupedPendingTransfers) : [];
+
   const groupedProcessedTransfers = processedTransfers?.reduce((acc, transfer) => {
     const date = new Date(transfer.createdAt);
     const dayKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
@@ -579,91 +611,108 @@ export default function OperationsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
-                {pendingTransfers.length === 0 ? (
+                {groupedPendingTransfersList.length === 0 ? (
                   <div className="text-center py-12" data-testid="text-no-pending">
                     <AlertCircle className="h-16 w-16 text-[#18B2B0]/50 mx-auto mb-4" />
                     <p className="text-white text-lg font-medium">لا توجد عمليات نقل معلقة</p>
                     <p className="text-gray-400 text-sm mt-2">جميع العمليات تمت معالجتها</p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="border-white/10 bg-white/5 hover:bg-white/5">
-                          <TableHead className="text-right font-bold text-[#18B2B0]">المستودع</TableHead>
-                          <TableHead className="text-right font-bold text-[#18B2B0]">الفني</TableHead>
-                          <TableHead className="text-right font-bold text-[#18B2B0]">الصنف</TableHead>
-                          <TableHead className="text-right font-bold text-[#18B2B0]">النوع</TableHead>
-                          <TableHead className="text-right font-bold text-[#18B2B0]">الكمية</TableHead>
-                          <TableHead className="text-right font-bold text-[#18B2B0]">التاريخ</TableHead>
-                          <TableHead className="text-right font-bold text-[#18B2B0]">الحالة</TableHead>
-                          <TableHead className="text-right font-bold text-[#18B2B0]">الإجراءات</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {pendingTransfers.map((transfer) => (
-                          <TableRow key={transfer.id} data-testid={`row-transfer-${transfer.id}`} className="border-white/10 hover:bg-white/5 transition-colors">
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <div className="bg-[#18B2B0]/20 p-2 rounded-lg backdrop-blur-sm">
-                                  <Warehouse className="h-4 w-4 text-[#18B2B0]" />
+                  <div className="grid grid-cols-1 gap-4">
+                    {groupedPendingTransfersList.map((group: any, index: number) => (
+                      <motion.div
+                        key={group.groupId}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 * index }}
+                      >
+                        <Card 
+                          className="relative overflow-hidden border-2 border-amber-500/30 bg-white/5 hover:border-amber-400/50 backdrop-blur-xl hover:shadow-2xl transition-all duration-300"
+                          data-testid={`card-pending-${group.groupId}`}
+                        >
+                          <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-amber-500 to-orange-600"></div>
+                          
+                          <CardHeader className="pb-3">
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="p-3 rounded-xl shadow-md bg-gradient-to-br from-amber-500 to-orange-600">
+                                  <Warehouse className="h-6 w-6 text-white" />
                                 </div>
-                                <span className="font-medium text-white" data-testid={`text-warehouse-${transfer.id}`}>{transfer.warehouseName}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <div className="bg-blue-500/20 p-2 rounded-lg backdrop-blur-sm">
-                                  <User className="h-4 w-4 text-blue-400" />
+                                <div>
+                                  <h3 className="text-lg font-bold text-white">{group.warehouseName}</h3>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <User className="h-3 w-3 text-gray-400" />
+                                    <p className="text-sm text-gray-300">{group.technicianName}</p>
+                                  </div>
                                 </div>
-                                <span className="text-gray-300" data-testid={`text-technician-${transfer.id}`}>{transfer.technicianName}</span>
                               </div>
-                            </TableCell>
-                            <TableCell className="font-medium text-white" data-testid={`text-item-${transfer.id}`}>{transfer.itemNameAr}</TableCell>
-                            <TableCell data-testid={`text-packaging-${transfer.id}`}>
-                              <Badge variant="outline" className="bg-[#18B2B0]/20 text-[#18B2B0] border-[#18B2B0]/30 backdrop-blur-sm">
-                                {transfer.packagingType === 'box' ? 'كرتونة' : 'قطعة'}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
+                              {getStatusBadge(group.status)}
+                            </div>
+                          </CardHeader>
+
+                          <CardContent className="space-y-3">
+                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/10">
+                              <div className="flex items-center gap-2 mb-2">
                                 <Package className="h-4 w-4 text-[#18B2B0]" />
-                                <span className="font-bold text-[#18B2B0]" data-testid={`text-quantity-${transfer.id}`}>{transfer.quantity}</span>
+                                <span className="text-sm font-semibold text-white">المنتجات ({group.items.length})</span>
                               </div>
-                            </TableCell>
-                            <TableCell className="text-sm text-gray-400" data-testid={`text-date-${transfer.id}`}>
-                              {format(new Date(transfer.createdAt), "dd MMM yyyy, HH:mm", { locale: ar })}
-                            </TableCell>
-                            <TableCell>{getStatusBadge(transfer.status)}</TableCell>
-                            <TableCell>
-                              <div className="flex gap-2">
-                                <Button
-                                  size="sm"
-                                  className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-md"
-                                  onClick={() => acceptMutation.mutate(transfer.id)}
-                                  disabled={acceptMutation.isPending}
-                                  data-testid={`button-accept-${transfer.id}`}
-                                >
-                                  <CheckCircle className="h-4 w-4 mr-1" />
-                                  قبول
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  className="bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 shadow-md"
-                                  onClick={() => handleReject(transfer.id)}
-                                  disabled={rejectMutation.isPending}
-                                  data-testid={`button-reject-${transfer.id}`}
-                                >
-                                  <XCircle className="h-4 w-4 mr-1" />
-                                  رفض
-                                </Button>
+                              <div className="grid grid-cols-2 gap-2">
+                                {group.items.map((item: any, idx: number) => (
+                                  <div key={idx} className="flex items-center justify-between bg-[#18B2B0]/10 rounded-lg p-2">
+                                    <span className="text-xs font-medium text-gray-300">{item.itemNameAr}</span>
+                                    <Badge variant="outline" className="text-xs bg-[#18B2B0]/20 text-[#18B2B0] border-[#18B2B0]/30">
+                                      {item.quantity} {item.packagingType === 'box' ? 'كرتونة' : 'قطعة'}
+                                    </Badge>
+                                  </div>
+                                ))}
                               </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                            </div>
+
+                            <div className="flex items-center justify-between text-sm">
+                              <div className="flex items-center gap-2">
+                                <Calendar className="h-4 w-4 text-gray-400" />
+                                <span className="text-gray-300">
+                                  {format(new Date(group.createdAt), "dd MMM yyyy, HH:mm", { locale: ar })}
+                                </span>
+                              </div>
+                            </div>
+
+                            {group.notes && (
+                              <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 backdrop-blur-sm">
+                                <p className="text-xs font-semibold text-blue-300 mb-1">ملاحظات:</p>
+                                <p className="text-xs text-blue-200">{group.notes}</p>
+                              </div>
+                            )}
+
+                            <div className="flex gap-2 pt-2">
+                              <Button
+                                className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-md"
+                                onClick={() => {
+                                  group.items.forEach((item: any) => acceptMutation.mutate(item.id));
+                                }}
+                                disabled={acceptMutation.isPending}
+                                data-testid={`button-accept-group-${group.groupId}`}
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                قبول الكل ({group.items.length})
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                className="flex-1 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 shadow-md"
+                                onClick={() => {
+                                  group.items.forEach((item: any) => rejectMutation.mutate({ transferId: item.id }));
+                                }}
+                                disabled={rejectMutation.isPending}
+                                data-testid={`button-reject-group-${group.groupId}`}
+                              >
+                                <XCircle className="h-4 w-4 mr-2" />
+                                رفض الكل ({group.items.length})
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    ))}
                   </div>
                 )}
               </CardContent>
