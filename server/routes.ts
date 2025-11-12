@@ -1457,6 +1457,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bulk operations for multiple request IDs
+  app.post("/api/warehouse-transfer-batches/bulk/accept", requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { requestIds } = req.body;
+
+      if (!requestIds || !Array.isArray(requestIds) || requestIds.length === 0) {
+        return res.status(400).json({ message: "Request IDs array is required" });
+      }
+
+      const allUpdatedTransfers = [];
+
+      for (const requestId of requestIds) {
+        const transfers = await db
+          .select()
+          .from(warehouseTransfers)
+          .where(or(
+            eq(warehouseTransfers.requestId, requestId),
+            eq(warehouseTransfers.id, requestId)
+          ));
+
+        if (transfers.length === 0) continue;
+
+        const firstTransfer = transfers[0];
+        if (user.role !== 'admin' && firstTransfer.technicianId !== user.id) {
+          return res.status(403).json({ message: "Forbidden" });
+        }
+
+        for (const transfer of transfers) {
+          if (transfer.status === 'pending') {
+            const updated = await storage.acceptWarehouseTransfer(transfer.id);
+            allUpdatedTransfers.push(updated);
+          }
+        }
+      }
+
+      res.json({ success: true, updated: allUpdatedTransfers.length });
+    } catch (error) {
+      console.error("Error bulk accepting transfers:", error);
+      if (error instanceof Error) {
+        return res.status(400).json({ message: error.message });
+      }
+      res.status(500).json({ message: "Failed to bulk accept transfers" });
+    }
+  });
+
+  app.post("/api/warehouse-transfer-batches/bulk/reject", requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { requestIds, reason } = req.body;
+
+      if (!requestIds || !Array.isArray(requestIds) || requestIds.length === 0) {
+        return res.status(400).json({ message: "Request IDs array is required" });
+      }
+
+      if (!reason || !reason.trim()) {
+        return res.status(400).json({ message: "Rejection reason is required" });
+      }
+
+      const allUpdatedTransfers = [];
+
+      for (const requestId of requestIds) {
+        const transfers = await db
+          .select()
+          .from(warehouseTransfers)
+          .where(or(
+            eq(warehouseTransfers.requestId, requestId),
+            eq(warehouseTransfers.id, requestId)
+          ));
+
+        if (transfers.length === 0) continue;
+
+        const firstTransfer = transfers[0];
+        if (user.role !== 'admin' && firstTransfer.technicianId !== user.id) {
+          return res.status(403).json({ message: "Forbidden" });
+        }
+
+        for (const transfer of transfers) {
+          if (transfer.status === 'pending') {
+            const updated = await storage.rejectWarehouseTransfer(transfer.id, reason);
+            allUpdatedTransfers.push(updated);
+          }
+        }
+      }
+
+      res.json({ success: true, updated: allUpdatedTransfers.length });
+    } catch (error) {
+      console.error("Error bulk rejecting transfers:", error);
+      if (error instanceof Error) {
+        return res.status(400).json({ message: error.message });
+      }
+      res.status(500).json({ message: "Failed to bulk reject transfers" });
+    }
+  });
+
   app.delete("/api/warehouse-transfers", requireAuth, requireAdmin, async (req, res) => {
     try {
       const { ids } = req.body;

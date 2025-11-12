@@ -19,7 +19,9 @@ import {
   FileText,
   AlertCircle,
   Warehouse,
-  TrendingUp
+  TrendingUp,
+  CheckSquare,
+  Square
 } from "lucide-react";
 import { GridBackground } from "@/components/dashboard/GridBackground";
 import { Navbar } from "@/components/dashboard/Navbar";
@@ -126,6 +128,12 @@ export default function Notifications() {
   const [selectedTransfer, setSelectedTransfer] = useState<WarehouseTransfer | null>(null);
   const [selectedBatch, setSelectedBatch] = useState<GroupedTransfer | null>(null);
   const [techRejectionReason, setTechRejectionReason] = useState("");
+  
+  // Bulk selection state (for technician)
+  const [selectedBatchIds, setSelectedBatchIds] = useState<string[]>([]);
+  const [bulkRejectDialogOpen, setBulkRejectDialogOpen] = useState(false);
+  const [bulkApproveDialogOpen, setBulkApproveDialogOpen] = useState(false);
+  const [bulkRejectionReason, setBulkRejectionReason] = useState("");
 
   // Admin queries
   const { data: requests = [], isLoading: requestsLoading } = useQuery<InventoryRequest[]>({
@@ -233,6 +241,53 @@ export default function Notifications() {
     onError: (error: any) => {
       toast({
         title: "خطأ في رفض الطلب",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Bulk mutations for technician
+  const bulkApproveMutation = useMutation({
+    mutationFn: async (requestIds: string[]) => {
+      return await apiRequest("POST", "/api/warehouse-transfer-batches/bulk/accept", { requestIds });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/warehouse-transfers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/my-fixed-inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/my-moving-inventory"] });
+      setBulkApproveDialogOpen(false);
+      setSelectedBatchIds([]);
+      toast({
+        title: "✓ تم قبول الطلبات المحددة",
+        description: "تم إضافة الأصناف إلى مخزونك",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "خطأ في قبول الطلبات",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const bulkRejectMutation = useMutation({
+    mutationFn: async ({ requestIds, reason }: { requestIds: string[]; reason: string }) => {
+      return await apiRequest("POST", "/api/warehouse-transfer-batches/bulk/reject", { requestIds, reason });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/warehouse-transfers"] });
+      setBulkRejectDialogOpen(false);
+      setSelectedBatchIds([]);
+      setBulkRejectionReason("");
+      toast({
+        title: "تم رفض الطلبات المحددة",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "خطأ في رفض الطلبات",
         description: error.message,
         variant: "destructive",
       });
@@ -408,6 +463,53 @@ export default function Notifications() {
     }
   };
 
+  // Bulk selection handlers
+  const pendingBatches = !isAdmin ? groupedTransfers.filter(g => g.status === 'pending') : [];
+  
+  const toggleSelectBatch = (requestId: string) => {
+    setSelectedBatchIds(prev => 
+      prev.includes(requestId) 
+        ? prev.filter(id => id !== requestId)
+        : [...prev, requestId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedBatchIds.length === pendingBatches.length) {
+      setSelectedBatchIds([]);
+    } else {
+      setSelectedBatchIds(pendingBatches.map(b => b.requestId));
+    }
+  };
+
+  const isAllSelected = selectedBatchIds.length > 0 && selectedBatchIds.length === pendingBatches.length;
+
+  const handleBulkApprove = () => {
+    if (selectedBatchIds.length === 0) return;
+    setBulkApproveDialogOpen(true);
+  };
+
+  const handleConfirmBulkApprove = () => {
+    bulkApproveMutation.mutate(selectedBatchIds);
+  };
+
+  const handleBulkReject = () => {
+    if (selectedBatchIds.length === 0) return;
+    setBulkRejectDialogOpen(true);
+  };
+
+  const handleConfirmBulkReject = () => {
+    if (!bulkRejectionReason.trim()) {
+      toast({
+        title: "خطأ",
+        description: "يجب إدخال سبب الرفض",
+        variant: "destructive",
+      });
+      return;
+    }
+    bulkRejectMutation.mutate({ requestIds: selectedBatchIds, reason: bulkRejectionReason });
+  };
+
   const allCount = isAdmin ? requests.length : transfers.length;
   const pendingCount = isAdmin
     ? requests.filter(r => r.status === 'pending').length
@@ -479,6 +581,61 @@ export default function Notifications() {
           </div>
         </motion.div>
 
+        {/* Bulk Actions Bar (Technician only) */}
+        {!isAdmin && filter === 'pending' && pendingBatches.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 bg-gradient-to-br from-white/10 via-white/[0.07] to-white/[0.03] backdrop-blur-xl border border-[#18B2B0]/30 rounded-xl"
+          >
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-3">
+                <Button
+                  onClick={toggleSelectAll}
+                  variant="outline"
+                  size="sm"
+                  className="bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-[#18B2B0]/50"
+                  data-testid="button-select-all"
+                >
+                  {isAllSelected ? (
+                    <><CheckSquare className="h-4 w-4 ml-2" /> إلغاء تحديد الكل</>
+                  ) : (
+                    <><Square className="h-4 w-4 ml-2" /> تحديد الكل</>
+                  )}
+                </Button>
+                {selectedBatchIds.length > 0 && (
+                  <Badge className="bg-[#18B2B0]/20 text-[#18B2B0] border border-[#18B2B0]/40">
+                    {selectedBatchIds.length} محدد
+                  </Badge>
+                )}
+              </div>
+              {selectedBatchIds.length > 0 && (
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleBulkApprove}
+                    disabled={bulkApproveMutation.isPending}
+                    className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg shadow-green-500/20"
+                    data-testid="button-bulk-approve"
+                  >
+                    <Check className="h-4 w-4 ml-2" />
+                    قبول المحدد ({selectedBatchIds.length})
+                  </Button>
+                  <Button
+                    onClick={handleBulkReject}
+                    disabled={bulkRejectMutation.isPending}
+                    variant="outline"
+                    className="bg-gradient-to-r from-red-500/10 to-red-600/10 border-red-500/30 text-red-400 hover:bg-red-500/20 hover:border-red-500/50"
+                    data-testid="button-bulk-reject"
+                  >
+                    <X className="h-4 w-4 ml-2" />
+                    رفض المحدد ({selectedBatchIds.length})
+                  </Button>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+
         {/* Notifications List */}
         {isLoading ? (
           <div className="text-center py-12">
@@ -515,6 +672,29 @@ export default function Notifications() {
                     <div className="absolute inset-0 bg-gradient-to-br from-[#18B2B0]/10 via-transparent to-violet-500/5" />
                     <div className="absolute top-0 right-0 w-32 h-32 bg-[#18B2B0]/10 rounded-full blur-3xl group-hover:bg-[#18B2B0]/20 transition-all duration-500" />
                     <div className="absolute bottom-0 left-0 w-32 h-32 bg-violet-500/10 rounded-full blur-3xl group-hover:bg-violet-500/20 transition-all duration-500" />
+                    
+                    {/* Checkbox for technician pending items */}
+                    {!isAdmin && groupedTransfer && groupedTransfer.status === 'pending' && (
+                      <div className="absolute top-4 left-4 z-10">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => toggleSelectBatch(groupedTransfer.requestId)}
+                          className={`p-2 ${
+                            selectedBatchIds.includes(groupedTransfer.requestId)
+                              ? 'bg-[#18B2B0]/30 border-[#18B2B0] text-[#18B2B0]'
+                              : 'bg-white/5 border-white/20 text-white hover:bg-white/10'
+                          }`}
+                          data-testid={`checkbox-${groupedTransfer.requestId}`}
+                        >
+                          {selectedBatchIds.includes(groupedTransfer.requestId) ? (
+                            <CheckSquare className="h-5 w-5" />
+                          ) : (
+                            <Square className="h-5 w-5" />
+                          )}
+                        </Button>
+                      </div>
+                    )}
                     
                     <div className="relative p-6">
                       {/* Header */}
@@ -824,6 +1004,80 @@ export default function Notifications() {
               disabled={!techRejectionReason.trim() || techRejectBatchMutation.isPending}
               className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white"
               data-testid="button-tech-confirm-reject"
+            >
+              تأكيد الرفض
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Approve Dialog */}
+      <Dialog open={bulkApproveDialogOpen} onOpenChange={setBulkApproveDialogOpen}>
+        <DialogContent className="sm:max-w-md bg-[#0f0f15] border-[#18B2B0]/20 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-xl">قبول الطلبات المحددة</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              هل تريد قبول {selectedBatchIds.length} طلب؟ سيتم إضافة جميع الأصناف إلى مخزونك
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 p-3 bg-white/5 rounded-lg border border-white/10">
+            <p className="text-sm text-gray-400 mb-1">عدد الطلبات:</p>
+            <p className="text-white font-bold text-2xl">{selectedBatchIds.length}</p>
+          </div>
+          <DialogFooter className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setBulkApproveDialogOpen(false)}
+              className="bg-white/5 border-white/10 text-gray-300 hover:bg-white/10"
+            >
+              إلغاء
+            </Button>
+            <Button
+              onClick={handleConfirmBulkApprove}
+              disabled={bulkApproveMutation.isPending}
+              className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white"
+              data-testid="button-confirm-bulk-approve"
+            >
+              تأكيد القبول
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Reject Dialog */}
+      <Dialog open={bulkRejectDialogOpen} onOpenChange={setBulkRejectDialogOpen}>
+        <DialogContent className="sm:max-w-md bg-[#0f0f15] border-[#18B2B0]/20 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-xl">رفض الطلبات المحددة</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              يرجى إدخال سبب رفض {selectedBatchIds.length} طلب
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Textarea
+              value={bulkRejectionReason}
+              onChange={(e) => setBulkRejectionReason(e.target.value)}
+              placeholder="اكتب سبب الرفض هنا..."
+              className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 min-h-[100px]"
+              data-testid="textarea-bulk-rejection-reason"
+            />
+          </div>
+          <DialogFooter className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setBulkRejectDialogOpen(false);
+                setBulkRejectionReason("");
+              }}
+              className="bg-white/5 border-white/10 text-gray-300 hover:bg-white/10"
+            >
+              إلغاء
+            </Button>
+            <Button
+              onClick={handleConfirmBulkReject}
+              disabled={!bulkRejectionReason.trim() || bulkRejectMutation.isPending}
+              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white"
+              data-testid="button-confirm-bulk-reject"
             >
               تأكيد الرفض
             </Button>
