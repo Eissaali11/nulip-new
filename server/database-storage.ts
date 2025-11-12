@@ -49,7 +49,8 @@ import {
   warehouseInventory,
   warehouseTransfers,
   supervisorTechnicians,
-  supervisorWarehouses
+  supervisorWarehouses,
+  inventoryRequests
 } from "@shared/schema";
 import { IStorage } from "./storage";
 import { db } from "./db";
@@ -549,7 +550,105 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRecentTransactions(limit: number = 10): Promise<TransactionWithDetails[]> {
-    const recentTransactions = await db
+    const itemNameMap: Record<string, string> = {
+      'n950': 'N950',
+      'i9000s': 'I9000s',
+      'i9100': 'I9100',
+      'rollPaper': 'ورق حراري',
+      'stickers': 'ملصقات',
+      'newBatteries': 'بطاريات جديدة',
+      'mobilySim': 'شريحة موبايلي',
+      'stcSim': 'شريحة STC',
+      'zainSim': 'شريحة زين',
+    };
+
+    // Get warehouse transfers (نقل من مستودع)
+    const warehouseTransferOps = await db
+      .select({
+        id: warehouseTransfers.id,
+        itemType: warehouseTransfers.itemType,
+        quantity: warehouseTransfers.quantity,
+        status: warehouseTransfers.status,
+        performedBy: warehouseTransfers.performedBy,
+        technicianId: warehouseTransfers.technicianId,
+        notes: warehouseTransfers.notes,
+        createdAt: warehouseTransfers.createdAt,
+        performerName: sql<string>`performer.full_name`,
+        technicianName: users.fullName,
+        performerRegion: sql<string>`performer_region.name`,
+      })
+      .from(warehouseTransfers)
+      .leftJoin(sql`${users} as performer`, sql`${warehouseTransfers.performedBy} = performer.id`)
+      .leftJoin(users, eq(warehouseTransfers.technicianId, users.id))
+      .leftJoin(sql`${regions} as performer_region`, sql`performer.region_id = performer_region.id`)
+      .orderBy(desc(warehouseTransfers.createdAt))
+      .limit(limit);
+
+    // Get stock movements (نقل بين Fixed و Moving)
+    const stockMovementOps = await db
+      .select({
+        id: stockMovements.id,
+        itemType: stockMovements.itemType,
+        quantity: stockMovements.quantity,
+        fromInventory: stockMovements.fromInventory,
+        toInventory: stockMovements.toInventory,
+        performedBy: stockMovements.performedBy,
+        technicianId: stockMovements.technicianId,
+        reason: stockMovements.reason,
+        createdAt: stockMovements.createdAt,
+        performerName: sql<string>`performer.full_name`,
+        technicianName: users.fullName,
+        performerRegion: sql<string>`performer_region.name`,
+      })
+      .from(stockMovements)
+      .leftJoin(sql`${users} as performer`, sql`${stockMovements.performedBy} = performer.id`)
+      .leftJoin(users, eq(stockMovements.technicianId, users.id))
+      .leftJoin(sql`${regions} as performer_region`, sql`performer.region_id = performer_region.id`)
+      .orderBy(desc(stockMovements.createdAt))
+      .limit(limit);
+
+    // Get inventory requests (طلبات فنيين)
+    const inventoryRequestOps = await db
+      .select({
+        id: inventoryRequests.id,
+        technicianId: inventoryRequests.technicianId,
+        status: inventoryRequests.status,
+        respondedBy: inventoryRequests.respondedBy,
+        notes: inventoryRequests.notes,
+        createdAt: inventoryRequests.createdAt,
+        
+        n950Boxes: inventoryRequests.n950Boxes,
+        n950Units: inventoryRequests.n950Units,
+        i9000sBoxes: inventoryRequests.i9000sBoxes,
+        i9000sUnits: inventoryRequests.i9000sUnits,
+        i9100Boxes: inventoryRequests.i9100Boxes,
+        i9100Units: inventoryRequests.i9100Units,
+        rollPaperBoxes: inventoryRequests.rollPaperBoxes,
+        rollPaperUnits: inventoryRequests.rollPaperUnits,
+        stickersBoxes: inventoryRequests.stickersBoxes,
+        stickersUnits: inventoryRequests.stickersUnits,
+        newBatteriesBoxes: inventoryRequests.newBatteriesBoxes,
+        newBatteriesUnits: inventoryRequests.newBatteriesUnits,
+        mobilySimBoxes: inventoryRequests.mobilySimBoxes,
+        mobilySimUnits: inventoryRequests.mobilySimUnits,
+        stcSimBoxes: inventoryRequests.stcSimBoxes,
+        stcSimUnits: inventoryRequests.stcSimUnits,
+        zainSimBoxes: inventoryRequests.zainSimBoxes,
+        zainSimUnits: inventoryRequests.zainSimUnits,
+        
+        technicianName: sql<string>`technician.full_name`,
+        responderName: sql<string>`responder.full_name`,
+        technicianRegion: sql<string>`technician_region.name`,
+      })
+      .from(inventoryRequests)
+      .leftJoin(sql`${users} as technician`, sql`${inventoryRequests.technicianId} = technician.id`)
+      .leftJoin(sql`${users} as responder`, sql`${inventoryRequests.respondedBy} = responder.id`)
+      .leftJoin(sql`${regions} as technician_region`, sql`technician.region_id = technician_region.id`)
+      .orderBy(desc(inventoryRequests.createdAt))
+      .limit(limit);
+
+    // Get old transactions from legacy table
+    const oldTransactions = await db
       .select({
         id: transactions.id,
         itemId: transactions.itemId,
@@ -569,12 +668,99 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(transactions.createdAt))
       .limit(limit);
 
-    return recentTransactions.map(transaction => ({
-      ...transaction,
-      itemName: transaction.itemName || "صنف محذوف",
-      userName: transaction.userName || "غير محدد",
-      regionName: transaction.regionName || "غير محدد",
-    }));
+    // Normalize all operations to unified format
+    const allOps: TransactionWithDetails[] = [];
+
+    // Add warehouse transfers
+    warehouseTransferOps.forEach(op => {
+      allOps.push({
+        id: op.id,
+        itemId: op.id,
+        userId: op.performedBy,
+        type: 'add' as const,
+        quantity: op.quantity,
+        reason: `نقل من مستودع إلى ${op.technicianName || 'فني'} - ${op.status === 'accepted' ? 'مقبول' : op.status === 'rejected' ? 'مرفوض' : 'قيد الانتظار'}`,
+        createdAt: op.createdAt,
+        itemName: itemNameMap[op.itemType] || op.itemType,
+        userName: op.performerName || 'غير محدد',
+        regionName: op.performerRegion || 'غير محدد',
+      });
+    });
+
+    // Add stock movements
+    stockMovementOps.forEach(op => {
+      allOps.push({
+        id: op.id,
+        itemId: op.id,
+        userId: op.performedBy,
+        type: 'add' as const,
+        quantity: op.quantity,
+        reason: `نقل من ${op.fromInventory === 'fixed' ? 'ثابت' : 'متحرك'} إلى ${op.toInventory === 'fixed' ? 'ثابت' : 'متحرك'} - ${op.technicianName || 'فني'}`,
+        createdAt: op.createdAt,
+        itemName: itemNameMap[op.itemType] || op.itemType,
+        userName: op.performerName || 'غير محدد',
+        regionName: op.performerRegion || 'غير محدد',
+      });
+    });
+
+    // Add inventory requests - process each item in the request
+    inventoryRequestOps.forEach(request => {
+      const itemFields = [
+        { type: 'n950', boxes: request.n950Boxes || 0, units: request.n950Units || 0 },
+        { type: 'i9000s', boxes: request.i9000sBoxes || 0, units: request.i9000sUnits || 0 },
+        { type: 'i9100', boxes: request.i9100Boxes || 0, units: request.i9100Units || 0 },
+        { type: 'rollPaper', boxes: request.rollPaperBoxes || 0, units: request.rollPaperUnits || 0 },
+        { type: 'stickers', boxes: request.stickersBoxes || 0, units: request.stickersUnits || 0 },
+        { type: 'newBatteries', boxes: request.newBatteriesBoxes || 0, units: request.newBatteriesUnits || 0 },
+        { type: 'mobilySim', boxes: request.mobilySimBoxes || 0, units: request.mobilySimUnits || 0 },
+        { type: 'stcSim', boxes: request.stcSimBoxes || 0, units: request.stcSimUnits || 0 },
+        { type: 'zainSim', boxes: request.zainSimBoxes || 0, units: request.zainSimUnits || 0 },
+      ];
+
+      // Add operation for each item that has a quantity
+      itemFields.forEach(item => {
+        const totalQty = item.boxes + item.units;
+        if (totalQty > 0) {
+          const packagingDesc = item.boxes > 0 && item.units > 0 
+            ? `${item.boxes} كرتون، ${item.units} مفرد`
+            : item.boxes > 0 
+            ? `${item.boxes} كرتون` 
+            : `${item.units} مفرد`;
+          
+          allOps.push({
+            id: `${request.id}-${item.type}`,
+            itemId: request.id,
+            userId: request.technicianId,
+            type: 'add' as const,
+            quantity: totalQty,
+            reason: `طلب مخزون (${packagingDesc}) - ${request.status === 'approved' ? 'موافق عليه' : request.status === 'rejected' ? 'مرفوض' : 'قيد الانتظار'}`,
+            createdAt: request.createdAt,
+            itemName: itemNameMap[item.type] || item.type,
+            userName: request.technicianName || 'غير محدد',
+            regionName: request.technicianRegion || 'غير محدد',
+          });
+        }
+      });
+    });
+
+    // Add old transactions
+    oldTransactions.forEach(tx => {
+      allOps.push({
+        ...tx,
+        itemName: tx.itemName || "صنف محذوف",
+        userName: tx.userName || "غير محدد",
+        regionName: tx.regionName || "غير محدد",
+      });
+    });
+
+    // Sort all operations by date and return top N
+    return allOps
+      .sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      })
+      .slice(0, limit);
   }
 
   async getTransactionStatistics(filters?: {
