@@ -935,7 +935,7 @@ export class DatabaseStorage implements IStorage {
       })
       .from(users)
       .leftJoin(technicianFixedInventories, eq(users.id, technicianFixedInventories.technicianId))
-      .where(eq(users.role, 'employee'));
+      .where(eq(users.role, 'technician'));
 
     return technicians.map(tech => {
       let alertLevel: 'good' | 'warning' | 'critical' = 'good';
@@ -1042,14 +1042,14 @@ export class DatabaseStorage implements IStorage {
       })
       .from(users)
       .leftJoin(technicianFixedInventories, eq(users.id, technicianFixedInventories.technicianId))
-      .where(eq(users.role, 'employee'));
+      .where(eq(users.role, 'technician'));
 
     const result = await Promise.all(
       technicians.map(async (tech) => {
         const movingInventory = await db
           .select()
           .from(techniciansInventory)
-          .where(eq(techniciansInventory.createdBy, tech.id))
+          .where(eq(techniciansInventory.id, tech.id))
           .limit(1);
 
         let alertLevel: 'good' | 'warning' | 'critical' = 'good';
