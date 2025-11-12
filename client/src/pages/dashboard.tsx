@@ -33,8 +33,11 @@ import {
   UserCircle,
   Users,
   Warehouse,
-  Search
+  Search,
+  FileDown
 } from "lucide-react";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 import { useEffect, useState, useMemo } from "react";
 import { Link, useLocation } from "wouter";
 import { CircularProgress } from "@/components/dashboard/CircularProgress";
@@ -260,6 +263,239 @@ export default function Dashboard() {
       tech.city.toLowerCase().includes(query)
     );
   }, [techniciansData?.technicians, technicianSearchQuery]);
+
+  // Export technicians inventory to Excel
+  const exportTechniciansToExcel = async () => {
+    if (!techniciansData?.technicians || techniciansData.technicians.length === 0) return;
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('مخزون الفنيين - Technicians Inventory');
+    worksheet.views = [{ rightToLeft: true }];
+
+    // Date and time
+    const currentDate = new Date();
+    const arabicDate = currentDate.toLocaleDateString('ar-SA', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric'
+    });
+    const englishDate = currentDate.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric'
+    });
+    const time = currentDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+
+    // Title
+    const numCols = 12;
+    worksheet.mergeCells(1, 1, 1, numCols);
+    const titleCell = worksheet.getCell(1, 1);
+    titleCell.value = 'Technician Inventory Management System';
+    titleCell.font = { size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    titleCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF4472C4' }
+    };
+    worksheet.getRow(1).height = 30;
+
+    // Date row
+    worksheet.mergeCells(2, 1, 2, numCols);
+    const dateCell = worksheet.getCell(2, 1);
+    dateCell.value = `تاريخ التقرير: ${arabicDate} | Report Date: ${englishDate} | ${time}`;
+    dateCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    dateCell.font = { bold: true, size: 10 };
+    worksheet.getRow(2).height = 20;
+
+    worksheet.addRow([]);
+
+    // Header row
+    const headerRow = worksheet.addRow([
+      '#',
+      'Technician Name',
+      'City',
+      'N950 Total',
+      'I9000s Total',
+      'I9100 Total',
+      'Roll Sheets',
+      'Stickers',
+      'Batteries',
+      'Mobily SIM',
+      'STC SIM',
+      'Zain SIM'
+    ]);
+    
+    headerRow.font = { bold: true, size: 10, color: { argb: 'FFFFFFFF' } };
+    headerRow.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    headerRow.height = 30;
+    headerRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF4472C4' }
+      };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+
+    // Helper function to get total
+    const getTotalForItem = (boxes: number, units: number) => {
+      return (boxes || 0) + (units || 0);
+    };
+
+    let totals = {
+      n950: 0,
+      i9000s: 0,
+      i9100: 0,
+      rollPaper: 0,
+      stickers: 0,
+      batteries: 0,
+      mobilySim: 0,
+      stcSim: 0,
+      zainSim: 0
+    };
+
+    // Data rows
+    techniciansData.technicians.forEach((tech, index) => {
+      const fixedInv = tech.fixedInventory;
+      const movingInv = tech.movingInventory;
+      
+      const n950Total = getTotalForItem(
+        (fixedInv?.n950Boxes || 0) + (movingInv?.n950Boxes || 0),
+        (fixedInv?.n950Units || 0) + (movingInv?.n950Units || 0)
+      );
+      const i9000sTotal = getTotalForItem(
+        (fixedInv?.i9000sBoxes || 0) + (movingInv?.i9000sBoxes || 0),
+        (fixedInv?.i9000sUnits || 0) + (movingInv?.i9000sUnits || 0)
+      );
+      const i9100Total = getTotalForItem(
+        (fixedInv?.i9100Boxes || 0) + (movingInv?.i9100Boxes || 0),
+        (fixedInv?.i9100Units || 0) + (movingInv?.i9100Units || 0)
+      );
+      const rollPaperTotal = getTotalForItem(
+        (fixedInv?.rollPaperBoxes || 0) + (movingInv?.rollPaperBoxes || 0),
+        (fixedInv?.rollPaperUnits || 0) + (movingInv?.rollPaperUnits || 0)
+      );
+      const stickersTotal = getTotalForItem(
+        (fixedInv?.stickersBoxes || 0) + (movingInv?.stickersBoxes || 0),
+        (fixedInv?.stickersUnits || 0) + (movingInv?.stickersUnits || 0)
+      );
+      const batteriesTotal = getTotalForItem(
+        (fixedInv?.newBatteriesBoxes || 0) + (movingInv?.newBatteriesBoxes || 0),
+        (fixedInv?.newBatteriesUnits || 0) + (movingInv?.newBatteriesUnits || 0)
+      );
+      const mobilySimTotal = getTotalForItem(
+        (fixedInv?.mobilySimBoxes || 0) + (movingInv?.mobilySimBoxes || 0),
+        (fixedInv?.mobilySimUnits || 0) + (movingInv?.mobilySimUnits || 0)
+      );
+      const stcSimTotal = getTotalForItem(
+        (fixedInv?.stcSimBoxes || 0) + (movingInv?.stcSimBoxes || 0),
+        (fixedInv?.stcSimUnits || 0) + (movingInv?.stcSimUnits || 0)
+      );
+      const zainSimTotal = getTotalForItem(
+        (fixedInv?.zainSimBoxes || 0) + (movingInv?.zainSimBoxes || 0),
+        (fixedInv?.zainSimUnits || 0) + (movingInv?.zainSimUnits || 0)
+      );
+
+      totals.n950 += n950Total;
+      totals.i9000s += i9000sTotal;
+      totals.i9100 += i9100Total;
+      totals.rollPaper += rollPaperTotal;
+      totals.stickers += stickersTotal;
+      totals.batteries += batteriesTotal;
+      totals.mobilySim += mobilySimTotal;
+      totals.stcSim += stcSimTotal;
+      totals.zainSim += zainSimTotal;
+
+      const row = worksheet.addRow([
+        index + 1,
+        tech.technicianName,
+        tech.city,
+        n950Total,
+        i9000sTotal,
+        i9100Total,
+        rollPaperTotal,
+        stickersTotal,
+        batteriesTotal,
+        mobilySimTotal,
+        stcSimTotal,
+        zainSimTotal
+      ]);
+
+      row.alignment = { horizontal: 'center', vertical: 'middle' };
+      row.eachCell((cell, colNumber) => {
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FF000000' } },
+          left: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } },
+          right: { style: 'thin', color: { argb: 'FF000000' } }
+        };
+        if (colNumber === 1 || colNumber === 2 || colNumber === 3) {
+          cell.font = { bold: true };
+        }
+      });
+    });
+
+    // Totals row
+    const totalRow = worksheet.addRow([
+      '',
+      'المجموع الكلي',
+      'Total',
+      totals.n950,
+      totals.i9000s,
+      totals.i9100,
+      totals.rollPaper,
+      totals.stickers,
+      totals.batteries,
+      totals.mobilySim,
+      totals.stcSim,
+      totals.zainSim
+    ]);
+    
+    totalRow.font = { bold: true, size: 11 };
+    totalRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    totalRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9E2F3' }
+      };
+      cell.border = {
+        top: { style: 'double', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'double', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+
+    // Column widths
+    worksheet.columns = [
+      { width: 5 },
+      { width: 25 },
+      { width: 15 },
+      { width: 12 },
+      { width: 12 },
+      { width: 12 },
+      { width: 12 },
+      { width: 12 },
+      { width: 12 },
+      { width: 12 },
+      { width: 12 },
+      { width: 12 }
+    ];
+
+    // Generate and save file
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    saveAs(blob, `تقرير_مخزون_الفنيين_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
 
   // حساب إجمالي وحدات المستودع
   const getWarehouseTotalUnits = (warehouse: WarehouseWithStats) => {
@@ -813,7 +1049,15 @@ export default function Dashboard() {
                     <p className="text-gray-400 text-sm">نظرة شاملة على مخزون جميع الفنيين</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <Button
+                    onClick={exportTechniciansToExcel}
+                    className="bg-gradient-to-r from-[#18B2B0] to-[#16a09e] hover:from-[#16a09e] hover:to-teal-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 font-bold"
+                    data-testid="button-export-technicians"
+                  >
+                    <FileDown className="h-4 w-4 ml-2" />
+                    تصدير Excel
+                  </Button>
                   <div className="relative flex-1 md:min-w-[300px]">
                     <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
