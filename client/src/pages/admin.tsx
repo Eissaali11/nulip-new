@@ -242,14 +242,14 @@ export default function AdminPage() {
       <div className="absolute inset-0 bg-gradient-to-b from-[#050508]/90 via-[#050508]/85 to-[#050508]/90 backdrop-blur-[2px] z-0" />
 
       {/* Header with Glassmorphic Design */}
-      <div className="relative z-10 border-b border-[#18B2B0]/20 bg-gradient-to-r from-[#0a0a0f]/90 via-[#0f0f15]/90 to-[#0a0a0f]/90 backdrop-blur-md">
+      <div className="relative z-10 border-b border-white/10 bg-gradient-to-r from-[#0a0a0f]/90 via-[#0f0f15]/90 to-[#0a0a0f]/90 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-6">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex items-center gap-4 w-full md:w-auto">
               <Link href="/">
                 <Button 
                   variant="ghost" 
-                  className="bg-white/10 backdrop-blur-xl border border-white/20 text-white hover:bg-white/20 hover:border-[#18B2B0]/60 hover:shadow-[0_0_20px_rgba(24,178,176,0.3)] transition-all duration-300"
+                  className="bg-white/10 backdrop-blur-xl border border-white/20 text-white hover:bg-white/20 hover:border-white/40 hover:shadow-[0_0_20px_rgba(24,178,176,0.3)] transition-all duration-300"
                   data-testid="button-back-dashboard"
                 >
                   <ArrowRight className="h-4 w-4 ml-2" />
@@ -440,7 +440,7 @@ export default function AdminPage() {
           {/* Regions Tab */}
           <TabsContent value="regions" className="space-y-4 mt-6">
             <motion.div 
-              className="flex justify-between items-center bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl p-4 rounded-2xl border border-[#18B2B0]/30 shadow-2xl"
+              className="flex justify-between items-center bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl p-4 rounded-2xl border border-white/20 shadow-2xl"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
             >
@@ -456,7 +456,7 @@ export default function AdminPage() {
                     إضافة منطقة جديدة
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-md bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl border border-[#18B2B0]/30" data-testid="modal-region">
+                <DialogContent className="max-w-md bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl border border-white/20" data-testid="modal-region">
                   <DialogHeader>
                     <DialogTitle className="text-2xl text-[#18B2B0] font-black">{editingRegion ? "تحديث المنطقة" : "إضافة منطقة جديدة"}</DialogTitle>
                     <DialogDescription className="text-gray-300">
@@ -472,7 +472,7 @@ export default function AdminPage() {
                           <FormItem>
                             <FormLabel className="text-[#18B2B0] font-bold">اسم المنطقة</FormLabel>
                             <FormControl>
-                              <Input placeholder="أدخل اسم المنطقة" {...field} data-testid="input-region-name" className="border-white/20 focus:border-[#18B2B0] bg-white/5 text-white" />
+                              <Input placeholder="أدخل اسم المنطقة" {...field} data-testid="input-region-name" className="border-white/20 focus:border-white/40 focus:ring-2 focus:ring-[#18B2B0]/30 bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl text-white" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -485,7 +485,7 @@ export default function AdminPage() {
                           <FormItem>
                             <FormLabel className="text-[#18B2B0] font-bold">الوصف (اختياري)</FormLabel>
                             <FormControl>
-                              <Textarea placeholder="أدخل وصف المنطقة" {...field} data-testid="input-region-description" className="border-white/20 focus:border-[#18B2B0] bg-white/5 text-white" />
+                              <Textarea placeholder="أدخل وصف المنطقة" {...field} data-testid="input-region-description" className="border-white/20 focus:border-white/40 focus:ring-2 focus:ring-[#18B2B0]/30 bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl text-white" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -495,7 +495,7 @@ export default function AdminPage() {
                         control={regionForm.control}
                         name="isActive"
                         render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-white/20 p-3 bg-white/5">
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-white/20 p-3 bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl">
                             <div className="space-y-0.5">
                               <FormLabel className="text-white font-bold">منطقة نشطة</FormLabel>
                             </div>
@@ -529,8 +529,8 @@ export default function AdminPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
             >
-              <Card className="shadow-2xl border border-[#18B2B0]/30 bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl">
-                <CardHeader className="bg-gradient-to-r from-[#18B2B0]/20 to-transparent border-b border-[#18B2B0]/20">
+              <Card className="shadow-2xl border border-white/20 bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl">
+                <CardHeader className="bg-gradient-to-r from-white/10 to-transparent border-b border-white/10">
                   <CardTitle className="text-white text-2xl font-black">قائمة المناطق</CardTitle>
                   <CardDescription className="text-gray-300">جميع المناطق المسجلة في النظام</CardDescription>
                 </CardHeader>
@@ -538,7 +538,7 @@ export default function AdminPage() {
                   <div className="overflow-x-auto rounded-xl">
                     <Table>
                       <TableHeader>
-                        <TableRow className="border-[#18B2B0]/20 hover:bg-transparent">
+                        <TableRow className="border-white/10 hover:bg-transparent">
                           <TableHead className="text-right font-bold text-[#18B2B0]">اسم المنطقة</TableHead>
                           <TableHead className="text-right font-bold text-[#18B2B0]">الوصف</TableHead>
                           <TableHead className="text-right font-bold text-[#18B2B0]">عدد الأصناف</TableHead>
@@ -552,7 +552,7 @@ export default function AdminPage() {
                           <motion.tr 
                             key={region.id} 
                             data-testid={`row-region-${region.id}`}
-                            className="border-[#18B2B0]/10 hover:bg-white/5 transition-colors"
+                            className="border-white/5 hover:bg-white/5 transition-colors"
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: index * 0.05 }}
@@ -560,7 +560,7 @@ export default function AdminPage() {
                             <TableCell className="font-bold text-right text-white">{region.name}</TableCell>
                             <TableCell className="text-right text-gray-300">{region.description || "لا يوجد وصف"}</TableCell>
                             <TableCell className="text-right">
-                              <Badge variant="outline" className="border-[#18B2B0] text-[#18B2B0]">
+                              <Badge variant="outline" className="border-white/30 text-[#18B2B0] bg-[#18B2B0]/10">
                                 {region.itemCount || 0}
                               </Badge>
                             </TableCell>
@@ -621,7 +621,7 @@ export default function AdminPage() {
           {/* Users Tab */}
           <TabsContent value="users" className="space-y-4 mt-6">
             <motion.div 
-              className="flex justify-between items-center bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl p-4 rounded-2xl border border-[#18B2B0]/30 shadow-2xl"
+              className="flex justify-between items-center bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl p-4 rounded-2xl border border-white/20 shadow-2xl"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
             >
@@ -637,7 +637,7 @@ export default function AdminPage() {
                     إضافة موظف جديد
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-md bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl border border-[#18B2B0]/30" data-testid="modal-user">
+                <DialogContent className="max-w-md bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl border border-white/20" data-testid="modal-user">
                   <DialogHeader>
                     <DialogTitle className="text-2xl text-[#18B2B0] font-black">{editingUser ? "تحديث بيانات الموظف" : "إضافة موظف جديد"}</DialogTitle>
                     <DialogDescription className="text-gray-300">
@@ -653,7 +653,7 @@ export default function AdminPage() {
                           <FormItem>
                             <FormLabel className="text-[#18B2B0] font-bold">اسم المستخدم</FormLabel>
                             <FormControl>
-                              <Input placeholder="أدخل اسم المستخدم" {...field} data-testid="input-user-username" className="border-white/20 focus:border-[#18B2B0] bg-white/5 text-white" />
+                              <Input placeholder="أدخل اسم المستخدم" {...field} data-testid="input-user-username" className="border-white/20 focus:border-white/40 focus:ring-2 focus:ring-[#18B2B0]/30 bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl text-white" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -666,7 +666,7 @@ export default function AdminPage() {
                           <FormItem>
                             <FormLabel className="text-[#18B2B0] font-bold">الاسم الكامل</FormLabel>
                             <FormControl>
-                              <Input placeholder="أدخل الاسم الكامل" {...field} data-testid="input-user-fullname" className="border-white/20 focus:border-[#18B2B0] bg-white/5 text-white" />
+                              <Input placeholder="أدخل الاسم الكامل" {...field} data-testid="input-user-fullname" className="border-white/20 focus:border-white/40 focus:ring-2 focus:ring-[#18B2B0]/30 bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl text-white" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -679,7 +679,7 @@ export default function AdminPage() {
                           <FormItem>
                             <FormLabel className="text-[#18B2B0] font-bold">البريد الإلكتروني</FormLabel>
                             <FormControl>
-                              <Input type="email" placeholder="أدخل البريد الإلكتروني" {...field} data-testid="input-user-email" className="border-white/20 focus:border-[#18B2B0] bg-white/5 text-white" />
+                              <Input type="email" placeholder="أدخل البريد الإلكتروني" {...field} data-testid="input-user-email" className="border-white/20 focus:border-white/40 focus:ring-2 focus:ring-[#18B2B0]/30 bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl text-white" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -692,7 +692,7 @@ export default function AdminPage() {
                           <FormItem>
                             <FormLabel className="text-[#18B2B0] font-bold">كلمة المرور {editingUser && "(اتركها فارغة للإبقاء على كلمة المرور الحالية)"}</FormLabel>
                             <FormControl>
-                              <Input type="password" placeholder="أدخل كلمة المرور" {...field} data-testid="input-user-password" className="border-white/20 focus:border-[#18B2B0] bg-white/5 text-white" />
+                              <Input type="password" placeholder="أدخل كلمة المرور" {...field} data-testid="input-user-password" className="border-white/20 focus:border-white/40 focus:ring-2 focus:ring-[#18B2B0]/30 bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl text-white" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -706,7 +706,7 @@ export default function AdminPage() {
                             <FormLabel className="text-[#18B2B0] font-bold">الدور</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value} data-testid="select-user-role">
                               <FormControl>
-                                <SelectTrigger className="border-white/20 focus:border-[#18B2B0] bg-white/5 text-white">
+                                <SelectTrigger className="border-white/20 focus:border-white/40 focus:ring-2 focus:ring-[#18B2B0]/30 bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl text-white">
                                   <SelectValue placeholder="اختر دور الموظف" />
                                 </SelectTrigger>
                               </FormControl>
@@ -728,7 +728,7 @@ export default function AdminPage() {
                             <FormLabel className="text-[#18B2B0] font-bold">المنطقة (للمشرفين والفنيين)</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value} data-testid="select-user-region">
                               <FormControl>
-                                <SelectTrigger className="border-white/20 focus:border-[#18B2B0] bg-white/5 text-white">
+                                <SelectTrigger className="border-white/20 focus:border-white/40 focus:ring-2 focus:ring-[#18B2B0]/30 bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl text-white">
                                   <SelectValue placeholder="اختر المنطقة" />
                                 </SelectTrigger>
                               </FormControl>
@@ -747,7 +747,7 @@ export default function AdminPage() {
                         control={userForm.control}
                         name="isActive"
                         render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-white/20 p-3 bg-white/5">
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-white/20 p-3 bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl">
                             <div className="space-y-0.5">
                               <FormLabel className="text-white font-bold">حساب نشط</FormLabel>
                             </div>
@@ -781,8 +781,8 @@ export default function AdminPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
             >
-              <Card className="shadow-2xl border border-[#18B2B0]/30 bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl">
-                <CardHeader className="bg-gradient-to-r from-[#18B2B0]/20 to-transparent border-b border-[#18B2B0]/20">
+              <Card className="shadow-2xl border border-white/20 bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl">
+                <CardHeader className="bg-gradient-to-r from-white/10 to-transparent border-b border-white/10">
                   <CardTitle className="text-white text-2xl font-black">قائمة الموظفين</CardTitle>
                   <CardDescription className="text-gray-300">جميع الموظفين المسجلين في النظام</CardDescription>
                 </CardHeader>
@@ -790,7 +790,7 @@ export default function AdminPage() {
                   <div className="overflow-x-auto rounded-xl">
                     <Table>
                       <TableHeader>
-                        <TableRow className="border-[#18B2B0]/20 hover:bg-transparent">
+                        <TableRow className="border-white/10 hover:bg-transparent">
                           <TableHead className="text-right font-bold text-[#18B2B0]">اسم المستخدم</TableHead>
                           <TableHead className="text-right font-bold text-[#18B2B0]">الاسم الكامل</TableHead>
                           <TableHead className="text-right font-bold text-[#18B2B0]">البريد الإلكتروني</TableHead>
@@ -805,7 +805,7 @@ export default function AdminPage() {
                           <motion.tr 
                             key={user.id} 
                             data-testid={`row-user-${user.id}`}
-                            className="border-[#18B2B0]/10 hover:bg-white/5 transition-colors"
+                            className="border-white/5 hover:bg-white/5 transition-colors"
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: index * 0.05 }}
@@ -814,7 +814,7 @@ export default function AdminPage() {
                             <TableCell className="text-right text-gray-300">{user.fullName}</TableCell>
                             <TableCell className="text-right text-gray-300">{user.email}</TableCell>
                             <TableCell className="text-right">
-                              <Badge variant="outline" className="border-[#18B2B0] text-[#18B2B0]">
+                              <Badge variant="outline" className="border-white/30 text-[#18B2B0] bg-[#18B2B0]/10">
                                 {ROLE_LABELS_AR[user.role as keyof typeof ROLE_LABELS_AR]}
                               </Badge>
                             </TableCell>
@@ -876,8 +876,8 @@ export default function AdminPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <Card className="shadow-2xl border border-[#18B2B0]/30 bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl">
-                <CardHeader className="bg-gradient-to-r from-[#18B2B0]/20 to-transparent border-b border-[#18B2B0]/20">
+              <Card className="shadow-2xl border border-white/20 bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl">
+                <CardHeader className="bg-gradient-to-r from-white/10 to-transparent border-b border-white/10">
                   <CardTitle className="text-white text-2xl font-black">العمليات الأخيرة</CardTitle>
                   <CardDescription className="text-gray-300">جميع العمليات الحديثة في النظام</CardDescription>
                 </CardHeader>
@@ -892,7 +892,7 @@ export default function AdminPage() {
                       {recentTransactions.slice(0, 20).map((transaction, index) => (
                         <motion.div
                           key={transaction.id}
-                          className="bg-white/5 backdrop-blur-sm p-4 rounded-xl border border-[#18B2B0]/20 hover:bg-white/10 transition-all duration-300"
+                          className="bg-white/5 backdrop-blur-sm p-4 rounded-xl border border-white/10 hover:bg-white/10 transition-all duration-300"
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: index * 0.02 }}
