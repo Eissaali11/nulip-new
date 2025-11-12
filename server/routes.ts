@@ -1281,12 +1281,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/warehouses/:id", requireAuth, requireAdmin, async (req, res) => {
+  app.get("/api/warehouses/:id", requireAuth, requireSupervisor, async (req, res) => {
     try {
+      const user = (req as any).user;
       const warehouse = await storage.getWarehouse(req.params.id);
       if (!warehouse) {
         return res.status(404).json({ message: "Warehouse not found" });
       }
+
+      // Supervisors can only access warehouses in their region
+      if (user.role === 'supervisor' && warehouse.regionId !== user.regionId) {
+        return res.status(403).json({ message: "لا يمكنك الوصول إلى مستودعات خارج منطقتك" });
+      }
+
       res.json(warehouse);
     } catch (error) {
       console.error("Error fetching warehouse:", error);
@@ -1324,8 +1331,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/warehouse-inventory/:warehouseId", requireAuth, requireAdmin, async (req, res) => {
+  app.get("/api/warehouse-inventory/:warehouseId", requireAuth, requireSupervisor, async (req, res) => {
     try {
+      const user = (req as any).user;
+
+      // Supervisors can only access warehouse inventory in their region
+      if (user.role === 'supervisor') {
+        const warehouse = await storage.getWarehouse(req.params.warehouseId);
+        if (!warehouse) {
+          return res.status(404).json({ message: "Warehouse not found" });
+        }
+        if (warehouse.regionId !== user.regionId) {
+          return res.status(403).json({ message: "لا يمكنك الوصول إلى مستودعات خارج منطقتك" });
+        }
+      }
+
       const inventory = await storage.getWarehouseInventory(req.params.warehouseId);
       if (!inventory) {
         return res.status(404).json({ message: "Warehouse inventory not found" });
@@ -1337,8 +1357,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/warehouse-inventory/:warehouseId", requireAuth, requireAdmin, async (req, res) => {
+  app.put("/api/warehouse-inventory/:warehouseId", requireAuth, requireSupervisor, async (req, res) => {
     try {
+      const user = (req as any).user;
+
+      // Supervisors can only update warehouse inventory in their region
+      if (user.role === 'supervisor') {
+        const warehouse = await storage.getWarehouse(req.params.warehouseId);
+        if (!warehouse) {
+          return res.status(404).json({ message: "Warehouse not found" });
+        }
+        if (warehouse.regionId !== user.regionId) {
+          return res.status(403).json({ message: "لا يمكنك تعديل مستودعات خارج منطقتك" });
+        }
+      }
+
       const validatedData = insertWarehouseInventorySchema.parse(req.body);
       const inventory = await storage.updateWarehouseInventory(req.params.warehouseId, validatedData);
       res.json(inventory);
