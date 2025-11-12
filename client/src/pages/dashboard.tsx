@@ -264,15 +264,23 @@ export default function Dashboard() {
     );
   }, [techniciansData?.technicians, technicianSearchQuery]);
 
-  // Export technicians inventory to Excel
-  const exportTechniciansToExcel = async () => {
-    if (!techniciansData?.technicians || techniciansData.technicians.length === 0) return;
+  // Helper function to get total
+  const getTotalForItem = (boxes: number, units: number) => {
+    return (boxes || 0) + (units || 0);
+  };
 
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('مخزون الفنيين - Technicians Inventory');
+  // Create inventory worksheet (Fixed/Moving, Boxes/Units)
+  const createInventoryWorksheet = (
+    workbook: ExcelJS.Workbook, 
+    sheetName: string, 
+    inventoryType: 'fixed' | 'moving',
+    metric: 'boxes' | 'units'
+  ) => {
+    if (!techniciansData?.technicians) return;
+    
+    const worksheet = workbook.addWorksheet(sheetName);
     worksheet.views = [{ rightToLeft: true }];
 
-    // Date and time
     const currentDate = new Date();
     const arabicDate = currentDate.toLocaleDateString('ar-SA', { 
       weekday: 'long', 
@@ -288,7 +296,6 @@ export default function Dashboard() {
     });
     const time = currentDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
 
-    // Title
     const numCols = 12;
     worksheet.mergeCells(1, 1, 1, numCols);
     const titleCell = worksheet.getCell(1, 1);
@@ -302,7 +309,6 @@ export default function Dashboard() {
     };
     worksheet.getRow(1).height = 30;
 
-    // Date row
     worksheet.mergeCells(2, 1, 2, numCols);
     const dateCell = worksheet.getCell(2, 1);
     dateCell.value = `تاريخ التقرير: ${arabicDate} | Report Date: ${englishDate} | ${time}`;
@@ -312,20 +318,20 @@ export default function Dashboard() {
 
     worksheet.addRow([]);
 
-    // Header row
+    const metricLabel = metric === 'boxes' ? 'Box' : 'Unit';
     const headerRow = worksheet.addRow([
       '#',
       'Technician Name',
       'City',
-      'N950 Total',
-      'I9000s Total',
-      'I9100 Total',
-      'Roll Sheets',
-      'Stickers',
-      'Batteries',
-      'Mobily SIM',
-      'STC SIM',
-      'Zain SIM'
+      `N950 ${metricLabel}`,
+      `I9000s ${metricLabel}`,
+      `I9100 ${metricLabel}`,
+      `Roll ${metricLabel}`,
+      `Sticker ${metricLabel}`,
+      `Battery ${metricLabel}`,
+      `Mobily ${metricLabel}`,
+      `STC ${metricLabel}`,
+      `Zain ${metricLabel}`
     ]);
     
     headerRow.font = { bold: true, size: 10, color: { argb: 'FFFFFFFF' } };
@@ -345,10 +351,182 @@ export default function Dashboard() {
       };
     });
 
-    // Helper function to get total
-    const getTotalForItem = (boxes: number, units: number) => {
-      return (boxes || 0) + (units || 0);
+    let totals = {
+      n950: 0,
+      i9000s: 0,
+      i9100: 0,
+      roll: 0,
+      sticker: 0,
+      battery: 0,
+      mobily: 0,
+      stc: 0,
+      zain: 0
     };
+
+    techniciansData.technicians.forEach((tech, index) => {
+      const inv = inventoryType === 'fixed' ? tech.fixedInventory : tech.movingInventory;
+      
+      const data = [
+        index + 1,
+        tech.technicianName,
+        tech.city,
+        metric === 'boxes' ? (inv?.n950Boxes || 0) : (inv?.n950Units || 0),
+        metric === 'boxes' ? (inv?.i9000sBoxes || 0) : (inv?.i9000sUnits || 0),
+        metric === 'boxes' ? (inv?.i9100Boxes || 0) : (inv?.i9100Units || 0),
+        metric === 'boxes' ? (inv?.rollPaperBoxes || 0) : (inv?.rollPaperUnits || 0),
+        metric === 'boxes' ? (inv?.stickersBoxes || 0) : (inv?.stickersUnits || 0),
+        metric === 'boxes' ? (inv?.newBatteriesBoxes || 0) : (inv?.newBatteriesUnits || 0),
+        metric === 'boxes' ? (inv?.mobilySimBoxes || 0) : (inv?.mobilySimUnits || 0),
+        metric === 'boxes' ? (inv?.stcSimBoxes || 0) : (inv?.stcSimUnits || 0),
+        metric === 'boxes' ? (inv?.zainSimBoxes || 0) : (inv?.zainSimUnits || 0)
+      ];
+
+      totals.n950 += Number(data[3]);
+      totals.i9000s += Number(data[4]);
+      totals.i9100 += Number(data[5]);
+      totals.roll += Number(data[6]);
+      totals.sticker += Number(data[7]);
+      totals.battery += Number(data[8]);
+      totals.mobily += Number(data[9]);
+      totals.stc += Number(data[10]);
+      totals.zain += Number(data[11]);
+
+      const row = worksheet.addRow(data);
+      row.alignment = { horizontal: 'center', vertical: 'middle' };
+      row.height = 20;
+      
+      row.eachCell((cell, colNumber) => {
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+          left: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+          bottom: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+          right: { style: 'thin', color: { argb: 'FFD1D5DB' } }
+        };
+        if (colNumber === 1) cell.font = { bold: true };
+      });
+    });
+
+    const totalRow = worksheet.addRow([
+      '',
+      'Total',
+      '',
+      totals.n950,
+      totals.i9000s,
+      totals.i9100,
+      totals.roll,
+      totals.sticker,
+      totals.battery,
+      totals.mobily,
+      totals.stc,
+      totals.zain
+    ]);
+    totalRow.font = { bold: true, size: 11 };
+    totalRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    totalRow.height = 25;
+    totalRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF92D050' }
+      };
+      cell.border = {
+        top: { style: 'medium', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'medium', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+
+    worksheet.columns = [
+      { width: 5 },
+      { width: 25 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 }
+    ];
+  };
+
+  // Create total worksheet (combined fixed + moving)
+  const createTotalWorksheet = (workbook: ExcelJS.Workbook, sheetName: string) => {
+    if (!techniciansData?.technicians) return;
+    
+    const worksheet = workbook.addWorksheet(sheetName);
+    worksheet.views = [{ rightToLeft: true }];
+
+    const currentDate = new Date();
+    const arabicDate = currentDate.toLocaleDateString('ar-SA', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric'
+    });
+    const englishDate = currentDate.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric'
+    });
+    const time = currentDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+
+    worksheet.mergeCells('A1:L1');
+    const titleCell = worksheet.getCell('A1');
+    titleCell.value = 'Technician Inventory Management System';
+    titleCell.font = { size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    titleCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF4472C4' }
+    };
+    worksheet.getRow(1).height = 30;
+
+    worksheet.mergeCells('A2:L2');
+    const dateCell = worksheet.getCell('A2');
+    dateCell.value = `تاريخ التقرير: ${arabicDate} | Report Date: ${englishDate} | ${time}`;
+    dateCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    dateCell.font = { bold: true, size: 10 };
+    worksheet.getRow(2).height = 20;
+
+    worksheet.addRow([]);
+
+    const headerRow = worksheet.addRow([
+      '#',
+      'Technician Name',
+      'City',
+      'N950 Devices',
+      'I9000s Devices',
+      'I9100 Devices',
+      'Roll Sheets',
+      'Madal Stickers',
+      'New Batteries',
+      'SIM Mobily',
+      'SIM STC',
+      'SIM Zain'
+    ]);
+    
+    headerRow.font = { bold: true, size: 10, color: { argb: 'FFFFFFFF' } };
+    headerRow.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    headerRow.height = 30;
+    headerRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF4472C4' }
+      };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
 
     let totals = {
       n950: 0,
@@ -356,145 +534,142 @@ export default function Dashboard() {
       i9100: 0,
       rollPaper: 0,
       stickers: 0,
-      batteries: 0,
+      newBatteries: 0,
       mobilySim: 0,
       stcSim: 0,
       zainSim: 0
     };
 
-    // Data rows
     techniciansData.technicians.forEach((tech, index) => {
-      const fixedInv = tech.fixedInventory;
-      const movingInv = tech.movingInventory;
-      
-      const n950Total = getTotalForItem(
-        (fixedInv?.n950Boxes || 0) + (movingInv?.n950Boxes || 0),
-        (fixedInv?.n950Units || 0) + (movingInv?.n950Units || 0)
-      );
-      const i9000sTotal = getTotalForItem(
-        (fixedInv?.i9000sBoxes || 0) + (movingInv?.i9000sBoxes || 0),
-        (fixedInv?.i9000sUnits || 0) + (movingInv?.i9000sUnits || 0)
-      );
-      const i9100Total = getTotalForItem(
-        (fixedInv?.i9100Boxes || 0) + (movingInv?.i9100Boxes || 0),
-        (fixedInv?.i9100Units || 0) + (movingInv?.i9100Units || 0)
-      );
-      const rollPaperTotal = getTotalForItem(
-        (fixedInv?.rollPaperBoxes || 0) + (movingInv?.rollPaperBoxes || 0),
-        (fixedInv?.rollPaperUnits || 0) + (movingInv?.rollPaperUnits || 0)
-      );
-      const stickersTotal = getTotalForItem(
-        (fixedInv?.stickersBoxes || 0) + (movingInv?.stickersBoxes || 0),
-        (fixedInv?.stickersUnits || 0) + (movingInv?.stickersUnits || 0)
-      );
-      const batteriesTotal = getTotalForItem(
-        (fixedInv?.newBatteriesBoxes || 0) + (movingInv?.newBatteriesBoxes || 0),
-        (fixedInv?.newBatteriesUnits || 0) + (movingInv?.newBatteriesUnits || 0)
-      );
-      const mobilySimTotal = getTotalForItem(
-        (fixedInv?.mobilySimBoxes || 0) + (movingInv?.mobilySimBoxes || 0),
-        (fixedInv?.mobilySimUnits || 0) + (movingInv?.mobilySimUnits || 0)
-      );
-      const stcSimTotal = getTotalForItem(
-        (fixedInv?.stcSimBoxes || 0) + (movingInv?.stcSimBoxes || 0),
-        (fixedInv?.stcSimUnits || 0) + (movingInv?.stcSimUnits || 0)
-      );
-      const zainSimTotal = getTotalForItem(
-        (fixedInv?.zainSimBoxes || 0) + (movingInv?.zainSimBoxes || 0),
-        (fixedInv?.zainSimUnits || 0) + (movingInv?.zainSimUnits || 0)
-      );
-
-      totals.n950 += n950Total;
-      totals.i9000s += i9000sTotal;
-      totals.i9100 += i9100Total;
-      totals.rollPaper += rollPaperTotal;
-      totals.stickers += stickersTotal;
-      totals.batteries += batteriesTotal;
-      totals.mobilySim += mobilySimTotal;
-      totals.stcSim += stcSimTotal;
-      totals.zainSim += zainSimTotal;
-
-      const row = worksheet.addRow([
+      const data = [
         index + 1,
         tech.technicianName,
         tech.city,
-        n950Total,
-        i9000sTotal,
-        i9100Total,
-        rollPaperTotal,
-        stickersTotal,
-        batteriesTotal,
-        mobilySimTotal,
-        stcSimTotal,
-        zainSimTotal
-      ]);
+        getTotalForItem(
+          (tech.fixedInventory?.n950Boxes || 0) + (tech.movingInventory?.n950Boxes || 0),
+          (tech.fixedInventory?.n950Units || 0) + (tech.movingInventory?.n950Units || 0)
+        ),
+        getTotalForItem(
+          (tech.fixedInventory?.i9000sBoxes || 0) + (tech.movingInventory?.i9000sBoxes || 0),
+          (tech.fixedInventory?.i9000sUnits || 0) + (tech.movingInventory?.i9000sUnits || 0)
+        ),
+        getTotalForItem(
+          (tech.fixedInventory?.i9100Boxes || 0) + (tech.movingInventory?.i9100Boxes || 0),
+          (tech.fixedInventory?.i9100Units || 0) + (tech.movingInventory?.i9100Units || 0)
+        ),
+        getTotalForItem(
+          (tech.fixedInventory?.rollPaperBoxes || 0) + (tech.movingInventory?.rollPaperBoxes || 0),
+          (tech.fixedInventory?.rollPaperUnits || 0) + (tech.movingInventory?.rollPaperUnits || 0)
+        ),
+        getTotalForItem(
+          (tech.fixedInventory?.stickersBoxes || 0) + (tech.movingInventory?.stickersBoxes || 0),
+          (tech.fixedInventory?.stickersUnits || 0) + (tech.movingInventory?.stickersUnits || 0)
+        ),
+        getTotalForItem(
+          (tech.fixedInventory?.newBatteriesBoxes || 0) + (tech.movingInventory?.newBatteriesBoxes || 0),
+          (tech.fixedInventory?.newBatteriesUnits || 0) + (tech.movingInventory?.newBatteriesUnits || 0)
+        ),
+        getTotalForItem(
+          (tech.fixedInventory?.mobilySimBoxes || 0) + (tech.movingInventory?.mobilySimBoxes || 0),
+          (tech.fixedInventory?.mobilySimUnits || 0) + (tech.movingInventory?.mobilySimUnits || 0)
+        ),
+        getTotalForItem(
+          (tech.fixedInventory?.stcSimBoxes || 0) + (tech.movingInventory?.stcSimBoxes || 0),
+          (tech.fixedInventory?.stcSimUnits || 0) + (tech.movingInventory?.stcSimUnits || 0)
+        ),
+        getTotalForItem(
+          (tech.fixedInventory?.zainSimBoxes || 0) + (tech.movingInventory?.zainSimBoxes || 0),
+          (tech.fixedInventory?.zainSimUnits || 0) + (tech.movingInventory?.zainSimUnits || 0)
+        )
+      ];
 
+      totals.n950 += Number(data[3]);
+      totals.i9000s += Number(data[4]);
+      totals.i9100 += Number(data[5]);
+      totals.rollPaper += Number(data[6]);
+      totals.stickers += Number(data[7]);
+      totals.newBatteries += Number(data[8]);
+      totals.mobilySim += Number(data[9]);
+      totals.stcSim += Number(data[10]);
+      totals.zainSim += Number(data[11]);
+
+      const row = worksheet.addRow(data);
       row.alignment = { horizontal: 'center', vertical: 'middle' };
+      row.height = 20;
+      
       row.eachCell((cell, colNumber) => {
         cell.border = {
-          top: { style: 'thin', color: { argb: 'FF000000' } },
-          left: { style: 'thin', color: { argb: 'FF000000' } },
-          bottom: { style: 'thin', color: { argb: 'FF000000' } },
-          right: { style: 'thin', color: { argb: 'FF000000' } }
+          top: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+          left: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+          bottom: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+          right: { style: 'thin', color: { argb: 'FFD1D5DB' } }
         };
-        if (colNumber === 1 || colNumber === 2 || colNumber === 3) {
-          cell.font = { bold: true };
-        }
+        if (colNumber === 1) cell.font = { bold: true };
       });
     });
 
-    // Totals row
     const totalRow = worksheet.addRow([
       '',
-      'المجموع الكلي',
       'Total',
-      totals.n950,
-      totals.i9000s,
-      totals.i9100,
+      '',
+      totals.n950.toFixed(1),
+      totals.i9000s.toFixed(1),
+      totals.i9100.toFixed(1),
       totals.rollPaper,
       totals.stickers,
-      totals.batteries,
+      totals.newBatteries,
       totals.mobilySim,
       totals.stcSim,
       totals.zainSim
     ]);
-    
     totalRow.font = { bold: true, size: 11 };
     totalRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    totalRow.height = 25;
     totalRow.eachCell((cell) => {
       cell.fill = {
         type: 'pattern',
         pattern: 'solid',
-        fgColor: { argb: 'FFD9E2F3' }
+        fgColor: { argb: 'FF92D050' }
       };
       cell.border = {
-        top: { style: 'double', color: { argb: 'FF000000' } },
+        top: { style: 'medium', color: { argb: 'FF000000' } },
         left: { style: 'thin', color: { argb: 'FF000000' } },
-        bottom: { style: 'double', color: { argb: 'FF000000' } },
+        bottom: { style: 'medium', color: { argb: 'FF000000' } },
         right: { style: 'thin', color: { argb: 'FF000000' } }
       };
     });
 
-    // Column widths
     worksheet.columns = [
       { width: 5 },
       { width: 25 },
       { width: 15 },
-      { width: 12 },
-      { width: 12 },
-      { width: 12 },
-      { width: 12 },
-      { width: 12 },
-      { width: 12 },
-      { width: 12 },
-      { width: 12 },
-      { width: 12 }
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 },
+      { width: 15 }
     ];
+  };
 
-    // Generate and save file
+  // Export technicians inventory to Excel with 5 sheets
+  const exportTechniciansToExcel = async () => {
+    if (!techniciansData?.technicians || techniciansData.technicians.length === 0) return;
+
+    const workbook = new ExcelJS.Workbook();
+    
+    createTotalWorksheet(workbook, 'مخزون شامل - Total');
+    createInventoryWorksheet(workbook, 'ثابت كراتين - Fixed Boxes', 'fixed', 'boxes');
+    createInventoryWorksheet(workbook, 'ثابت مفردات - Fixed Units', 'fixed', 'units');
+    createInventoryWorksheet(workbook, 'متحرك كراتين - Moving Boxes', 'moving', 'boxes');
+    createInventoryWorksheet(workbook, 'متحرك مفردات - Moving Units', 'moving', 'units');
+
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    saveAs(blob, `تقرير_مخزون_الفنيين_${new Date().toISOString().split('T')[0]}.xlsx`);
+    saveAs(blob, `تقرير_المخزون_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   // حساب إجمالي وحدات المستودع
