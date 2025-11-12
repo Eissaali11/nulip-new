@@ -412,8 +412,8 @@ export default function AdminPage() {
 
           {/* Regions Tab */}
           <TabsContent value="regions" className="space-y-4 mt-6">
-            <div className="flex justify-between items-center bg-white/60 backdrop-blur-sm p-4 rounded-xl border border-[#18B2B0]/20">
-              <h2 className="text-2xl font-bold text-[#18B2B0]">المناطق</h2>
+            <div className="flex justify-between items-center bg-white/10 backdrop-blur-xl p-4 rounded-xl border border-white/20">
+              <h2 className="text-2xl font-bold text-white">المناطق</h2>
               <Dialog open={showRegionModal} onOpenChange={setShowRegionModal}>
                 <DialogTrigger asChild>
                   <Button 
@@ -493,29 +493,32 @@ export default function AdminPage() {
               </Dialog>
             </div>
 
-            <Card className="shadow-xl border-[#18B2B0]/20 bg-white/80 backdrop-blur-sm">
-              <CardHeader className="bg-gradient-to-r from-[#18B2B0]/10 to-teal-50/50">
-                <CardTitle className="text-[#18B2B0]">قائمة المناطق</CardTitle>
-                <CardDescription>جميع المناطق المسجلة في النظام</CardDescription>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-[#18B2B0]/20">
-                      <TableHead className="text-right font-bold">اسم المنطقة</TableHead>
-                      <TableHead className="text-right font-bold">الوصف</TableHead>
-                      <TableHead className="text-right font-bold">عدد الأصناف</TableHead>
-                      <TableHead className="text-right font-bold">إجمالي الكمية</TableHead>
-                      <TableHead className="text-right font-bold">المخزون المنخفض</TableHead>
-                      <TableHead className="text-right font-bold">الحالة</TableHead>
-                      <TableHead className="text-right font-bold">الإجراءات</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {regions.map((region) => (
-                      <TableRow key={region.id} data-testid={`row-region-${region.id}`} className="hover:bg-[#18B2B0]/5 transition-colors">
-                        <TableCell className="font-medium text-right">{region.name}</TableCell>
-                        <TableCell className="text-right">{region.description || "لا يوجد"}</TableCell>
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-[#18B2B0]/10 to-transparent rounded-2xl blur-2xl"></div>
+              <Card className="relative shadow-xl border border-white/20 bg-white/10 backdrop-blur-xl">
+                <CardHeader className="bg-white/5">
+                  <CardTitle className="text-white">قائمة المناطق</CardTitle>
+                  <CardDescription className="text-gray-300">جميع المناطق المسجلة في النظام</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="overflow-x-auto rounded-xl">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="border-white/10">
+                          <TableHead className="text-right font-bold text-gray-300">اسم المنطقة</TableHead>
+                          <TableHead className="text-right font-bold text-gray-300">الوصف</TableHead>
+                          <TableHead className="text-right font-bold text-gray-300">عدد الأصناف</TableHead>
+                          <TableHead className="text-right font-bold text-gray-300">إجمالي الكمية</TableHead>
+                          <TableHead className="text-right font-bold text-gray-300">المخزون المنخفض</TableHead>
+                          <TableHead className="text-right font-bold text-gray-300">الحالة</TableHead>
+                          <TableHead className="text-right font-bold text-gray-300">الإجراءات</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {regions.map((region) => (
+                          <TableRow key={region.id} data-testid={`row-region-${region.id}`} className="border-white/5 hover:bg-white/5 transition-colors">
+                            <TableCell className="font-medium text-right text-white">{region.name}</TableCell>
+                            <TableCell className="text-right text-gray-300">{region.description || "لا يوجد"}</TableCell>
                         <TableCell className="text-right">
                           <Badge variant="outline" className="border-[#18B2B0] text-[#18B2B0]">{region.itemCount}</Badge>
                         </TableCell>
@@ -564,16 +567,18 @@ export default function AdminPage() {
                         </TableCell>
                       </TableRow>
                     ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Users Tab */}
           <TabsContent value="users" className="space-y-4 mt-6">
-            <div className="flex justify-between items-center bg-white/60 backdrop-blur-sm p-4 rounded-xl border border-[#18B2B0]/20">
-              <h2 className="text-2xl font-bold text-[#18B2B0]">الموظفين</h2>
+            <div className="flex justify-between items-center bg-white/10 backdrop-blur-xl p-4 rounded-xl border border-white/20">
+              <h2 className="text-2xl font-bold text-white">الموظفين</h2>
               <Dialog open={showUserModal} onOpenChange={setShowUserModal}>
                 <DialogTrigger asChild>
                   <Button 

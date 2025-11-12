@@ -9,7 +9,8 @@ import {
   Menu,
   X,
   Bell,
-  Smartphone
+  Smartphone,
+  Home
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -58,6 +59,18 @@ export const Navbar = () => {
 
   const navItems: NavItem[] = [
     {
+      title: "الصفحة الرئيسية",
+      href: "/",
+      icon: Home,
+      gradient: "from-[#18B2B0] to-teal-600",
+    },
+    {
+      title: "العمليات",
+      href: "/operations",
+      icon: ClipboardCheck,
+      gradient: "from-cyan-500 to-teal-600",
+    },
+    {
       title: "لوحة مخزون الفنيين",
       href: "/admin-inventory-overview",
       icon: LayoutDashboard,
@@ -74,7 +87,7 @@ export const Navbar = () => {
       title: "المخزون الثابت",
       href: "/my-fixed-inventory",
       icon: Package,
-      gradient: "from-[#18B2B0] to-[#0ea5a3]",
+      gradient: "from-blue-500 to-indigo-600",
     },
     {
       title: "الأجهزة",
@@ -94,21 +107,14 @@ export const Navbar = () => {
       title: "المستخدمين",
       href: "/users",
       icon: Users,
-      gradient: "from-blue-500 to-indigo-600",
-      adminOnly: true,
-    },
-    {
-      title: "العمليات",
-      href: "/operations",
-      icon: ClipboardCheck,
-      gradient: "from-cyan-500 to-teal-600",
+      gradient: "from-rose-500 to-pink-600",
       adminOnly: true,
     },
     {
       title: "المستودعات",
       href: "/warehouses",
       icon: Warehouse,
-      gradient: "from-orange-500 to-amber-600",
+      gradient: "from-amber-500 to-orange-600",
       adminOnly: true,
     },
   ];
