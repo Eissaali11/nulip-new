@@ -22,9 +22,11 @@ import {
 } from "lucide-react";
 import CreateWarehouseModal from "@/components/create-warehouse-modal";
 import EditWarehouseModal from "@/components/edit-warehouse-modal";
-import bannerImage from "@assets/Gemini_Generated_Image_1iknau1iknau1ikn_1762464877305.png";
+import dashboardBg from "@assets/image_1762515061799.png";
 import { exportWarehousesToExcel } from "@/lib/exportToExcel";
 import { useToast } from "@/hooks/use-toast";
+import { Navbar } from "@/components/dashboard/Navbar";
+import { GridBackground } from "@/components/dashboard/GridBackground";
 
 interface WarehouseInventory {
   id: string;
@@ -153,142 +155,76 @@ export default function WarehousesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900" dir="rtl">
-      {/* Modern Professional Banner */}
-      <motion.div 
-        className="relative overflow-hidden h-80 shadow-2xl"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6 }}
-      >
-        {/* Gradient Background */}
-        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600"></div>
-        
-        {/* Animated Background Shapes */}
-        <motion.div
-          className="absolute top-0 left-0 w-72 h-72 bg-blue-500/30 rounded-full blur-3xl"
-          animate={{
-            x: [0, 100, 0],
-            y: [0, 50, 0],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-        <motion.div
-          className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl"
-          animate={{
-            x: [0, -80, 0],
-            y: [0, -60, 0],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-        
-        {/* Content Section */}
-        <div className="relative h-full flex flex-col justify-between px-6 py-6">
-          {/* Top Section - Back Button */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden" dir="rtl">
+      <GridBackground />
+      
+      <div
+        className="absolute inset-0 opacity-5 bg-center bg-cover"
+        style={{
+          backgroundImage: `url(${dashboardBg})`,
+          backgroundBlendMode: 'overlay'
+        }}
+      />
+
+      <div className="relative z-10">
+        <Navbar />
+
+        <div className="container mx-auto px-4 sm:px-6 py-8 max-w-7xl">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
+            className="mb-8"
           >
-            <Link href="/">
-              <Button 
-                variant="secondary" 
-                className="bg-white/10 backdrop-blur-xl border-2 border-white/20 text-white hover:bg-white/20 hover:border-[#18B2B0]/60 shadow-2xl transition-all duration-300"
-                data-testid="button-back-dashboard"
-              >
-                <ArrowRight className="h-4 w-4 ml-2" />
-                <LayoutDashboard className="h-4 w-4 ml-2" />
-                العودة للوحة الرئيسية
-              </Button>
-            </Link>
-          </motion.div>
-
-          {/* Center Title */}
-          <motion.div
-            className="flex items-center justify-center"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
-          >
-            <div className="text-center">
-              <div className="relative inline-block mb-4">
-                <div className="absolute inset-0 bg-[#18B2B0]/30 rounded-full blur-2xl"></div>
-                <div className="relative bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl p-6 rounded-3xl border-2 border-white/30">
-                  <Warehouse className="h-16 w-16 text-white" />
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <div className="flex items-center gap-4">
+                <div className="p-4 bg-gradient-to-br from-[#18B2B0] to-[#16a09e] rounded-2xl shadow-lg shadow-[#18B2B0]/30">
+                  <Warehouse className="h-8 w-8 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl sm:text-4xl font-bold text-white mb-1">
+                    إدارة المستودعات
+                  </h1>
+                  <p className="text-gray-400 text-sm">
+                    نظام متكامل لإدارة المخزون
+                  </p>
                 </div>
               </div>
-              <h1 className="text-4xl lg:text-5xl font-black text-white mb-2 drop-shadow-2xl flex items-center justify-center gap-3">
-                <Sparkles className="h-8 w-8 text-yellow-300 animate-pulse" />
-                إدارة المستودعات
-                <Sparkles className="h-8 w-8 text-yellow-300 animate-pulse" />
-              </h1>
-              <p className="text-white/90 text-lg font-semibold">نظام متكامل لإدارة المخزون</p>
+
+              <div className="flex gap-2 sm:gap-3 w-full sm:w-auto flex-wrap">
+                <button
+                  onClick={handleExportWarehouses}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white/10 backdrop-blur-xl border border-white/20 text-white font-medium rounded-xl hover:bg-white/20 hover:shadow-lg hover:shadow-white/10 transition-all duration-300 flex-1 sm:flex-none text-sm sm:text-base"
+                  data-testid="button-export-warehouses"
+                  type="button"
+                >
+                  <Download className="h-4 w-4" />
+                  <span>تصدير إلى Excel</span>
+                </button>
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#18B2B0] to-[#16a09e] text-white font-medium rounded-xl hover:shadow-lg hover:shadow-[#18B2B0]/50 transition-all duration-300 transform hover:scale-105 flex-1 sm:flex-none text-sm sm:text-base"
+                  data-testid="button-create-warehouse"
+                  type="button"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>إضافة مستودع جديد</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Input
+                type="text"
+                placeholder="ابحث عن مستودع بالاسم أو الموقع..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pr-10 bg-white/10 backdrop-blur-xl border border-white/20 text-white placeholder:text-gray-400 focus:border-[#18B2B0] focus:ring-[#18B2B0] rounded-xl shadow-sm text-right"
+                data-testid="input-search-warehouses"
+              />
             </div>
           </motion.div>
-
-          {/* Bottom Spacer */}
-          <div></div>
-        </div>
-
-        {/* Bottom Wave */}
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1200 120" preserveAspectRatio="none" className="w-full h-12 fill-slate-900">
-            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"></path>
-          </svg>
-        </div>
-      </motion.div>
-
-      {/* Warehouses Content */}
-      <div className="container mx-auto px-4 sm:px-6 py-10 max-w-7xl">
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-white">جميع المستودعات</h2>
-            <p className="text-sm sm:text-base text-white/70 mt-1">إدارة شاملة للمستودعات والمخزون</p>
-          </div>
-          <div className="flex gap-2 sm:gap-3 w-full sm:w-auto flex-wrap">
-            <Button 
-              onClick={handleExportWarehouses}
-              variant="outline"
-              className="bg-white border-2 border-gray-200 text-gray-900 hover:bg-gray-50 shadow-lg transition-all flex-1 sm:flex-none text-sm sm:text-base"
-              data-testid="button-export-warehouses"
-            >
-              <Download className="h-4 w-4 sm:h-5 sm:w-5 ml-2" />
-              تصدير إلى Excel
-            </Button>
-            <Button 
-              onClick={() => setShowCreateModal(true)}
-              className="bg-gradient-to-r from-[#18B2B0] to-teal-500 hover:from-[#16a09e] hover:to-teal-600 shadow-xl text-white transition-all flex-1 sm:flex-none text-sm sm:text-base"
-              data-testid="button-create-warehouse"
-            >
-              <Plus className="h-4 w-4 sm:h-5 sm:w-5 ml-2" />
-              إضافة مستودع جديد
-            </Button>
-          </div>
-        </div>
-
-        {/* Search Bar */}
-        <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <Input
-              type="text"
-              placeholder="ابحث عن مستودع بالاسم أو الموقع..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pr-10 bg-white border-2 border-gray-200 focus:border-[#18B2B0] focus:ring-[#18B2B0] rounded-xl shadow-sm text-right text-gray-900"
-              data-testid="input-search-warehouses"
-            />
-          </div>
-        </div>
 
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -438,6 +374,7 @@ export default function WarehousesPage() {
             })}
           </motion.div>
         )}
+        </div>
       </div>
 
       <CreateWarehouseModal 
