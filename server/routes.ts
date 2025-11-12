@@ -2,6 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertInventoryItemSchema, insertTransactionSchema, insertRegionSchema, insertUserSchema, insertTechnicianInventorySchema, insertWithdrawnDeviceSchema, loginSchema, techniciansInventory, insertWarehouseSchema, insertWarehouseInventorySchema, insertWarehouseTransferSchema, warehouseTransfers, warehouseInventory, inventoryRequests, insertInventoryRequestSchema, users } from "@shared/schema";
+import { ROLES, hasRoleOrAbove, canManageUsers } from "@shared/roles";
 import { z } from "zod";
 import { db } from "./db";
 import { eq, inArray } from "drizzle-orm";
@@ -29,13 +30,33 @@ function requireAuth(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-// Admin-only middleware
+// Admin-only middleware (System Manager only)
 function requireAdmin(req: Request, res: Response, next: NextFunction) {
   const user = (req as any).user;
-  if (!user || user.role !== 'admin') {
-    return res.status(403).json({ message: "Admin access required" });
+  if (!user || user.role !== ROLES.ADMIN) {
+    return res.status(403).json({ message: "يجب أن تكون مدير نظام للوصول إلى هذه الصفحة" });
   }
   next();
+}
+
+// Supervisor or above middleware
+function requireSupervisor(req: Request, res: Response, next: NextFunction) {
+  const user = (req as any).user;
+  if (!user || !hasRoleOrAbove(user.role, ROLES.SUPERVISOR)) {
+    return res.status(403).json({ message: "يجب أن تكون مشرف أو أعلى للوصول إلى هذه الصفحة" });
+  }
+  next();
+}
+
+// Require specific role or above
+function requireRole(minRole: string) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const user = (req as any).user;
+    if (!user || !hasRoleOrAbove(user.role, minRole)) {
+      return res.status(403).json({ message: "ليس لديك الصلاحيات الكافية" });
+    }
+    next();
+  };
 }
 
 // Generate session token
@@ -80,19 +101,34 @@ async function initializeDefaults() {
         isActive: true,
       });
       
-      // Create default employee user
+      // Create default technician user
       await storage.createUser({
-        username: "employee1",
-        email: "employee1@company.com",
-        password: "emp123",
-        fullName: "موظف تجريبي",
+        username: "tech1",
+        email: "tech1@company.com",
+        password: "tech123",
+        fullName: "فني تجريبي",
         city: "جدة",
-        role: "employee",
+        role: "technician",
         regionId: defaultRegionId,
         isActive: true,
       });
       
-      console.log("✅ Created default users (admin/admin123, employee1/emp123)");
+      // Create default supervisor user
+      await storage.createUser({
+        username: "supervisor1",
+        email: "supervisor1@company.com",
+        password: "super123",
+        fullName: "مشرف تجريبي",
+        city: "الرياض",
+        role: "supervisor",
+        regionId: defaultRegionId,
+        isActive: true,
+      });
+      
+      console.log("✅ Created default users:");
+      console.log("   - Admin: admin/admin123");
+      console.log("   - Supervisor: supervisor1/super123");
+      console.log("   - Technician: tech1/tech123");
     }
   } catch (error) {
     console.error("❌ Error initializing defaults:", error);
@@ -547,13 +583,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const techs = await storage.getTechniciansInventory();
       
       // Filter data based on user role
-      if (user.role === 'employee') {
-        // Employees only see data they created
+      if (user.role === ROLES.ADMIN || user.role === ROLES.SUPERVISOR) {
+        // Admins and supervisors see everything
+        res.json(techs);
+      } else {
+        // Technicians only see data they created
         const filteredTechs = techs.filter(tech => tech.createdBy === user.id);
         res.json(filteredTechs);
-      } else {
-        // Admins see everything
-        res.json(techs);
       }
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch technicians inventory" });
@@ -649,13 +685,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const devices = await storage.getWithdrawnDevices();
       
       // Filter data based on user role
-      if (user.role === 'employee') {
-        // Employees only see devices they created
+      if (user.role === ROLES.ADMIN || user.role === ROLES.SUPERVISOR) {
+        // Admins and supervisors see everything
+        res.json(devices);
+      } else {
+        // Technicians only see devices they created
         const filteredDevices = devices.filter(device => device.createdBy === user.id);
         res.json(filteredDevices);
-      } else {
-        // Admins see everything
-        res.json(devices);
       }
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch withdrawn devices" });

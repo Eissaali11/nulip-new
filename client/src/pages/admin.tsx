@@ -16,6 +16,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Plus, Users, MapPin, Activity, Trash2, Edit, ArrowRight, LayoutDashboard, TrendingUp, Database, AlertTriangle } from "lucide-react";
 import type { RegionWithStats, UserSafe, AdminStats, Region, InsertRegion, InsertUser } from "@shared/schema";
+import { ROLES, ROLE_LABELS_AR } from "@shared/roles";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -33,7 +34,7 @@ const userFormSchema = z.object({
   email: z.string().email("البريد الإلكتروني غير صالح"),
   password: z.string().min(6, "كلمة المرور يجب أن تكون 6 أحرف على الأقل"),
   fullName: z.string().min(1, "الاسم الكامل مطلوب"),
-  role: z.enum(["admin", "employee"]),
+  role: z.enum(["admin", "supervisor", "technician"]),
   regionId: z.string().optional(),
   isActive: z.boolean().default(true),
 });
@@ -75,7 +76,7 @@ export default function AdminPage() {
       email: "",
       password: "",
       fullName: "",
-      role: "employee",
+      role: ROLES.TECHNICIAN,
       isActive: true,
     },
   });
@@ -200,7 +201,7 @@ export default function AdminPage() {
       email: user.email,
       password: "",
       fullName: user.fullName,
-      role: user.role as "admin" | "employee",
+      role: user.role as "admin" | "supervisor" | "technician",
       regionId: user.regionId || "",
       isActive: user.isActive,
     });
@@ -653,8 +654,9 @@ export default function AdminPage() {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="employee">موظف</SelectItem>
-                                <SelectItem value="admin">مدير</SelectItem>
+                                <SelectItem value={ROLES.TECHNICIAN}>{ROLE_LABELS_AR[ROLES.TECHNICIAN]}</SelectItem>
+                                <SelectItem value={ROLES.SUPERVISOR}>{ROLE_LABELS_AR[ROLES.SUPERVISOR]}</SelectItem>
+                                <SelectItem value={ROLES.ADMIN}>{ROLE_LABELS_AR[ROLES.ADMIN]}</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -746,10 +748,11 @@ export default function AdminPage() {
                           <TableCell className="text-right">{user.email}</TableCell>
                           <TableCell className="text-right">
                             <Badge 
-                              variant={user.role === "admin" ? "default" : "secondary"}
-                              className={user.role === "admin" ? "bg-gradient-to-r from-[#18B2B0] to-teal-500" : ""}
+                              variant={user.role === ROLES.ADMIN ? "default" : "secondary"}
+                              className={user.role === ROLES.ADMIN ? "bg-gradient-to-r from-[#18B2B0] to-teal-500" : 
+                                         user.role === ROLES.SUPERVISOR ? "bg-gradient-to-r from-blue-500 to-cyan-500" : ""}
                             >
-                              {user.role === "admin" ? "مدير" : "موظف"}
+                              {ROLE_LABELS_AR[user.role as keyof typeof ROLE_LABELS_AR] || user.role}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right">{userRegion?.name || "غير محدد"}</TableCell>

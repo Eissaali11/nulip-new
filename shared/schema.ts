@@ -13,7 +13,7 @@ export const regions = pgTable("regions", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Users table for employee accounts
+// Users table for all user accounts
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   username: text("username").notNull().unique(),
@@ -22,7 +22,7 @@ export const users = pgTable("users", {
   fullName: text("full_name").notNull(),
   profileImage: text("profile_image"),
   city: text("city"),
-  role: text("role").notNull().default("employee"), // "admin", "employee"
+  role: text("role").notNull().default("technician"), // "admin" (مدير النظام), "supervisor" (مشرف), "technician" (فني)
   regionId: varchar("region_id").references(() => regions.id),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
@@ -199,6 +199,26 @@ export const warehouses = pgTable("warehouses", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Supervisor-Technician Assignments - ربط المشرف بالفنيين
+export const supervisorTechnicians = pgTable("supervisor_technicians", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  supervisorId: varchar("supervisor_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  technicianId: varchar("technician_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  uniqSupervisorTechnician: sql`UNIQUE (${table.supervisorId}, ${table.technicianId})`,
+}));
+
+// Supervisor-Warehouse Assignments - ربط المشرف بالمستودعات
+export const supervisorWarehouses = pgTable("supervisor_warehouses", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  supervisorId: varchar("supervisor_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  warehouseId: varchar("warehouse_id").notNull().references(() => warehouses.id, { onDelete: 'cascade' }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  uniqSupervisorWarehouse: sql`UNIQUE (${table.supervisorId}, ${table.warehouseId})`,
+}));
+
 // Warehouse Inventory - مخزون المستودع (يتتبع الكراتين والوحدات منفصلة)
 export const warehouseInventory = pgTable("warehouse_inventory", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -305,6 +325,8 @@ export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  role: z.enum(["admin", "supervisor", "technician"]),
 });
 
 export const insertInventoryItemSchema = createInsertSchema(inventoryItems).omit({
@@ -366,6 +388,16 @@ export const insertInventoryRequestSchema = createInsertSchema(inventoryRequests
   respondedAt: true,
 });
 
+export const insertSupervisorTechnicianSchema = createInsertSchema(supervisorTechnicians).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertSupervisorWarehouseSchema = createInsertSchema(supervisorWarehouses).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type InsertRegion = z.infer<typeof insertRegionSchema>;
 export type Region = typeof regions.$inferSelect;
@@ -391,6 +423,10 @@ export type InsertWarehouseTransfer = z.infer<typeof insertWarehouseTransferSche
 export type WarehouseTransfer = typeof warehouseTransfers.$inferSelect;
 export type InsertInventoryRequest = z.infer<typeof insertInventoryRequestSchema>;
 export type InventoryRequest = typeof inventoryRequests.$inferSelect;
+export type InsertSupervisorTechnician = z.infer<typeof insertSupervisorTechnicianSchema>;
+export type SupervisorTechnician = typeof supervisorTechnicians.$inferSelect;
+export type InsertSupervisorWarehouse = z.infer<typeof insertSupervisorWarehouseSchema>;
+export type SupervisorWarehouse = typeof supervisorWarehouses.$inferSelect;
 
 // Additional types for API responses
 export type InventoryItemWithStatus = InventoryItem & {
