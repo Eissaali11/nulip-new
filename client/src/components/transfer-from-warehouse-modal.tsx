@@ -86,9 +86,11 @@ export default function TransferFromWarehouseModal({
 }: TransferFromWarehouseModalProps) {
   const { toast } = useToast();
 
-  const { data: currentUser } = useQuery<UserSafe>({
+  const { data: authData } = useQuery<{ user: UserSafe }>({
     queryKey: ["/api/auth/me"],
   });
+  
+  const currentUser = authData?.user;
 
   const { data: users = [] } = useQuery<UserSafe[]>({
     queryKey: currentUser?.role === 'admin' ? ["/api/users"] : ["/api/supervisor/technicians"],
