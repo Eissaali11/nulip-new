@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/auth";
 import dashboardBg from "@assets/image_1762515061799.png";
 import rasscoLogo from "@assets/image_1762442473114.png";
@@ -374,40 +375,60 @@ export default function Dashboard() {
 
         {/* مخزوني الشخصي - للفني */}
         {user?.role === 'technician' && (
-          <>
-            {/* المخزون الثابت */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="mb-8"
-            >
-              <div className="relative bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl rounded-2xl md:rounded-3xl border border-[#18B2B0]/30 p-4 md:p-8 overflow-hidden shadow-2xl mb-4 md:mb-6">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#18B2B0]/10 to-transparent" />
-                
-                <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-                  <div className="flex items-center gap-3">
-                    <motion.div
-                      animate={{ rotate: [0, 5, 0, -5, 0] }}
-                      transition={{ duration: 4, repeat: Infinity }}
-                      className="p-3 md:p-4 bg-gradient-to-br from-[#18B2B0] to-teal-600 rounded-xl md:rounded-2xl shadow-lg"
-                    >
-                      <Package className="h-6 w-6 md:h-8 md:w-8 text-white" />
-                    </motion.div>
-                    <div>
-                      <h3 className="text-lg md:text-2xl font-bold text-white">المخزون الثابت</h3>
-                      <p className="text-gray-400 text-xs md:text-sm">جميع المنتجات المخزنة بشكل دائم</p>
+          <Tabs defaultValue="fixed" className="w-full" dir="rtl">
+            {/* Tab Bar - Sticky */}
+            <div className="sticky top-0 z-20 bg-gradient-to-b from-[#1a1625] via-[#1a1625]/95 to-transparent pb-4 mb-6">
+              <TabsList className="grid w-full grid-cols-2 bg-white/10 backdrop-blur-xl border border-white/20 h-12 md:h-14 p-1">
+                <TabsTrigger 
+                  value="fixed" 
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#18B2B0] data-[state=active]:to-teal-500 data-[state=active]:text-white text-gray-300 font-bold text-sm md:text-base transition-all duration-300"
+                >
+                  <Package className="h-4 w-4 ml-2" />
+                  المخزون الثابت
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="moving" 
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white text-gray-300 font-bold text-sm md:text-base transition-all duration-300"
+                >
+                  <TruckIcon className="h-4 w-4 ml-2" />
+                  المخزون المتحرك
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            {/* Tab Content - Fixed Inventory */}
+            <TabsContent value="fixed" className="mt-0">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                className="mb-8"
+              >
+                <div className="relative bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl rounded-2xl md:rounded-3xl border border-[#18B2B0]/30 p-4 md:p-6 overflow-hidden shadow-2xl mb-4 md:mb-6">
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#18B2B0]/10 to-transparent" />
+                  
+                  <div className="relative flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <motion.div
+                        animate={{ rotate: [0, 5, 0, -5, 0] }}
+                        transition={{ duration: 4, repeat: Infinity }}
+                        className="p-3 bg-gradient-to-br from-[#18B2B0] to-teal-600 rounded-xl shadow-lg"
+                      >
+                        <Package className="h-6 w-6 text-white" />
+                      </motion.div>
+                      <div>
+                        <h3 className="text-lg md:text-xl font-bold text-white">المخزون الثابت</h3>
+                        <p className="text-gray-400 text-xs md:text-sm">جميع المنتجات المخزنة بشكل دائم</p>
+                      </div>
                     </div>
+                    <Link href="/my-fixed-inventory">
+                      <Button size="sm" className="bg-[#18B2B0] hover:bg-[#159a98] shadow-lg">
+                        <span className="hidden sm:inline">عرض التفاصيل</span>
+                        <ArrowRight className="mr-2 h-4 w-4" />
+                      </Button>
+                    </Link>
                   </div>
-                  <Link href="/my-fixed-inventory" className="w-full sm:w-auto">
-                    <Button size="sm" className="bg-[#18B2B0] hover:bg-[#159a98] shadow-lg w-full sm:w-auto">
-                      <span className="hidden sm:inline">عرض التفاصيل الكاملة</span>
-                      <span className="sm:hidden">عرض التفاصيل</span>
-                      <ArrowRight className="mr-2 h-4 w-4" />
-                    </Button>
-                  </Link>
                 </div>
-              </div>
 
               {fixedLoading ? (
                 <div className="text-center py-12 md:py-16">
@@ -505,41 +526,42 @@ export default function Dashboard() {
                   <p className="text-gray-500 text-xs md:text-sm mt-2 px-4">يمكنك طلب مخزون جديد من خلال زر "طلب مخزون" أعلاه</p>
                 </div>
               )}
-            </motion.div>
+              </motion.div>
+            </TabsContent>
 
-            {/* المخزون المتحرك */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="mb-8"
-            >
-              <div className="relative bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl rounded-2xl md:rounded-3xl border border-emerald-500/30 p-4 md:p-8 overflow-hidden shadow-2xl mb-4 md:mb-6">
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent" />
-                
-                <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-                  <div className="flex items-center gap-3">
-                    <motion.div
-                      animate={{ rotate: [0, 5, 0, -5, 0] }}
-                      transition={{ duration: 4, repeat: Infinity, delay: 0.5 }}
-                      className="p-3 md:p-4 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl md:rounded-2xl shadow-lg"
-                    >
-                      <TruckIcon className="h-6 w-6 md:h-8 md:w-8 text-white" />
-                    </motion.div>
-                    <div>
-                      <h3 className="text-lg md:text-2xl font-bold text-white">المخزون المتحرك</h3>
-                      <p className="text-gray-400 text-xs md:text-sm">المنتجات الجاهزة للعمليات الميدانية</p>
+            {/* Tab Content - Moving Inventory */}
+            <TabsContent value="moving" className="mt-0">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                className="mb-8"
+              >
+                <div className="relative bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl rounded-2xl md:rounded-3xl border border-emerald-500/30 p-4 md:p-6 overflow-hidden shadow-2xl mb-4 md:mb-6">
+                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent" />
+                  
+                  <div className="relative flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <motion.div
+                        animate={{ rotate: [0, 5, 0, -5, 0] }}
+                        transition={{ duration: 4, repeat: Infinity }}
+                        className="p-3 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl shadow-lg"
+                      >
+                        <TruckIcon className="h-6 w-6 text-white" />
+                      </motion.div>
+                      <div>
+                        <h3 className="text-lg md:text-xl font-bold text-white">المخزون المتحرك</h3>
+                        <p className="text-gray-400 text-xs md:text-sm">المنتجات الجاهزة للعمليات الميدانية</p>
+                      </div>
                     </div>
+                    <Link href="/my-moving-inventory">
+                      <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600 shadow-lg">
+                        <span className="hidden sm:inline">عرض التفاصيل</span>
+                        <ArrowRight className="mr-2 h-4 w-4" />
+                      </Button>
+                    </Link>
                   </div>
-                  <Link href="/my-moving-inventory" className="w-full sm:w-auto">
-                    <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600 shadow-lg w-full sm:w-auto">
-                      <span className="hidden sm:inline">عرض التفاصيل الكاملة</span>
-                      <span className="sm:hidden">عرض التفاصيل</span>
-                      <ArrowRight className="mr-2 h-4 w-4" />
-                    </Button>
-                  </Link>
                 </div>
-              </div>
 
               {movingLoading ? (
                 <div className="text-center py-12 md:py-16">
@@ -637,8 +659,9 @@ export default function Dashboard() {
                   <p className="text-gray-500 text-xs md:text-sm mt-2 px-4">سيظهر المخزون المتحرك بعد قبول طلبات النقل من المستودعات</p>
                 </div>
               )}
-            </motion.div>
-          </>
+              </motion.div>
+            </TabsContent>
+          </Tabs>
         )}
 
         {/* المستودعات - للأدمن فقط */}
@@ -685,8 +708,8 @@ export default function Dashboard() {
             movingTotal={getMovingInventoryTotal()}
           />
           <InventoryBarCard
-            fixedInventory={user?.role === 'technician' ? aggregatedFixedInventory : undefined}
-            movingInventory={aggregatedMovingInventory}
+            fixedInventory={user?.role === 'technician' ? (aggregatedFixedInventory || undefined) : undefined}
+            movingInventory={aggregatedMovingInventory || undefined}
             title={user?.role === 'admin' ? "توزيع المخزون المتحرك لجميع الفنيين" : user?.role === 'technician' ? "تفاصيل المخزون حسب الفئة" : "توزيع المخزون المتحرك"}
           />
         </div>
