@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,7 +32,8 @@ import {
   User,
   UserCircle,
   Users,
-  Warehouse
+  Warehouse,
+  Search
 } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
 import { Link, useLocation } from "wouter";
@@ -59,6 +61,8 @@ export default function Dashboard() {
   const [, setLocation] = useLocation();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showRequestInventoryModal, setShowRequestInventoryModal] = useState(false);
+  const [warehouseSearchQuery, setWarehouseSearchQuery] = useState("");
+  const [technicianSearchQuery, setTechnicianSearchQuery] = useState("");
 
   const { data: pendingTransfers = [] } = useQuery<WarehouseTransfer[]>({
     queryKey: ["/api/warehouse-transfers"],
@@ -231,6 +235,30 @@ export default function Dashboard() {
     }
     return myMovingInventory;
   }, [user?.role, techniciansData?.technicians, myMovingInventory]);
+
+  // فلترة المستودعات بناءً على البحث
+  const filteredWarehouses = useMemo(() => {
+    if (!warehousesData) return [];
+    if (!warehouseSearchQuery.trim()) return warehousesData;
+    
+    const query = warehouseSearchQuery.toLowerCase().trim();
+    return warehousesData.filter(warehouse => 
+      warehouse.name.toLowerCase().includes(query) ||
+      (warehouse.location && warehouse.location.toLowerCase().includes(query))
+    );
+  }, [warehousesData, warehouseSearchQuery]);
+
+  // فلترة الفنيين بناءً على البحث
+  const filteredTechnicians = useMemo(() => {
+    if (!techniciansData?.technicians) return [];
+    if (!technicianSearchQuery.trim()) return techniciansData.technicians;
+    
+    const query = technicianSearchQuery.toLowerCase().trim();
+    return techniciansData.technicians.filter(tech => 
+      tech.technicianName.toLowerCase().includes(query) ||
+      tech.city.toLowerCase().includes(query)
+    );
+  }, [techniciansData?.technicians, technicianSearchQuery]);
 
   // حساب إجمالي وحدات المستودع
   const getWarehouseTotalUnits = (warehouse: WarehouseWithStats) => {
@@ -685,28 +713,49 @@ export default function Dashboard() {
             <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent" />
             
             <div className="relative">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                 <div className="flex items-center gap-3">
                   <Warehouse className="h-6 w-6 text-orange-500" />
                   <h2 className="text-xl md:text-2xl font-bold text-white">المستودعات</h2>
                 </div>
-                <Link href="/warehouses">
-                  <Button className="bg-orange-500 hover:bg-orange-600 text-sm md:text-base">
-                    إدارة المستودعات
-                    <ArrowRight className="mr-2 h-4 w-4" />
-                  </Button>
-                </Link>
+                <div className="flex items-center gap-3">
+                  <div className="relative flex-1 md:min-w-[300px]">
+                    <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      type="text"
+                      placeholder="بحث بالاسم أو المدينة..."
+                      value={warehouseSearchQuery}
+                      onChange={(e) => setWarehouseSearchQuery(e.target.value)}
+                      className="pr-10 bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:border-orange-500/50"
+                      data-testid="warehouse-search-input"
+                    />
+                  </div>
+                  <Link href="/warehouses">
+                    <Button className="bg-orange-500 hover:bg-orange-600 text-sm md:text-base whitespace-nowrap">
+                      إدارة المستودعات
+                      <ArrowRight className="mr-2 h-4 w-4" />
+                    </Button>
+                  </Link>
+                </div>
               </div>
 
-              <div className="space-y-4">
-                {warehousesData.map((warehouse, index) => (
-                  <CompactWarehouseCard
-                    key={warehouse.id}
-                    warehouse={warehouse}
-                    index={index}
-                  />
-                ))}
-              </div>
+              {filteredWarehouses.length > 0 ? (
+                <div className="space-y-4">
+                  {filteredWarehouses.map((warehouse, index) => (
+                    <CompactWarehouseCard
+                      key={warehouse.id}
+                      warehouse={warehouse}
+                      index={index}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10">
+                  <Warehouse className="h-16 w-16 text-gray-500 mx-auto mb-4" />
+                  <p className="text-gray-400 text-lg font-medium">لا توجد مستودعات مطابقة للبحث</p>
+                  <p className="text-gray-500 text-sm mt-2">جرب كلمات بحث أخرى</p>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
@@ -749,7 +798,7 @@ export default function Dashboard() {
             />
 
             <div className="relative">
-              <div className="flex items-center justify-between mb-8">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div className="flex items-center gap-3">
                   <motion.div 
                     className="p-3 bg-gradient-to-br from-[#18B2B0] to-[#0ea5a3] rounded-2xl shadow-lg"
@@ -763,25 +812,39 @@ export default function Dashboard() {
                     <p className="text-gray-400 text-sm">نظرة شاملة على مخزون جميع الفنيين</p>
                   </div>
                 </div>
-                <Badge className="bg-[#18B2B0]/20 text-[#18B2B0] border-[#18B2B0]/30 px-4 py-2">
-                  {techniciansData.technicians.length} فني
-                </Badge>
+                <div className="flex items-center gap-3">
+                  <div className="relative flex-1 md:min-w-[300px]">
+                    <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      type="text"
+                      placeholder="بحث بالاسم أو المدينة..."
+                      value={technicianSearchQuery}
+                      onChange={(e) => setTechnicianSearchQuery(e.target.value)}
+                      className="pr-10 bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:border-[#18B2B0]/50"
+                      data-testid="technician-search-input"
+                    />
+                  </div>
+                  <Badge className="bg-[#18B2B0]/20 text-[#18B2B0] border-[#18B2B0]/30 px-4 py-2 whitespace-nowrap">
+                    {filteredTechnicians.length} فني
+                  </Badge>
+                </div>
               </div>
 
-              <div className="space-y-4">
-                {techniciansData.technicians.map((tech, index) => (
-                  <TechnicianDashboardCard 
-                    key={tech.technicianId} 
-                    technician={tech} 
-                    index={index}
-                  />
-                ))}
-              </div>
-
-              {techniciansData.technicians.length === 0 && (
-                <div className="text-center py-12">
+              {filteredTechnicians.length > 0 ? (
+                <div className="space-y-4">
+                  {filteredTechnicians.map((tech, index) => (
+                    <TechnicianDashboardCard 
+                      key={tech.technicianId} 
+                      technician={tech} 
+                      index={index}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10">
                   <Users className="h-16 w-16 text-gray-500 mx-auto mb-4" />
-                  <p className="text-gray-400 text-lg">لا يوجد فنيين مسجلين في النظام</p>
+                  <p className="text-gray-400 text-lg font-medium">لا يوجد فنيين مطابقين للبحث</p>
+                  <p className="text-gray-500 text-sm mt-2">جرب كلمات بحث أخرى</p>
                 </div>
               )}
             </div>
