@@ -1711,6 +1711,30 @@ export class DatabaseStorage implements IStorage {
       
       const fieldName = transfer.packagingType === 'box' ? fields.boxes : fields.units;
 
+      // Deduct from warehouse inventory
+      const [warehouseInv] = await tx
+        .select()
+        .from(warehouseInventory)
+        .where(eq(warehouseInventory.warehouseId, transfer.warehouseId));
+
+      if (!warehouseInv) {
+        throw new Error('Warehouse inventory not found');
+      }
+
+      const warehouseCurrentStock = (warehouseInv as any)[fieldName] || 0;
+      if (warehouseCurrentStock < transfer.quantity) {
+        throw new Error(`Insufficient stock in warehouse. Available: ${warehouseCurrentStock}, Requested: ${transfer.quantity}`);
+      }
+
+      await tx
+        .update(warehouseInventory)
+        .set({
+          [fieldName]: warehouseCurrentStock - transfer.quantity,
+          updatedAt: new Date(),
+        })
+        .where(eq(warehouseInventory.warehouseId, transfer.warehouseId));
+
+      // Add to technician inventory
       const [techInventory] = await tx
         .select()
         .from(techniciansInventory)
