@@ -24,11 +24,13 @@ export function StockCompositionPie({
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5, delay: 0.1 }}
+      className="relative"
     >
-      <Card className="bg-white border-gray-200">
+      <div className="absolute inset-0 bg-gradient-to-br from-[#18B2B0]/10 to-transparent rounded-2xl blur-2xl"></div>
+      <Card className="relative bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl">
         <CardHeader>
-          <CardTitle className="text-gray-900">{title}</CardTitle>
-          {description && <CardDescription className="text-gray-600">{description}</CardDescription>}
+          <CardTitle className="text-white">{title}</CardTitle>
+          {description && <CardDescription className="text-gray-300">{description}</CardDescription>}
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={height}>

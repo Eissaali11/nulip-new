@@ -35,10 +35,12 @@ export function StatsKpiCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay }}
+      className="relative overflow-hidden group"
     >
-      <Card className="overflow-hidden hover:shadow-lg transition-shadow bg-white border-gray-200">
+      <div className={`absolute inset-0 ${colorClasses[color as keyof typeof colorClasses] || 'bg-primary/10'} rounded-2xl opacity-10 group-hover:opacity-20 transition-opacity blur-xl`}></div>
+      <Card className="relative overflow-hidden bg-white/10 backdrop-blur-xl border border-white/20 hover:border-white/30 transition-all duration-300 transform hover:scale-105">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-gray-600">
+          <CardTitle className="text-sm font-medium text-gray-300">
             {title}
           </CardTitle>
           <div className={`p-2 rounded-full ${colorClasses[color as keyof typeof colorClasses] || colorClasses.primary}`}>
@@ -46,9 +48,9 @@ export function StatsKpiCard({
           </div>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-gray-900">{value}</div>
+          <div className="text-2xl font-bold text-white">{value}</div>
           {trend && (
-            <p className={`text-xs ${trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+            <p className={`text-xs ${trend.isPositive ? 'text-green-400' : 'text-red-400'}`}>
               {trend.isPositive ? '↑' : '↓'} {Math.abs(trend.value)}% من الشهر الماضي
             </p>
           )}
