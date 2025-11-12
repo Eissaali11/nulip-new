@@ -10,7 +10,8 @@ import {
   X,
   Bell,
   Smartphone,
-  Home
+  Home,
+  Settings
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -63,6 +64,13 @@ export const Navbar = () => {
       href: "/",
       icon: Home,
       gradient: "from-[#18B2B0] to-teal-600",
+    },
+    {
+      title: "إدارة العمليات",
+      href: "/admin",
+      icon: Settings,
+      gradient: "from-violet-500 to-purple-600",
+      adminOnly: true,
     },
     {
       title: "العمليات",
