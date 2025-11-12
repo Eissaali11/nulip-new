@@ -731,7 +731,6 @@ export default function AdminPage() {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent className="bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl border-white/20">
-                                <SelectItem value="" className="text-white hover:bg-white/10">بدون منطقة</SelectItem>
                                 {regions.map(region => (
                                   <SelectItem key={region.id} value={region.id} className="text-white hover:bg-white/10">{region.name}</SelectItem>
                                 ))}
