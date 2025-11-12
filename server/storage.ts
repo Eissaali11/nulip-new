@@ -1,4 +1,4 @@
-import { type InventoryItem, type InsertInventoryItem, type Transaction, type InsertTransaction, type InventoryItemWithStatus, type DashboardStats, type Region, type InsertRegion, type User, type InsertUser, type UserSafe, type RegionWithStats, type AdminStats, type TransactionWithDetails, type WithdrawnDevice, type InsertWithdrawnDevice, type TechnicianFixedInventory, type InsertTechnicianFixedInventory, type StockMovement, type InsertStockMovement, type TechnicianWithFixedInventory, type FixedInventorySummary, type StockMovementWithDetails, type Warehouse, type WarehouseInventory, type WarehouseTransfer, type InsertWarehouse, type InsertWarehouseInventory, type InsertWarehouseTransfer, type WarehouseWithStats, type WarehouseWithInventory, type WarehouseTransferWithDetails } from "@shared/schema";
+import { type InventoryItem, type InsertInventoryItem, type Transaction, type InsertTransaction, type InventoryItemWithStatus, type DashboardStats, type Region, type InsertRegion, type User, type InsertUser, type UserSafe, type RegionWithStats, type AdminStats, type TransactionWithDetails, type WithdrawnDevice, type InsertWithdrawnDevice, type TechnicianFixedInventory, type InsertTechnicianFixedInventory, type StockMovement, type InsertStockMovement, type TechnicianWithFixedInventory, type FixedInventorySummary, type StockMovementWithDetails, type Warehouse, type WarehouseInventory, type WarehouseTransfer, type InsertWarehouse, type InsertWarehouseInventory, type InsertWarehouseTransfer, type WarehouseWithStats, type WarehouseWithInventory, type WarehouseTransferWithDetails, type SupervisorTechnician, type SupervisorWarehouse } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -85,7 +85,7 @@ export interface IStorage {
   // Warehouses
   getWarehouses(): Promise<WarehouseWithStats[]>;
   getWarehouse(id: string): Promise<WarehouseWithInventory | undefined>;
-  createWarehouse(warehouse: InsertWarehouse): Promise<Warehouse>;
+  createWarehouse(warehouse: InsertWarehouse, createdBy: string): Promise<Warehouse>;
   updateWarehouse(id: string, updates: Partial<InsertWarehouse>): Promise<Warehouse>;
   deleteWarehouse(id: string): Promise<boolean>;
   
@@ -98,6 +98,14 @@ export interface IStorage {
   getWarehouseTransfers(warehouseId?: string, technicianId?: string, limit?: number): Promise<WarehouseTransferWithDetails[]>;
   acceptWarehouseTransfer(transferId: string): Promise<WarehouseTransfer>;
   rejectWarehouseTransfer(transferId: string, reason?: string): Promise<WarehouseTransfer>;
+  
+  // Supervisor Management
+  assignTechnicianToSupervisor(supervisorId: string, technicianId: string): Promise<SupervisorTechnician>;
+  removeTechnicianFromSupervisor(supervisorId: string, technicianId: string): Promise<boolean>;
+  getSupervisorTechnicians(supervisorId: string): Promise<string[]>;
+  assignWarehouseToSupervisor(supervisorId: string, warehouseId: string): Promise<SupervisorWarehouse>;
+  removeWarehouseFromSupervisor(supervisorId: string, warehouseId: string): Promise<boolean>;
+  getSupervisorWarehouses(supervisorId: string): Promise<string[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -831,7 +839,7 @@ export class MemStorage implements IStorage {
     return undefined;
   }
 
-  async createWarehouse(warehouse: InsertWarehouse): Promise<Warehouse> {
+  async createWarehouse(warehouse: InsertWarehouse, createdBy: string): Promise<Warehouse> {
     const id = randomUUID();
     const newWarehouse: Warehouse = {
       id,
@@ -839,7 +847,7 @@ export class MemStorage implements IStorage {
       location: warehouse.location,
       description: warehouse.description ?? null,
       isActive: warehouse.isActive ?? true,
-      createdBy: warehouse.createdBy,
+      createdBy,
       regionId: warehouse.regionId ?? null,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -868,6 +876,38 @@ export class MemStorage implements IStorage {
   }
 
   async getWarehouseTransfers(warehouseId?: string, technicianId?: string, limit?: number): Promise<WarehouseTransferWithDetails[]> {
+    return [];
+  }
+
+  async acceptWarehouseTransfer(transferId: string): Promise<WarehouseTransfer> {
+    throw new Error("MemStorage does not support warehouse operations. Use DatabaseStorage instead.");
+  }
+
+  async rejectWarehouseTransfer(transferId: string, reason?: string): Promise<WarehouseTransfer> {
+    throw new Error("MemStorage does not support warehouse operations. Use DatabaseStorage instead.");
+  }
+
+  async assignTechnicianToSupervisor(supervisorId: string, technicianId: string): Promise<SupervisorTechnician> {
+    throw new Error("MemStorage does not support supervisor operations. Use DatabaseStorage instead.");
+  }
+
+  async removeTechnicianFromSupervisor(supervisorId: string, technicianId: string): Promise<boolean> {
+    return false;
+  }
+
+  async getSupervisorTechnicians(supervisorId: string): Promise<string[]> {
+    return [];
+  }
+
+  async assignWarehouseToSupervisor(supervisorId: string, warehouseId: string): Promise<SupervisorWarehouse> {
+    throw new Error("MemStorage does not support supervisor operations. Use DatabaseStorage instead.");
+  }
+
+  async removeWarehouseFromSupervisor(supervisorId: string, warehouseId: string): Promise<boolean> {
+    return false;
+  }
+
+  async getSupervisorWarehouses(supervisorId: string): Promise<string[]> {
     return [];
   }
 }

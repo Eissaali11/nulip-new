@@ -33,6 +33,10 @@ import {
   type WarehouseWithStats,
   type WarehouseWithInventory,
   type WarehouseTransferWithDetails,
+  type SupervisorTechnician,
+  type InsertSupervisorTechnician,
+  type SupervisorWarehouse,
+  type InsertSupervisorWarehouse,
   regions,
   users,
   inventoryItems,
@@ -43,7 +47,9 @@ import {
   stockMovements,
   warehouses,
   warehouseInventory,
-  warehouseTransfers
+  warehouseTransfers,
+  supervisorTechnicians,
+  supervisorWarehouses
 } from "@shared/schema";
 import { IStorage } from "./storage";
 import { db } from "./db";
@@ -247,6 +253,7 @@ export class DatabaseStorage implements IStorage {
         username: users.username,
         email: users.email,
         fullName: users.fullName,
+        profileImage: users.profileImage,
         city: users.city,
         role: users.role,
         regionId: users.regionId,
@@ -265,6 +272,7 @@ export class DatabaseStorage implements IStorage {
         username: users.username,
         email: users.email,
         fullName: users.fullName,
+        profileImage: users.profileImage,
         city: users.city,
         role: users.role,
         regionId: users.regionId,
@@ -305,7 +313,7 @@ export class DatabaseStorage implements IStorage {
       .insert(users)
       .values({
         ...insertUser,
-        role: insertUser.role || "employee",
+        role: insertUser.role || "technician",
         isActive: insertUser.isActive ?? true,
       })
       .returning({
@@ -313,6 +321,7 @@ export class DatabaseStorage implements IStorage {
         username: users.username,
         email: users.email,
         fullName: users.fullName,
+        profileImage: users.profileImage,
         city: users.city,
         role: users.role,
         regionId: users.regionId,
@@ -360,6 +369,7 @@ export class DatabaseStorage implements IStorage {
         username: users.username,
         email: users.email,
         fullName: users.fullName,
+        profileImage: users.profileImage,
         city: users.city,
         role: users.role,
         regionId: users.regionId,
@@ -1344,11 +1354,12 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async createWarehouse(insertWarehouse: InsertWarehouse): Promise<Warehouse> {
+  async createWarehouse(insertWarehouse: InsertWarehouse, createdBy: string): Promise<Warehouse> {
     const [warehouse] = await db
       .insert(warehouses)
       .values({
         ...insertWarehouse,
+        createdBy,
         isActive: insertWarehouse.isActive ?? true,
       })
       .returning();
@@ -1663,5 +1674,67 @@ export class DatabaseStorage implements IStorage {
       .returning();
 
     return updatedTransfer;
+  }
+
+  async assignTechnicianToSupervisor(supervisorId: string, technicianId: string): Promise<SupervisorTechnician> {
+    const [assignment] = await db
+      .insert(supervisorTechnicians)
+      .values({
+        supervisorId,
+        technicianId,
+      })
+      .returning();
+    return assignment;
+  }
+
+  async removeTechnicianFromSupervisor(supervisorId: string, technicianId: string): Promise<boolean> {
+    const result = await db
+      .delete(supervisorTechnicians)
+      .where(
+        and(
+          eq(supervisorTechnicians.supervisorId, supervisorId),
+          eq(supervisorTechnicians.technicianId, technicianId)
+        )
+      );
+    return (result.rowCount || 0) > 0;
+  }
+
+  async getSupervisorTechnicians(supervisorId: string): Promise<string[]> {
+    const assignments = await db
+      .select({ technicianId: supervisorTechnicians.technicianId })
+      .from(supervisorTechnicians)
+      .where(eq(supervisorTechnicians.supervisorId, supervisorId));
+    return assignments.map(a => a.technicianId);
+  }
+
+  async assignWarehouseToSupervisor(supervisorId: string, warehouseId: string): Promise<SupervisorWarehouse> {
+    const [assignment] = await db
+      .insert(supervisorWarehouses)
+      .values({
+        supervisorId,
+        warehouseId,
+      })
+      .returning();
+    return assignment;
+  }
+
+  async removeWarehouseFromSupervisor(supervisorId: string, warehouseId: string): Promise<boolean> {
+    const result = await db
+      .delete(supervisorWarehouses)
+      .where(
+        and(
+          eq(supervisorWarehouses.supervisorId, supervisorId),
+          eq(supervisorWarehouses.warehouseId, warehouseId)
+        )
+      );
+    return (result.rowCount || 0) > 0;
+  }
+
+  async getSupervisorWarehouses(supervisorId: string): Promise<string[]> {
+    const assignments = await db
+      .select({ warehouseId: supervisorWarehouses.warehouseId })
+      .from(supervisorWarehouses)
+      .where(eq(supervisorWarehouses.supervisorId, supervisorId));
+    return assignments.map(a => a.warehouseId);
   }
 }
