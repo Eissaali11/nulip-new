@@ -36,9 +36,9 @@ export function StatsKpiCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay }}
     >
-      <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+      <Card className="overflow-hidden hover:shadow-lg transition-shadow bg-white border-gray-200">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardTitle className="text-sm font-medium text-gray-600">
             {title}
           </CardTitle>
           <div className={`p-2 rounded-full ${colorClasses[color as keyof typeof colorClasses] || colorClasses.primary}`}>
@@ -46,7 +46,7 @@ export function StatsKpiCard({
           </div>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{value}</div>
+          <div className="text-2xl font-bold text-gray-900">{value}</div>
           {trend && (
             <p className={`text-xs ${trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
               {trend.isPositive ? '↑' : '↓'} {Math.abs(trend.value)}% من الشهر الماضي

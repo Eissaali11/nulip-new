@@ -258,7 +258,7 @@ export default function WarehousesPage() {
             <Button 
               onClick={handleExportWarehouses}
               variant="outline"
-              className="border-2 border-[#18B2B0] text-[#18B2B0] hover:bg-[#18B2B0]/10 hover:border-[#16a09e] shadow-lg transition-all flex-1 sm:flex-none text-sm sm:text-base"
+              className="bg-white border-2 border-gray-200 text-gray-900 hover:bg-gray-50 shadow-lg transition-all flex-1 sm:flex-none text-sm sm:text-base"
               data-testid="button-export-warehouses"
             >
               <Download className="h-4 w-4 sm:h-5 sm:w-5 ml-2" />
@@ -284,7 +284,7 @@ export default function WarehousesPage() {
               placeholder="ابحث عن مستودع بالاسم أو الموقع..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pr-10 border-2 border-gray-200 focus:border-[#18B2B0] focus:ring-[#18B2B0] rounded-xl shadow-sm text-right"
+              className="pr-10 bg-white border-2 border-gray-200 focus:border-[#18B2B0] focus:ring-[#18B2B0] rounded-xl shadow-sm text-right text-gray-900"
               data-testid="input-search-warehouses"
             />
           </div>
@@ -315,10 +315,10 @@ export default function WarehousesPage() {
             <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-r from-[#18B2B0] to-teal-500 text-white mb-6 shadow-2xl">
               <Warehouse className="h-12 w-12" />
             </div>
-            <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+            <h3 className="text-3xl font-bold text-white mb-3">
               لا توجد مستودعات
             </h3>
-            <p className="text-lg text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+            <p className="text-lg text-white/70 mb-6 max-w-md mx-auto">
               ابدأ بإضافة أول مستودع لإدارة المخزون بكفاءة
             </p>
             <Button 
@@ -346,17 +346,17 @@ export default function WarehousesPage() {
                 <motion.div key={warehouse.id} variants={itemVariants}>
                   <Link href={`/warehouses/${warehouse.id}`}>
                     <Card 
-                      className="group hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden border-2 hover:border-[#18B2B0] bg-white/80 backdrop-blur-sm"
+                      className="group hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden border-2 border-gray-200 hover:border-[#18B2B0] bg-white"
                       data-testid={`card-warehouse-${warehouse.id}`}
                     >
                       <div className="h-2 bg-gradient-to-r from-[#18B2B0] via-teal-400 to-cyan-400" />
                       <CardContent className="p-6 space-y-4">
                         <div className="flex items-start justify-between">
                           <div className="flex-1 text-right">
-                            <h3 className="text-2xl font-black text-gray-900 dark:text-white group-hover:text-[#18B2B0] transition-colors" data-testid={`text-warehouse-name-${warehouse.id}`}>
+                            <h3 className="text-2xl font-black text-gray-900 group-hover:text-[#18B2B0] transition-colors" data-testid={`text-warehouse-name-${warehouse.id}`}>
                               {warehouse.name}
                             </h3>
-                            <div className="flex items-center gap-2 mt-3 text-gray-600 dark:text-gray-400">
+                            <div className="flex items-center gap-2 mt-3 text-gray-600">
                               <MapPin className="h-4 w-4 text-[#18B2B0]" />
                               <span data-testid={`text-warehouse-location-${warehouse.id}`}>{warehouse.location}</span>
                             </div>
@@ -371,31 +371,31 @@ export default function WarehousesPage() {
                         </div>
 
                         {warehouse.description && (
-                          <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg" data-testid={`text-warehouse-description-${warehouse.id}`}>
+                          <p className="text-sm text-gray-600 line-clamp-2 bg-gray-50 p-3 rounded-lg" data-testid={`text-warehouse-description-${warehouse.id}`}>
                             {warehouse.description}
                           </p>
                         )}
 
                         <div className="grid grid-cols-2 gap-3 pt-4 border-t-2 border-gray-100">
                           <motion.div 
-                            className="text-center p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 border-2 border-emerald-100"
+                            className="text-center p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-green-50 border-2 border-emerald-100"
                             whileHover={{ scale: 1.05 }}
                           >
                             <div className="flex items-center justify-center gap-2 mb-2">
                               <Package className="h-5 w-5 text-emerald-600" />
                             </div>
                             <p className="text-3xl font-black text-emerald-600" data-testid={`text-total-items-${warehouse.id}`}>{totalItems}</p>
-                            <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold mt-1">إجمالي القطع</p>
+                            <p className="text-xs text-gray-600 font-semibold mt-1">إجمالي القطع</p>
                           </motion.div>
                           <motion.div 
-                            className="text-center p-4 rounded-xl bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 border-2 border-orange-100"
+                            className="text-center p-4 rounded-xl bg-gradient-to-br from-orange-50 to-red-50 border-2 border-orange-100"
                             whileHover={{ scale: 1.05 }}
                           >
                             <div className="flex items-center justify-center gap-2 mb-2">
                               <AlertTriangle className="h-5 w-5 text-orange-600" />
                             </div>
                             <p className="text-3xl font-black text-orange-600" data-testid={`text-low-stock-${warehouse.id}`}>{lowStockCount}</p>
-                            <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold mt-1">مخزون منخفض</p>
+                            <p className="text-xs text-gray-600 font-semibold mt-1">مخزون منخفض</p>
                           </motion.div>
                         </div>
 

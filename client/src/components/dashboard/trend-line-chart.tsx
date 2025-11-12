@@ -23,10 +23,10 @@ export function TrendLineChart({
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <Card className="col-span-full lg:col-span-2">
+      <Card className="col-span-full lg:col-span-2 bg-white border-gray-200">
         <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          {description && <CardDescription>{description}</CardDescription>}
+          <CardTitle className="text-gray-900">{title}</CardTitle>
+          {description && <CardDescription className="text-gray-600">{description}</CardDescription>}
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={height}>
