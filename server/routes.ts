@@ -621,6 +621,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // My Inventory Routes - for current user
+  app.get("/api/my-fixed-inventory", requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const inventory = await storage.getTechnicianFixedInventory(user.id);
+      res.json(inventory || null);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch fixed inventory" });
+    }
+  });
+
+  app.get("/api/my-moving-inventory", requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const inventory = await storage.getTechnicianInventory(user.id);
+      res.json(inventory || null);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch moving inventory" });
+    }
+  });
+
   // Withdrawn Devices Routes
   app.get("/api/withdrawn-devices", requireAuth, async (req, res) => {
     try {
