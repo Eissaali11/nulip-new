@@ -12,29 +12,25 @@ import {
 import { useAuth } from "@/lib/auth";
 import dashboardBg from "@assets/image_1762515061799.png";
 import rasscoLogo from "@assets/image_1762442473114.png";
-import type { DashboardStats, TechnicianWithBothInventories, WarehouseWithStats, TechnicianFixedInventory, TechnicianInventory } from "@shared/schema";
+import type { TechnicianWithBothInventories, WarehouseWithStats, TechnicianFixedInventory, TechnicianInventory } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
   Activity,
-  AlertTriangle,
   ArrowRight,
   Battery,
   Bell,
   CheckCircle,
   ClipboardCheck,
-  Database,
   LayoutDashboard,
   LogOut,
   Package,
   Smartphone,
-  TrendingUp,
   TruckIcon,
   User,
   UserCircle,
   Users,
-  Warehouse,
-  Zap
+  Warehouse
 } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
 import { Link, useLocation } from "wouter";
@@ -63,10 +59,6 @@ export default function Dashboard() {
     queryKey: ["/api/warehouse-transfers", user?.id],
     enabled: !!user?.id && user?.role !== 'admin',
     select: (data) => data.filter(t => t.status === 'pending' && t.technicianId === user?.id),
-  });
-
-  const { data: dashboardStats } = useQuery<DashboardStats>({
-    queryKey: ["/api/dashboard"],
   });
 
   const { data: techniciansData } = useQuery<{ technicians: TechnicianWithBothInventories[] }>({
@@ -235,43 +227,6 @@ export default function Dashboard() {
     return myMovingInventory;
   }, [user?.role, techniciansData?.technicians, myMovingInventory]);
 
-  // حساب كفاءة الفنيين (بناءً على المجموع الكلي: ثابت + متحرك)
-  const getTechnicianEfficiency = (tech: TechnicianWithBothInventories) => {
-    const fixedInv = tech.fixedInventory;
-    const movingInv = tech.movingInventory;
-    
-    const totalItems =
-      (fixedInv?.n950Boxes || 0) + (fixedInv?.n950Units || 0) +
-      (fixedInv?.i9000sBoxes || 0) + (fixedInv?.i9000sUnits || 0) +
-      (fixedInv?.i9100Boxes || 0) + (fixedInv?.i9100Units || 0) +
-      (fixedInv?.rollPaperBoxes || 0) + (fixedInv?.rollPaperUnits || 0) +
-      (fixedInv?.stickersBoxes || 0) + (fixedInv?.stickersUnits || 0) +
-      (fixedInv?.newBatteriesBoxes || 0) + (fixedInv?.newBatteriesUnits || 0) +
-      (fixedInv?.mobilySimBoxes || 0) + (fixedInv?.mobilySimUnits || 0) +
-      (fixedInv?.stcSimBoxes || 0) + (fixedInv?.stcSimUnits || 0) +
-      (fixedInv?.zainSimBoxes || 0) + (fixedInv?.zainSimUnits || 0) +
-      (movingInv?.n950Boxes || 0) + (movingInv?.n950Units || 0) +
-      (movingInv?.i9000sBoxes || 0) + (movingInv?.i9000sUnits || 0) +
-      (movingInv?.i9100Boxes || 0) + (movingInv?.i9100Units || 0) +
-      (movingInv?.rollPaperBoxes || 0) + (movingInv?.rollPaperUnits || 0) +
-      (movingInv?.stickersBoxes || 0) + (movingInv?.stickersUnits || 0) +
-      (movingInv?.newBatteriesBoxes || 0) + (movingInv?.newBatteriesUnits || 0) +
-      (movingInv?.mobilySimBoxes || 0) + (movingInv?.mobilySimUnits || 0) +
-      (movingInv?.stcSimBoxes || 0) + (movingInv?.stcSimUnits || 0) +
-      (movingInv?.zainSimBoxes || 0) + (movingInv?.zainSimUnits || 0);
-
-    const threshold = fixedInv?.criticalStockThreshold || 100;
-    return Math.min(100, Math.round((totalItems / threshold) * 100));
-  };
-
-  // حساب الكفاءة العامة
-  const globalEfficiency = techniciansData?.technicians
-    ? Math.round(
-      techniciansData.technicians.reduce((sum, tech) => sum + getTechnicianEfficiency(tech), 0) /
-      techniciansData.technicians.length
-    )
-    : 0;
-
   // حساب إجمالي وحدات المستودع
   const getWarehouseTotalUnits = (warehouse: WarehouseWithStats) => {
     if (!warehouse.inventory) return 0;
@@ -413,115 +368,6 @@ export default function Dashboard() {
               </Button>
             </motion.div>
           )}
-        </motion.div>
-
-        {/* نظرة عامة على النظام */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="relative bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl rounded-3xl border border-[#18B2B0]/30 p-8 overflow-hidden shadow-2xl mb-8"
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-[#18B2B0]/10 to-transparent" />
-          
-          <div className="relative">
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-3">
-                <Activity className="h-6 w-6 text-[#18B2B0]" />
-                <h2 className="text-2xl font-bold text-white">نظرة عامة على النظام</h2>
-              </div>
-              <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-                <div className="w-2 h-2 bg-green-400 rounded-full ml-2 animate-pulse" />
-                يعمل
-              </Badge>
-            </div>
-
-            {/* الدوائر الرئيسية - مع padding أكبر */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-12 justify-items-center mb-8">
-              <div className="flex flex-col items-center p-4">
-                <CircularProgress
-                  percentage={globalEfficiency || 85}
-                  label="الكفاءة"
-                  value={`${globalEfficiency || 85}%`}
-                  color="#18B2B0"
-                  size={140}
-                />
-              </div>
-
-              <div className="flex flex-col items-center p-4">
-                <CircularProgress
-                  percentage={dashboardStats ? Math.min(100, (dashboardStats.totalItems / 10000) * 100) : 70}
-                  label="السعة"
-                  value={dashboardStats ? `${dashboardStats.totalItems}` : "0"}
-                  color="#0ea5a3"
-                  size={140}
-                />
-              </div>
-
-              <div className="flex flex-col items-center p-4">
-                <CircularProgress
-                  percentage={dashboardStats && dashboardStats.totalItems > 0
-                    ? 100 - ((dashboardStats.outOfStockItems / dashboardStats.totalItems) * 100)
-                    : 90}
-                  label="التوفر"
-                  value={dashboardStats ? `${100 - Math.round((dashboardStats.outOfStockItems / (dashboardStats.totalItems || 1)) * 100)}%` : "90%"}
-                  color="#10b981"
-                  size={140}
-                />
-              </div>
-
-              <div className="flex flex-col items-center p-4">
-                <CircularProgress
-                  percentage={95}
-                  label="الجودة"
-                  value="95%"
-                  color="#f59e0b"
-                  size={140}
-                />
-              </div>
-            </div>
-
-            {/* Stats Bar */}
-            {dashboardStats && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="grid grid-cols-2 md:grid-cols-4 gap-4"
-              >
-                <div className="bg-gradient-to-br from-[#18B2B0]/10 to-transparent border border-[#18B2B0]/20 rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Database className="h-4 w-4 text-[#18B2B0]" />
-                    <p className="text-xs text-gray-400">إجمالي الأصناف</p>
-                  </div>
-                  <p className="text-2xl font-bold text-white">{dashboardStats.totalItems.toLocaleString()}</p>
-                </div>
-
-                <div className="bg-gradient-to-br from-orange-500/10 to-transparent border border-orange-500/20 rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <AlertTriangle className="h-4 w-4 text-orange-400" />
-                    <p className="text-xs text-gray-400">مخزون منخفض</p>
-                  </div>
-                  <p className="text-2xl font-bold text-orange-400">{dashboardStats.lowStockItems}</p>
-                </div>
-
-                <div className="bg-gradient-to-br from-red-500/10 to-transparent border border-red-500/20 rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Zap className="h-4 w-4 text-red-400" />
-                    <p className="text-xs text-gray-400">نفد المخزون</p>
-                  </div>
-                  <p className="text-2xl font-bold text-red-400">{dashboardStats.outOfStockItems}</p>
-                </div>
-
-                <div className="bg-gradient-to-br from-green-500/10 to-transparent border border-green-500/20 rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <TrendingUp className="h-4 w-4 text-green-400" />
-                    <p className="text-xs text-gray-400">اليوم</p>
-                  </div>
-                  <p className="text-2xl font-bold text-green-400">{dashboardStats.todayTransactions}</p>
-                </div>
-              </motion.div>
-            )}
-          </div>
         </motion.div>
 
         {/* مخزوني الشخصي - للفني */}
