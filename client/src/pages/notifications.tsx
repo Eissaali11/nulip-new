@@ -44,6 +44,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { hasRoleOrAbove, ROLES } from "@shared/roles";
 
 interface InventoryRequest {
   id: string;
@@ -297,11 +298,11 @@ export default function Notifications() {
     },
   });
 
-  const isAdmin = user?.role === 'admin';
-  const isLoading = isAdmin ? requestsLoading : transfersLoading;
+  const isAdminOrSupervisor = hasRoleOrAbove(user?.role || '', ROLES.SUPERVISOR);
+  const isLoading = isAdminOrSupervisor ? requestsLoading : transfersLoading;
 
   const groupedTransfers = useMemo(() => {
-    if (isAdmin) return [];
+    if (isAdminOrSupervisor) return [];
     
     const groupMap = new Map<string, GroupedTransfer>();
     
@@ -327,9 +328,9 @@ export default function Notifications() {
     });
     
     return Array.from(groupMap.values());
-  }, [transfers, isAdmin]);
+  }, [transfers, isAdminOrSupervisor]);
 
-  const filteredItems = isAdmin
+  const filteredItems = isAdminOrSupervisor
     ? requests.filter(req => filter === 'all' || req.status === filter)
     : groupedTransfers.filter(group => filter === 'all' || group.status === filter);
 
@@ -467,7 +468,7 @@ export default function Notifications() {
   };
 
   // Bulk selection handlers
-  const pendingBatches = !isAdmin ? groupedTransfers.filter(g => g.status === 'pending') : [];
+  const pendingBatches = !isAdminOrSupervisor ? groupedTransfers.filter(g => g.status === 'pending') : [];
   
   const toggleSelectBatch = (requestId: string) => {
     setSelectedBatchIds(prev => 
@@ -546,14 +547,14 @@ export default function Notifications() {
     return `${names[itemType] || itemType} (${packaging}): ${quantity}`;
   };
 
-  const allCount = isAdmin ? requests.length : transfers.length;
-  const pendingCount = isAdmin
+  const allCount = isAdminOrSupervisor ? requests.length : transfers.length;
+  const pendingCount = isAdminOrSupervisor
     ? requests.filter(r => r.status === 'pending').length
     : transfers.filter(t => t.status === 'pending').length;
-  const approvedCount = isAdmin
+  const approvedCount = isAdminOrSupervisor
     ? requests.filter(r => r.status === 'approved').length
     : transfers.filter(t => t.status === 'accepted').length;
-  const rejectedCount = isAdmin
+  const rejectedCount = isAdminOrSupervisor
     ? requests.filter(r => r.status === 'rejected').length
     : transfers.filter(t => t.status === 'rejected').length;
 
@@ -577,7 +578,7 @@ export default function Notifications() {
                 الإشعارات
               </h1>
               <p className="text-sm text-gray-400">
-                {isAdmin ? 'طلبات المخزون من الفنيين' : 'طلبات النقل من المستودعات'}
+                {isAdminOrSupervisor ? 'طلبات المخزون من الفنيين' : 'طلبات النقل من المستودعات'}
               </p>
             </div>
           </div>
@@ -618,7 +619,7 @@ export default function Notifications() {
         </motion.div>
 
         {/* Bulk Actions Bar (Technician only) */}
-        {!isAdmin && filter === 'pending' && pendingBatches.length > 0 && (
+        {!isAdminOrSupervisor && filter === 'pending' && pendingBatches.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -710,7 +711,7 @@ export default function Notifications() {
                     <div className="absolute bottom-0 left-0 w-32 h-32 bg-violet-500/10 rounded-full blur-3xl group-hover:bg-violet-500/20 transition-all duration-500" />
                     
                     {/* Checkbox for technician pending items */}
-                    {!isAdmin && groupedTransfer && groupedTransfer.status === 'pending' && (
+                    {!isAdminOrSupervisor && groupedTransfer && groupedTransfer.status === 'pending' && (
                       <div className="absolute top-4 left-4 z-10">
                         <Button
                           variant="outline"
