@@ -1049,7 +1049,7 @@ export class DatabaseStorage implements IStorage {
         const movingInventory = await db
           .select()
           .from(techniciansInventory)
-          .where(eq(techniciansInventory.id, tech.id))
+          .where(eq(techniciansInventory.createdBy, tech.id))
           .limit(1);
 
         let alertLevel: 'good' | 'warning' | 'critical' = 'good';

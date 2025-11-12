@@ -598,13 +598,13 @@ export default function Dashboard() {
         {/* Analytics Dashboard - Charts */}
         <div className="grid lg:grid-cols-2 gap-8 mb-8">
           <InventoryPieCard 
-            fixedTotal={getFixedInventoryTotal()}
+            fixedTotal={user?.role === 'technician' ? getFixedInventoryTotal() : 0}
             movingTotal={getMovingInventoryTotal()}
           />
           <InventoryBarCard
-            fixedInventory={aggregatedFixedInventory}
+            fixedInventory={user?.role === 'technician' ? aggregatedFixedInventory : undefined}
             movingInventory={aggregatedMovingInventory}
-            title={user?.role === 'admin' ? "توزيع المخزون لجميع الفنيين" : "تفاصيل المخزون حسب الفئة"}
+            title={user?.role === 'admin' ? "توزيع المخزون المتحرك لجميع الفنيين" : user?.role === 'technician' ? "تفاصيل المخزون حسب الفئة" : "توزيع المخزون المتحرك"}
           />
         </div>
 
