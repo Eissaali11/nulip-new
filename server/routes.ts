@@ -1310,8 +1310,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "لا يمكنك الوصول إلى مستخدمين خارج منطقتك" });
       }
 
-      const inventory = await storage.getFixedInventory(req.params.userId);
-      res.json(inventory);
+      const inventory = await storage.getTechnicianFixedInventory(req.params.userId);
+      res.json(inventory || null);
     } catch (error) {
       console.error("Error fetching fixed inventory:", error);
       res.status(500).json({ message: "Failed to fetch fixed inventory" });
@@ -1336,8 +1336,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "لا يمكنك الوصول إلى مستخدمين خارج منطقتك" });
       }
 
-      const inventory = await storage.getMovingInventory(req.params.userId);
-      res.json(inventory);
+      const inventory = await storage.getTechnicianInventory(req.params.userId);
+      res.json(inventory || null);
     } catch (error) {
       console.error("Error fetching moving inventory:", error);
       res.status(500).json({ message: "Failed to fetch moving inventory" });
