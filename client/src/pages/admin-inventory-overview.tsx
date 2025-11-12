@@ -17,6 +17,7 @@ import {
 import { Navbar } from "@/components/dashboard/Navbar";
 import { GridBackground } from "@/components/dashboard/GridBackground";
 import dashboardBg from "@assets/image_1762515061799.png";
+import { useAuth } from "@/lib/auth";
 
 interface TechnicianInventoryData {
   technicianId: string;
@@ -75,9 +76,11 @@ export default function AdminInventoryOverview() {
   const [, setLocation] = useLocation();
   const [searchName, setSearchName] = useState("");
   const [searchCity, setSearchCity] = useState("");
+  const { user } = useAuth();
 
   const { data, isLoading } = useQuery<{ technicians: TechnicianInventoryData[] }>({
-    queryKey: ['/api/admin/all-technicians-inventory'],
+    queryKey: user?.role === 'admin' ? ['/api/admin/all-technicians-inventory'] : ['/api/supervisor/technicians-inventory'],
+    enabled: !!user?.id && (user?.role === 'admin' || user?.role === 'supervisor'),
   });
 
   const allTechnicians = data?.technicians || [];

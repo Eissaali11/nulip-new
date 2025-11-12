@@ -27,6 +27,7 @@ import { exportWarehousesToExcel } from "@/lib/exportToExcel";
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/dashboard/Navbar";
 import { GridBackground } from "@/components/dashboard/GridBackground";
+import { useAuth } from "@/lib/auth";
 
 interface WarehouseInventory {
   id: string;
@@ -67,9 +68,11 @@ export default function WarehousesPage() {
   const [selectedWarehouse, setSelectedWarehouse] = useState<WarehouseData | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const { data: allWarehouses = [], isLoading } = useQuery<WarehouseData[]>({
-    queryKey: ["/api/warehouses"],
+    queryKey: user?.role === 'admin' ? ["/api/warehouses"] : ["/api/supervisor/warehouses"],
+    enabled: !!user?.id && (user?.role === 'admin' || user?.role === 'supervisor'),
   });
 
   const warehouses = allWarehouses.filter(warehouse => 
