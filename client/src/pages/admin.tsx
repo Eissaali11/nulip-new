@@ -14,13 +14,17 @@ import { Switch } from "@/components/ui/switch";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Users, MapPin, Activity, Trash2, Edit, ArrowRight, LayoutDashboard, TrendingUp, Database, AlertTriangle } from "lucide-react";
+import { Plus, Users, MapPin, Activity, Trash2, Edit, ArrowRight, LayoutDashboard, TrendingUp, Database, AlertTriangle, BarChart3, PieChart as PieChartIcon } from "lucide-react";
 import type { RegionWithStats, UserSafe, AdminStats, Region, InsertRegion, InsertUser } from "@shared/schema";
 import { ROLES, ROLE_LABELS_AR } from "@shared/roles";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import bannerImage from "@assets/Gemini_Generated_Image_1iknau1iknau1ikn_1762464877305.png";
+import { StatsKpiCard } from "@/components/dashboard/stats-kpi-card";
+import { TrendLineChart } from "@/components/dashboard/trend-line-chart";
+import { StockCompositionPie } from "@/components/dashboard/stock-composition-pie";
+import { RegionsBarChart } from "@/components/dashboard/regions-bar-chart";
 
 // Form schemas
 const regionFormSchema = z.object({
@@ -296,83 +300,17 @@ export default function AdminPage() {
 
       {/* Main Content */}
       <div className="p-6 space-y-6 max-w-7xl mx-auto">
-
-        {/* Enhanced Stats Cards */}
-        {adminStats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Total Regions Card */}
-            <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 group">
-              <div className="absolute inset-0 bg-gradient-to-br from-[#18B2B0] via-teal-500 to-cyan-600 opacity-90 group-hover:opacity-100 transition-opacity"></div>
-              <CardContent className="relative p-6">
-                <div className="flex items-center justify-between">
-                  <div className="text-right text-white">
-                    <p className="text-sm font-medium opacity-90 mb-1">إجمالي المناطق</p>
-                    <p className="text-4xl font-bold">{adminStats.totalRegions}</p>
-                    <p className="text-xs opacity-75 mt-2">منطقة نشطة</p>
-                  </div>
-                  <div className="bg-white/20 backdrop-blur-sm p-4 rounded-2xl">
-                    <MapPin className="h-10 w-10 text-white" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Total Users Card */}
-            <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 group">
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 via-green-500 to-teal-600 opacity-90 group-hover:opacity-100 transition-opacity"></div>
-              <CardContent className="relative p-6">
-                <div className="flex items-center justify-between">
-                  <div className="text-right text-white">
-                    <p className="text-sm font-medium opacity-90 mb-1">إجمالي الموظفين</p>
-                    <p className="text-4xl font-bold">{adminStats.totalUsers}</p>
-                    <p className="text-xs opacity-75 mt-2">موظف مسجل</p>
-                  </div>
-                  <div className="bg-white/20 backdrop-blur-sm p-4 rounded-2xl">
-                    <Users className="h-10 w-10 text-white" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Active Users Card */}
-            <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 group">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 opacity-90 group-hover:opacity-100 transition-opacity"></div>
-              <CardContent className="relative p-6">
-                <div className="flex items-center justify-between">
-                  <div className="text-right text-white">
-                    <p className="text-sm font-medium opacity-90 mb-1">الموظفين النشطين</p>
-                    <p className="text-4xl font-bold">{adminStats.activeUsers}</p>
-                    <p className="text-xs opacity-75 mt-2">نشط حالياً</p>
-                  </div>
-                  <div className="bg-white/20 backdrop-blur-sm p-4 rounded-2xl">
-                    <TrendingUp className="h-10 w-10 text-white" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Total Transactions Card */}
-            <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 group">
-              <div className="absolute inset-0 bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-600 opacity-90 group-hover:opacity-100 transition-opacity"></div>
-              <CardContent className="relative p-6">
-                <div className="flex items-center justify-between">
-                  <div className="text-right text-white">
-                    <p className="text-sm font-medium opacity-90 mb-1">إجمالي العمليات</p>
-                    <p className="text-4xl font-bold">{adminStats.totalTransactions}</p>
-                    <p className="text-xs opacity-75 mt-2">عملية منجزة</p>
-                  </div>
-                  <div className="bg-white/20 backdrop-blur-sm p-4 rounded-2xl">
-                    <Activity className="h-10 w-10 text-white" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
         {/* Enhanced Tabs */}
-        <Tabs defaultValue="regions" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-white/80 backdrop-blur-sm p-2 rounded-xl shadow-lg border border-[#18B2B0]/20">
+        <Tabs defaultValue="dashboard" className="w-full">
+          <TabsList className="grid w-full grid-cols-4 bg-white/80 backdrop-blur-sm p-2 rounded-xl shadow-lg border border-[#18B2B0]/20">
+            <TabsTrigger 
+              value="dashboard" 
+              data-testid="tab-dashboard"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#18B2B0] data-[state=active]:to-teal-500 data-[state=active]:text-white font-semibold rounded-lg transition-all duration-300"
+            >
+              <LayoutDashboard className="h-4 w-4 ml-2" />
+              لوحة المعلومات
+            </TabsTrigger>
             <TabsTrigger 
               value="regions" 
               data-testid="tab-regions"
@@ -398,6 +336,91 @@ export default function AdminPage() {
               العمليات الأخيرة
             </TabsTrigger>
           </TabsList>
+
+          {/* Dashboard Tab */}
+          <TabsContent value="dashboard" className="space-y-6 mt-6">
+            {/* KPI Cards */}
+            {adminStats && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <StatsKpiCard
+                  title="إجمالي المناطق"
+                  value={adminStats.totalRegions}
+                  icon={MapPin}
+                  color="primary"
+                  delay={0}
+                />
+                <StatsKpiCard
+                  title="إجمالي الموظفين"
+                  value={adminStats.totalUsers}
+                  icon={Users}
+                  color="success"
+                  delay={0.1}
+                />
+                <StatsKpiCard
+                  title="الموظفين النشطين"
+                  value={adminStats.activeUsers}
+                  icon={TrendingUp}
+                  color="info"
+                  delay={0.2}
+                />
+                <StatsKpiCard
+                  title="إجمالي العمليات"
+                  value={adminStats.totalTransactions}
+                  icon={Activity}
+                  color="warning"
+                  delay={0.3}
+                />
+              </div>
+            )}
+
+            {/* Charts Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Regions Bar Chart */}
+              {regions && regions.length > 0 && (
+                <RegionsBarChart
+                  title="إحصائيات المناطق"
+                  description="مقارنة المستخدمين والأصناف حسب المنطقة"
+                  data={regions.map(r => ({
+                    name: r.name,
+                    users: r.userCount || 0,
+                    items: r.itemCount || 0,
+                  }))}
+                />
+              )}
+
+              {/* User Status Pie */}
+              {adminStats && (
+                <StockCompositionPie
+                  title="حالة المستخدمين"
+                  description="توزيع المستخدمين النشطين وغير النشطين"
+                  data={[
+                    { name: 'نشط', value: adminStats.activeUsers },
+                    { name: 'غير نشط', value: adminStats.totalUsers - adminStats.activeUsers },
+                  ]}
+                  colors={['#18B2B0', '#EF4444']}
+                />
+              )}
+            </div>
+
+            {/* Trend Line Chart */}
+            {adminStats && (
+              <TrendLineChart
+                title="اتجاه العمليات"
+                description="نمو العمليات والمستخدمين عبر الوقت"
+                data={[
+                  { name: 'يناير', عمليات: 120, مستخدمين: 15 },
+                  { name: 'فبراير', عمليات: 200, مستخدمين: 18 },
+                  { name: 'مارس', عمليات: 280, مستخدمين: 22 },
+                  { name: 'أبريل', عمليات: 350, مستخدمين: 25 },
+                  { name: 'مايو', عمليات: adminStats.totalTransactions, مستخدمين: adminStats.totalUsers },
+                ]}
+                dataKeys={[
+                  { key: 'عمليات', color: '#18B2B0', name: 'العمليات' },
+                  { key: 'مستخدمين', color: '#10B981', name: 'المستخدمين' },
+                ]}
+              />
+            )}
+          </TabsContent>
 
           {/* Regions Tab */}
           <TabsContent value="regions" className="space-y-4 mt-6">
