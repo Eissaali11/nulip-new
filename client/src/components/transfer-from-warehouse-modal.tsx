@@ -86,11 +86,18 @@ export default function TransferFromWarehouseModal({
 }: TransferFromWarehouseModalProps) {
   const { toast } = useToast();
 
-  const { data: users = [] } = useQuery<UserSafe[]>({
-    queryKey: ["/api/users"],
+  const { data: currentUser } = useQuery<UserSafe>({
+    queryKey: ["/api/auth/me"],
   });
 
-  const employees = users.filter(user => user.role === "employee");
+  const { data: users = [] } = useQuery<UserSafe[]>({
+    queryKey: currentUser?.role === 'admin' ? ["/api/users"] : ["/api/supervisor/technicians"],
+    enabled: !!currentUser,
+  });
+
+  const employees = currentUser?.role === 'admin' 
+    ? users.filter(user => user.role === "employee")
+    : users;
 
   const [itemTransfers, setItemTransfers] = useState<{[key: string]: ItemTransfer}>({
     n950: { selected: false, quantity: 0, packagingType: "unit" },

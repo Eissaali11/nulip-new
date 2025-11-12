@@ -1625,6 +1625,7 @@ export class DatabaseStorage implements IStorage {
     let query = db
       .select({
         id: warehouseTransfers.id,
+        requestId: warehouseTransfers.requestId,
         warehouseId: warehouseTransfers.warehouseId,
         technicianId: warehouseTransfers.technicianId,
         itemType: warehouseTransfers.itemType,
