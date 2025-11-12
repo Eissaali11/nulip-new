@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAuth } from "@/lib/auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -75,6 +75,7 @@ interface InventoryRequest {
 
 interface WarehouseTransfer {
   id: string;
+  requestId?: string;
   warehouseId: string;
   warehouseName: string;
   technicianId: string;
@@ -87,6 +88,19 @@ interface WarehouseTransfer {
   createdAt: string;
   notes?: string;
   rejectionReason?: string;
+}
+
+interface GroupedTransfer {
+  requestId: string;
+  warehouseId: string;
+  warehouseName: string;
+  technicianId: string;
+  technicianName: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  createdAt: string;
+  notes?: string;
+  rejectionReason?: string;
+  transfers: WarehouseTransfer[];
 }
 
 interface WarehouseInfo {
@@ -110,6 +124,7 @@ export default function Notifications() {
   const [techRejectDialogOpen, setTechRejectDialogOpen] = useState(false);
   const [techApproveDialogOpen, setTechApproveDialogOpen] = useState(false);
   const [selectedTransfer, setSelectedTransfer] = useState<WarehouseTransfer | null>(null);
+  const [selectedBatch, setSelectedBatch] = useState<GroupedTransfer | null>(null);
   const [techRejectionReason, setTechRejectionReason] = useState("");
 
   // Admin queries
@@ -177,17 +192,17 @@ export default function Notifications() {
     },
   });
 
-  // Technician mutations
-  const techApproveMutation = useMutation({
-    mutationFn: async (id: string) => {
-      return await apiRequest("POST", `/api/warehouse-transfers/${id}/accept`, {});
+  // Technician mutations - Batch operations
+  const techApproveBatchMutation = useMutation({
+    mutationFn: async (requestId: string) => {
+      return await apiRequest("POST", `/api/warehouse-transfer-batches/${requestId}/accept`, {});
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/warehouse-transfers"] });
       queryClient.invalidateQueries({ queryKey: ["/api/my-fixed-inventory"] });
       queryClient.invalidateQueries({ queryKey: ["/api/my-moving-inventory"] });
       setTechApproveDialogOpen(false);
-      setSelectedTransfer(null);
+      setSelectedBatch(null);
       toast({
         title: "✓ تم قبول طلب النقل",
         description: "تم إضافة الأصناف إلى مخزونك",
@@ -202,14 +217,14 @@ export default function Notifications() {
     },
   });
 
-  const techRejectMutation = useMutation({
-    mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
-      return await apiRequest("POST", `/api/warehouse-transfers/${id}/reject`, { rejectionReason: reason });
+  const techRejectBatchMutation = useMutation({
+    mutationFn: async ({ requestId, reason }: { requestId: string; reason: string }) => {
+      return await apiRequest("POST", `/api/warehouse-transfer-batches/${requestId}/reject`, { reason });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/warehouse-transfers"] });
       setTechRejectDialogOpen(false);
-      setSelectedTransfer(null);
+      setSelectedBatch(null);
       setTechRejectionReason("");
       toast({
         title: "تم رفض طلب النقل",
@@ -227,13 +242,46 @@ export default function Notifications() {
   const isAdmin = user?.role === 'admin';
   const isLoading = isAdmin ? requestsLoading : transfersLoading;
 
+  const groupedTransfers = useMemo(() => {
+    if (isAdmin) return [];
+    
+    const groupMap = new Map<string, GroupedTransfer>();
+    
+    transfers.forEach(transfer => {
+      const key = transfer.requestId || transfer.id;
+      
+      if (!groupMap.has(key)) {
+        groupMap.set(key, {
+          requestId: key,
+          warehouseId: transfer.warehouseId,
+          warehouseName: transfer.warehouseName,
+          technicianId: transfer.technicianId,
+          technicianName: transfer.technicianName,
+          status: transfer.status,
+          createdAt: transfer.createdAt,
+          notes: transfer.notes,
+          rejectionReason: transfer.rejectionReason,
+          transfers: [],
+        });
+      }
+      
+      groupMap.get(key)!.transfers.push(transfer);
+    });
+    
+    return Array.from(groupMap.values());
+  }, [transfers, isAdmin]);
+
   const filteredItems = isAdmin
     ? requests.filter(req => filter === 'all' || req.status === filter)
-    : transfers.filter(transfer => filter === 'all' || transfer.status === filter);
+    : groupedTransfers.filter(group => filter === 'all' || group.status === filter);
 
-  const getRequestedItems = (item: InventoryRequest | WarehouseTransfer) => {
-    if ('itemType' in item) {
-      return [`${item.itemNameAr || item.itemType}: ${item.quantity} ${item.packagingType === 'box' ? 'كرتون' : 'قطعة'}`];
+  const getRequestedItems = (item: InventoryRequest | GroupedTransfer) => {
+    if ('transfers' in item) {
+      const items: string[] = [];
+      item.transfers.forEach(transfer => {
+        items.push(`${transfer.itemNameAr || transfer.itemType}: ${transfer.quantity} ${transfer.packagingType === 'box' ? 'كرتون' : 'قطعة'}`);
+      });
+      return items;
     }
     
     const items: string[] = [];
@@ -329,19 +377,19 @@ export default function Notifications() {
   };
 
   // Technician handlers
-  const handleTechApproveClick = (transfer: WarehouseTransfer) => {
-    setSelectedTransfer(transfer);
+  const handleTechApproveBatchClick = (batch: GroupedTransfer) => {
+    setSelectedBatch(batch);
     setTechApproveDialogOpen(true);
   };
 
   const handleTechConfirmApprove = () => {
-    if (selectedTransfer) {
-      techApproveMutation.mutate(selectedTransfer.id);
+    if (selectedBatch) {
+      techApproveBatchMutation.mutate(selectedBatch.requestId);
     }
   };
 
-  const handleTechRejectClick = (transfer: WarehouseTransfer) => {
-    setSelectedTransfer(transfer);
+  const handleTechRejectBatchClick = (batch: GroupedTransfer) => {
+    setSelectedBatch(batch);
     setTechRejectDialogOpen(true);
   };
 
@@ -355,8 +403,8 @@ export default function Notifications() {
       return;
     }
 
-    if (selectedTransfer) {
-      techRejectMutation.mutate({ id: selectedTransfer.id, reason: techRejectionReason });
+    if (selectedBatch) {
+      techRejectBatchMutation.mutate({ requestId: selectedBatch.requestId, reason: techRejectionReason });
     }
   };
 
@@ -453,11 +501,11 @@ export default function Notifications() {
             {filteredItems.map((item, index) => {
               const isRequest = 'technicianName' in item && 'technicianUsername' in item;
               const request = isRequest ? item as InventoryRequest : null;
-              const transfer = !isRequest ? item as WarehouseTransfer : null;
+              const groupedTransfer = !isRequest ? item as GroupedTransfer : null;
 
               return (
                 <motion.div
-                  key={item.id}
+                  key={request ? request.id : groupedTransfer?.requestId}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
@@ -484,7 +532,7 @@ export default function Notifications() {
                           </div>
                           <div className="flex-1">
                             <h3 className="text-xl font-bold text-white mb-2 group-hover:text-[#18B2B0] transition-colors duration-300">
-                              {request ? request.technicianName : transfer?.warehouseName}
+                              {request ? request.technicianName : groupedTransfer?.warehouseName}
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                               {request?.technicianUsername && (
@@ -499,7 +547,7 @@ export default function Notifications() {
                                   <span>{request.technicianCity}</span>
                                 </div>
                               )}
-                              {transfer && (
+                              {groupedTransfer && (
                                 <div className="flex items-center gap-2 text-sm text-gray-400">
                                   <TrendingUp className="h-3.5 w-3.5 text-violet-400" />
                                   <span>طلب نقل من المستودع</span>
@@ -559,14 +607,14 @@ export default function Notifications() {
                       )}
 
                       {/* Rejection reason */}
-                      {item.status === 'rejected' && (request?.adminNotes || transfer?.rejectionReason) && (
+                      {item.status === 'rejected' && (request?.adminNotes || groupedTransfer?.rejectionReason) && (
                         <div className="mb-5 p-4 bg-gradient-to-br from-red-500/20 to-red-500/10 rounded-xl border border-red-500/30 hover:border-red-500/40 transition-all duration-300">
                           <div className="flex items-start gap-2">
                             <AlertCircle className="h-4 w-4 text-red-400 mt-0.5 flex-shrink-0" />
                             <div>
                               <p className="text-xs font-semibold text-red-400 mb-1">سبب الرفض</p>
                               <p className="text-sm text-red-300 leading-relaxed">
-                                {request?.adminNotes || transfer?.rejectionReason}
+                                {request?.adminNotes || groupedTransfer?.rejectionReason}
                               </p>
                             </div>
                           </div>
@@ -577,20 +625,20 @@ export default function Notifications() {
                       {item.status === 'pending' && (
                         <div className="flex gap-3 mt-5">
                           <Button
-                            onClick={() => request ? handleApproveClick(request) : handleTechApproveClick(transfer!)}
-                            disabled={request ? approveMutation.isPending : techApproveMutation.isPending}
+                            onClick={() => request ? handleApproveClick(request) : handleTechApproveBatchClick(groupedTransfer!)}
+                            disabled={request ? approveMutation.isPending : techApproveBatchMutation.isPending}
                             className="flex-1 bg-gradient-to-r from-green-500 via-green-600 to-green-500 hover:from-green-600 hover:via-green-700 hover:to-green-600 text-white font-semibold shadow-lg shadow-green-500/20 hover:shadow-green-500/40 transition-all duration-300 h-11"
-                            data-testid={`button-approve-${item.id}`}
+                            data-testid={`button-approve-${request ? request.id : groupedTransfer?.requestId}`}
                           >
                             <Check className="h-4 w-4 ml-2" />
                             قبول {request ? 'الطلب' : 'النقل'}
                           </Button>
                           <Button
-                            onClick={() => request ? handleRejectClick(request) : handleTechRejectClick(transfer!)}
-                            disabled={request ? rejectMutation.isPending : techRejectMutation.isPending}
+                            onClick={() => request ? handleRejectClick(request) : handleTechRejectBatchClick(groupedTransfer!)}
+                            disabled={request ? rejectMutation.isPending : techRejectBatchMutation.isPending}
                             variant="outline"
                             className="flex-1 bg-gradient-to-r from-red-500/10 to-red-600/10 border-red-500/30 text-red-400 hover:bg-red-500/20 hover:border-red-500/50 font-semibold shadow-lg shadow-red-500/10 hover:shadow-red-500/20 transition-all duration-300 h-11"
-                            data-testid={`button-reject-${item.id}`}
+                            data-testid={`button-reject-${request ? request.id : groupedTransfer?.requestId}`}
                           >
                             <X className="h-4 w-4 ml-2" />
                             رفض {request ? 'الطلب' : 'النقل'}
@@ -715,10 +763,11 @@ export default function Notifications() {
               هل تريد قبول هذا الطلب؟ سيتم إضافة الأصناف إلى مخزونك
             </DialogDescription>
           </DialogHeader>
-          {selectedTransfer && (
+          {selectedBatch && (
             <div className="py-4 p-3 bg-white/5 rounded-lg border border-white/10">
               <p className="text-sm text-gray-400 mb-1">من المستودع:</p>
-              <p className="text-white font-bold">{selectedTransfer.warehouseName}</p>
+              <p className="text-white font-bold">{selectedBatch.warehouseName}</p>
+              <p className="text-xs text-gray-500 mt-2">عدد الأصناف: {selectedBatch.transfers.length}</p>
             </div>
           )}
           <DialogFooter className="flex gap-2">
@@ -731,7 +780,7 @@ export default function Notifications() {
             </Button>
             <Button
               onClick={handleTechConfirmApprove}
-              disabled={techApproveMutation.isPending}
+              disabled={techApproveBatchMutation.isPending}
               className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white"
               data-testid="button-tech-confirm-approve"
             >
@@ -772,7 +821,7 @@ export default function Notifications() {
             </Button>
             <Button
               onClick={handleTechConfirmReject}
-              disabled={!techRejectionReason.trim() || techRejectMutation.isPending}
+              disabled={!techRejectionReason.trim() || techRejectBatchMutation.isPending}
               className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white"
               data-testid="button-tech-confirm-reject"
             >

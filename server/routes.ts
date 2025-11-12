@@ -5,7 +5,7 @@ import { insertInventoryItemSchema, insertTransactionSchema, insertRegionSchema,
 import { ROLES, hasRoleOrAbove, canManageUsers } from "@shared/roles";
 import { z } from "zod";
 import { db } from "./db";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, or } from "drizzle-orm";
 
 // Simple session store for demo purposes (in production, use proper session store)
 const activeSessions = new Map<string, { userId: string; role: string; username: string; expiry: number }>();
@@ -1368,6 +1368,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/warehouse-transfer-batches/:requestId/accept", requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { requestId } = req.params;
+
+      const transfers = await db
+        .select()
+        .from(warehouseTransfers)
+        .where(or(
+          eq(warehouseTransfers.requestId, requestId),
+          eq(warehouseTransfers.id, requestId)
+        ));
+
+      if (!transfers || transfers.length === 0) {
+        return res.status(404).json({ message: "No transfers found for this request" });
+      }
+
+      const firstTransfer = transfers[0];
+      if (user.role !== 'admin' && firstTransfer.technicianId !== user.id) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const updatedTransfers = [];
+      for (const transfer of transfers) {
+        if (transfer.status === 'pending') {
+          const updated = await storage.acceptWarehouseTransfer(transfer.id);
+          updatedTransfers.push(updated);
+        } else {
+          updatedTransfers.push(transfer);
+        }
+      }
+
+      res.json(updatedTransfers);
+    } catch (error) {
+      console.error("Error accepting transfer batch:", error);
+      if (error instanceof Error) {
+        return res.status(400).json({ message: error.message });
+      }
+      res.status(500).json({ message: "Failed to accept transfer batch" });
+    }
+  });
+
+  app.post("/api/warehouse-transfer-batches/:requestId/reject", requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { requestId } = req.params;
+      const { reason } = req.body;
+
+      if (!reason || !reason.trim()) {
+        return res.status(400).json({ message: "Rejection reason is required" });
+      }
+
+      const transfers = await db
+        .select()
+        .from(warehouseTransfers)
+        .where(or(
+          eq(warehouseTransfers.requestId, requestId),
+          eq(warehouseTransfers.id, requestId)
+        ));
+
+      if (!transfers || transfers.length === 0) {
+        return res.status(404).json({ message: "No transfers found for this request" });
+      }
+
+      const firstTransfer = transfers[0];
+      if (user.role !== 'admin' && firstTransfer.technicianId !== user.id) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const updatedTransfers = [];
+      for (const transfer of transfers) {
+        if (transfer.status === 'pending') {
+          const updated = await storage.rejectWarehouseTransfer(transfer.id, reason);
+          updatedTransfers.push(updated);
+        } else {
+          updatedTransfers.push(transfer);
+        }
+      }
+
+      res.json(updatedTransfers);
+    } catch (error) {
+      console.error("Error rejecting transfer batch:", error);
+      if (error instanceof Error) {
+        return res.status(400).json({ message: error.message });
+      }
+      res.status(500).json({ message: "Failed to reject transfer batch" });
+    }
+  });
+
   app.delete("/api/warehouse-transfers", requireAuth, requireAdmin, async (req, res) => {
     try {
       const { ids } = req.body;
@@ -1639,6 +1728,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         for (const item of itemsToTransfer) {
           if ((item.boxes || 0) > 0) {
             await tx.insert(warehouseTransfers).values({
+              requestId: req.params.id,
               warehouseId,
               technicianId: inventoryRequest.technicianId,
               itemType: item.type,
@@ -1651,6 +1741,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           if ((item.units || 0) > 0) {
             await tx.insert(warehouseTransfers).values({
+              requestId: req.params.id,
               warehouseId,
               technicianId: inventoryRequest.technicianId,
               itemType: item.type,

@@ -266,6 +266,7 @@ export const warehouseInventory = pgTable("warehouse_inventory", {
 // Warehouse Transfers - سجل نقل البضائع من المستودع إلى الفني
 export const warehouseTransfers = pgTable("warehouse_transfers", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  requestId: varchar("request_id").references(() => inventoryRequests.id), // ID الطلب الأصلي لتجميع الطلبات
   warehouseId: varchar("warehouse_id").notNull().references(() => warehouses.id),
   technicianId: varchar("technician_id").notNull().references(() => users.id),
   itemType: text("item_type").notNull(), // "n950", "i9000s", "i9100", "rollPaper", "stickers", "newBatteries", "mobilySim", "stcSim", "zainSim"
