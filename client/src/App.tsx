@@ -26,6 +26,7 @@ import Login from "@/pages/login";
 import { Loader2 } from "lucide-react";
 import { SplashScreen } from "@/components/SplashScreen";
 import { useState, useEffect } from "react";
+import { hasRoleOrAbove, ROLES } from "@shared/roles";
 
 function AuthenticatedRouter() {
   const { user } = useAuth();
@@ -45,17 +46,21 @@ function AuthenticatedRouter() {
           <Route path="/my-moving-inventory" component={MyMovingInventory} />
         </>
       )}
-      {user?.role === "admin" && (
+      {hasRoleOrAbove(user?.role || '', ROLES.SUPERVISOR) && (
         <>
-          <Route path="/admin" component={AdminPage} />
-          <Route path="/users" component={UsersPage} />
-          <Route path="/fixed-inventory" component={FixedInventoryDashboard} />
           <Route path="/admin-inventory-overview" component={AdminInventoryOverview} />
           <Route path="/warehouses" component={WarehousesPage} />
           <Route path="/warehouses/:id" component={WarehouseDetailsPage} />
           <Route path="/transfer-details/:id" component={TransferDetailsPage} />
           <Route path="/operations" component={OperationsPage} />
           <Route path="/operation-details/:groupId" component={OperationDetailsPage} />
+        </>
+      )}
+      {user?.role === "admin" && (
+        <>
+          <Route path="/admin" component={AdminPage} />
+          <Route path="/users" component={UsersPage} />
+          <Route path="/fixed-inventory" component={FixedInventoryDashboard} />
         </>
       )}
       <Route component={NotFound} />
