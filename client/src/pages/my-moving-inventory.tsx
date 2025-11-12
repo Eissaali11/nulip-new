@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TruckIcon, MinusCircle, ArrowRight, ArrowLeftRight, FileDown, Home, Package, RefreshCw } from "lucide-react";
+import { TruckIcon, MinusCircle, ArrowRight, ArrowLeftRight, FileDown, Home, Package, RefreshCw, Bell } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useState } from "react";
 import { UpdateMovingInventoryModal } from "@/components/update-moving-inventory-modal";
@@ -16,6 +16,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
+import { motion } from "framer-motion";
+import { Navbar } from "@/components/dashboard/Navbar";
+import { GridBackground } from "@/components/dashboard/GridBackground";
+import dashboardBg from "@assets/image_1762515061799.png";
 
 interface MovingInventory {
   id: string;
@@ -115,13 +119,13 @@ export default function MyMovingInventory() {
       queryClient.invalidateQueries({ queryKey: ["/api/warehouse-transfers"] });
       queryClient.invalidateQueries({ queryKey: [`/api/technicians/${user?.id}`] });
       toast({
-        title: "تم القبول",
-        description: "تم قبول عملية النقل بنجاح",
+        title: "✅ تم القبول",
+        description: "تم قبول عملية النقل وإضافة الكميات للمخزون المتحرك",
       });
     },
     onError: (error: any) => {
       toast({
-        title: "خطأ",
+        title: "❌ خطأ",
         description: error.message || "فشل قبول عملية النقل",
         variant: "destructive",
       });
@@ -300,12 +304,19 @@ export default function MyMovingInventory() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#E0F7F7] to-white">
-        <div className="text-center">
-          <div className="relative w-16 h-16 mx-auto mb-4 animate-spin">
-            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#18B2B0] border-r-[#18B2B0]"></div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
+        <GridBackground />
+        <div className="flex items-center justify-center min-h-screen relative z-10">
+          <div className="text-center">
+            <motion.div
+              className="relative w-20 h-20 mx-auto mb-6"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            >
+              <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#18B2B0] border-r-[#18B2B0] shadow-lg shadow-[#18B2B0]/50"></div>
+            </motion.div>
+            <p className="text-white text-lg font-medium">جاري التحميل...</p>
           </div>
-          <p className="text-slate-700 text-base font-medium">جاري التحميل...</p>
         </div>
       </div>
     );
@@ -313,326 +324,441 @@ export default function MyMovingInventory() {
 
   if (!inventory) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#E0F7F7] to-white flex items-center justify-center p-4" dir="rtl">
-        <Card className="max-w-md w-full bg-white border border-gray-200 shadow-lg">
-          <CardContent className="py-12 text-center">
-            <TruckIcon className="h-20 w-20 mx-auto mb-6 text-[#18B2B0]" />
-            <h3 className="text-2xl font-bold mb-3 text-gray-900">لا يوجد مخزون متحرك</h3>
-            <p className="text-gray-600 mb-6">
-              قم بنقل بعض العناصر من المخزون الثابت أولاً
-            </p>
-            <button
-              onClick={() => setLocation("/")}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#18B2B0] text-white font-medium rounded-lg hover:bg-[#16a09e] transition-all duration-200 text-sm touch-manipulation"
-              style={{ WebkitTapHighlightColor: 'transparent', minHeight: '44px' }}
-              type="button"
-            >
-              <Home className="w-4 h-4" />
-              <span>العودة للصفحة الرئيسية</span>
-            </button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden" dir="rtl">
+        <GridBackground />
+        <div className="flex items-center justify-center min-h-screen p-4 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-md w-full"
+          >
+            <Card className="bg-white/10 backdrop-blur-xl border-white/20 shadow-2xl">
+              <CardContent className="py-12 text-center">
+                <TruckIcon className="h-20 w-20 mx-auto mb-6 text-[#18B2B0]" />
+                <h3 className="text-2xl font-bold mb-3 text-white">لا يوجد مخزون متحرك</h3>
+                <p className="text-gray-300 mb-6">
+                  قم بنقل بعض العناصر من المخزون الثابت أولاً
+                </p>
+                <button
+                  onClick={() => setLocation("/")}
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-[#18B2B0] to-[#16a09e] text-white font-medium rounded-xl hover:shadow-lg hover:shadow-[#18B2B0]/50 transition-all duration-300 transform hover:scale-105"
+                  type="button"
+                >
+                  <Home className="w-5 h-5" />
+                  <span>العودة للصفحة الرئيسية</span>
+                </button>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
       </div>
     );
   }
 
+  const inventoryItems = [
+    { 
+      category: "أجهزة N950",
+      icon: "📱",
+      color: "from-blue-500 to-blue-600",
+      items: [
+        { label: "كرتون", value: inventory.n950Boxes || 0 },
+        { label: "وحدات", value: inventory.n950Units || 0 }
+      ]
+    },
+    { 
+      category: "أجهزة I9000s",
+      icon: "📲",
+      color: "from-purple-500 to-purple-600",
+      items: [
+        { label: "كرتون", value: inventory.i9000sBoxes || 0 },
+        { label: "وحدات", value: inventory.i9000sUnits || 0 }
+      ]
+    },
+    { 
+      category: "أجهزة I9100",
+      icon: "💳",
+      color: "from-indigo-500 to-indigo-600",
+      items: [
+        { label: "كرتون", value: inventory.i9100Boxes || 0 },
+        { label: "وحدات", value: inventory.i9100Units || 0 }
+      ]
+    },
+    { 
+      category: "أوراق رول",
+      icon: "📜",
+      color: "from-amber-500 to-amber-600",
+      items: [
+        { label: "كرتون", value: inventory.rollPaperBoxes || 0 },
+        { label: "وحدات", value: inventory.rollPaperUnits || 0 }
+      ]
+    },
+    { 
+      category: "ملصقات مدى",
+      icon: "🏷️",
+      color: "from-pink-500 to-pink-600",
+      items: [
+        { label: "كرتون", value: inventory.stickersBoxes || 0 },
+        { label: "وحدات", value: inventory.stickersUnits || 0 }
+      ]
+    },
+    { 
+      category: "بطاريات جديدة",
+      icon: "🔋",
+      color: "from-green-500 to-green-600",
+      items: [
+        { label: "كرتون", value: inventory.newBatteriesBoxes || 0 },
+        { label: "وحدات", value: inventory.newBatteriesUnits || 0 }
+      ]
+    },
+    { 
+      category: "شرائح موبايلي",
+      icon: "📱",
+      color: "from-teal-500 to-teal-600",
+      items: [
+        { label: "كرتون", value: inventory.mobilySimBoxes || 0 },
+        { label: "وحدات", value: inventory.mobilySimUnits || 0 }
+      ]
+    },
+    { 
+      category: "شرائح STC",
+      icon: "📱",
+      color: "from-cyan-500 to-cyan-600",
+      items: [
+        { label: "كرتون", value: inventory.stcSimBoxes || 0 },
+        { label: "وحدات", value: inventory.stcSimUnits || 0 }
+      ]
+    },
+    { 
+      category: "شرائح زين",
+      icon: "📱",
+      color: "from-violet-500 to-violet-600",
+      items: [
+        { label: "كرتون", value: inventory.zainSimBoxes || 0 },
+        { label: "وحدات", value: inventory.zainSimUnits || 0 }
+      ]
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#E0F7F7] to-white" dir="rtl">
-      <div className="container mx-auto p-4 sm:p-6 max-w-7xl">
-        
-        {/* Header Section */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-[#18B2B0] rounded-xl">
-                <TruckIcon className="h-6 w-6 text-white" />
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden" dir="rtl">
+      <GridBackground />
+      
+      <div
+        className="absolute inset-0 opacity-5 bg-center bg-cover"
+        style={{
+          backgroundImage: `url(${dashboardBg})`,
+          backgroundBlendMode: 'overlay'
+        }}
+      />
+
+      <div className="relative z-10">
+        <Navbar />
+
+        <div className="container mx-auto px-4 sm:px-6 py-8 max-w-7xl">
+          
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <div className="flex items-center gap-4">
+                <div className="p-4 bg-gradient-to-br from-[#18B2B0] to-[#16a09e] rounded-2xl shadow-lg shadow-[#18B2B0]/30">
+                  <TruckIcon className="h-8 w-8 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl sm:text-4xl font-bold text-white mb-1">
+                    المخزون المتحرك
+                  </h1>
+                  <p className="text-gray-400 text-sm">
+                    {inventory?.technicianName} • {inventory?.city}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-                  المخزون المتحرك
-                </h1>
-                <p className="text-sm text-gray-600 mt-0.5">
-                  {inventory?.technicianName} - {inventory?.city}
+              
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  onClick={() => setLocation('/')}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 text-white font-medium rounded-xl hover:bg-white/20 transition-all duration-300 text-sm focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+                  type="button"
+                  data-testid="button-back-home"
+                >
+                  <Home className="h-4 w-4" />
+                  <span>الرئيسية</span>
+                </button>
+                
+                <button
+                  onClick={() => setShowTransferModal(true)}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#18B2B0] to-[#16a09e] text-white font-medium rounded-xl hover:shadow-lg hover:shadow-[#18B2B0]/50 transition-all duration-300 transform hover:scale-105 text-sm focus-visible:ring-2 focus-visible:ring-[#18B2B0] focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+                  type="button"
+                  data-testid="button-transfer-from-fixed"
+                >
+                  <ArrowLeftRight className="h-4 w-4" />
+                  <span>نقل من الثابت</span>
+                </button>
+                
+                <button
+                  onClick={handleRefresh}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium rounded-xl hover:shadow-lg hover:shadow-blue-500/50 transition-all duration-300 transform hover:scale-105 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+                  type="button"
+                  data-testid="button-refresh"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  <span>تحديث</span>
+                </button>
+                
+                <button
+                  onClick={() => setShowUpdateModal(true)}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-500 to-purple-600 text-white font-medium rounded-xl hover:shadow-lg hover:shadow-purple-500/50 transition-all duration-300 transform hover:scale-105 text-sm focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+                  type="button"
+                  data-testid="button-update-inventory"
+                >
+                  <MinusCircle className="h-4 w-4" />
+                  <span>تحديث</span>
+                </button>
+                
+                <button
+                  onClick={exportToExcel}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white font-medium rounded-xl hover:shadow-lg hover:shadow-green-500/50 transition-all duration-300 transform hover:scale-105 text-sm focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+                  type="button"
+                  data-testid="button-export-excel"
+                >
+                  <FileDown className="h-4 w-4" />
+                  <span>تصدير Excel</span>
+                </button>
+              </div>
+            </div>
+          </motion.div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1 }}
+              className="relative overflow-hidden group"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-[#18B2B0] to-[#16a09e] rounded-2xl opacity-10 group-hover:opacity-20 transition-opacity blur-xl"></div>
+              <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 hover:border-[#18B2B0]/50 transition-all duration-300 transform hover:scale-105">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 bg-gradient-to-br from-[#18B2B0] to-[#16a09e] rounded-xl shadow-lg shadow-[#18B2B0]/30">
+                    <Package className="w-5 h-5 text-white" />
+                  </div>
+                  <h3 className="text-sm font-medium text-gray-300">إجمالي العناصر</h3>
+                </div>
+                <p className="text-3xl font-bold text-white" data-testid="text-total-items">
+                  {getTotalItems()}
                 </p>
               </div>
-            </div>
-            
-            <div className="flex gap-2 flex-wrap">
-              <button
-                onClick={() => setLocation('/')}
-                className="inline-flex items-center justify-center gap-2 px-3 py-2 bg-white border-2 border-[#18B2B0] text-[#18B2B0] font-medium rounded-lg hover:bg-[#18B2B0] hover:text-white transition-all duration-200 text-sm touch-manipulation"
-                style={{ WebkitTapHighlightColor: 'transparent', minHeight: '44px' }}
-                type="button"
-                data-testid="button-back-home"
-              >
-                <Home className="h-4 w-4" />
-                <span className="hidden sm:inline">الرئيسية</span>
-              </button>
-              
-              <button
-                onClick={() => setShowTransferModal(true)}
-                className="inline-flex items-center justify-center gap-2 px-3 py-2 bg-[#18B2B0] text-white font-medium rounded-lg hover:bg-[#16a09e] transition-all duration-200 text-sm touch-manipulation"
-                style={{ WebkitTapHighlightColor: 'transparent', minHeight: '44px' }}
-                type="button"
-                data-testid="button-transfer-from-fixed"
-              >
-                <ArrowLeftRight className="h-4 w-4" />
-                <span>نقل من الثابت</span>
-              </button>
-              
-              <button
-                onClick={handleRefresh}
-                className="inline-flex items-center justify-center gap-2 px-3 py-2 bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-all duration-200 text-sm touch-manipulation"
-                style={{ WebkitTapHighlightColor: 'transparent', minHeight: '44px' }}
-                type="button"
-                data-testid="button-refresh"
-              >
-                <RefreshCw className="h-4 w-4" />
-                <span className="hidden sm:inline">تحديث</span>
-              </button>
-              
-              <button
-                onClick={() => setShowUpdateModal(true)}
-                className="inline-flex items-center justify-center gap-2 px-3 py-2 bg-purple-500 text-white font-medium rounded-lg hover:bg-purple-600 transition-all duration-200 text-sm touch-manipulation"
-                style={{ WebkitTapHighlightColor: 'transparent', minHeight: '44px' }}
-                type="button"
-                data-testid="button-update-inventory"
-              >
-                <MinusCircle className="h-4 w-4" />
-                <span className="hidden sm:inline">تحديث المخزون</span>
-              </button>
-              
-              <button
-                onClick={exportToExcel}
-                className="inline-flex items-center justify-center gap-2 px-3 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-all duration-200 text-sm touch-manipulation"
-                style={{ WebkitTapHighlightColor: 'transparent', minHeight: '44px' }}
-                type="button"
-                data-testid="button-export-excel"
-              >
-                <FileDown className="h-4 w-4" />
-                <span>تصدير Excel</span>
-              </button>
-            </div>
-          </div>
-        </div>
+            </motion.div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
-          <div className="relative overflow-hidden bg-gradient-to-br from-[#E0F7F7] via-white to-[#E0F7F7]/30 rounded-xl shadow-lg border border-[#18B2B0]/20 p-4 backdrop-blur-sm">
-            <div className="absolute top-0 left-0 w-24 h-24 bg-[#18B2B0]/10 rounded-full blur-2xl"></div>
-            <div className="relative">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="p-1.5 bg-gradient-to-br from-[#18B2B0] to-[#16a09e] rounded-lg shadow-md">
-                  <Package className="w-4 h-4 text-white" />
-                </div>
-                <h3 className="text-xs font-medium text-gray-700">إجمالي العناصر</h3>
-              </div>
-              <p className="text-2xl sm:text-3xl font-bold text-[#18B2B0]" data-testid="text-total-items">
-                {getTotalItems()}
-              </p>
-            </div>
-          </div>
-
-          <div className="relative overflow-hidden bg-gradient-to-br from-purple-50 via-white to-purple-50/30 rounded-xl shadow-lg border border-purple-100 p-4 backdrop-blur-sm">
-            <div className="absolute top-0 left-0 w-24 h-24 bg-purple-500/5 rounded-full blur-2xl"></div>
-            <div className="relative">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="p-1.5 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-md">
-                  <TruckIcon className="w-4 h-4 text-white" />
-                </div>
-                <h3 className="text-xs font-medium text-gray-700">الأجهزة</h3>
-              </div>
-              <p className="text-2xl sm:text-3xl font-bold text-purple-600" data-testid="text-total-devices">
-                {(inventory.n950Boxes || 0) + (inventory.n950Units || 0) + (inventory.i9000sBoxes || 0) + (inventory.i9000sUnits || 0) + (inventory.i9100Boxes || 0) + (inventory.i9100Units || 0)}
-              </p>
-            </div>
-          </div>
-
-          <div className="relative overflow-hidden bg-gradient-to-br from-amber-50 via-white to-amber-50/30 rounded-xl shadow-lg border border-amber-100 p-4 backdrop-blur-sm">
-            <div className="absolute top-0 left-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl"></div>
-            <div className="relative">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="p-1.5 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg shadow-md">
-                  <Package className="w-4 h-4 text-white" />
-                </div>
-                <h3 className="text-xs font-medium text-gray-700">الملحقات</h3>
-              </div>
-              <p className="text-2xl sm:text-3xl font-bold text-amber-600" data-testid="text-total-accessories">
-                {(inventory.rollPaperBoxes || 0) + (inventory.rollPaperUnits || 0) + (inventory.stickersBoxes || 0) + (inventory.stickersUnits || 0) + (inventory.newBatteriesBoxes || 0) + (inventory.newBatteriesUnits || 0)}
-              </p>
-            </div>
-          </div>
-
-          <div className="relative overflow-hidden bg-gradient-to-br from-green-50 via-white to-green-50/30 rounded-xl shadow-lg border border-green-100 p-4 backdrop-blur-sm">
-            <div className="absolute top-0 left-0 w-24 h-24 bg-green-500/5 rounded-full blur-2xl"></div>
-            <div className="relative">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="p-1.5 bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-md">
-                  <Package className="w-4 h-4 text-white" />
-                </div>
-                <h3 className="text-xs font-medium text-gray-700">الشرائح</h3>
-              </div>
-              <p className="text-2xl sm:text-3xl font-bold text-green-600" data-testid="text-total-sims">
-                {(inventory.mobilySimBoxes || 0) + (inventory.mobilySimUnits || 0) + (inventory.stcSimBoxes || 0) + (inventory.stcSimUnits || 0) + (inventory.zainSimBoxes || 0) + (inventory.zainSimUnits || 0)}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Pending Transfers */}
-        {pendingTransfers && pendingTransfers.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">طلبات النقل المعلقة ({pendingTransfers.length})</h2>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-right">الصنف</TableHead>
-                    <TableHead className="text-right">الكمية</TableHead>
-                    <TableHead className="text-right">المستودع</TableHead>
-                    <TableHead className="text-right">التاريخ</TableHead>
-                    <TableHead className="text-right">الإجراءات</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pendingTransfers.map((transfer) => (
-                    <TableRow key={transfer.id}>
-                      <TableCell className="font-medium">{transfer.itemNameAr}</TableCell>
-                      <TableCell>{transfer.quantity} {transfer.packagingType === 'boxes' ? 'كرتون' : 'مفرد'}</TableCell>
-                      <TableCell>{transfer.warehouseName}</TableCell>
-                      <TableCell className="text-sm">{format(new Date(transfer.createdAt), 'PPp', { locale: ar })}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => acceptMutation.mutate(transfer.id)}
-                            className="px-3 py-1.5 bg-green-500 text-white text-xs font-medium rounded hover:bg-green-600 transition-colors touch-manipulation"
-                            style={{ WebkitTapHighlightColor: 'transparent', minHeight: '36px' }}
-                            disabled={acceptMutation.isPending}
-                          >
-                            قبول
-                          </button>
-                          <button
-                            onClick={() => handleReject(transfer.id)}
-                            className="px-3 py-1.5 bg-red-500 text-white text-xs font-medium rounded hover:bg-red-600 transition-colors touch-manipulation"
-                            style={{ WebkitTapHighlightColor: 'transparent', minHeight: '36px' }}
-                            disabled={rejectMutation.isPending}
-                          >
-                            رفض
-                          </button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
-        )}
-
-        {/* Detailed Inventory */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <div className="p-2 bg-gradient-to-br from-[#18B2B0] to-[#16a09e] rounded-lg">
-              <Package className="h-4 w-4 text-white" />
-            </div>
-            تفاصيل المخزون
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-            {[
-              { label: 'أجهزة N950', boxes: inventory.n950Boxes || 0, units: inventory.n950Units || 0, colorFrom: '[#E0F7F7]', colorTo: 'white', textColor: '[#18B2B0]', borderColor: '[#18B2B0]/20', bgGlow: '[#18B2B0]/10', icon: '📱' },
-              { label: 'أجهزة I9000s', boxes: inventory.i9000sBoxes || 0, units: inventory.i9000sUnits || 0, colorFrom: 'purple-50', colorTo: 'white', textColor: 'purple-600', borderColor: 'purple-100', bgGlow: 'purple-500/5', icon: '📱' },
-              { label: 'أجهزة I9100', boxes: inventory.i9100Boxes || 0, units: inventory.i9100Units || 0, colorFrom: 'indigo-50', colorTo: 'white', textColor: 'indigo-600', borderColor: 'indigo-100', bgGlow: 'indigo-500/5', icon: '📱' },
-              { label: 'أوراق رول', boxes: inventory.rollPaperBoxes || 0, units: inventory.rollPaperUnits || 0, colorFrom: 'amber-50', colorTo: 'white', textColor: 'amber-600', borderColor: 'amber-100', bgGlow: 'amber-500/5', icon: '📄' },
-              { label: 'ملصقات مداى', boxes: inventory.stickersBoxes || 0, units: inventory.stickersUnits || 0, colorFrom: 'orange-50', colorTo: 'white', textColor: 'orange-600', borderColor: 'orange-100', bgGlow: 'orange-500/5', icon: '🏷️' },
-              { label: 'بطاريات جديدة', boxes: inventory.newBatteriesBoxes || 0, units: inventory.newBatteriesUnits || 0, colorFrom: 'yellow-50', colorTo: 'white', textColor: 'yellow-600', borderColor: 'yellow-100', bgGlow: 'yellow-500/5', icon: '🔋' },
-              { label: 'شرائح موبايلي', boxes: inventory.mobilySimBoxes || 0, units: inventory.mobilySimUnits || 0, colorFrom: 'green-50', colorTo: 'white', textColor: 'green-600', borderColor: 'green-100', bgGlow: 'green-500/5', icon: '📶' },
-              { label: 'شرائح STC', boxes: inventory.stcSimBoxes || 0, units: inventory.stcSimUnits || 0, colorFrom: 'teal-50', colorTo: 'white', textColor: 'teal-600', borderColor: 'teal-100', bgGlow: 'teal-500/5', icon: '📶' },
-              { label: 'شرائح زين', boxes: inventory.zainSimBoxes || 0, units: inventory.zainSimUnits || 0, colorFrom: 'cyan-50', colorTo: 'white', textColor: 'cyan-600', borderColor: 'cyan-100', bgGlow: 'cyan-500/5', icon: '📶' },
-            ].map((item, index) => (
-              <div
-                key={index}
-                className={`relative overflow-hidden bg-gradient-to-br from-${item.colorFrom} via-white to-${item.colorTo}/30 rounded-xl p-4 border border-${item.borderColor} shadow-md backdrop-blur-sm`}
-              >
-                <div className={`absolute top-0 right-0 w-20 h-20 bg-${item.bgGlow} rounded-full blur-2xl`}></div>
-                <div className="relative">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-2xl">{item.icon}</span>
-                    <h3 className="font-medium text-gray-900">{item.label}</h3>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2 }}
+              className="relative overflow-hidden group"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl opacity-10 group-hover:opacity-20 transition-opacity blur-xl"></div>
+              <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 hover:border-purple-500/50 transition-all duration-300 transform hover:scale-105">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg shadow-purple-500/30">
+                    <TruckIcon className="w-5 h-5 text-white" />
                   </div>
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">كراتين:</span>
-                      <span className="font-bold text-gray-900">{item.boxes}</span>
+                  <h3 className="text-sm font-medium text-gray-300">الأجهزة</h3>
+                </div>
+                <p className="text-3xl font-bold text-white" data-testid="text-total-devices">
+                  {(inventory.n950Boxes || 0) + (inventory.n950Units || 0) + (inventory.i9000sBoxes || 0) + (inventory.i9000sUnits || 0) + (inventory.i9100Boxes || 0) + (inventory.i9100Units || 0)}
+                </p>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3 }}
+              className="relative overflow-hidden group"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl opacity-10 group-hover:opacity-20 transition-opacity blur-xl"></div>
+              <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 hover:border-amber-500/50 transition-all duration-300 transform hover:scale-105">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl shadow-lg shadow-amber-500/30">
+                    <Package className="w-5 h-5 text-white" />
+                  </div>
+                  <h3 className="text-sm font-medium text-gray-300">الملحقات</h3>
+                </div>
+                <p className="text-3xl font-bold text-white" data-testid="text-total-accessories">
+                  {(inventory.rollPaperBoxes || 0) + (inventory.rollPaperUnits || 0) + (inventory.stickersBoxes || 0) + (inventory.stickersUnits || 0) + (inventory.newBatteriesBoxes || 0) + (inventory.newBatteriesUnits || 0)}
+                </p>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.4 }}
+              className="relative overflow-hidden group"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl opacity-10 group-hover:opacity-20 transition-opacity blur-xl"></div>
+              <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 hover:border-green-500/50 transition-all duration-300 transform hover:scale-105">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg shadow-green-500/30">
+                    <Package className="w-5 h-5 text-white" />
+                  </div>
+                  <h3 className="text-sm font-medium text-gray-300">الشرائح</h3>
+                </div>
+                <p className="text-3xl font-bold text-white" data-testid="text-total-sims">
+                  {(inventory.mobilySimBoxes || 0) + (inventory.mobilySimUnits || 0) + (inventory.stcSimBoxes || 0) + (inventory.stcSimUnits || 0) + (inventory.zainSimBoxes || 0) + (inventory.zainSimUnits || 0)}
+                </p>
+              </div>
+            </motion.div>
+          </div>
+
+          {pendingTransfers && pendingTransfers.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="mb-8"
+            >
+              <div className="relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#18B2B0]/10 to-transparent rounded-2xl blur-2xl"></div>
+                <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-2xl">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg animate-pulse">
+                      <Bell className="w-5 h-5 text-white" />
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">مفرد:</span>
-                      <span className="font-bold text-gray-900">{item.units}</span>
-                    </div>
-                    <div className="pt-2 mt-2 border-t border-gray-200">
-                      <div className="flex justify-between">
-                        <span className="text-sm font-medium text-gray-700">الإجمالي:</span>
-                        <span className={`text-lg font-bold text-${item.textColor}`}>
-                          {item.boxes + item.units}
+                    <h2 className="text-xl font-bold text-white">
+                      طلبات النقل المعلقة ({pendingTransfers.length})
+                    </h2>
+                  </div>
+                  <div className="overflow-x-auto rounded-xl">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-white/10">
+                          <th className="text-right py-4 px-4 text-sm font-semibold text-gray-300">الصنف</th>
+                          <th className="text-right py-4 px-4 text-sm font-semibold text-gray-300">الكمية</th>
+                          <th className="text-right py-4 px-4 text-sm font-semibold text-gray-300">المستودع</th>
+                          <th className="text-right py-4 px-4 text-sm font-semibold text-gray-300">التاريخ</th>
+                          <th className="text-right py-4 px-4 text-sm font-semibold text-gray-300">الإجراءات</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pendingTransfers.map((transfer, index) => (
+                          <motion.tr
+                            key={transfer.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.1 * index }}
+                            className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                          >
+                            <td className="py-4 px-4 text-white font-medium">{transfer.itemNameAr}</td>
+                            <td className="py-4 px-4 text-gray-300">{transfer.quantity} {transfer.packagingType === 'box' ? 'كرتون' : 'مفرد'}</td>
+                            <td className="py-4 px-4 text-gray-300">{transfer.warehouseName}</td>
+                            <td className="py-4 px-4 text-gray-400 text-sm">{format(new Date(transfer.createdAt), 'PPp', { locale: ar })}</td>
+                            <td className="py-4 px-4">
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => acceptMutation.mutate(transfer.id)}
+                                  className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white text-sm font-medium rounded-lg hover:shadow-lg hover:shadow-green-500/50 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+                                  disabled={acceptMutation.isPending}
+                                >
+                                  ✅ قبول
+                                </button>
+                                <button
+                                  onClick={() => handleReject(transfer.id)}
+                                  className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-medium rounded-lg hover:shadow-lg hover:shadow-red-500/50 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+                                  disabled={rejectMutation.isPending}
+                                >
+                                  ❌ رفض
+                                </button>
+                              </div>
+                            </td>
+                          </motion.tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {inventoryItems.map((item, index) => (
+              <motion.div
+                key={item.category}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 * index }}
+                className="relative group"
+              >
+                <div className={`absolute inset-0 bg-gradient-to-br ${item.color} rounded-2xl opacity-10 group-hover:opacity-20 transition-opacity blur-xl`}></div>
+                <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 hover:border-white/30 transition-all duration-300 transform hover:scale-105">
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="text-3xl">{item.icon}</span>
+                    <h3 className="text-lg font-bold text-white">{item.category}</h3>
+                  </div>
+                  <div className="space-y-3">
+                    {item.items.map((subItem) => (
+                      <div key={subItem.label} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10">
+                        <span className="text-gray-300 text-sm">{subItem.label}</span>
+                        <span className={`text-xl font-bold bg-gradient-to-r ${item.color} bg-clip-text text-transparent`}>
+                          {subItem.value}
                         </span>
                       </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Modals */}
-      {showUpdateModal && (
+      {showUpdateModal && user?.id && inventory && (
         <UpdateMovingInventoryModal
           open={showUpdateModal}
           onClose={() => setShowUpdateModal(false)}
-          technicianId={user?.id || ''}
+          technicianId={user.id}
           currentInventory={inventory}
         />
       )}
 
-      {showTransferModal && fixedInventory && (
+      {showTransferModal && user?.id && fixedInventory && (
         <TransferToMovingModal
           open={showTransferModal}
           onClose={() => setShowTransferModal(false)}
-          technicianId={user?.id || ''}
+          technicianId={user.id}
           fixedInventory={fixedInventory}
         />
       )}
 
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
-        <DialogContent dir="rtl">
+        <DialogContent className="bg-slate-900/95 backdrop-blur-xl border-white/20 text-white">
           <DialogHeader>
-            <DialogTitle>رفض عملية النقل</DialogTitle>
-            <DialogDescription>
-              يرجى إدخال سبب الرفض (اختياري)
+            <DialogTitle className="text-xl font-bold">رفض عملية النقل</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              يرجى تقديم سبب الرفض (اختياري)
             </DialogDescription>
           </DialogHeader>
           <Textarea
             value={rejectionReason}
             onChange={(e) => setRejectionReason(e.target.value)}
-            placeholder="سبب الرفض..."
-            className="min-h-[100px]"
+            placeholder="أدخل سبب الرفض..."
+            className="bg-white/10 border-white/20 text-white placeholder:text-gray-500"
           />
           <DialogFooter className="gap-2">
             <button
               onClick={() => setRejectDialogOpen(false)}
-              className="px-4 py-2 bg-gray-200 text-gray-800 font-medium rounded-lg hover:bg-gray-300 transition-colors text-sm touch-manipulation"
-              style={{ WebkitTapHighlightColor: 'transparent', minHeight: '40px' }}
-              type="button"
+              className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors"
             >
               إلغاء
             </button>
             <button
               onClick={handleConfirmReject}
-              className="px-4 py-2 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition-colors text-sm touch-manipulation"
-              style={{ WebkitTapHighlightColor: 'transparent', minHeight: '40px' }}
-              type="button"
+              className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:shadow-lg hover:shadow-red-500/50 transition-all"
+              disabled={rejectMutation.isPending}
             >
-              تأكيد الرفض
+              {rejectMutation.isPending ? "جاري الرفض..." : "تأكيد الرفض"}
             </button>
           </DialogFooter>
         </DialogContent>
