@@ -25,6 +25,7 @@ interface NavItem {
   icon: any;
   gradient: string;
   adminOnly?: boolean;
+  technicianOnly?: boolean;
   technicianHidden?: boolean;
   badge?: number;
 }
@@ -92,12 +93,14 @@ export const Navbar = () => {
       href: "/my-moving-inventory",
       icon: TruckIcon,
       gradient: "from-emerald-500 to-green-600",
+      technicianOnly: true,
     },
     {
       title: "المخزون الثابت",
       href: "/my-fixed-inventory",
       icon: Package,
       gradient: "from-blue-500 to-indigo-600",
+      technicianOnly: true,
     },
     {
       title: "الأجهزة",
@@ -131,6 +134,7 @@ export const Navbar = () => {
 
   const filteredNavItems = navItems.filter(item => {
     if (item.adminOnly && user?.role !== 'admin') return false;
+    if (item.technicianOnly && user?.role !== 'technician') return false;
     if (item.technicianHidden && user?.role === 'technician') return false;
     return true;
   });

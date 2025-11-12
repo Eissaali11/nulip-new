@@ -36,11 +36,15 @@ function AuthenticatedRouter() {
       <Route path="/" component={Dashboard} />
       <Route path="/transactions" component={TransactionHistoryPage} />
       <Route path="/withdrawn-devices" component={WithdrawnDevicesPage} />
-      <Route path="/my-fixed-inventory" component={MyFixedInventory} />
-      <Route path="/my-moving-inventory" component={MyMovingInventory} />
       <Route path="/notifications" component={NotificationsPage} />
       <Route path="/profile" component={ProfilePage} />
       <Route path="/technician-details/:id" component={TechnicianDetailsPage} />
+      {user?.role === "technician" && (
+        <>
+          <Route path="/my-fixed-inventory" component={MyFixedInventory} />
+          <Route path="/my-moving-inventory" component={MyMovingInventory} />
+        </>
+      )}
       {user?.role === "admin" && (
         <>
           <Route path="/admin" component={AdminPage} />

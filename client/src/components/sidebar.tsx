@@ -220,27 +220,31 @@ ${inventory.map(item =>
             </Button>
           </Link>
           
-          <Link href="/my-fixed-inventory">
-            <Button
-              variant="outline"
-              className="w-full flex items-center justify-center space-x-2 space-x-reverse"
-              data-testid="button-my-fixed-inventory"
-            >
-              <Package className="h-4 w-4" />
-              <span>مخزوني الثابت</span>
-            </Button>
-          </Link>
+          {user?.role === 'technician' && (
+            <>
+              <Link href="/my-fixed-inventory">
+                <Button
+                  variant="outline"
+                  className="w-full flex items-center justify-center space-x-2 space-x-reverse"
+                  data-testid="button-my-fixed-inventory"
+                >
+                  <Package className="h-4 w-4" />
+                  <span>مخزوني الثابت</span>
+                </Button>
+              </Link>
 
-          <Link href="/my-moving-inventory">
-            <Button
-              variant="outline"
-              className="w-full flex items-center justify-center space-x-2 space-x-reverse"
-              data-testid="button-my-moving-inventory"
-            >
-              <TruckIcon className="h-4 w-4" />
-              <span>مخزوني المتحرك</span>
-            </Button>
-          </Link>
+              <Link href="/my-moving-inventory">
+                <Button
+                  variant="outline"
+                  className="w-full flex items-center justify-center space-x-2 space-x-reverse"
+                  data-testid="button-my-moving-inventory"
+                >
+                  <TruckIcon className="h-4 w-4" />
+                  <span>مخزوني المتحرك</span>
+                </Button>
+              </Link>
+            </>
+          )}
           
           {user?.role === 'admin' && (
             <>
