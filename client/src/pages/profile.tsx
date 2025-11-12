@@ -59,7 +59,7 @@ export default function ProfilePage() {
                 </p>
               </div>
             </div>
-            <Link href="/">
+            <Link href="/home">
               <Button 
                 variant="outline" 
                 className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30 shadow-lg"

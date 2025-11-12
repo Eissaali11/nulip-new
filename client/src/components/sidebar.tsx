@@ -150,7 +150,7 @@ ${inventory.map(item =>
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
-          <Link href="/">
+          <Link href="/home">
             <Button
               variant="default"
               className="w-full mt-4 flex items-center justify-center space-x-2 space-x-reverse"

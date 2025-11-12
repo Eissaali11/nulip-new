@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -28,13 +28,24 @@ import { SplashScreen } from "@/components/SplashScreen";
 import { useState, useEffect } from "react";
 import { hasRoleOrAbove, ROLES } from "@shared/roles";
 
+function Redirect({ to }: { to: string }) {
+  const [, setLocation] = useLocation();
+  
+  useEffect(() => {
+    setLocation(to);
+  }, [to, setLocation]);
+  
+  return null;
+}
+
 function AuthenticatedRouter() {
   const { user } = useAuth();
   
   // Show appropriate routes based on user role
   return (
     <Switch>
-      <Route path="/" component={Dashboard} />
+      <Route path="/" component={() => <Redirect to="/home" />} />
+      <Route path="/home" component={Dashboard} />
       <Route path="/transactions" component={TransactionHistoryPage} />
       <Route path="/withdrawn-devices" component={WithdrawnDevicesPage} />
       <Route path="/notifications" component={NotificationsPage} />

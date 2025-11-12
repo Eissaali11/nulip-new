@@ -247,7 +247,7 @@ export default function WithdrawnDevicesPage() {
                 size="sm"
                 className="hover:bg-orange-100 dark:hover:bg-orange-900"
               >
-                <Link href="/" data-testid="button-back-home">
+                <Link href="/home" data-testid="button-back-home">
                   <ArrowRight className="h-4 w-4 ml-2" />
                   <span>العودة للرئيسية</span>
                 </Link>
