@@ -314,6 +314,24 @@ export const inventoryRequests = pgTable("inventory_requests", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// System Activity Logs - سجل شامل لجميع عمليات النظام
+export const systemLogs = pgTable("system_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id),
+  userName: text("user_name").notNull(),
+  userRole: text("user_role").notNull(), // "admin", "supervisor", "technician"
+  regionId: varchar("region_id").references(() => regions.id),
+  action: text("action").notNull(), // "create", "update", "delete", "approve", "reject", "login", "logout", "transfer"
+  entityType: text("entity_type").notNull(), // "region", "user", "inventory", "warehouse", "request", "transfer", "auth"
+  entityId: varchar("entity_id"),
+  entityName: text("entity_name"),
+  details: text("details"), // تفاصيل العملية بصيغة JSON
+  description: text("description").notNull(), // وصف العملية بالعربية
+  severity: text("severity").notNull().default("info"), // "info", "warn", "error"
+  success: boolean("success").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Schema for regions
 export const insertRegionSchema = createInsertSchema(regions).omit({
   id: true,
@@ -399,6 +417,11 @@ export const insertSupervisorWarehouseSchema = createInsertSchema(supervisorWare
   createdAt: true,
 });
 
+export const insertSystemLogSchema = createInsertSchema(systemLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type InsertRegion = z.infer<typeof insertRegionSchema>;
 export type Region = typeof regions.$inferSelect;
@@ -428,6 +451,8 @@ export type InsertSupervisorTechnician = z.infer<typeof insertSupervisorTechnici
 export type SupervisorTechnician = typeof supervisorTechnicians.$inferSelect;
 export type InsertSupervisorWarehouse = z.infer<typeof insertSupervisorWarehouseSchema>;
 export type SupervisorWarehouse = typeof supervisorWarehouses.$inferSelect;
+export type InsertSystemLog = z.infer<typeof insertSystemLogSchema>;
+export type SystemLog = typeof systemLogs.$inferSelect;
 
 // Additional types for API responses
 export type InventoryItemWithStatus = InventoryItem & {

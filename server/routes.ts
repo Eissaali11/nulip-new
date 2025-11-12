@@ -453,8 +453,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/regions", requireAuth, requireAdmin, async (req, res) => {
     try {
+      const user = (req as any).user;
       const validatedData = insertRegionSchema.parse(req.body);
       const region = await storage.createRegion(validatedData);
+      
+      // Log the activity
+      await storage.logSystemActivity({
+        userId: user.id,
+        userName: user.username,
+        userRole: user.role,
+        regionId: null,
+        action: "create",
+        entityType: "region",
+        entityId: region.id,
+        entityName: region.name,
+        description: `تم إنشاء منطقة جديدة: ${region.name}`,
+        severity: "info",
+        success: true,
+      });
+      
       res.status(201).json(region);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -466,8 +483,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/regions/:id", requireAuth, requireAdmin, async (req, res) => {
     try {
+      const user = (req as any).user;
       const updates = insertRegionSchema.partial().parse(req.body);
       const region = await storage.updateRegion(req.params.id, updates);
+      
+      // Log the activity
+      await storage.logSystemActivity({
+        userId: user.id,
+        userName: user.username,
+        userRole: user.role,
+        regionId: region.id,
+        action: "update",
+        entityType: "region",
+        entityId: region.id,
+        entityName: region.name,
+        description: `تم تحديث منطقة: ${region.name}`,
+        severity: "info",
+        success: true,
+      });
+      
       res.json(region);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -482,10 +516,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/regions/:id", requireAuth, requireAdmin, async (req, res) => {
     try {
+      const user = (req as any).user;
+      // Get region name before deletion
+      const regions = await storage.getRegions();
+      const region = regions.find(r => r.id === req.params.id);
+      const regionName = region?.name || "غير محدد";
+      
       const deleted = await storage.deleteRegion(req.params.id);
       if (!deleted) {
         return res.status(404).json({ message: "Region not found" });
       }
+      
+      // Log the activity
+      await storage.logSystemActivity({
+        userId: user.id,
+        userName: user.username,
+        userRole: user.role,
+        regionId: null,
+        action: "delete",
+        entityType: "region",
+        entityId: req.params.id,
+        entityName: regionName,
+        description: `تم حذف منطقة: ${regionName}`,
+        severity: "warn",
+        success: true,
+      });
+      
       res.status(204).send();
     } catch (error) {
       if (error instanceof Error && error.message.includes("Cannot delete region")) {
@@ -519,8 +575,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/users", requireAuth, requireAdmin, async (req, res) => {
     try {
+      const currentUser = (req as any).user;
       const validatedData = insertUserSchema.parse(req.body);
       const user = await storage.createUser(validatedData);
+      
+      // Log the activity
+      await storage.logSystemActivity({
+        userId: currentUser.id,
+        userName: currentUser.username,
+        userRole: currentUser.role,
+        regionId: user.regionId || null,
+        action: "create",
+        entityType: "user",
+        entityId: user.id,
+        entityName: user.fullName,
+        details: JSON.stringify({ username: user.username, role: user.role }),
+        description: `تم إنشاء مستخدم جديد: ${user.fullName} (${user.role})`,
+        severity: "info",
+        success: true,
+      });
+      
       res.status(201).json(user);
     } catch (error) {
       console.error('Error creating user:', error);
@@ -574,6 +648,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(stats);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch admin stats" });
+    }
+  });
+
+  // System logs endpoint
+  app.get("/api/system-logs", requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { limit, offset, action, entityType, severity } = req.query;
+      
+      const filters: any = {
+        limit: limit ? parseInt(limit as string) : 50,
+        offset: offset ? parseInt(offset as string) : 0,
+      };
+      
+      // Role-based filtering
+      if (user.role === ROLES.TECHNICIAN) {
+        // Technicians only see their own logs
+        filters.userId = user.id;
+      } else if (user.role === ROLES.SUPERVISOR) {
+        // Supervisors see logs from their region
+        if (user.regionId) {
+          filters.regionId = user.regionId;
+        }
+      }
+      // Admins see all logs (no additional filters)
+      
+      if (action) filters.action = action as string;
+      if (entityType) filters.entityType = entityType as string;
+      if (severity) filters.severity = severity as string;
+      
+      const logs = await storage.getSystemLogs(filters);
+      res.json(logs);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch system logs" });
     }
   });
 

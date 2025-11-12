@@ -15,7 +15,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Plus, Users, MapPin, Activity, Trash2, Edit, ArrowRight, LayoutDashboard, TrendingUp, Database, AlertTriangle, BarChart3, PieChart as PieChartIcon, Shield, CheckCircle, XCircle } from "lucide-react";
-import type { RegionWithStats, UserSafe, AdminStats, Region, InsertRegion, InsertUser, TransactionWithDetails } from "@shared/schema";
+import type { RegionWithStats, UserSafe, AdminStats, Region, InsertRegion, InsertUser, SystemLog } from "@shared/schema";
 import { ROLES, ROLE_LABELS_AR } from "@shared/roles";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState } from "react";
@@ -62,11 +62,9 @@ export default function AdminPage() {
     queryKey: ["/api/users"],
   });
 
-  const { data: transactionsData } = useQuery<{ transactions: TransactionWithDetails[] }>({
-    queryKey: ["/api/transactions"],
+  const { data: systemLogs = [] } = useQuery<SystemLog[]>({
+    queryKey: ["/api/system-logs"],
   });
-
-  const recentTransactions = transactionsData?.transactions || [];
 
   const regionForm = useForm<z.infer<typeof regionFormSchema>>({
     resolver: zodResolver(regionFormSchema),
@@ -878,46 +876,80 @@ export default function AdminPage() {
             >
               <Card className="shadow-2xl border border-white/20 bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl">
                 <CardHeader className="bg-gradient-to-r from-white/10 to-transparent border-b border-white/10">
-                  <CardTitle className="text-white text-2xl font-black">العمليات الأخيرة</CardTitle>
-                  <CardDescription className="text-gray-300">جميع العمليات الحديثة في النظام</CardDescription>
+                  <CardTitle className="text-white text-2xl font-black">عمليات النظام</CardTitle>
+                  <CardDescription className="text-gray-300">سجل شامل لجميع العمليات التي تمت داخل النظام</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6">
-                  {recentTransactions.length === 0 ? (
+                  {systemLogs.length === 0 ? (
                     <div className="text-center py-12">
                       <Activity className="h-16 w-16 text-gray-500 mx-auto mb-4" />
-                      <p className="text-gray-400 text-lg">لا توجد عمليات حديثة</p>
+                      <p className="text-gray-400 text-lg">لا توجد عمليات مسجلة في النظام</p>
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {recentTransactions.slice(0, 20).map((transaction, index) => (
+                      {systemLogs.slice(0, 20).map((log, index) => (
                         <motion.div
-                          key={transaction.id}
+                          key={log.id}
                           className="bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl p-5 rounded-2xl border border-white/20 hover:border-white/30 hover:shadow-[0_0_20px_rgba(24,178,176,0.2)] transition-all duration-300"
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: index * 0.02 }}
-                          data-testid={`transaction-${transaction.id}`}
+                          data-testid={`system-log-${log.id}`}
                         >
                           <div className="flex items-center justify-between gap-4">
                             <div className="flex items-center gap-4 flex-1">
-                              <div className="bg-gradient-to-br from-[#18B2B0]/30 to-[#18B2B0]/10 p-3 rounded-xl border border-[#18B2B0]/20">
-                                <Activity className="h-6 w-6 text-[#18B2B0]" />
+                              <div className={`p-3 rounded-xl border ${
+                                log.severity === 'error' ? 'bg-gradient-to-br from-red-500/30 to-red-500/10 border-red-500/20' :
+                                log.severity === 'warn' ? 'bg-gradient-to-br from-yellow-500/30 to-yellow-500/10 border-yellow-500/20' :
+                                'bg-gradient-to-br from-[#18B2B0]/30 to-[#18B2B0]/10 border-[#18B2B0]/20'
+                              }`}>
+                                <Activity className={`h-6 w-6 ${
+                                  log.severity === 'error' ? 'text-red-400' :
+                                  log.severity === 'warn' ? 'text-yellow-400' :
+                                  'text-[#18B2B0]'
+                                }`} />
                               </div>
                               <div className="flex-1">
-                                <p className="text-white font-bold text-lg mb-1">{transaction.itemName}</p>
-                                <p className="text-gray-300 text-sm flex items-center gap-2">
-                                  <span className="text-[#18B2B0]">•</span>
-                                  {transaction.userName || transaction.regionName || "عملية"}
-                                </p>
+                                <p className="text-white font-bold text-lg mb-1">{log.description}</p>
+                                <div className="flex items-center gap-3 text-sm">
+                                  <span className="text-gray-300 flex items-center gap-1">
+                                    <Shield className="h-3 w-3 text-[#18B2B0]" />
+                                    {log.userName} ({log.userRole === 'admin' ? 'مدير' : log.userRole === 'supervisor' ? 'مشرف' : 'فني'})
+                                  </span>
+                                  {log.entityName && (
+                                    <span className="text-gray-400 flex items-center gap-1">
+                                      <span className="text-[#18B2B0]">•</span>
+                                      {log.entityName}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
                             <div className="text-left space-y-2">
-                              <Badge variant="outline" className="border-white/30 text-[#18B2B0] bg-[#18B2B0]/10 text-sm px-3 py-1 font-bold">
-                                الكمية: {transaction.quantity}
+                              <Badge variant="outline" className={`text-sm px-3 py-1 font-bold ${
+                                log.action === 'create' ? 'border-white/30 text-green-400 bg-green-500/10' :
+                                log.action === 'update' ? 'border-white/30 text-blue-400 bg-blue-500/10' :
+                                log.action === 'delete' ? 'border-white/30 text-red-400 bg-red-500/10' :
+                                'border-white/30 text-[#18B2B0] bg-[#18B2B0]/10'
+                              }`}>
+                                {log.action === 'create' ? 'إنشاء' : 
+                                 log.action === 'update' ? 'تحديث' : 
+                                 log.action === 'delete' ? 'حذف' :
+                                 log.action === 'approve' ? 'موافقة' :
+                                 log.action === 'reject' ? 'رفض' :
+                                 log.action === 'login' ? 'تسجيل دخول' :
+                                 log.action === 'logout' ? 'تسجيل خروج' :
+                                 log.action}
                               </Badge>
                               <p className="text-gray-400 text-xs flex items-center justify-end gap-1">
                                 <span className="text-white/40">📅</span>
-                                {transaction.createdAt ? new Date(transaction.createdAt).toLocaleDateString('ar-SA') : 'غير محدد'}
+                                {log.createdAt ? new Date(log.createdAt).toLocaleDateString('ar-SA', { 
+                                  year: 'numeric', 
+                                  month: 'short', 
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                }) : 'غير محدد'}
                               </p>
                             </div>
                           </div>

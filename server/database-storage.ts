@@ -37,6 +37,8 @@ import {
   type InsertSupervisorTechnician,
   type SupervisorWarehouse,
   type InsertSupervisorWarehouse,
+  type SystemLog,
+  type InsertSystemLog,
   regions,
   users,
   inventoryItems,
@@ -50,7 +52,8 @@ import {
   warehouseTransfers,
   supervisorTechnicians,
   supervisorWarehouses,
-  inventoryRequests
+  inventoryRequests,
+  systemLogs
 } from "@shared/schema";
 import { IStorage } from "./storage";
 import { db } from "./db";
@@ -2074,5 +2077,73 @@ export class DatabaseStorage implements IStorage {
       .from(supervisorWarehouses)
       .where(eq(supervisorWarehouses.supervisorId, supervisorId));
     return assignments.map(a => a.warehouseId);
+  }
+
+  // System Logging
+  async logSystemActivity(logData: InsertSystemLog): Promise<void> {
+    try {
+      await db.insert(systemLogs).values(logData);
+    } catch (error) {
+      console.error('Failed to log system activity:', error);
+      // Don't throw - logging failures shouldn't break main operations
+    }
+  }
+
+  async getSystemLogs(filters?: {
+    limit?: number;
+    offset?: number;
+    userId?: string;
+    regionId?: string;
+    action?: string;
+    entityType?: string;
+    severity?: string;
+    startDate?: Date;
+    endDate?: Date;
+  }): Promise<SystemLog[]> {
+    const limit = filters?.limit || 50;
+    const offset = filters?.offset || 0;
+
+    let query = db.select().from(systemLogs).$dynamic();
+
+    const conditions = [];
+    
+    if (filters?.userId) {
+      conditions.push(eq(systemLogs.userId, filters.userId));
+    }
+    
+    if (filters?.regionId) {
+      conditions.push(eq(systemLogs.regionId, filters.regionId));
+    }
+    
+    if (filters?.action) {
+      conditions.push(eq(systemLogs.action, filters.action));
+    }
+    
+    if (filters?.entityType) {
+      conditions.push(eq(systemLogs.entityType, filters.entityType));
+    }
+    
+    if (filters?.severity) {
+      conditions.push(eq(systemLogs.severity, filters.severity));
+    }
+    
+    if (filters?.startDate) {
+      conditions.push(gte(systemLogs.createdAt, filters.startDate));
+    }
+    
+    if (filters?.endDate) {
+      conditions.push(lte(systemLogs.createdAt, filters.endDate));
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    const logs = await query
+      .orderBy(desc(systemLogs.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    return logs;
   }
 }
