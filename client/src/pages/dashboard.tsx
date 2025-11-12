@@ -384,7 +384,7 @@ export default function Dashboard() {
           </p>
           
           {/* زر طلب مخزون للفنيين فقط */}
-          {user?.role !== 'admin' && (
+          {user?.role === 'technician' && (
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
