@@ -313,7 +313,8 @@ export default function AdminPage() {
           </TabsList>
 
           {/* Dashboard Tab */}
-          <TabsContent value="dashboard" className="space-y-6 mt-6">
+          <TabsContent value="dashboard" className="space-y-8 mt-6">
+            {/* Hero Stats Section */}
             {adminStats && (
               <motion.div 
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
@@ -321,57 +322,113 @@ export default function AdminPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
               >
+                {/* المناطق */}
                 <motion.div
-                  whileHover={{ scale: 1.05, y: -5 }}
-                  transition={{ type: "spring", stiffness: 300 }}
+                  whileHover={{ scale: 1.03, y: -8 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  className="group relative overflow-hidden"
                 >
-                  <StatsKpiCard
-                    title="إجمالي المناطق"
-                    value={adminStats.totalRegions}
-                    icon={MapPin}
-                    color="primary"
-                    delay={0}
-                  />
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#18B2B0]/20 via-[#18B2B0]/10 to-transparent rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-500"></div>
+                  <Card className="relative h-full shadow-2xl border border-white/20 bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl hover:border-[#18B2B0]/40 transition-all duration-300">
+                    <CardContent className="p-8">
+                      <div className="flex items-center justify-between mb-6">
+                        <div className="p-4 rounded-2xl bg-gradient-to-br from-[#18B2B0]/30 to-[#18B2B0]/10 border border-[#18B2B0]/20 group-hover:shadow-[0_0_30px_rgba(24,178,176,0.4)] transition-all duration-300">
+                          <MapPin className="h-8 w-8 text-[#18B2B0]" />
+                        </div>
+                      </div>
+                      <h3 className="text-gray-300 text-sm font-bold mb-2">إجمالي المناطق</h3>
+                      <p className="text-white text-5xl font-black mb-2">{adminStats.totalRegions}</p>
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="text-green-400 flex items-center gap-1">
+                          <TrendingUp className="h-3 w-3" />
+                          نشط
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </motion.div>
+
+                {/* الموظفين */}
                 <motion.div
-                  whileHover={{ scale: 1.05, y: -5 }}
-                  transition={{ type: "spring", stiffness: 300 }}
+                  whileHover={{ scale: 1.03, y: -8 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  className="group relative overflow-hidden"
                 >
-                  <StatsKpiCard
-                    title="إجمالي الموظفين"
-                    value={adminStats.totalUsers}
-                    icon={Users}
-                    color="success"
-                    delay={0.1}
-                  />
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-purple-500/10 to-transparent rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-500"></div>
+                  <Card className="relative h-full shadow-2xl border border-white/20 bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl hover:border-purple-400/40 transition-all duration-300">
+                    <CardContent className="p-8">
+                      <div className="flex items-center justify-between mb-6">
+                        <div className="p-4 rounded-2xl bg-gradient-to-br from-purple-500/30 to-purple-500/10 border border-purple-400/20 group-hover:shadow-[0_0_30px_rgba(168,85,247,0.4)] transition-all duration-300">
+                          <Users className="h-8 w-8 text-purple-400" />
+                        </div>
+                      </div>
+                      <h3 className="text-gray-300 text-sm font-bold mb-2">إجمالي الموظفين</h3>
+                      <p className="text-white text-5xl font-black mb-2">{adminStats.totalUsers}</p>
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="text-purple-400 flex items-center gap-1">
+                          <Users className="h-3 w-3" />
+                          مستخدم
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </motion.div>
+
+                {/* النشطين */}
                 <motion.div
-                  whileHover={{ scale: 1.05, y: -5 }}
-                  transition={{ type: "spring", stiffness: 300 }}
+                  whileHover={{ scale: 1.03, y: -8 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  className="group relative overflow-hidden"
                 >
-                  <StatsKpiCard
-                    title="الموظفين النشطين"
-                    value={adminStats.activeUsers}
-                    icon={TrendingUp}
-                    color="info"
-                    delay={0.2}
-                  />
+                  <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 via-green-500/10 to-transparent rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-500"></div>
+                  <Card className="relative h-full shadow-2xl border border-white/20 bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl hover:border-green-400/40 transition-all duration-300">
+                    <CardContent className="p-8">
+                      <div className="flex items-center justify-between mb-6">
+                        <div className="p-4 rounded-2xl bg-gradient-to-br from-green-500/30 to-green-500/10 border border-green-400/20 group-hover:shadow-[0_0_30px_rgba(34,197,94,0.4)] transition-all duration-300">
+                          <CheckCircle className="h-8 w-8 text-green-400" />
+                        </div>
+                      </div>
+                      <h3 className="text-gray-300 text-sm font-bold mb-2">الموظفين النشطين</h3>
+                      <p className="text-white text-5xl font-black mb-2">{adminStats.activeUsers}</p>
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="text-green-400 flex items-center gap-1">
+                          <TrendingUp className="h-3 w-3" />
+                          {Math.round((adminStats.activeUsers / adminStats.totalUsers) * 100)}%
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </motion.div>
+
+                {/* العمليات */}
                 <motion.div
-                  whileHover={{ scale: 1.05, y: -5 }}
-                  transition={{ type: "spring", stiffness: 300 }}
+                  whileHover={{ scale: 1.03, y: -8 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  className="group relative overflow-hidden"
                 >
-                  <StatsKpiCard
-                    title="إجمالي العمليات"
-                    value={adminStats.totalTransactions}
-                    icon={Activity}
-                    color="warning"
-                    delay={0.3}
-                  />
+                  <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 via-amber-500/10 to-transparent rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-500"></div>
+                  <Card className="relative h-full shadow-2xl border border-white/20 bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl hover:border-amber-400/40 transition-all duration-300">
+                    <CardContent className="p-8">
+                      <div className="flex items-center justify-between mb-6">
+                        <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/30 to-amber-500/10 border border-amber-400/20 group-hover:shadow-[0_0_30px_rgba(245,158,11,0.4)] transition-all duration-300">
+                          <Activity className="h-8 w-8 text-amber-400" />
+                        </div>
+                      </div>
+                      <h3 className="text-gray-300 text-sm font-bold mb-2">إجمالي العمليات</h3>
+                      <p className="text-white text-5xl font-black mb-2">{adminStats.totalTransactions}</p>
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="text-amber-400 flex items-center gap-1">
+                          <Activity className="h-3 w-3" />
+                          عملية
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </motion.div>
               </motion.div>
             )}
 
+            {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {regions && regions.length > 0 && (
                 <motion.div
@@ -404,12 +461,13 @@ export default function AdminPage() {
                       { name: 'نشط', value: adminStats.activeUsers },
                       { name: 'غير نشط', value: adminStats.totalUsers - adminStats.activeUsers },
                     ]}
-                    colors={['#18B2B0', '#EF4444']}
+                    colors={['#10B981', '#EF4444']}
                   />
                 </motion.div>
               )}
             </div>
 
+            {/* Trend Chart */}
             {adminStats && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -428,7 +486,7 @@ export default function AdminPage() {
                   ]}
                   dataKeys={[
                     { key: 'عمليات', color: '#18B2B0', name: 'العمليات' },
-                    { key: 'مستخدمين', color: '#10B981', name: 'المستخدمين' },
+                    { key: 'مستخدمين', color: '#A855F7', name: 'المستخدمين' },
                   ]}
                 />
               </motion.div>
