@@ -71,12 +71,12 @@ export default function Dashboard() {
     enabled: user?.role === 'admin',
   });
 
-  const { data: myFixedInventory } = useQuery<TechnicianFixedInventory>({
+  const { data: myFixedInventory = null, isLoading: fixedLoading } = useQuery<TechnicianFixedInventory | null>({
     queryKey: ["/api/my-fixed-inventory"],
     enabled: !!user?.id,
   });
 
-  const { data: myMovingInventory } = useQuery<TechnicianInventory>({
+  const { data: myMovingInventory = null, isLoading: movingLoading } = useQuery<TechnicianInventory | null>({
     queryKey: ["/api/my-moving-inventory"],
     enabled: !!user?.id,
   });
@@ -406,7 +406,12 @@ export default function Dashboard() {
                   />
                 </div>
 
-                {myFixedInventory && (
+                {fixedLoading ? (
+                  <div className="mt-6 text-center py-8">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#18B2B0]"></div>
+                    <p className="text-gray-400 text-sm mt-4">جاري تحميل البيانات...</p>
+                  </div>
+                ) : myFixedInventory && getFixedInventoryTotal() > 0 ? (
                   <div className="grid grid-cols-2 gap-3 mt-6">
                     <div className="bg-gradient-to-br from-blue-500/10 to-transparent border border-blue-500/20 rounded-lg p-3">
                       <div className="flex items-center gap-2 mb-1">
@@ -453,6 +458,11 @@ export default function Dashboard() {
                       </p>
                     </div>
                   </div>
+                ) : (
+                  <div className="mt-6 text-center py-8">
+                    <p className="text-gray-400 text-sm">لا يوجد مخزون ثابت حالياً</p>
+                    <p className="text-gray-500 text-xs mt-2">يمكنك طلب مخزون جديد من خلال زر "طلب مخزون" أعلاه</p>
+                  </div>
                 )}
               </div>
             </div>
@@ -485,7 +495,12 @@ export default function Dashboard() {
                   />
                 </div>
 
-                {myMovingInventory && (
+                {movingLoading ? (
+                  <div className="mt-6 text-center py-8">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+                    <p className="text-gray-400 text-sm mt-4">جاري تحميل البيانات...</p>
+                  </div>
+                ) : myMovingInventory && getMovingInventoryTotal() > 0 ? (
                   <div className="grid grid-cols-2 gap-3 mt-6">
                     <div className="bg-gradient-to-br from-emerald-500/10 to-transparent border border-emerald-500/20 rounded-lg p-3">
                       <div className="flex items-center gap-2 mb-1">
@@ -531,6 +546,11 @@ export default function Dashboard() {
                         {(myMovingInventory.newBatteriesBoxes || 0) + (myMovingInventory.newBatteriesUnits || 0)}
                       </p>
                     </div>
+                  </div>
+                ) : (
+                  <div className="mt-6 text-center py-8">
+                    <p className="text-gray-400 text-sm">لا يوجد مخزون متحرك حالياً</p>
+                    <p className="text-gray-500 text-xs mt-2">سيظهر المخزون المتحرك بعد قبول طلبات النقل من المستودعات</p>
                   </div>
                 )}
               </div>
