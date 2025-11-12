@@ -8,7 +8,7 @@ import { db } from "./db";
 import { eq, inArray, or } from "drizzle-orm";
 
 // Simple session store for demo purposes (in production, use proper session store)
-const activeSessions = new Map<string, { userId: string; role: string; username: string; expiry: number }>();
+const activeSessions = new Map<string, { userId: string; role: string; username: string; regionId: string | null; expiry: number }>();
 
 // Authentication middleware
 function requireAuth(req: Request, res: Response, next: NextFunction) {
@@ -26,7 +26,7 @@ function requireAuth(req: Request, res: Response, next: NextFunction) {
   }
   
   // Add user info to request
-  (req as any).user = { id: session.userId, role: session.role, username: session.username };
+  (req as any).user = { id: session.userId, role: session.role, username: session.username, regionId: session.regionId };
   next();
 }
 
@@ -175,6 +175,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: user.id,
         role: user.role,
         username: user.username,
+        regionId: user.regionId || null,
         expiry
       });
       

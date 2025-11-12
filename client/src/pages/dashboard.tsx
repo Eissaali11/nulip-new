@@ -71,13 +71,13 @@ export default function Dashboard() {
   });
 
   const { data: techniciansData } = useQuery<{ technicians: TechnicianWithBothInventories[] }>({
-    queryKey: ["/api/admin/all-technicians-inventory"],
-    enabled: user?.role === 'admin',
+    queryKey: user?.role === 'admin' ? ["/api/admin/all-technicians-inventory"] : ["/api/supervisor/technicians-inventory"],
+    enabled: !!user?.id && (user?.role === 'admin' || user?.role === 'supervisor'),
   });
 
   const { data: warehousesData } = useQuery<WarehouseWithStats[]>({
-    queryKey: ["/api/warehouses"],
-    enabled: user?.role === 'admin',
+    queryKey: user?.role === 'admin' ? ["/api/warehouses"] : ["/api/supervisor/warehouses"],
+    enabled: !!user?.id && (user?.role === 'admin' || user?.role === 'supervisor'),
   });
 
   const { data: myFixedInventory = null, isLoading: fixedLoading } = useQuery<TechnicianFixedInventory | null>({
@@ -102,8 +102,8 @@ export default function Dashboard() {
 
   // حساب إجمالي المخزون الثابت
   const getFixedInventoryTotal = () => {
-    // إذا كان المستخدم Admin، احسب إجمالي المخزون الثابت لجميع الفنيين
-    if (user?.role === 'admin' && techniciansData?.technicians) {
+    // إذا كان المستخدم Admin أو Supervisor، احسب إجمالي المخزون الثابت لجميع الفنيين
+    if ((user?.role === 'admin' || user?.role === 'supervisor') && techniciansData?.technicians) {
       return techniciansData.technicians.reduce((total, tech) => {
         if (!tech.fixedInventory) return total;
         const inv = tech.fixedInventory;
@@ -139,8 +139,8 @@ export default function Dashboard() {
 
   // حساب إجمالي المخزون المتحرك
   const getMovingInventoryTotal = () => {
-    // إذا كان المستخدم Admin، احسب إجمالي المخزون المتحرك لجميع الفنيين
-    if (user?.role === 'admin' && techniciansData?.technicians) {
+    // إذا كان المستخدم Admin أو Supervisor، احسب إجمالي المخزون المتحرك لجميع الفنيين
+    if ((user?.role === 'admin' || user?.role === 'supervisor') && techniciansData?.technicians) {
       return techniciansData.technicians.reduce((total, tech) => {
         if (!tech.movingInventory) return total;
         const inv = tech.movingInventory;
@@ -174,9 +174,9 @@ export default function Dashboard() {
     );
   };
 
-  // إنشاء object مجمّع لجميع المخزون الثابت (للأدمن) - مع memoization
+  // إنشاء object مجمّع لجميع المخزون الثابت (للأدمن والمشرف) - مع memoization
   const aggregatedFixedInventory = useMemo(() => {
-    if (user?.role === 'admin' && techniciansData?.technicians) {
+    if ((user?.role === 'admin' || user?.role === 'supervisor') && techniciansData?.technicians) {
       return techniciansData.technicians.reduce((agg, tech) => {
         if (!tech.fixedInventory) return agg;
         const inv = tech.fixedInventory;
@@ -205,9 +205,9 @@ export default function Dashboard() {
     return myFixedInventory;
   }, [user?.role, techniciansData?.technicians, myFixedInventory]);
 
-  // إنشاء object مجمّع لجميع المخزون المتحرك (للأدمن) - مع memoization
+  // إنشاء object مجمّع لجميع المخزون المتحرك (للأدمن والمشرف) - مع memoization
   const aggregatedMovingInventory = useMemo(() => {
-    if (user?.role === 'admin' && techniciansData?.technicians) {
+    if ((user?.role === 'admin' || user?.role === 'supervisor') && techniciansData?.technicians) {
       return techniciansData.technicians.reduce((agg, tech) => {
         if (!tech.movingInventory) return agg;
         const inv = tech.movingInventory;
@@ -694,16 +694,16 @@ export default function Dashboard() {
           </Tabs>
         )}
 
-        {/* Global Inventory Chart - للأدمن فقط */}
-        {user?.role === 'admin' && (
+        {/* Global Inventory Chart - للأدمن والمشرف */}
+        {(user?.role === 'admin' || user?.role === 'supervisor') && (
           <GlobalInventoryChart
             technicians={techniciansData?.technicians}
             warehouses={warehousesData}
           />
         )}
 
-        {/* المستودعات - للأدمن فقط */}
-        {user?.role === 'admin' && warehousesData && warehousesData.length > 0 && (
+        {/* المستودعات - للأدمن والمشرف */}
+        {(user?.role === 'admin' || user?.role === 'supervisor') && warehousesData && warehousesData.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -776,7 +776,7 @@ export default function Dashboard() {
         )}
 
         {/* Technicians Dashboard */}
-        {user?.role === 'admin' && techniciansData?.technicians && (
+        {(user?.role === 'admin' || user?.role === 'supervisor') && techniciansData?.technicians && (
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
