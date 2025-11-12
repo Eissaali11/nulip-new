@@ -1566,29 +1566,11 @@ export class DatabaseStorage implements IStorage {
       };
 
       const fields = fieldMap[transfer.itemType];
+      if (!fields) {
+        throw new Error(`Unknown item type: ${transfer.itemType}`);
+      }
+      
       const fieldName = transfer.packagingType === 'box' ? fields.boxes : fields.units;
-
-      const [inventory] = await tx
-        .select()
-        .from(warehouseInventory)
-        .where(eq(warehouseInventory.warehouseId, transfer.warehouseId));
-
-      if (!inventory) {
-        throw new Error('Warehouse inventory not found');
-      }
-
-      const currentStock = (inventory as any)[fieldName] || 0;
-      if (currentStock < transfer.quantity) {
-        throw new Error(`Insufficient stock in warehouse. Available: ${currentStock}, Requested: ${transfer.quantity}`);
-      }
-
-      await tx
-        .update(warehouseInventory)
-        .set({
-          [fieldName]: currentStock - transfer.quantity,
-          updatedAt: new Date(),
-        })
-        .where(eq(warehouseInventory.warehouseId, transfer.warehouseId));
 
       const [techInventory] = await tx
         .select()
