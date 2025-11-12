@@ -79,28 +79,14 @@ interface WarehouseTransfer {
   warehouseName: string;
   technicianId: string;
   technicianName: string;
-  status: 'pending' | 'approved' | 'rejected';
+  itemType: string;
+  packagingType: string;
+  quantity: number;
+  itemNameAr?: string;
+  status: 'pending' | 'accepted' | 'rejected';
   createdAt: string;
   notes?: string;
   rejectionReason?: string;
-  n950Boxes: number;
-  n950Units: number;
-  i9000sBoxes: number;
-  i9000sUnits: number;
-  i9100Boxes: number;
-  i9100Units: number;
-  rollPaperBoxes: number;
-  rollPaperUnits: number;
-  stickersBoxes: number;
-  stickersUnits: number;
-  newBatteriesBoxes: number;
-  newBatteriesUnits: number;
-  mobilySimBoxes: number;
-  mobilySimUnits: number;
-  stcSimBoxes: number;
-  stcSimUnits: number;
-  zainSimBoxes: number;
-  zainSimUnits: number;
 }
 
 interface WarehouseInfo {
@@ -247,6 +233,10 @@ export default function Notifications() {
     : transfers.filter(transfer => filter === 'all' || transfer.status === filter);
 
   const getRequestedItems = (item: InventoryRequest | WarehouseTransfer) => {
+    if ('itemType' in item) {
+      return [`${item.itemNameAr || item.itemType}: ${item.quantity} ${item.packagingType === 'box' ? 'كرتون' : 'قطعة'}`];
+    }
+    
     const items: string[] = [];
     const fields = [
       { name: "N950", boxes: item.n950Boxes, units: item.n950Units },
@@ -281,6 +271,7 @@ export default function Notifications() {
           </Badge>
         );
       case 'approved':
+      case 'accepted':
         return (
           <Badge className="bg-gradient-to-r from-green-500/30 to-emerald-500/30 text-green-300 border border-green-500/40 px-4 py-1.5 text-sm font-semibold shadow-lg shadow-green-500/20">
             ✓ مقبول
@@ -376,7 +367,7 @@ export default function Notifications() {
     : transfers.filter(t => t.status === 'pending').length;
   const approvedCount = isAdmin
     ? requests.filter(r => r.status === 'approved').length
-    : transfers.filter(t => t.status === 'approved').length;
+    : transfers.filter(t => t.status === 'accepted').length;
   const rejectedCount = isAdmin
     ? requests.filter(r => r.status === 'rejected').length
     : transfers.filter(t => t.status === 'rejected').length;
