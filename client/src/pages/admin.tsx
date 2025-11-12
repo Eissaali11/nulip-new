@@ -225,28 +225,15 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50/30 to-slate-50" dir="rtl">
-      {/* Elegant Professional Banner */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900" dir="rtl">
+      {/* Modern Professional Banner */}
       <div className="relative overflow-hidden h-96 shadow-2xl">
-        {/* Background Image */}
-        <div className="absolute inset-0">
-          <img
-            src={bannerImage}
-            alt="Admin Dashboard Banner"
-            className="w-full h-full object-cover"
-          />
-        </div>
-
-        {/* Multi-Layer Gradient Overlays for Depth */}
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-900/85 via-[#18B2B0]/30 to-slate-900/75"></div>
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-slate-900/50"></div>
-
-        {/* Elegant Decorative Glow Effects */}
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#18B2B0]/20 rounded-full blur-3xl opacity-60"></div>
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-teal-400/15 rounded-full blur-3xl opacity-50"></div>
-
-        {/* Top Premium Border Accent */}
-        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-[#18B2B0] to-transparent"></div>
+        {/* Gradient Background */}
+        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600"></div>
+        
+        {/* Animated Background Shapes */}
+        <div className="absolute top-0 left-0 w-96 h-96 bg-blue-500/30 rounded-full blur-3xl opacity-60"></div>
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl opacity-50"></div>
 
         {/* Content Section */}
         <div className="relative h-full flex flex-col justify-between px-6 py-6">
@@ -291,11 +278,12 @@ export default function AdminPage() {
           <div></div>
         </div>
 
-        {/* Elegant Bottom Gradient Fade */}
-        <div className="absolute bottom-0 inset-x-0 h-32 bg-gradient-to-t from-slate-50 via-slate-50/60 to-transparent"></div>
-        
-        {/* Bottom Premium Border Accent */}
-        <div className="absolute bottom-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-[#18B2B0]/60 to-transparent"></div>
+        {/* Bottom Wave */}
+        <div className="absolute bottom-0 left-0 right-0">
+          <svg viewBox="0 0 1200 120" preserveAspectRatio="none" className="w-full h-12 fill-slate-900">
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"></path>
+          </svg>
+        </div>
       </div>
 
       {/* Main Content */}
@@ -382,7 +370,7 @@ export default function AdminPage() {
                   description="مقارنة المستخدمين والأصناف حسب المنطقة"
                   data={regions.map(r => ({
                     name: r.name,
-                    users: r.userCount || 0,
+                    users: users.filter(u => u.regionId === r.id).length,
                     items: r.itemCount || 0,
                   }))}
                 />

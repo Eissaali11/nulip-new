@@ -153,87 +153,84 @@ export default function WarehousesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50/30 to-slate-50" dir="rtl">
-      {/* Elegant Professional Banner */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900" dir="rtl">
+      {/* Modern Professional Banner */}
       <motion.div 
-        className="relative overflow-hidden h-96 shadow-2xl"
+        className="relative overflow-hidden h-80 shadow-2xl"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 1 }}
+        transition={{ duration: 0.6 }}
       >
-        {/* Background Image with Zoom Effect */}
-        <motion.div 
-          className="absolute inset-0"
-          initial={{ scale: 1.1 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 1.5, ease: "easeOut" }}
-        >
-          <img
-            src={bannerImage}
-            alt="Warehouses Banner"
-            className="w-full h-full object-cover"
-          />
-        </motion.div>
-
-        {/* Multi-Layer Gradient Overlays for Depth */}
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-900/85 via-[#18B2B0]/30 to-slate-900/75"></div>
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-slate-900/50"></div>
-
-        {/* Elegant Decorative Glow Effects */}
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#18B2B0]/20 rounded-full blur-3xl opacity-60"></div>
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-teal-400/15 rounded-full blur-3xl opacity-50"></div>
-
-        {/* Top Premium Border Accent */}
-        <motion.div 
-          className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-[#18B2B0] to-transparent"
-          initial={{ scaleX: 0 }}
-          animate={{ scaleX: 1 }}
-          transition={{ delay: 0.5, duration: 1 }}
-        ></motion.div>
-
+        {/* Gradient Background */}
+        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600"></div>
+        
+        {/* Animated Background Shapes */}
+        <motion.div
+          className="absolute top-0 left-0 w-72 h-72 bg-blue-500/30 rounded-full blur-3xl"
+          animate={{
+            x: [0, 100, 0],
+            y: [0, 50, 0],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        <motion.div
+          className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl"
+          animate={{
+            x: [0, -80, 0],
+            y: [0, -60, 0],
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        
         {/* Content Section */}
         <div className="relative h-full flex flex-col justify-between px-6 py-6">
-          {/* Top Section - Back Button with Elegant Animation */}
+          {/* Top Section - Back Button */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 0.7 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
           >
-            <Link href="/admin">
-              <motion.div
-                whileHover={{ scale: 1.05, x: -5 }}
-                whileTap={{ scale: 0.95 }}
-                className="inline-block"
+            <Link href="/">
+              <Button 
+                variant="secondary" 
+                className="bg-white/10 backdrop-blur-xl border-2 border-white/20 text-white hover:bg-white/20 hover:border-[#18B2B0]/60 shadow-2xl transition-all duration-300"
+                data-testid="button-back-dashboard"
               >
-                <Button 
-                  variant="secondary" 
-                  className="bg-white/10 backdrop-blur-xl border-2 border-white/20 text-white hover:bg-white/20 hover:border-[#18B2B0]/60 hover:shadow-[0_0_20px_rgba(24,178,176,0.3)] shadow-2xl transition-all duration-300 group"
-                  data-testid="button-back-admin"
-                >
-                  <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-[-3px] transition-transform duration-300" />
-                  <LayoutDashboard className="h-4 w-4 ml-2" />
-                  الرجوع للقائمة الرئيسية
-                </Button>
-              </motion.div>
+                <ArrowRight className="h-4 w-4 ml-2" />
+                <LayoutDashboard className="h-4 w-4 ml-2" />
+                العودة للوحة الرئيسية
+              </Button>
             </Link>
           </motion.div>
 
-          {/* Center Premium Icon with Sophisticated Animation */}
+          {/* Center Title */}
           <motion.div
             className="flex items-center justify-center"
-            initial={{ opacity: 0, scale: 0.7, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ delay: 0.9, duration: 0.9, ease: "easeOut" }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.6 }}
           >
-            <div className="relative">
-              {/* Static Elegant Glow Effect */}
-              <div className="absolute inset-0 bg-[#18B2B0]/30 rounded-full blur-2xl"></div>
-              
-              {/* Premium Glass Card */}
-              <div className="relative bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl p-8 rounded-3xl border-2 border-white/30 shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#18B2B0]/10 to-transparent rounded-3xl"></div>
-                <Warehouse className="relative h-20 w-20 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]" />
+            <div className="text-center">
+              <div className="relative inline-block mb-4">
+                <div className="absolute inset-0 bg-[#18B2B0]/30 rounded-full blur-2xl"></div>
+                <div className="relative bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl p-6 rounded-3xl border-2 border-white/30">
+                  <Warehouse className="h-16 w-16 text-white" />
+                </div>
               </div>
+              <h1 className="text-4xl lg:text-5xl font-black text-white mb-2 drop-shadow-2xl flex items-center justify-center gap-3">
+                <Sparkles className="h-8 w-8 text-yellow-300 animate-pulse" />
+                إدارة المستودعات
+                <Sparkles className="h-8 w-8 text-yellow-300 animate-pulse" />
+              </h1>
+              <p className="text-white/90 text-lg font-semibold">نظام متكامل لإدارة المخزون</p>
             </div>
           </motion.div>
 
@@ -241,25 +238,21 @@ export default function WarehousesPage() {
           <div></div>
         </div>
 
-        {/* Elegant Bottom Gradient Fade */}
-        <div className="absolute bottom-0 inset-x-0 h-32 bg-gradient-to-t from-slate-50 via-slate-50/60 to-transparent"></div>
-        
-        {/* Bottom Premium Border Accent */}
-        <motion.div 
-          className="absolute bottom-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-[#18B2B0]/60 to-transparent"
-          initial={{ scaleX: 0 }}
-          animate={{ scaleX: 1 }}
-          transition={{ delay: 1.2, duration: 1 }}
-        ></motion.div>
+        {/* Bottom Wave */}
+        <div className="absolute bottom-0 left-0 right-0">
+          <svg viewBox="0 0 1200 120" preserveAspectRatio="none" className="w-full h-12 fill-slate-900">
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"></path>
+          </svg>
+        </div>
       </motion.div>
 
       {/* Warehouses Content */}
-      <div className="max-w-7xl mx-auto px-6 py-10">
-        {/* Add Warehouse Button */}
+      <div className="container mx-auto px-4 sm:px-6 py-10 max-w-7xl">
+        {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">إدارة المستودعات</h2>
-            <p className="text-sm sm:text-base text-gray-600 mt-1">تحكم كامل في مستودعاتك ومخزونك</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white">جميع المستودعات</h2>
+            <p className="text-sm sm:text-base text-white/70 mt-1">إدارة شاملة للمستودعات والمخزون</p>
           </div>
           <div className="flex gap-2 sm:gap-3 w-full sm:w-auto flex-wrap">
             <Button 

@@ -1,191 +1,163 @@
-# نظام إدارة المخزون - Design Guidelines
+# StockPro - دليل التصميم الموحد
 
-## Design Approach
-**System-Based Approach**: Material Design + Carbon Design System hybrid
-**Rationale**: Utility-focused inventory management requires data clarity, efficient workflows, and enterprise-grade UI patterns. Material's visual feedback combined with Carbon's data-handling excellence creates optimal admin interface.
+## الهوية البصرية
 
----
+### الألوان الأساسية
+- **اللون الأساسي**: #18B2B0 (Teal/Turquoise) - احترافي وحديث
+- **Hover State**: #16a09e
+- **Gradient Primary**: from-[#18B2B0] via-teal-500 to-cyan-500
+- **Gradient Secondary**: from-slate-900 via-purple-900 to-slate-900
 
-## Core Design Elements
+### ألوان الحالات
+- **Success**: #10B981 (Green)
+- **Warning**: #F59E0B (Amber)
+- **Error**: #EF4444 (Red)
+- **Info**: #3B82F6 (Blue)
 
-### A. Color Palette
+## مكونات التصميم
 
-**Light Mode:**
-- Primary Blue: 210 95% 45% (professional, trustworthy)
-- Primary Hover: 210 95% 38%
-- Background: 0 0% 98%
-- Surface: 0 0% 100%
-- Border: 220 13% 91%
-- Text Primary: 220 15% 15%
-- Text Secondary: 220 9% 46%
+### 1. البانر العلوي (Hero Banner)
+```
+- Background: gradient-to-r from-cyan-500 via-blue-600 to-purple-600
+- Height: h-80 to h-96
+- Shadow: shadow-2xl
+- Animation: Animated background shapes with framer-motion
+- Content: Logo + Title + Description + Action Button
+- Bottom wave decoration
+```
 
-**Dark Mode:**
-- Primary Blue: 210 90% 55%
-- Primary Hover: 210 90% 62%
-- Background: 222 47% 11%
-- Surface: 217 33% 17%
-- Border: 217 20% 25%
-- Text Primary: 210 40% 98%
-- Text Secondary: 217 10% 70%
+### 2. البطاقات (Cards)
+```
+- Background: bg-gradient-to-br from-slate-800/90 to-slate-900/90
+- Backdrop: backdrop-blur-xl
+- Border: border-2 border-cyan-500/30 أو border-[#18B2B0]/30
+- Shadow: shadow-2xl
+- Rounded: rounded-xl أو rounded-2xl
+- Padding: p-6 أو p-8
+- Hover: hover:shadow-2xl transition-all duration-300 hover:-translate-y-1
+```
 
-**Status Colors (Both Modes):**
-- Success: 142 76% 36% / 142 71% 45%
-- Warning: 38 92% 50% / 43 96% 56%
-- Error: 0 84% 60% / 0 72% 51%
-- Info: 199 89% 48% / 199 89% 60%
+### 3. الأزرار (Buttons)
+```
+Primary:
+- bg-gradient-to-r from-[#18B2B0] to-teal-500
+- hover:from-[#16a09e] hover:to-teal-600
+- text-white font-bold shadow-lg
+- rounded-lg px-6 py-2.5
 
-### B. Typography (RTL)
+Secondary:
+- bg-gradient-to-r from-blue-600 to-cyan-600
+- hover:from-blue-700 hover:to-cyan-700
 
-**Font Family**: 'Cairo', 'Tajawal', sans-serif (Google Fonts)
+Danger:
+- bg-gradient-to-r from-red-600 to-rose-600
+- hover:from-red-700 hover:to-rose-700
+```
 
-**Scale:**
-- H1: text-3xl font-bold (إدارة المخزون)
-- H2: text-2xl font-semibold (عناوين الصفحات)
-- H3: text-xl font-semibold (عناوين الأقسام)
-- Body: text-base font-normal
-- Small: text-sm
-- Label: text-sm font-medium
+### 4. KPI Cards (بطاقات المؤشرات)
+```
+- Gradient backgrounds: from-[color]-500 via-[color]-600 to-[color2]-500
+- Icon in colored circle: bg-white/20 backdrop-blur-sm p-4 rounded-2xl
+- White text: text-white
+- Animation: hover:shadow-2xl transition-all duration-300 hover:-translate-y-1
+```
 
-**RTL Considerations**: Direction RTL, text alignment right by default
+### 5. الجداول (Tables)
+```
+- Background: bg-white/5 backdrop-blur-sm
+- Header: bg-gradient-to-r from-[#18B2B0]/20 to-transparent
+- Border: border-cyan-500/30
+- Hover: hover:bg-white/10
+- Text: text-white
+```
 
-### C. Layout System
+### 6. Forms & Inputs
+```
+- Background: bg-slate-800/50 backdrop-blur-sm
+- Border: border-cyan-500/30 focus:border-[#18B2B0]
+- Text: text-white
+- Labels: text-cyan-400 font-medium
+```
 
-**Spacing Primitives**: Use Tailwind units: 2, 3, 4, 6, 8, 12, 16, 20
-- Component padding: p-4, p-6
-- Section spacing: space-y-6, space-y-8
-- Card gaps: gap-4, gap-6
-- Table cell padding: px-4 py-3
+## الانيميشنز (Animations)
 
-**Grid Structure**: 
-- Sidebar: w-64 (navigation)
-- Main content: flex-1 with max-w-7xl
-- Dashboard cards: grid-cols-1 md:grid-cols-2 lg:grid-cols-4
+### Framer Motion Patterns
+```
+- Page entrance: initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+- Stagger delay: delay={0.1 * index}
+- Hover scale: whileHover={{ scale: 1.05 }}
+- Tap feedback: whileTap={{ scale: 0.95 }}
+- Floating elements: animate={{ y: [0, -10, 0] }} transition={{ duration: 3, repeat: Infinity }}
+```
 
-### D. Component Library
+## Layout Patterns
 
-**Navigation Sidebar:**
-- Fixed right-side (RTL)
-- Logo + app name at top
-- Icon + label menu items
-- Active state: bg-blue with subtle glow
-- Collapsible on mobile (hamburger top-right)
+### صفحة Admin
+```
+1. Hero Banner (h-96)
+2. Stats Grid (4 columns - gradient KPI cards)
+3. Tabs Section
+   - Dashboard Tab: KPI cards + Charts
+   - Regions Tab: Table + CRUD
+   - Users Tab: Table + CRUD
+   - Transactions Tab: List
+```
 
-**Data Tables:**
-- Striped rows (subtle alternating background)
-- Hover state: light highlight
-- Sortable headers (chevron icons)
-- Row actions: icon buttons (edit, delete, view)
-- Pagination: bottom with page numbers
-- Search + filters above table
-- Borders: subtle, not heavy
+### صفحة Warehouses
+```
+1. Hero Banner (h-80)
+2. Stats Overview (3-4 KPI cards)
+3. Warehouses Grid (responsive cards)
+4. Actions: Create/Edit/View modals
+```
 
-**Forms:**
-- Labels above inputs (right-aligned)
-- Input fields: rounded-lg, border, bg-surface
-- Focus state: blue border ring
-- Helper text below inputs
-- Required field indicators (*)
-- Submit buttons: primary blue, full-width on mobile
-- Form sections with clear dividers
+### صفحة My Fixed Inventory
+```
+1. Hero Banner (h-80) مع Logos و Device Image
+2. Personal Analytics:
+   - 3 KPI Cards (Total/Devices/SIMs)
+   - Pie Chart (Stock Distribution)
+3. Action Buttons Row
+4. Inventory Items Grid (gradient cards)
+```
 
-**Buttons:**
-- Primary: bg-primary text-white rounded-lg px-6 py-2.5
-- Secondary: border-2 border-primary text-primary
-- Danger: bg-error text-white
-- Icon buttons: p-2 rounded-lg hover:bg-surface
-- Button groups: flex gap-2
+## الخطوط (Typography)
 
-**Cards:**
-- Rounded corners: rounded-xl
-- Shadow: subtle elevation
-- Header with title + actions
-- Padding: p-6
-- Dividers between sections
+- **Font Family**: 'Noto Sans Arabic', 'Cairo', sans-serif
+- **Headings**: font-black أو font-bold
+- **Body**: font-normal أو font-medium
+- **RTL Direction**: dir="rtl" على كل صفحة
 
-**Stats/Metrics Cards:**
-- Icon + number + label + trend indicator
-- Color-coded by category
-- Grid layout: 2x2 or 4x1
+## Responsive Design
 
-**Modals/Dialogs:**
-- Overlay: bg-black/50 backdrop-blur-sm
-- Content: centered, max-w-lg
-- Header: title + close button
-- Footer: action buttons (right-aligned in RTL)
+```
+Mobile (< 768px):
+- grid-cols-1
+- Full width buttons
+- Stacked layout
 
-**Toasts/Alerts:**
-- Top-center positioning
-- Color-coded by type
-- Icon + message + close button
-- Auto-dismiss after 5s
+Tablet (768px - 1024px):
+- grid-cols-2
+- Two column forms
 
-### E. Interactions
+Desktop (> 1024px):
+- grid-cols-4 (Stats)
+- grid-cols-3 (Cards)
+- Full features visible
+```
 
-**Minimal Animations:**
-- Page transitions: fade-in only
-- Hover states: subtle color shift
-- Loading: simple spinner
-- No complex scroll effects
-- Focus visible for accessibility
+## Dark Theme
 
----
-
-## Page-Specific Layouts
-
-**Dashboard:**
-- Stats cards grid (4 metrics)
-- Recent activity table
-- Quick actions section
-- Low stock alerts panel
-
-**Inventory List:**
-- Search + filter toolbar
-- Data table (item, SKU, quantity, location, status)
-- Bulk actions dropdown
-- Add item button (top-left in RTL)
-
-**Add/Edit Item Form:**
-- Two-column layout on desktop
-- Sections: Basic Info, Pricing, Stock, Images
-- Save + Cancel buttons at bottom
-- Validation feedback inline
-
-**Reports Page:**
-- Date range picker
-- Report type selector
-- Charts (bar, line for trends)
-- Export button (PDF, Excel)
-
----
-
-## RTL Implementation Notes
-
-- All flex/grid items flow right-to-left
-- Icons positioned on right side of text
-- Menus open from right edge
-- Dropdowns align to right
-- Chevrons point left for "next"
-- Form labels right-aligned
-- Number inputs maintain LTR for numerals
-
----
-
-## Dark Mode Strategy
-
-- Toggle in header (sun/moon icon)
-- Persistent preference (localStorage)
-- All components use CSS variables
-- Reduced contrast to prevent eye strain
-- Form inputs with visible but subtle borders
-- Tables maintain readability with proper contrast
-
----
+جميع الصفحات تستخدم:
+- Background: bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900
+- Text: text-white
+- Cards: Semi-transparent dark cards مع backdrop-blur
+- Borders: Colored borders (#18B2B0) مع opacity
 
 ## Accessibility
 
-- ARIA labels in Arabic
-- Keyboard navigation support
-- Focus indicators visible in both modes
-- Color contrast ratios meet WCAG AA
-- Screen reader friendly table markup
-- Form error announcements
+- data-testid على كل عنصر تفاعلي
+- ARIA labels بالعربية
+- Focus states واضحة
+- Keyboard navigation
+- High contrast في الـ dark theme
