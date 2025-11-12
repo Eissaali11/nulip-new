@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Navbar } from "@/components/dashboard/Navbar";
+import { GridBackground } from "@/components/dashboard/GridBackground";
+import dashboardBg from "@assets/image_1762515061799.png";
 
 interface TechnicianInventoryData {
   technicianId: string;
@@ -589,183 +593,210 @@ export default function AdminInventoryOverview() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#E0F7F7] to-white">
-        <div className="text-center">
-          <div className="relative w-16 h-16 mx-auto mb-4 animate-spin">
-            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#18B2B0] border-r-[#18B2B0]"></div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
+        <GridBackground />
+        <div className="flex items-center justify-center min-h-screen relative z-10">
+          <div className="text-center">
+            <motion.div
+              className="relative w-20 h-20 mx-auto mb-6"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            >
+              <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#18B2B0] border-r-[#18B2B0] shadow-lg shadow-[#18B2B0]/50"></div>
+            </motion.div>
+            <p className="text-white text-lg font-medium">جاري التحميل...</p>
           </div>
-          <p className="text-slate-700 text-base font-medium">جاري التحميل...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#E0F7F7] to-white" dir="rtl">
-      <div className="container mx-auto p-4 sm:p-6 max-w-7xl">
-        
-        {/* Header Section */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-[#E0F7F7] via-white to-[#E0F7F7]/50 rounded-2xl shadow-lg border border-[#18B2B0]/20 p-4 sm:p-6 mb-6 backdrop-blur-sm">
-          <div className="absolute top-0 right-0 w-40 h-40 bg-[#18B2B0]/10 rounded-full blur-3xl"></div>
-          <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-[#18B2B0] rounded-xl">
-                <BarChart3 className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-                  لوحة مخزون الفنيين
-                </h1>
-                <p className="text-sm text-gray-600 mt-0.5">
-                  عرض شامل لمخزون جميع الفنيين
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex gap-2 flex-wrap">
-              <button
-                onClick={() => setLocation('/')}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white border-2 border-[#18B2B0] text-[#18B2B0] font-medium rounded-lg hover:bg-[#18B2B0] hover:text-white transition-all duration-200 text-sm touch-manipulation"
-                style={{ WebkitTapHighlightColor: 'transparent', minHeight: '44px' }}
-                type="button"
-                data-testid="button-back-home"
-              >
-                <Home className="h-4 w-4" />
-                <span>الرئيسية</span>
-              </button>
-              
-              <button
-                onClick={exportToExcel}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#18B2B0] text-white font-medium rounded-lg hover:bg-[#16a09e] transition-all duration-200 text-sm touch-manipulation shadow-sm"
-                style={{ WebkitTapHighlightColor: 'transparent', minHeight: '44px' }}
-                type="button"
-                data-testid="button-export-all"
-              >
-                <FileDown className="h-4 w-4" />
-                <span>تصدير إلى Excel</span>
-              </button>
-            </div>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden" dir="rtl">
+      <GridBackground />
+      
+      <div
+        className="absolute inset-0 opacity-5 bg-center bg-cover"
+        style={{
+          backgroundImage: `url(${dashboardBg})`,
+          backgroundBlendMode: 'overlay'
+        }}
+      />
 
-        {/* Search Section */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-[#E0F7F7] via-white to-[#E0F7F7]/50 rounded-2xl shadow-lg border border-[#18B2B0]/20 p-4 sm:p-6 mb-6 backdrop-blur-sm">
-          <div className="absolute top-0 left-0 w-40 h-40 bg-[#18B2B0]/10 rounded-full blur-3xl"></div>
-          <div className="relative">
-            <div className="flex items-center gap-2 mb-4">
-              <Search className="h-5 w-5 text-[#18B2B0]" />
-              <h2 className="text-lg font-bold text-gray-900">البحث والتصفية</h2>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="relative">
-              <Input
-                type="text"
-                placeholder="ابحث باسم الفني..."
-                value={searchName}
-                onChange={(e) => setSearchName(e.target.value)}
-                className="pr-10 h-12 border-gray-300 focus:border-[#18B2B0] focus:ring-[#18B2B0]"
-                data-testid="input-search-name"
-              />
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-              {searchName && (
-                <button
-                  onClick={() => setSearchName("")}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  data-testid="button-clear-name"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-            <div className="relative">
-              <Input
-                type="text"
-                placeholder="ابحث بالمنطقة/المدينة..."
-                value={searchCity}
-                onChange={(e) => setSearchCity(e.target.value)}
-                className="pr-10 h-12 border-gray-300 focus:border-[#18B2B0] focus:ring-[#18B2B0]"
-                data-testid="input-search-city"
-              />
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-              {searchCity && (
-                <button
-                  onClick={() => setSearchCity("")}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  data-testid="button-clear-city"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-            </div>
-            {(searchName || searchCity) && (
-              <div className="mt-3 text-sm text-gray-600">
-                النتائج: {technicians.length} من {allTechnicians.length} فني
+      <div className="relative z-10">
+        <Navbar />
+
+        <div className="container mx-auto px-4 sm:px-6 py-8 max-w-7xl">
+          
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <div className="flex items-center gap-4">
+                <div className="p-4 bg-gradient-to-br from-[#18B2B0] to-[#16a09e] rounded-2xl shadow-lg shadow-[#18B2B0]/30">
+                  <BarChart3 className="h-8 w-8 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl sm:text-4xl font-bold text-white mb-1">
+                    لوحة مخزون الفنيين
+                  </h1>
+                  <p className="text-gray-400 text-sm">
+                    عرض شامل لمخزون جميع الفنيين
+                  </p>
+                </div>
               </div>
-            )}
-          </div>
-        </div>
+              
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  onClick={exportToExcel}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#18B2B0] to-[#16a09e] text-white font-medium rounded-xl hover:shadow-lg hover:shadow-[#18B2B0]/50 transition-all duration-300 transform hover:scale-105"
+                  type="button"
+                  data-testid="button-export-all"
+                >
+                  <FileDown className="h-4 w-4" />
+                  <span>تصدير إلى Excel</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Search Section */}
+            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl shadow-2xl p-4 sm:p-6 mb-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Search className="h-5 w-5 text-[#18B2B0]" />
+                <h2 className="text-lg font-bold text-white">البحث والتصفية</h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="relative">
+                  <Input
+                    type="text"
+                    placeholder="ابحث باسم الفني..."
+                    value={searchName}
+                    onChange={(e) => setSearchName(e.target.value)}
+                    className="pr-10 bg-white/10 backdrop-blur-xl border border-white/20 text-white placeholder:text-gray-400 focus:border-[#18B2B0] focus:ring-[#18B2B0] rounded-xl shadow-sm text-right"
+                    data-testid="input-search-name"
+                  />
+                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  {searchName && (
+                    <button
+                      onClick={() => setSearchName("")}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300"
+                      data-testid="button-clear-name"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+                <div className="relative">
+                  <Input
+                    type="text"
+                    placeholder="ابحث بالمنطقة/المدينة..."
+                    value={searchCity}
+                    onChange={(e) => setSearchCity(e.target.value)}
+                    className="pr-10 bg-white/10 backdrop-blur-xl border border-white/20 text-white placeholder:text-gray-400 focus:border-[#18B2B0] focus:ring-[#18B2B0] rounded-xl shadow-sm text-right"
+                    data-testid="input-search-city"
+                  />
+                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  {searchCity && (
+                    <button
+                      onClick={() => setSearchCity("")}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300"
+                      data-testid="button-clear-city"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+              {(searchName || searchCity) && (
+                <div className="mt-3 text-sm text-gray-300">
+                  النتائج: {technicians.length} من {allTechnicians.length} فني
+                </div>
+              )}
+            </div>
+          </motion.div>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <div className="relative overflow-hidden bg-gradient-to-br from-red-50 via-white to-red-50/30 rounded-xl shadow-lg border border-red-100 p-5 backdrop-blur-sm">
-            <div className="absolute top-0 left-0 w-32 h-32 bg-red-500/5 rounded-full blur-2xl"></div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="relative overflow-hidden bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl shadow-lg p-5"
+          >
+            <div className="absolute top-0 left-0 w-32 h-32 bg-red-500/10 rounded-full blur-2xl"></div>
             <div className="relative">
               <div className="flex items-center gap-3 mb-2">
                 <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg shadow-md">
                   <XCircle className="w-5 h-5 text-white" />
                 </div>
-                <h3 className="text-sm font-medium text-gray-700">حالة حرجة</h3>
+                <h3 className="text-sm font-medium text-white">حالة حرجة</h3>
               </div>
-              <p className="text-3xl font-bold text-red-600" data-testid="text-critical-count">
+              <p className="text-3xl font-bold text-red-400" data-testid="text-critical-count">
                 {criticalTechs}
               </p>
-              <p className="text-xs text-gray-500 mt-1">فني</p>
+              <p className="text-xs text-gray-300 mt-1">فني</p>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="relative overflow-hidden bg-gradient-to-br from-amber-50 via-white to-amber-50/30 rounded-xl shadow-lg border border-amber-100 p-5 backdrop-blur-sm">
-            <div className="absolute top-0 left-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl"></div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="relative overflow-hidden bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl shadow-lg p-5"
+          >
+            <div className="absolute top-0 left-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl"></div>
             <div className="relative">
               <div className="flex items-center gap-3 mb-2">
                 <div className="p-2 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg shadow-md">
                   <AlertTriangle className="w-5 h-5 text-white" />
                 </div>
-                <h3 className="text-sm font-medium text-gray-700">تحذير</h3>
+                <h3 className="text-sm font-medium text-white">تحذير</h3>
               </div>
-              <p className="text-3xl font-bold text-amber-600" data-testid="text-warning-count">
+              <p className="text-3xl font-bold text-amber-400" data-testid="text-warning-count">
                 {warningTechs}
               </p>
-              <p className="text-xs text-gray-500 mt-1">فني</p>
+              <p className="text-xs text-gray-300 mt-1">فني</p>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="relative overflow-hidden bg-gradient-to-br from-[#E0F7F7] via-white to-[#E0F7F7]/30 rounded-xl shadow-lg border border-[#18B2B0]/20 p-5 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="relative overflow-hidden bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl shadow-lg p-5"
+          >
             <div className="absolute top-0 left-0 w-32 h-32 bg-[#18B2B0]/10 rounded-full blur-2xl"></div>
             <div className="relative">
               <div className="flex items-center gap-3 mb-2">
                 <div className="p-2 bg-gradient-to-br from-[#18B2B0] to-[#16a09e] rounded-lg shadow-md">
                   <CheckCircle className="w-5 h-5 text-white" />
                 </div>
-                <h3 className="text-sm font-medium text-gray-700">جيد</h3>
+                <h3 className="text-sm font-medium text-white">جيد</h3>
               </div>
               <p className="text-3xl font-bold text-[#18B2B0]" data-testid="text-good-count">
                 {goodTechs}
               </p>
-              <p className="text-xs text-gray-500 mt-1">فني</p>
+              <p className="text-xs text-gray-300 mt-1">فني</p>
             </div>
-          </div>
+          </motion.div>
         </div>
 
         {/* Technicians List */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-[#E0F7F7] via-white to-[#E0F7F7]/50 rounded-2xl shadow-lg border border-[#18B2B0]/20 p-4 sm:p-6 backdrop-blur-sm">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="relative overflow-hidden bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-4 sm:p-6"
+        >
           <div className="absolute bottom-0 left-0 w-40 h-40 bg-[#18B2B0]/10 rounded-full blur-3xl"></div>
           <div className="relative">
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-2.5 bg-[#18B2B0] rounded-xl">
+              <div className="p-2.5 bg-gradient-to-br from-[#18B2B0] to-[#16a09e] rounded-xl shadow-lg shadow-[#18B2B0]/30">
                 <User className="h-5 w-5 text-white" />
               </div>
-              <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+              <h2 className="text-lg sm:text-xl font-bold text-white">
                 قائمة الفنيين ({technicians.length})
               </h2>
             </div>
@@ -775,46 +806,46 @@ export default function AdminInventoryOverview() {
               <AccordionItem 
                 key={tech.technicianId}
                 value={tech.technicianId} 
-                className="bg-gray-50 border border-gray-200 rounded-xl overflow-hidden"
+                className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden"
                 data-testid={`accordion-tech-${index}`}
               >
-                <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-gray-100 transition-colors">
+                <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-white/10 transition-colors">
                   <div className="flex items-center gap-3 w-full">
                     <div className="flex-1 text-right">
-                      <div className="font-bold text-base text-gray-900" data-testid={`text-tech-name-${index}`}>
+                      <div className="font-bold text-base text-white" data-testid={`text-tech-name-${index}`}>
                         {tech.technicianName}
                       </div>
-                      <div className="text-sm text-gray-600" data-testid={`text-tech-city-${index}`}>
+                      <div className="text-sm text-gray-300" data-testid={`text-tech-city-${index}`}>
                         📍 {tech.city}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap justify-end">
                       {getAlertBadge(tech.alertLevel)}
                       <div className="flex items-center gap-2">
-                        <div className="text-center bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-200">
-                          <div className="flex items-center gap-1 text-blue-700">
+                        <div className="text-center bg-blue-500/20 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-blue-400/30">
+                          <div className="flex items-center gap-1 text-blue-300">
                             <Package className="w-4 h-4" />
                             <span className="font-bold text-sm">{calculateFixedTotal(tech.fixedInventory)}</span>
                           </div>
-                          <div className="text-xs text-blue-600">ثابت</div>
+                          <div className="text-xs text-blue-200">ثابت</div>
                         </div>
-                        <div className="text-center bg-green-50 px-3 py-1.5 rounded-lg border border-green-200">
-                          <div className="flex items-center gap-1 text-green-700">
+                        <div className="text-center bg-green-500/20 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-green-400/30">
+                          <div className="flex items-center gap-1 text-green-300">
                             <TrendingUp className="w-4 h-4" />
                             <span className="font-bold text-sm">{calculateMovingTotal(tech.movingInventory)}</span>
                           </div>
-                          <div className="text-xs text-green-600">متحرك</div>
+                          <div className="text-xs text-green-200">متحرك</div>
                         </div>
                       </div>
                     </div>
                   </div>
                 </AccordionTrigger>
                 
-                <AccordionContent className="px-4 pb-4 bg-white">
+                <AccordionContent className="px-4 pb-4 bg-white/5 backdrop-blur-sm">
                   <div className="space-y-4 pt-4">
                     {/* Fixed Inventory */}
-                    <div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
-                      <h4 className="font-bold text-blue-900 mb-3 flex items-center gap-2">
+                    <div className="bg-blue-500/10 backdrop-blur-sm p-4 rounded-xl border border-blue-400/30">
+                      <h4 className="font-bold text-blue-300 mb-3 flex items-center gap-2">
                         <Package className="w-4 h-4" />
                         المخزون الثابت
                       </h4>
@@ -885,13 +916,13 @@ export default function AdminInventoryOverview() {
                           />
                         </div>
                       ) : (
-                        <p className="text-sm text-gray-600">لا توجد بيانات</p>
+                        <p className="text-sm text-gray-300">لا توجد بيانات</p>
                       )}
                     </div>
 
                     {/* Moving Inventory */}
-                    <div className="bg-green-50 p-4 rounded-xl border border-green-200">
-                      <h4 className="font-bold text-green-900 mb-3 flex items-center gap-2">
+                    <div className="bg-green-500/10 backdrop-blur-sm p-4 rounded-xl border border-green-400/30">
+                      <h4 className="font-bold text-green-300 mb-3 flex items-center gap-2">
                         <TrendingUp className="w-4 h-4" />
                         المخزون المتحرك
                       </h4>
@@ -962,7 +993,7 @@ export default function AdminInventoryOverview() {
                           />
                         </div>
                       ) : (
-                        <p className="text-sm text-gray-600">لا توجد بيانات</p>
+                        <p className="text-sm text-gray-300">لا توجد بيانات</p>
                       )}
                     </div>
                   </div>
@@ -971,27 +1002,28 @@ export default function AdminInventoryOverview() {
             ))}
             </Accordion>
           </div>
-        </div>
+        </motion.div>
       </div>
+    </div>
     </div>
   );
 }
 
 function InventoryItem({ label, boxes, units, testId, color }: { label: string; boxes: number; units: number; testId: string; color: 'blue' | 'green' }) {
   const total = (boxes || 0) + (units || 0);
-  const bgColor = color === 'blue' ? 'bg-white' : 'bg-white';
-  const borderColor = color === 'blue' ? 'border-blue-300' : 'border-green-300';
-  const textColor = color === 'blue' ? 'text-blue-700' : 'text-green-700';
+  const bgColor = color === 'blue' ? 'bg-blue-500/20' : 'bg-green-500/20';
+  const borderColor = color === 'blue' ? 'border-blue-400/40' : 'border-green-400/40';
+  const textColor = color === 'blue' ? 'text-blue-200' : 'text-green-200';
   
   return (
     <div 
-      className={`${bgColor} p-2.5 rounded-lg border ${borderColor}`}
+      className={`${bgColor} backdrop-blur-sm p-2.5 rounded-lg border ${borderColor}`}
       data-testid={testId}
     >
-      <div className="text-xs font-medium text-gray-600 mb-1">{label}</div>
+      <div className="text-xs font-medium text-gray-300 mb-1">{label}</div>
       <div className="text-sm">
         <span className={`font-bold text-xl ${textColor}`}>{total}</span>
-        <span className="text-xs text-gray-500 block mt-0.5">
+        <span className="text-xs text-gray-400 block mt-0.5">
           {boxes || 0} كرتون + {units || 0} مفرد
         </span>
       </div>
