@@ -1575,6 +1575,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // تجميع الكميات حسب المستودع
         const warehouseUpdates = new Map<string, any>();
+        // تجميع الكميات حسب الفني (للعمليات المقبولة فقط)
+        const technicianUpdates = new Map<string, any>();
 
         for (const transfer of transfersToDelete) {
           if (!warehouseUpdates.has(transfer.warehouseId)) {
@@ -1607,6 +1609,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
             updates[`${transfer.itemType}Boxes`] += transfer.quantity;
           } else {
             updates[`${transfer.itemType}Units`] += transfer.quantity;
+          }
+
+          // إذا كانت العملية مقبولة، يجب طرح الكميات من مخزون الفني
+          if (transfer.status === 'accepted') {
+            if (!technicianUpdates.has(transfer.technicianId)) {
+              technicianUpdates.set(transfer.technicianId, {
+                n950Boxes: 0,
+                n950Units: 0,
+                i9000sBoxes: 0,
+                i9000sUnits: 0,
+                i9100Boxes: 0,
+                i9100Units: 0,
+                rollPaperBoxes: 0,
+                rollPaperUnits: 0,
+                stickersBoxes: 0,
+                stickersUnits: 0,
+                newBatteriesBoxes: 0,
+                newBatteriesUnits: 0,
+                mobilySimBoxes: 0,
+                mobilySimUnits: 0,
+                stcSimBoxes: 0,
+                stcSimUnits: 0,
+                zainSimBoxes: 0,
+                zainSimUnits: 0,
+              });
+            }
+
+            const techUpdates = technicianUpdates.get(transfer.technicianId);
+            
+            // إضافة الكميات للطرح من الفني
+            if (transfer.packagingType === 'box') {
+              techUpdates[`${transfer.itemType}Boxes`] += transfer.quantity;
+            } else {
+              techUpdates[`${transfer.itemType}Units`] += transfer.quantity;
+            }
           }
         }
 
@@ -1647,6 +1684,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
               zainSimUnits: currentInventory.zainSimUnits + updates.zainSimUnits,
             })
             .where(eq(warehouseInventory.warehouseId, warehouseId));
+        }
+
+        // طرح الكميات من مخزون الفنيين (للعمليات المقبولة فقط)
+        for (const [technicianId, updates] of Array.from(technicianUpdates.entries())) {
+          // الحصول على اسم الفني من جدول users
+          const [technician] = await tx
+            .select({ fullName: users.fullName, city: users.city })
+            .from(users)
+            .where(eq(users.id, technicianId));
+
+          if (!technician) {
+            throw new Error(`Technician not found for ID: ${technicianId}`);
+          }
+
+          // الحصول على المخزون المتحرك الحالي للفني باستخدام technicianName
+          const [currentMovingInventory] = await tx
+            .select()
+            .from(techniciansInventory)
+            .where(eq(techniciansInventory.technicianName, technician.fullName));
+
+          if (!currentMovingInventory) {
+            throw new Error(`Moving inventory not found for technician: ${technician.fullName}`);
+          }
+
+          // تحديث المخزون بطرح الكميات
+          await tx
+            .update(techniciansInventory)
+            .set({
+              n950Boxes: Math.max(0, currentMovingInventory.n950Boxes - updates.n950Boxes),
+              n950Units: Math.max(0, currentMovingInventory.n950Units - updates.n950Units),
+              i9000sBoxes: Math.max(0, currentMovingInventory.i9000sBoxes - updates.i9000sBoxes),
+              i9000sUnits: Math.max(0, currentMovingInventory.i9000sUnits - updates.i9000sUnits),
+              i9100Boxes: Math.max(0, currentMovingInventory.i9100Boxes - updates.i9100Boxes),
+              i9100Units: Math.max(0, currentMovingInventory.i9100Units - updates.i9100Units),
+              rollPaperBoxes: Math.max(0, currentMovingInventory.rollPaperBoxes - updates.rollPaperBoxes),
+              rollPaperUnits: Math.max(0, currentMovingInventory.rollPaperUnits - updates.rollPaperUnits),
+              stickersBoxes: Math.max(0, currentMovingInventory.stickersBoxes - updates.stickersBoxes),
+              stickersUnits: Math.max(0, currentMovingInventory.stickersUnits - updates.stickersUnits),
+              newBatteriesBoxes: Math.max(0, currentMovingInventory.newBatteriesBoxes - updates.newBatteriesBoxes),
+              newBatteriesUnits: Math.max(0, currentMovingInventory.newBatteriesUnits - updates.newBatteriesUnits),
+              mobilySimBoxes: Math.max(0, currentMovingInventory.mobilySimBoxes - updates.mobilySimBoxes),
+              mobilySimUnits: Math.max(0, currentMovingInventory.mobilySimUnits - updates.mobilySimUnits),
+              stcSimBoxes: Math.max(0, currentMovingInventory.stcSimBoxes - updates.stcSimBoxes),
+              stcSimUnits: Math.max(0, currentMovingInventory.stcSimUnits - updates.stcSimUnits),
+              zainSimBoxes: Math.max(0, currentMovingInventory.zainSimBoxes - updates.zainSimBoxes),
+              zainSimUnits: Math.max(0, currentMovingInventory.zainSimUnits - updates.zainSimUnits),
+            })
+            .where(eq(techniciansInventory.technicianName, technician.fullName));
         }
 
         // حذف السجلات بعد إرجاع المخزون بنجاح
