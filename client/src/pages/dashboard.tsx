@@ -343,12 +343,12 @@ export default function Dashboard() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
+          className="text-center mb-6 md:mb-8"
         >
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-2 bg-gradient-to-r from-white via-[#18B2B0] to-white bg-clip-text text-transparent">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2 bg-gradient-to-r from-white via-[#18B2B0] to-white bg-clip-text text-transparent px-4">
             مرحباً بك، {user?.fullName}
           </h2>
-          <p className="text-gray-400 text-sm sm:text-base">
+          <p className="text-gray-400 text-xs sm:text-sm md:text-base">
             {user?.role === 'admin' ? 'لوحة التحكم الإدارية' : 'لوحة التحكم الشخصية'}
           </p>
           
@@ -358,14 +358,14 @@ export default function Dashboard() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 }}
-              className="mt-6"
+              className="mt-4 md:mt-6"
             >
               <Button
                 onClick={() => setShowRequestInventoryModal(true)}
-                className="bg-gradient-to-r from-[#18B2B0] to-teal-500 hover:from-[#16a09e] hover:to-teal-600 text-white px-8 py-6 text-lg shadow-lg shadow-[#18B2B0]/20"
+                className="bg-gradient-to-r from-[#18B2B0] to-teal-500 hover:from-[#16a09e] hover:to-teal-600 text-white px-6 py-4 md:px-8 md:py-6 text-base md:text-lg shadow-lg shadow-[#18B2B0]/20"
                 data-testid="button-request-inventory"
               >
-                <Package className="h-5 w-5 ml-2" />
+                <Package className="h-4 w-4 md:h-5 md:w-5 ml-2" />
                 طلب مخزون
               </Button>
             </motion.div>
@@ -382,39 +382,40 @@ export default function Dashboard() {
               transition={{ delay: 0.2 }}
               className="mb-8"
             >
-              <div className="relative bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl rounded-3xl border border-[#18B2B0]/30 p-8 overflow-hidden shadow-2xl mb-6">
+              <div className="relative bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl rounded-2xl md:rounded-3xl border border-[#18B2B0]/30 p-4 md:p-8 overflow-hidden shadow-2xl mb-4 md:mb-6">
                 <div className="absolute inset-0 bg-gradient-to-br from-[#18B2B0]/10 to-transparent" />
                 
-                <div className="relative flex items-center justify-between">
-                  <div className="flex items-center gap-4">
+                <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+                  <div className="flex items-center gap-3">
                     <motion.div
                       animate={{ rotate: [0, 5, 0, -5, 0] }}
                       transition={{ duration: 4, repeat: Infinity }}
-                      className="p-4 bg-gradient-to-br from-[#18B2B0] to-teal-600 rounded-2xl shadow-lg"
+                      className="p-3 md:p-4 bg-gradient-to-br from-[#18B2B0] to-teal-600 rounded-xl md:rounded-2xl shadow-lg"
                     >
-                      <Package className="h-8 w-8 text-white" />
+                      <Package className="h-6 w-6 md:h-8 md:w-8 text-white" />
                     </motion.div>
                     <div>
-                      <h3 className="text-2xl font-bold text-white">المخزون الثابت</h3>
-                      <p className="text-gray-400 text-sm">جميع المنتجات المخزنة بشكل دائم</p>
+                      <h3 className="text-lg md:text-2xl font-bold text-white">المخزون الثابت</h3>
+                      <p className="text-gray-400 text-xs md:text-sm">جميع المنتجات المخزنة بشكل دائم</p>
                     </div>
                   </div>
-                  <Link href="/my-fixed-inventory">
-                    <Button size="lg" className="bg-[#18B2B0] hover:bg-[#159a98] shadow-lg">
-                      عرض التفاصيل الكاملة
-                      <ArrowRight className="mr-2 h-5 w-5" />
+                  <Link href="/my-fixed-inventory" className="w-full sm:w-auto">
+                    <Button size="sm" className="bg-[#18B2B0] hover:bg-[#159a98] shadow-lg w-full sm:w-auto">
+                      <span className="hidden sm:inline">عرض التفاصيل الكاملة</span>
+                      <span className="sm:hidden">عرض التفاصيل</span>
+                      <ArrowRight className="mr-2 h-4 w-4" />
                     </Button>
                   </Link>
                 </div>
               </div>
 
               {fixedLoading ? (
-                <div className="text-center py-16">
-                  <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#18B2B0]"></div>
-                  <p className="text-gray-400 text-sm mt-4">جاري تحميل المنتجات...</p>
+                <div className="text-center py-12 md:py-16">
+                  <div className="inline-block animate-spin rounded-full h-10 w-10 md:h-12 md:w-12 border-b-2 border-[#18B2B0]"></div>
+                  <p className="text-gray-400 text-xs md:text-sm mt-4">جاري تحميل المنتجات...</p>
                 </div>
               ) : myFixedInventory && getFixedInventoryTotal() > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                   <ProductCard
                     icon={<Smartphone className="h-6 w-6" />}
                     title="جهاز N950"
@@ -498,10 +499,10 @@ export default function Dashboard() {
                   />
                 </div>
               ) : (
-                <div className="text-center py-16 bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10">
-                  <Package className="h-16 w-16 text-gray-500 mx-auto mb-4" />
-                  <p className="text-gray-400 text-lg font-medium">لا يوجد مخزون ثابت حالياً</p>
-                  <p className="text-gray-500 text-sm mt-2">يمكنك طلب مخزون جديد من خلال زر "طلب مخزون" أعلاه</p>
+                <div className="text-center py-12 md:py-16 bg-white/5 backdrop-blur-sm rounded-2xl md:rounded-3xl border border-white/10">
+                  <Package className="h-12 w-12 md:h-16 md:w-16 text-gray-500 mx-auto mb-4" />
+                  <p className="text-gray-400 text-base md:text-lg font-medium px-4">لا يوجد مخزون ثابت حالياً</p>
+                  <p className="text-gray-500 text-xs md:text-sm mt-2 px-4">يمكنك طلب مخزون جديد من خلال زر "طلب مخزون" أعلاه</p>
                 </div>
               )}
             </motion.div>
@@ -513,39 +514,40 @@ export default function Dashboard() {
               transition={{ delay: 0.3 }}
               className="mb-8"
             >
-              <div className="relative bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl rounded-3xl border border-emerald-500/30 p-8 overflow-hidden shadow-2xl mb-6">
+              <div className="relative bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl rounded-2xl md:rounded-3xl border border-emerald-500/30 p-4 md:p-8 overflow-hidden shadow-2xl mb-4 md:mb-6">
                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent" />
                 
-                <div className="relative flex items-center justify-between">
-                  <div className="flex items-center gap-4">
+                <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+                  <div className="flex items-center gap-3">
                     <motion.div
                       animate={{ rotate: [0, 5, 0, -5, 0] }}
                       transition={{ duration: 4, repeat: Infinity, delay: 0.5 }}
-                      className="p-4 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl shadow-lg"
+                      className="p-3 md:p-4 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl md:rounded-2xl shadow-lg"
                     >
-                      <TruckIcon className="h-8 w-8 text-white" />
+                      <TruckIcon className="h-6 w-6 md:h-8 md:w-8 text-white" />
                     </motion.div>
                     <div>
-                      <h3 className="text-2xl font-bold text-white">المخزون المتحرك</h3>
-                      <p className="text-gray-400 text-sm">المنتجات الجاهزة للعمليات الميدانية</p>
+                      <h3 className="text-lg md:text-2xl font-bold text-white">المخزون المتحرك</h3>
+                      <p className="text-gray-400 text-xs md:text-sm">المنتجات الجاهزة للعمليات الميدانية</p>
                     </div>
                   </div>
-                  <Link href="/my-moving-inventory">
-                    <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600 shadow-lg">
-                      عرض التفاصيل الكاملة
-                      <ArrowRight className="mr-2 h-5 w-5" />
+                  <Link href="/my-moving-inventory" className="w-full sm:w-auto">
+                    <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600 shadow-lg w-full sm:w-auto">
+                      <span className="hidden sm:inline">عرض التفاصيل الكاملة</span>
+                      <span className="sm:hidden">عرض التفاصيل</span>
+                      <ArrowRight className="mr-2 h-4 w-4" />
                     </Button>
                   </Link>
                 </div>
               </div>
 
               {movingLoading ? (
-                <div className="text-center py-16">
-                  <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
-                  <p className="text-gray-400 text-sm mt-4">جاري تحميل المنتجات...</p>
+                <div className="text-center py-12 md:py-16">
+                  <div className="inline-block animate-spin rounded-full h-10 w-10 md:h-12 md:w-12 border-b-2 border-emerald-500"></div>
+                  <p className="text-gray-400 text-xs md:text-sm mt-4">جاري تحميل المنتجات...</p>
                 </div>
               ) : myMovingInventory && getMovingInventoryTotal() > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                   <ProductCard
                     icon={<Smartphone className="h-6 w-6" />}
                     title="جهاز N950"
@@ -629,10 +631,10 @@ export default function Dashboard() {
                   />
                 </div>
               ) : (
-                <div className="text-center py-16 bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10">
-                  <TruckIcon className="h-16 w-16 text-gray-500 mx-auto mb-4" />
-                  <p className="text-gray-400 text-lg font-medium">لا يوجد مخزون متحرك حالياً</p>
-                  <p className="text-gray-500 text-sm mt-2">سيظهر المخزون المتحرك بعد قبول طلبات النقل من المستودعات</p>
+                <div className="text-center py-12 md:py-16 bg-white/5 backdrop-blur-sm rounded-2xl md:rounded-3xl border border-white/10">
+                  <TruckIcon className="h-12 w-12 md:h-16 md:w-16 text-gray-500 mx-auto mb-4" />
+                  <p className="text-gray-400 text-base md:text-lg font-medium px-4">لا يوجد مخزون متحرك حالياً</p>
+                  <p className="text-gray-500 text-xs md:text-sm mt-2 px-4">سيظهر المخزون المتحرك بعد قبول طلبات النقل من المستودعات</p>
                 </div>
               )}
             </motion.div>
