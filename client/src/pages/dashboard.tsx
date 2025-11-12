@@ -56,9 +56,9 @@ export default function Dashboard() {
   const [showRequestInventoryModal, setShowRequestInventoryModal] = useState(false);
 
   const { data: pendingTransfers = [] } = useQuery<WarehouseTransfer[]>({
-    queryKey: ["/api/warehouse-transfers", user?.id],
+    queryKey: ["/api/warehouse-transfers"],
     enabled: !!user?.id && user?.role !== 'admin',
-    select: (data) => data.filter(t => t.status === 'pending' && t.technicianId === user?.id),
+    select: (data) => data.filter(t => t.status === 'pending'),
   });
 
   const { data: techniciansData } = useQuery<{ technicians: TechnicianWithBothInventories[] }>({

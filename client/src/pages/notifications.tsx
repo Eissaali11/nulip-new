@@ -125,9 +125,8 @@ export default function Notifications() {
 
   // Technician queries
   const { data: transfers = [], isLoading: transfersLoading } = useQuery<WarehouseTransfer[]>({
-    queryKey: ["/api/warehouse-transfers", user?.id],
+    queryKey: ["/api/warehouse-transfers"],
     enabled: user?.role !== 'admin' && !!user?.id,
-    select: (data) => data.filter(t => t.technicianId === user?.id),
   });
 
   // Admin mutations
@@ -184,7 +183,7 @@ export default function Notifications() {
       return await apiRequest("POST", `/api/warehouse-transfers/${id}/accept`, {});
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/warehouse-transfers", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/warehouse-transfers"] });
       queryClient.invalidateQueries({ queryKey: ["/api/my-fixed-inventory"] });
       queryClient.invalidateQueries({ queryKey: ["/api/my-moving-inventory"] });
       setTechApproveDialogOpen(false);
@@ -208,7 +207,7 @@ export default function Notifications() {
       return await apiRequest("POST", `/api/warehouse-transfers/${id}/reject`, { rejectionReason: reason });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/warehouse-transfers", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/warehouse-transfers"] });
       setTechRejectDialogOpen(false);
       setSelectedTransfer(null);
       setTechRejectionReason("");
