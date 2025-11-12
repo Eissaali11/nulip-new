@@ -293,14 +293,14 @@ export default function WarehousesPage() {
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
-              <Card key={i} className="overflow-hidden border-2">
+              <Card key={i} className="overflow-hidden border border-white/20 bg-white/10 backdrop-blur-xl">
                 <CardContent className="p-6 space-y-4">
-                  <Skeleton className="h-6 w-3/4" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="h-6 w-3/4 bg-white/20" />
+                  <Skeleton className="h-4 w-full bg-white/20" />
+                  <Skeleton className="h-4 w-1/2 bg-white/20" />
                   <div className="flex gap-2">
-                    <Skeleton className="h-8 w-20" />
-                    <Skeleton className="h-8 w-20" />
+                    <Skeleton className="h-8 w-20 bg-white/20" />
+                    <Skeleton className="h-8 w-20 bg-white/20" />
                   </div>
                 </CardContent>
               </Card>
@@ -343,20 +343,21 @@ export default function WarehousesPage() {
               const lowStockCount = calculateLowStockCount(warehouse.inventory);
 
               return (
-                <motion.div key={warehouse.id} variants={itemVariants}>
+                <motion.div key={warehouse.id} variants={itemVariants} className="relative group">
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#18B2B0]/10 to-transparent rounded-2xl opacity-10 group-hover:opacity-20 transition-opacity blur-xl"></div>
                   <Link href={`/warehouses/${warehouse.id}`}>
                     <Card 
-                      className="group hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden border-2 border-gray-200 hover:border-[#18B2B0] bg-white"
+                      className="relative group hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden border border-white/20 hover:border-[#18B2B0]/50 bg-white/10 backdrop-blur-xl transform hover:scale-105"
                       data-testid={`card-warehouse-${warehouse.id}`}
                     >
                       <div className="h-2 bg-gradient-to-r from-[#18B2B0] via-teal-400 to-cyan-400" />
                       <CardContent className="p-6 space-y-4">
                         <div className="flex items-start justify-between">
                           <div className="flex-1 text-right">
-                            <h3 className="text-2xl font-black text-gray-900 group-hover:text-[#18B2B0] transition-colors" data-testid={`text-warehouse-name-${warehouse.id}`}>
+                            <h3 className="text-2xl font-black text-white group-hover:text-[#18B2B0] transition-colors" data-testid={`text-warehouse-name-${warehouse.id}`}>
                               {warehouse.name}
                             </h3>
-                            <div className="flex items-center gap-2 mt-3 text-gray-600">
+                            <div className="flex items-center gap-2 mt-3 text-gray-300">
                               <MapPin className="h-4 w-4 text-[#18B2B0]" />
                               <span data-testid={`text-warehouse-location-${warehouse.id}`}>{warehouse.location}</span>
                             </div>
@@ -371,35 +372,35 @@ export default function WarehousesPage() {
                         </div>
 
                         {warehouse.description && (
-                          <p className="text-sm text-gray-600 line-clamp-2 bg-gray-50 p-3 rounded-lg" data-testid={`text-warehouse-description-${warehouse.id}`}>
+                          <p className="text-sm text-gray-300 line-clamp-2 bg-white/5 p-3 rounded-lg border border-white/10" data-testid={`text-warehouse-description-${warehouse.id}`}>
                             {warehouse.description}
                           </p>
                         )}
 
-                        <div className="grid grid-cols-2 gap-3 pt-4 border-t-2 border-gray-100">
+                        <div className="grid grid-cols-2 gap-3 pt-4 border-t border-white/10">
                           <motion.div 
-                            className="text-center p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-green-50 border-2 border-emerald-100"
+                            className="text-center p-4 rounded-xl bg-white/5 border border-emerald-500/30"
                             whileHover={{ scale: 1.05 }}
                           >
                             <div className="flex items-center justify-center gap-2 mb-2">
-                              <Package className="h-5 w-5 text-emerald-600" />
+                              <Package className="h-5 w-5 text-emerald-400" />
                             </div>
-                            <p className="text-3xl font-black text-emerald-600" data-testid={`text-total-items-${warehouse.id}`}>{totalItems}</p>
-                            <p className="text-xs text-gray-600 font-semibold mt-1">إجمالي القطع</p>
+                            <p className="text-3xl font-black text-emerald-400" data-testid={`text-total-items-${warehouse.id}`}>{totalItems}</p>
+                            <p className="text-xs text-gray-300 font-semibold mt-1">إجمالي القطع</p>
                           </motion.div>
                           <motion.div 
-                            className="text-center p-4 rounded-xl bg-gradient-to-br from-orange-50 to-red-50 border-2 border-orange-100"
+                            className="text-center p-4 rounded-xl bg-white/5 border border-orange-500/30"
                             whileHover={{ scale: 1.05 }}
                           >
                             <div className="flex items-center justify-center gap-2 mb-2">
-                              <AlertTriangle className="h-5 w-5 text-orange-600" />
+                              <AlertTriangle className="h-5 w-5 text-orange-400" />
                             </div>
-                            <p className="text-3xl font-black text-orange-600" data-testid={`text-low-stock-${warehouse.id}`}>{lowStockCount}</p>
-                            <p className="text-xs text-gray-600 font-semibold mt-1">مخزون منخفض</p>
+                            <p className="text-3xl font-black text-orange-400" data-testid={`text-low-stock-${warehouse.id}`}>{lowStockCount}</p>
+                            <p className="text-xs text-gray-300 font-semibold mt-1">مخزون منخفض</p>
                           </motion.div>
                         </div>
 
-                        <div className="flex justify-between items-center pt-4 border-t-2 border-gray-100">
+                        <div className="flex justify-between items-center pt-4 border-t border-white/10">
                           <div className="flex gap-2">
                             <Badge 
                               variant={warehouse.isActive ? "default" : "secondary"}
