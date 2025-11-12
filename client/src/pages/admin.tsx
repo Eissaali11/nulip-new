@@ -25,6 +25,7 @@ import { StatsKpiCard } from "@/components/dashboard/stats-kpi-card";
 import { TrendLineChart } from "@/components/dashboard/trend-line-chart";
 import { StockCompositionPie } from "@/components/dashboard/stock-composition-pie";
 import { RegionsBarChart } from "@/components/dashboard/regions-bar-chart";
+import backgroundImage from "@assets/Gemini_Generated_Image_1iknau1iknau1ikn_1762469188250.png";
 
 const regionFormSchema = z.object({
   name: z.string().min(1, "اسم المنطقة مطلوب"),
@@ -226,79 +227,59 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900" dir="rtl">
-      {/* Glassmorphic Professional Banner */}
-      <div className="relative overflow-hidden h-96 shadow-2xl">
-        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600"></div>
-        
-        <motion.div 
-          className="absolute top-10 left-10 w-96 h-96 bg-blue-400/30 rounded-full blur-3xl"
-          animate={{ y: [0, -20, 0], x: [0, 20, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div 
-          className="absolute bottom-10 right-10 w-80 h-80 bg-purple-400/20 rounded-full blur-3xl"
-          animate={{ y: [0, 20, 0], x: [0, -20, 0] }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        />
+    <div 
+      className="min-h-screen relative overflow-hidden" 
+      dir="rtl"
+      style={{
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed'
+      }}
+    >
+      {/* Glassmorphic Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#050508]/90 via-[#050508]/85 to-[#050508]/90 backdrop-blur-[2px] z-0" />
 
-        <div className="relative h-full flex flex-col justify-between px-6 py-6">
-          <div>
-            <Link href="/">
-              <Button 
-                variant="secondary" 
-                className="bg-white/10 backdrop-blur-xl border-2 border-white/20 text-white hover:bg-white/20 hover:border-[#18B2B0]/60 hover:shadow-[0_0_20px_rgba(24,178,176,0.3)] shadow-2xl transition-all duration-300"
-                data-testid="button-back-dashboard"
-              >
-                <ArrowRight className="h-4 w-4 ml-2" />
-                <LayoutDashboard className="h-4 w-4 ml-2" />
-                العودة للوحة الرئيسية
-              </Button>
-            </Link>
-          </div>
-
-          <motion.div 
-            className="flex flex-col items-center justify-center text-center"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <div className="relative">
-              <motion.div 
-                className="absolute inset-0 bg-[#18B2B0]/30 rounded-full blur-2xl"
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              />
+      {/* Header with Glassmorphic Design */}
+      <div className="relative z-10 border-b border-[#18B2B0]/20 bg-gradient-to-r from-[#0a0a0f]/90 via-[#0f0f15]/90 to-[#0a0a0f]/90 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-6">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex items-center gap-4 w-full md:w-auto">
+              <Link href="/">
+                <Button 
+                  variant="ghost" 
+                  className="bg-white/10 backdrop-blur-xl border border-white/20 text-white hover:bg-white/20 hover:border-[#18B2B0]/60 hover:shadow-[0_0_20px_rgba(24,178,176,0.3)] transition-all duration-300"
+                  data-testid="button-back-dashboard"
+                >
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                  العودة
+                </Button>
+              </Link>
               
-              <div className="relative bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl p-8 rounded-3xl border-2 border-white/30 shadow-[0_8px_32px_rgba(0,0,0,0.3)] mb-6">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#18B2B0]/10 to-transparent rounded-3xl"></div>
-                <Shield className="relative h-20 w-20 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]" />
+              <div className="flex items-center gap-3">
+                <motion.div 
+                  className="p-3 bg-gradient-to-br from-[#18B2B0] to-[#0ea5a3] rounded-2xl shadow-lg"
+                  animate={{ rotate: [0, 5, 0, -5, 0] }}
+                  transition={{ duration: 4, repeat: Infinity }}
+                >
+                  <Shield className="h-7 w-7 text-white drop-shadow-md" />
+                </motion.div>
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-bold text-white">لوحة الإدارة</h1>
+                  <p className="text-sm text-gray-400">التحكم الكامل في النظام</p>
+                </div>
               </div>
             </div>
-
-            <h1 className="text-6xl font-black text-white mb-3 drop-shadow-2xl tracking-tight">
-              لوحة الإدارة
-            </h1>
-            <p className="text-xl text-white/95 font-semibold drop-shadow-lg">
-              التحكم الكامل في النظام والموظفين والمناطق
-            </p>
-          </motion.div>
-
-          <div></div>
-        </div>
-
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1200 120" preserveAspectRatio="none" className="w-full h-16 fill-slate-900">
-            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"></path>
-          </svg>
+          </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="p-6 space-y-6 max-w-7xl mx-auto">
+      <div className="relative z-10 p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
         {/* Premium Glassmorphic Tabs */}
         <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl p-2 rounded-2xl shadow-2xl border-2 border-[#18B2B0]/30">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 bg-white/5 backdrop-blur-xl p-2 rounded-2xl shadow-2xl border border-white/20">
             <TabsTrigger 
               value="dashboard" 
               data-testid="tab-dashboard"
@@ -459,7 +440,7 @@ export default function AdminPage() {
           {/* Regions Tab */}
           <TabsContent value="regions" className="space-y-4 mt-6">
             <motion.div 
-              className="flex justify-between items-center bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl p-4 rounded-2xl border-2 border-[#18B2B0]/30 shadow-2xl"
+              className="flex justify-between items-center bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl p-4 rounded-2xl border border-[#18B2B0]/30 shadow-2xl"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
             >
@@ -475,7 +456,7 @@ export default function AdminPage() {
                     إضافة منطقة جديدة
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-md bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-[#18B2B0]/30" data-testid="modal-region">
+                <DialogContent className="max-w-md bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl border border-[#18B2B0]/30" data-testid="modal-region">
                   <DialogHeader>
                     <DialogTitle className="text-2xl text-[#18B2B0] font-black">{editingRegion ? "تحديث المنطقة" : "إضافة منطقة جديدة"}</DialogTitle>
                     <DialogDescription className="text-gray-300">
@@ -491,7 +472,7 @@ export default function AdminPage() {
                           <FormItem>
                             <FormLabel className="text-[#18B2B0] font-bold">اسم المنطقة</FormLabel>
                             <FormControl>
-                              <Input placeholder="أدخل اسم المنطقة" {...field} data-testid="input-region-name" className="border-[#18B2B0]/30 focus:border-[#18B2B0] bg-slate-700/50 text-white" />
+                              <Input placeholder="أدخل اسم المنطقة" {...field} data-testid="input-region-name" className="border-white/20 focus:border-[#18B2B0] bg-white/5 text-white" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -504,7 +485,7 @@ export default function AdminPage() {
                           <FormItem>
                             <FormLabel className="text-[#18B2B0] font-bold">الوصف (اختياري)</FormLabel>
                             <FormControl>
-                              <Textarea placeholder="أدخل وصف المنطقة" {...field} data-testid="input-region-description" className="border-[#18B2B0]/30 focus:border-[#18B2B0] bg-slate-700/50 text-white" />
+                              <Textarea placeholder="أدخل وصف المنطقة" {...field} data-testid="input-region-description" className="border-white/20 focus:border-[#18B2B0] bg-white/5 text-white" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -514,7 +495,7 @@ export default function AdminPage() {
                         control={regionForm.control}
                         name="isActive"
                         render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-[#18B2B0]/30 p-3 bg-slate-700/30">
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-white/20 p-3 bg-white/5">
                             <div className="space-y-0.5">
                               <FormLabel className="text-white font-bold">منطقة نشطة</FormLabel>
                             </div>
@@ -533,7 +514,7 @@ export default function AdminPage() {
                         >
                           {editingRegion ? "تحديث" : "إضافة"}
                         </Button>
-                        <Button type="button" variant="outline" onClick={handleCloseRegionModal} data-testid="button-cancel-region" className="border-[#18B2B0]/30 text-white hover:bg-slate-700">
+                        <Button type="button" variant="outline" onClick={handleCloseRegionModal} data-testid="button-cancel-region" className="border-white/20 text-white hover:bg-white/10">
                           إلغاء
                         </Button>
                       </div>
@@ -548,7 +529,7 @@ export default function AdminPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
             >
-              <Card className="shadow-2xl border-2 border-[#18B2B0]/30 bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl">
+              <Card className="shadow-2xl border border-[#18B2B0]/30 bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl">
                 <CardHeader className="bg-gradient-to-r from-[#18B2B0]/20 to-transparent border-b border-[#18B2B0]/20">
                   <CardTitle className="text-white text-2xl font-black">قائمة المناطق</CardTitle>
                   <CardDescription className="text-gray-300">جميع المناطق المسجلة في النظام</CardDescription>
@@ -640,7 +621,7 @@ export default function AdminPage() {
           {/* Users Tab */}
           <TabsContent value="users" className="space-y-4 mt-6">
             <motion.div 
-              className="flex justify-between items-center bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl p-4 rounded-2xl border-2 border-[#18B2B0]/30 shadow-2xl"
+              className="flex justify-between items-center bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl p-4 rounded-2xl border border-[#18B2B0]/30 shadow-2xl"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
             >
@@ -656,7 +637,7 @@ export default function AdminPage() {
                     إضافة موظف جديد
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-md bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-[#18B2B0]/30" data-testid="modal-user">
+                <DialogContent className="max-w-md bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl border border-[#18B2B0]/30" data-testid="modal-user">
                   <DialogHeader>
                     <DialogTitle className="text-2xl text-[#18B2B0] font-black">{editingUser ? "تحديث بيانات الموظف" : "إضافة موظف جديد"}</DialogTitle>
                     <DialogDescription className="text-gray-300">
@@ -672,7 +653,7 @@ export default function AdminPage() {
                           <FormItem>
                             <FormLabel className="text-[#18B2B0] font-bold">اسم المستخدم</FormLabel>
                             <FormControl>
-                              <Input placeholder="أدخل اسم المستخدم" {...field} data-testid="input-user-username" className="border-[#18B2B0]/30 focus:border-[#18B2B0] bg-slate-700/50 text-white" />
+                              <Input placeholder="أدخل اسم المستخدم" {...field} data-testid="input-user-username" className="border-white/20 focus:border-[#18B2B0] bg-white/5 text-white" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -685,7 +666,7 @@ export default function AdminPage() {
                           <FormItem>
                             <FormLabel className="text-[#18B2B0] font-bold">الاسم الكامل</FormLabel>
                             <FormControl>
-                              <Input placeholder="أدخل الاسم الكامل" {...field} data-testid="input-user-fullname" className="border-[#18B2B0]/30 focus:border-[#18B2B0] bg-slate-700/50 text-white" />
+                              <Input placeholder="أدخل الاسم الكامل" {...field} data-testid="input-user-fullname" className="border-white/20 focus:border-[#18B2B0] bg-white/5 text-white" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -698,7 +679,7 @@ export default function AdminPage() {
                           <FormItem>
                             <FormLabel className="text-[#18B2B0] font-bold">البريد الإلكتروني</FormLabel>
                             <FormControl>
-                              <Input type="email" placeholder="أدخل البريد الإلكتروني" {...field} data-testid="input-user-email" className="border-[#18B2B0]/30 focus:border-[#18B2B0] bg-slate-700/50 text-white" />
+                              <Input type="email" placeholder="أدخل البريد الإلكتروني" {...field} data-testid="input-user-email" className="border-white/20 focus:border-[#18B2B0] bg-white/5 text-white" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -711,7 +692,7 @@ export default function AdminPage() {
                           <FormItem>
                             <FormLabel className="text-[#18B2B0] font-bold">كلمة المرور {editingUser && "(اتركها فارغة للإبقاء على كلمة المرور الحالية)"}</FormLabel>
                             <FormControl>
-                              <Input type="password" placeholder="أدخل كلمة المرور" {...field} data-testid="input-user-password" className="border-[#18B2B0]/30 focus:border-[#18B2B0] bg-slate-700/50 text-white" />
+                              <Input type="password" placeholder="أدخل كلمة المرور" {...field} data-testid="input-user-password" className="border-white/20 focus:border-[#18B2B0] bg-white/5 text-white" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -725,14 +706,14 @@ export default function AdminPage() {
                             <FormLabel className="text-[#18B2B0] font-bold">الدور</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value} data-testid="select-user-role">
                               <FormControl>
-                                <SelectTrigger className="border-[#18B2B0]/30 focus:border-[#18B2B0] bg-slate-700/50 text-white">
+                                <SelectTrigger className="border-white/20 focus:border-[#18B2B0] bg-white/5 text-white">
                                   <SelectValue placeholder="اختر دور الموظف" />
                                 </SelectTrigger>
                               </FormControl>
-                              <SelectContent className="bg-slate-800 border-[#18B2B0]/30">
-                                <SelectItem value="admin" className="text-white hover:bg-slate-700">{ROLE_LABELS_AR.admin}</SelectItem>
-                                <SelectItem value="supervisor" className="text-white hover:bg-slate-700">{ROLE_LABELS_AR.supervisor}</SelectItem>
-                                <SelectItem value="technician" className="text-white hover:bg-slate-700">{ROLE_LABELS_AR.technician}</SelectItem>
+                              <SelectContent className="bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl border-white/20">
+                                <SelectItem value="admin" className="text-white hover:bg-white/10">{ROLE_LABELS_AR.admin}</SelectItem>
+                                <SelectItem value="supervisor" className="text-white hover:bg-white/10">{ROLE_LABELS_AR.supervisor}</SelectItem>
+                                <SelectItem value="technician" className="text-white hover:bg-white/10">{ROLE_LABELS_AR.technician}</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -747,14 +728,14 @@ export default function AdminPage() {
                             <FormLabel className="text-[#18B2B0] font-bold">المنطقة (للمشرفين والفنيين)</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value} data-testid="select-user-region">
                               <FormControl>
-                                <SelectTrigger className="border-[#18B2B0]/30 focus:border-[#18B2B0] bg-slate-700/50 text-white">
+                                <SelectTrigger className="border-white/20 focus:border-[#18B2B0] bg-white/5 text-white">
                                   <SelectValue placeholder="اختر المنطقة" />
                                 </SelectTrigger>
                               </FormControl>
-                              <SelectContent className="bg-slate-800 border-[#18B2B0]/30">
-                                <SelectItem value="" className="text-white hover:bg-slate-700">بدون منطقة</SelectItem>
+                              <SelectContent className="bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl border-white/20">
+                                <SelectItem value="" className="text-white hover:bg-white/10">بدون منطقة</SelectItem>
                                 {regions.map(region => (
-                                  <SelectItem key={region.id} value={region.id} className="text-white hover:bg-slate-700">{region.name}</SelectItem>
+                                  <SelectItem key={region.id} value={region.id} className="text-white hover:bg-white/10">{region.name}</SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
@@ -766,7 +747,7 @@ export default function AdminPage() {
                         control={userForm.control}
                         name="isActive"
                         render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-[#18B2B0]/30 p-3 bg-slate-700/30">
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-white/20 p-3 bg-white/5">
                             <div className="space-y-0.5">
                               <FormLabel className="text-white font-bold">حساب نشط</FormLabel>
                             </div>
@@ -785,7 +766,7 @@ export default function AdminPage() {
                         >
                           {editingUser ? "تحديث" : "إضافة"}
                         </Button>
-                        <Button type="button" variant="outline" onClick={handleCloseUserModal} data-testid="button-cancel-user" className="border-[#18B2B0]/30 text-white hover:bg-slate-700">
+                        <Button type="button" variant="outline" onClick={handleCloseUserModal} data-testid="button-cancel-user" className="border-white/20 text-white hover:bg-white/10">
                           إلغاء
                         </Button>
                       </div>
@@ -800,7 +781,7 @@ export default function AdminPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
             >
-              <Card className="shadow-2xl border-2 border-[#18B2B0]/30 bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl">
+              <Card className="shadow-2xl border border-[#18B2B0]/30 bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl">
                 <CardHeader className="bg-gradient-to-r from-[#18B2B0]/20 to-transparent border-b border-[#18B2B0]/20">
                   <CardTitle className="text-white text-2xl font-black">قائمة الموظفين</CardTitle>
                   <CardDescription className="text-gray-300">جميع الموظفين المسجلين في النظام</CardDescription>
@@ -895,7 +876,7 @@ export default function AdminPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <Card className="shadow-2xl border-2 border-[#18B2B0]/30 bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl">
+              <Card className="shadow-2xl border border-[#18B2B0]/30 bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl">
                 <CardHeader className="bg-gradient-to-r from-[#18B2B0]/20 to-transparent border-b border-[#18B2B0]/20">
                   <CardTitle className="text-white text-2xl font-black">العمليات الأخيرة</CardTitle>
                   <CardDescription className="text-gray-300">جميع العمليات الحديثة في النظام</CardDescription>
@@ -924,7 +905,7 @@ export default function AdminPage() {
                               </div>
                               <div>
                                 <p className="text-white font-bold">{transaction.itemName}</p>
-                                <p className="text-gray-400 text-sm">{transaction.notes || "بدون ملاحظات"}</p>
+                                <p className="text-gray-400 text-sm">{transaction.userName || transaction.regionName || "عملية"}</p>
                               </div>
                             </div>
                             <div className="text-left">
@@ -932,7 +913,7 @@ export default function AdminPage() {
                                 الكمية: {transaction.quantity}
                               </Badge>
                               <p className="text-gray-400 text-xs">
-                                {new Date(transaction.createdAt).toLocaleDateString('ar-SA')}
+                                {transaction.createdAt ? new Date(transaction.createdAt).toLocaleDateString('ar-SA') : 'غير محدد'}
                               </p>
                             </div>
                           </div>
