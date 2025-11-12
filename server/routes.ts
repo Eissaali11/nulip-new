@@ -1292,10 +1292,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Supervisor users endpoints - for viewing technician details
   app.get("/api/supervisor/users/:userId", requireAuth, requireSupervisor, async (req, res) => {
     try {
-      const supervisor = (req as any).user;
+      const user = (req as any).user;
       
-      if (!supervisor.regionId) {
-        return res.status(400).json({ message: "المشرف يجب أن يكون مرتبط بمنطقة" });
+      // Admin can access all users, supervisors only their region
+      if (user.role === ROLES.SUPERVISOR) {
+        if (!user.regionId) {
+          return res.status(400).json({ message: "المشرف يجب أن يكون مرتبط بمنطقة" });
+        }
       }
 
       const targetUser = await storage.getUser(req.params.userId);
@@ -1303,8 +1306,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Supervisors can only access users in their region
-      if (targetUser.regionId !== supervisor.regionId) {
+      // Supervisors can only access users in their region, admins can access all
+      if (user.role === ROLES.SUPERVISOR && targetUser.regionId !== user.regionId) {
         return res.status(403).json({ message: "لا يمكنك الوصول إلى مستخدمين خارج منطقتك" });
       }
 
@@ -1317,10 +1320,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/supervisor/users/:userId/fixed-inventory", requireAuth, requireSupervisor, async (req, res) => {
     try {
-      const supervisor = (req as any).user;
+      const user = (req as any).user;
       
-      if (!supervisor.regionId) {
-        return res.status(400).json({ message: "المشرف يجب أن يكون مرتبط بمنطقة" });
+      // Admin can access all users, supervisors only their region
+      if (user.role === ROLES.SUPERVISOR) {
+        if (!user.regionId) {
+          return res.status(400).json({ message: "المشرف يجب أن يكون مرتبط بمنطقة" });
+        }
       }
 
       const targetUser = await storage.getUser(req.params.userId);
@@ -1328,8 +1334,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Supervisors can only access users in their region
-      if (targetUser.regionId !== supervisor.regionId) {
+      // Supervisors can only access users in their region, admins can access all
+      if (user.role === ROLES.SUPERVISOR && targetUser.regionId !== user.regionId) {
         return res.status(403).json({ message: "لا يمكنك الوصول إلى مستخدمين خارج منطقتك" });
       }
 
@@ -1356,10 +1362,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/supervisor/users/:userId/moving-inventory", requireAuth, requireSupervisor, async (req, res) => {
     try {
-      const supervisor = (req as any).user;
+      const user = (req as any).user;
       
-      if (!supervisor.regionId) {
-        return res.status(400).json({ message: "المشرف يجب أن يكون مرتبط بمنطقة" });
+      // Admin can access all users, supervisors only their region
+      if (user.role === ROLES.SUPERVISOR) {
+        if (!user.regionId) {
+          return res.status(400).json({ message: "المشرف يجب أن يكون مرتبط بمنطقة" });
+        }
       }
 
       const targetUser = await storage.getUser(req.params.userId);
@@ -1367,8 +1376,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Supervisors can only access users in their region
-      if (targetUser.regionId !== supervisor.regionId) {
+      // Supervisors can only access users in their region, admins can access all
+      if (user.role === ROLES.SUPERVISOR && targetUser.regionId !== user.regionId) {
         return res.status(403).json({ message: "لا يمكنك الوصول إلى مستخدمين خارج منطقتك" });
       }
 
