@@ -25,6 +25,7 @@ interface NavItem {
   icon: any;
   gradient: string;
   adminOnly?: boolean;
+  technicianHidden?: boolean;
   badge?: number;
 }
 
@@ -77,6 +78,7 @@ export const Navbar = () => {
       href: "/operations",
       icon: ClipboardCheck,
       gradient: "from-cyan-500 to-teal-600",
+      technicianHidden: true,
     },
     {
       title: "لوحة مخزون الفنيين",
@@ -127,9 +129,11 @@ export const Navbar = () => {
     },
   ];
 
-  const filteredNavItems = navItems.filter(
-    item => !item.adminOnly || user?.role === 'admin'
-  );
+  const filteredNavItems = navItems.filter(item => {
+    if (item.adminOnly && user?.role !== 'admin') return false;
+    if (item.technicianHidden && user?.role === 'technician') return false;
+    return true;
+  });
 
   const isActive = (href: string) => location === href;
 

@@ -371,7 +371,7 @@ export default function Dashboard() {
         </motion.div>
 
         {/* مخزوني الشخصي - للفني */}
-        {user?.role !== 'admin' && (
+        {user?.role === 'technician' && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
