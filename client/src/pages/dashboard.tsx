@@ -701,18 +701,20 @@ export default function Dashboard() {
           </motion.div>
         )}
 
-        {/* Analytics Dashboard - Charts */}
-        <div className="grid lg:grid-cols-2 gap-8 mb-8">
-          <InventoryPieCard 
-            fixedTotal={user?.role === 'technician' ? getFixedInventoryTotal() : 0}
-            movingTotal={getMovingInventoryTotal()}
-          />
-          <InventoryBarCard
-            fixedInventory={user?.role === 'technician' ? (aggregatedFixedInventory || undefined) : undefined}
-            movingInventory={aggregatedMovingInventory || undefined}
-            title={user?.role === 'admin' ? "توزيع المخزون المتحرك لجميع الفنيين" : user?.role === 'technician' ? "تفاصيل المخزون حسب الفئة" : "توزيع المخزون المتحرك"}
-          />
-        </div>
+        {/* Analytics Dashboard - Charts - للفنيين فقط */}
+        {user?.role === 'technician' && (
+          <div className="grid lg:grid-cols-2 gap-8 mb-8">
+            <InventoryPieCard 
+              fixedTotal={getFixedInventoryTotal()}
+              movingTotal={getMovingInventoryTotal()}
+            />
+            <InventoryBarCard
+              fixedInventory={aggregatedFixedInventory || undefined}
+              movingInventory={aggregatedMovingInventory || undefined}
+              title="تفاصيل المخزون حسب الفئة"
+            />
+          </div>
+        )}
 
         {/* Technicians Dashboard */}
         {user?.role === 'admin' && techniciansData?.technicians && (
