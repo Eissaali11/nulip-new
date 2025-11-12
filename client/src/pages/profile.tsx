@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
+import { getRoleLabel, ROLE_BADGE_VARIANTS, type UserRole } from "@shared/roles";
 
 export default function ProfilePage() {
   const { user, logout } = useAuth();
@@ -22,7 +23,7 @@ export default function ProfilePage() {
   const userInfo = [
     { label: "الاسم الكامل", value: user.fullName, icon: UserCircle },
     { label: "اسم المستخدم", value: user.username, icon: User },
-    { label: "الدور", value: user.role === 'admin' ? 'مدير' : 'فني', icon: Shield },
+    { label: "الدور", value: getRoleLabel(user.role), icon: Shield },
   ];
 
   return (
@@ -110,9 +111,7 @@ export default function ProfilePage() {
                       </div>
                       {info.label === "الدور" && (
                         <Badge 
-                          className={user.role === 'admin' 
-                            ? "bg-purple-100 text-purple-700 border-purple-200" 
-                            : "bg-blue-100 text-blue-700 border-blue-200"}
+                          className={ROLE_BADGE_VARIANTS[user.role as UserRole] || "bg-gray-100 text-gray-700 border-gray-200"}
                         >
                           {info.value}
                         </Badge>

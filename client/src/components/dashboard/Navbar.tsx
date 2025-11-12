@@ -18,6 +18,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
+import { hasRoleOrAbove, ROLES } from "@shared/roles";
 
 interface NavItem {
   title: string;
@@ -25,6 +26,7 @@ interface NavItem {
   icon: any;
   gradient: string;
   adminOnly?: boolean;
+  supervisorOrAbove?: boolean;
   technicianOnly?: boolean;
   technicianHidden?: boolean;
   badge?: number;
@@ -52,11 +54,11 @@ export const Navbar = () => {
   });
 
   const { data: pendingRequestsCount } = useQuery<PendingCountResponse>({
-    queryKey: ["/api/inventory-requests/pending/count"],
-    enabled: !!user?.id && user?.role === 'admin',
+    queryKey: user?.role === 'admin' ? ["/api/inventory-requests/pending/count"] : ["/api/supervisor/inventory-requests/pending/count"],
+    enabled: !!user?.id && (user?.role === 'admin' || user?.role === 'supervisor'),
   });
 
-  const notificationsBadgeCount = user?.role === 'admin' 
+  const notificationsBadgeCount = (user?.role === 'admin' || user?.role === 'supervisor')
     ? (pendingRequestsCount?.count || 0)
     : pendingTransfers.length;
 
@@ -86,7 +88,7 @@ export const Navbar = () => {
       href: "/admin-inventory-overview",
       icon: LayoutDashboard,
       gradient: "from-purple-500 to-pink-600",
-      adminOnly: true,
+      supervisorOrAbove: true,
     },
     {
       title: "المخزون المتحرك",
@@ -128,12 +130,13 @@ export const Navbar = () => {
       href: "/warehouses",
       icon: Warehouse,
       gradient: "from-amber-500 to-orange-600",
-      adminOnly: true,
+      supervisorOrAbove: true,
     },
   ];
 
   const filteredNavItems = navItems.filter(item => {
     if (item.adminOnly && user?.role !== 'admin') return false;
+    if (item.supervisorOrAbove && !hasRoleOrAbove(user?.role || '', ROLES.SUPERVISOR)) return false;
     if (item.technicianOnly && user?.role !== 'technician') return false;
     if (item.technicianHidden && user?.role === 'technician') return false;
     return true;

@@ -135,21 +135,21 @@ export default function Notifications() {
   const [bulkApproveDialogOpen, setBulkApproveDialogOpen] = useState(false);
   const [bulkRejectionReason, setBulkRejectionReason] = useState("");
 
-  // Admin queries
+  // Admin/Supervisor queries
   const { data: requests = [], isLoading: requestsLoading } = useQuery<InventoryRequest[]>({
-    queryKey: ["/api/inventory-requests"],
-    enabled: user?.role === 'admin',
+    queryKey: user?.role === 'admin' ? ["/api/inventory-requests"] : ["/api/supervisor/inventory-requests"],
+    enabled: user?.role === 'admin' || user?.role === 'supervisor',
   });
 
   const { data: warehouses = [] } = useQuery<WarehouseInfo[]>({
-    queryKey: ["/api/warehouses"],
-    enabled: user?.role === 'admin',
+    queryKey: user?.role === 'admin' ? ["/api/warehouses"] : ["/api/supervisor/warehouses"],
+    enabled: user?.role === 'admin' || user?.role === 'supervisor',
   });
 
   // Technician queries
   const { data: transfers = [], isLoading: transfersLoading } = useQuery<WarehouseTransfer[]>({
     queryKey: ["/api/warehouse-transfers"],
-    enabled: user?.role !== 'admin' && !!user?.id,
+    enabled: user?.role === 'technician' && !!user?.id,
   });
 
   // Admin mutations
@@ -159,7 +159,9 @@ export default function Notifications() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inventory-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/supervisor/inventory-requests"] });
       queryClient.invalidateQueries({ queryKey: ["/api/warehouses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/supervisor/warehouses"] });
       queryClient.invalidateQueries({ queryKey: ["/api/warehouse-transfers"] });
       setApproveDialogOpen(false);
       setSelectedRequest(null);
@@ -184,6 +186,7 @@ export default function Notifications() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inventory-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/supervisor/inventory-requests"] });
       setRejectDialogOpen(false);
       setSelectedRequest(null);
       setAdminNotes("");

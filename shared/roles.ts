@@ -47,3 +47,13 @@ export function isAdmin(userRole: string): boolean {
 export function isTechnician(userRole: string): boolean {
   return userRole === ROLES.TECHNICIAN;
 }
+
+export function getRoleLabel(role: UserRole | string): string {
+  return ROLE_LABELS_AR[role as UserRole] || 'غير معروف';
+}
+
+export const ROLE_BADGE_VARIANTS = {
+  [ROLES.ADMIN]: 'bg-purple-100 text-purple-700 border-purple-200',
+  [ROLES.SUPERVISOR]: 'bg-teal-100 text-teal-700 border-teal-200',
+  [ROLES.TECHNICIAN]: 'bg-blue-100 text-blue-700 border-blue-200',
+} as const;
