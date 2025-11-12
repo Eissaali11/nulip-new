@@ -142,7 +142,13 @@ export const Navbar = () => {
         className="hidden lg:block relative z-20 border-b border-[#18B2B0]/20 bg-gradient-to-r from-[#0a0a0f]/95 via-[#0f0f15]/95 to-[#0a0a0f]/95 backdrop-blur-xl"
       >
         <div className="container mx-auto px-6">
-          <div className="flex items-center justify-center gap-2 py-4">
+          <div 
+            className="flex items-center gap-2 py-4 overflow-x-auto scrollbar-thin scrollbar-thumb-[#18B2B0]/50 scrollbar-track-white/5 hover:scrollbar-thumb-[#18B2B0]/70 transition-colors"
+            style={{
+              scrollbarWidth: 'thin',
+              scrollbarColor: 'rgba(24, 178, 176, 0.5) rgba(255, 255, 255, 0.05)'
+            }}
+          >
             {filteredNavItems.map((item, index) => {
               const Icon = item.icon;
               const active = isActive(item.href);
