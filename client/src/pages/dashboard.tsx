@@ -49,6 +49,7 @@ import { ProductCard } from "@/components/dashboard/ProductCard";
 import { GlobalInventoryChart } from "@/components/dashboard/GlobalInventoryChart";
 import RequestInventoryModal from "@/components/request-inventory-modal";
 import { CreditCard, FileText, Sticker } from "lucide-react";
+import { getRoleLabel } from "@shared/roles";
 
 interface WarehouseTransfer {
   id: string;
@@ -333,7 +334,7 @@ export default function Dashboard() {
                   <div className="hidden sm:block text-right">
                     <p className="text-white font-semibold text-sm">{user?.fullName}</p>
                     <p className="text-gray-400 text-xs">
-                      {user?.role === 'admin' ? 'مدير' : 'فني'}
+                      {getRoleLabel(user?.role || '')}
                     </p>
                   </div>
                 </motion.button>
