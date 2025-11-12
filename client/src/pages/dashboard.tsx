@@ -403,7 +403,7 @@ export default function Dashboard() {
           )}
         </motion.div>
 
-        {/* مخزوني الشخصي - للفني */}
+        {/* المخزون الثابت والمتحرك - للفني فقط */}
         {user?.role === 'technician' && (
           <Tabs defaultValue="fixed" className="w-full" dir="rtl">
             {/* Tab Bar - Sticky */}
