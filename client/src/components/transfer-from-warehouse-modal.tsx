@@ -96,7 +96,7 @@ export default function TransferFromWarehouseModal({
   });
 
   const employees = currentUser?.role === 'admin' 
-    ? users.filter(user => user.role === "employee")
+    ? users.filter(user => user.role === "technician")
     : users;
 
   const [itemTransfers, setItemTransfers] = useState<{[key: string]: ItemTransfer}>({
