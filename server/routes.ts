@@ -1311,7 +1311,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const inventory = await storage.getTechnicianFixedInventory(req.params.userId);
-      res.json(inventory || null);
+      
+      // If no fixed inventory exists, return null
+      if (!inventory) {
+        return res.json(null);
+      }
+
+      // Add user info to the inventory response
+      const inventoryWithUserInfo = {
+        ...inventory,
+        technicianName: targetUser.fullName,
+        city: targetUser.city || "غير محدد",
+      };
+
+      res.json(inventoryWithUserInfo);
     } catch (error) {
       console.error("Error fetching fixed inventory:", error);
       res.status(500).json({ message: "Failed to fetch fixed inventory" });
