@@ -1093,6 +1093,68 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
+  async getRegionTechniciansWithInventories(regionId: string) {
+    const technicians = await db
+      .select({
+        id: users.id,
+        fullName: users.fullName,
+        city: users.city,
+        regionId: users.regionId,
+        fixedInventory: technicianFixedInventories,
+      })
+      .from(users)
+      .leftJoin(technicianFixedInventories, eq(users.id, technicianFixedInventories.technicianId))
+      .where(and(eq(users.role, 'technician'), eq(users.regionId, regionId)));
+
+    const result = await Promise.all(
+      technicians.map(async (tech) => {
+        const movingInventory = await db
+          .select()
+          .from(techniciansInventory)
+          .where(eq(techniciansInventory.createdBy, tech.id))
+          .limit(1);
+
+        let alertLevel: 'good' | 'warning' | 'critical' = 'good';
+        
+        if (tech.fixedInventory) {
+          const totalItems = 
+            tech.fixedInventory.n950Boxes + tech.fixedInventory.n950Units +
+            tech.fixedInventory.i9000sBoxes + tech.fixedInventory.i9000sUnits +
+            tech.fixedInventory.i9100Boxes + tech.fixedInventory.i9100Units +
+            tech.fixedInventory.newBatteriesBoxes + tech.fixedInventory.newBatteriesUnits +
+            tech.fixedInventory.rollPaperBoxes + tech.fixedInventory.rollPaperUnits +
+            tech.fixedInventory.stickersBoxes + tech.fixedInventory.stickersUnits +
+            tech.fixedInventory.mobilySimBoxes + tech.fixedInventory.mobilySimUnits +
+            tech.fixedInventory.stcSimBoxes + tech.fixedInventory.stcSimUnits +
+            tech.fixedInventory.zainSimBoxes + tech.fixedInventory.zainSimUnits;
+          
+          const threshold = tech.fixedInventory.criticalStockThreshold || 70;
+          const lowThreshold = tech.fixedInventory.lowStockThreshold || 30;
+          
+          if (totalItems === 0) {
+            alertLevel = 'critical';
+          } else if (totalItems < lowThreshold) {
+            alertLevel = 'critical';
+          } else if (totalItems < threshold) {
+            alertLevel = 'warning';
+          }
+        }
+
+        return {
+          technicianId: tech.id,
+          technicianName: tech.fullName,
+          city: tech.city || '',
+          regionId: tech.regionId,
+          fixedInventory: tech.fixedInventory || null,
+          movingInventory: movingInventory[0] || null,
+          alertLevel,
+        };
+      })
+    );
+
+    return result;
+  }
+
   // Stock Movements Operations
   async createStockMovement(data: InsertStockMovement): Promise<StockMovement> {
     const [movement] = await db
@@ -1275,6 +1337,68 @@ export class DatabaseStorage implements IStorage {
       })
       .from(warehouses)
       .leftJoin(users, eq(warehouses.createdBy, users.id));
+
+    const result: WarehouseWithStats[] = [];
+    for (const warehouse of warehousesList) {
+      const [inventory] = await db
+        .select()
+        .from(warehouseInventory)
+        .where(eq(warehouseInventory.warehouseId, warehouse.id));
+
+      const totalItems = inventory
+        ? (inventory.n950Boxes || 0) + (inventory.n950Units || 0) +
+          (inventory.i9000sBoxes || 0) + (inventory.i9000sUnits || 0) +
+          (inventory.i9100Boxes || 0) + (inventory.i9100Units || 0) +
+          (inventory.rollPaperBoxes || 0) + (inventory.rollPaperUnits || 0) +
+          (inventory.stickersBoxes || 0) + (inventory.stickersUnits || 0) +
+          (inventory.newBatteriesBoxes || 0) + (inventory.newBatteriesUnits || 0) +
+          (inventory.mobilySimBoxes || 0) + (inventory.mobilySimUnits || 0) +
+          (inventory.stcSimBoxes || 0) + (inventory.stcSimUnits || 0) +
+          (inventory.zainSimBoxes || 0) + (inventory.zainSimUnits || 0)
+        : 0;
+
+      let lowStockItemsCount = 0;
+      if (inventory) {
+        if ((inventory.n950Boxes || 0) + (inventory.n950Units || 0) < 10) lowStockItemsCount++;
+        if ((inventory.i9000sBoxes || 0) + (inventory.i9000sUnits || 0) < 10) lowStockItemsCount++;
+        if ((inventory.i9100Boxes || 0) + (inventory.i9100Units || 0) < 10) lowStockItemsCount++;
+        if ((inventory.rollPaperBoxes || 0) + (inventory.rollPaperUnits || 0) < 10) lowStockItemsCount++;
+        if ((inventory.stickersBoxes || 0) + (inventory.stickersUnits || 0) < 10) lowStockItemsCount++;
+        if ((inventory.newBatteriesBoxes || 0) + (inventory.newBatteriesUnits || 0) < 10) lowStockItemsCount++;
+        if ((inventory.mobilySimBoxes || 0) + (inventory.mobilySimUnits || 0) < 10) lowStockItemsCount++;
+        if ((inventory.stcSimBoxes || 0) + (inventory.stcSimUnits || 0) < 10) lowStockItemsCount++;
+        if ((inventory.zainSimBoxes || 0) + (inventory.zainSimUnits || 0) < 10) lowStockItemsCount++;
+      }
+
+      result.push({
+        ...warehouse,
+        inventory: inventory || null,
+        totalItems,
+        lowStockItemsCount,
+        creatorName: warehouse.creatorName || undefined,
+      });
+    }
+
+    return result;
+  }
+
+  async getWarehousesByRegion(regionId: string): Promise<WarehouseWithStats[]> {
+    const warehousesList = await db
+      .select({
+        id: warehouses.id,
+        name: warehouses.name,
+        location: warehouses.location,
+        description: warehouses.description,
+        isActive: warehouses.isActive,
+        createdBy: warehouses.createdBy,
+        regionId: warehouses.regionId,
+        createdAt: warehouses.createdAt,
+        updatedAt: warehouses.updatedAt,
+        creatorName: users.fullName,
+      })
+      .from(warehouses)
+      .leftJoin(users, eq(warehouses.createdBy, users.id))
+      .where(eq(warehouses.regionId, regionId));
 
     const result: WarehouseWithStats[] = [];
     for (const warehouse of warehousesList) {

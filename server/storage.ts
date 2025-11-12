@@ -66,6 +66,7 @@ export interface IStorage {
   getAllTechniciansWithFixedInventory(): Promise<TechnicianWithFixedInventory[]>;
   getFixedInventorySummary(): Promise<FixedInventorySummary>;
   getAllTechniciansWithBothInventories(): Promise<any[]>;
+  getRegionTechniciansWithInventories(regionId: string): Promise<any[]>;
   
   // Stock Movements
   createStockMovement(movement: InsertStockMovement): Promise<StockMovement>;
@@ -84,6 +85,7 @@ export interface IStorage {
   
   // Warehouses
   getWarehouses(): Promise<WarehouseWithStats[]>;
+  getWarehousesByRegion(regionId: string): Promise<WarehouseWithStats[]>;
   getWarehouse(id: string): Promise<WarehouseWithInventory | undefined>;
   createWarehouse(warehouse: InsertWarehouse, createdBy: string): Promise<Warehouse>;
   updateWarehouse(id: string, updates: Partial<InsertWarehouse>): Promise<Warehouse>;
@@ -750,6 +752,11 @@ export class MemStorage implements IStorage {
     });
   }
 
+  async getRegionTechniciansWithInventories(regionId: string): Promise<any[]> {
+    const allTechnicians = await this.getAllTechniciansWithBothInventories();
+    return allTechnicians.filter(tech => tech.regionId === regionId);
+  }
+
   // Stock Movement methods (stub implementations)
   async createStockMovement(insertMovement: InsertStockMovement): Promise<StockMovement> {
     const id = randomUUID();
@@ -832,6 +839,10 @@ export class MemStorage implements IStorage {
 
   // Warehouses (stub implementations for MemStorage)
   async getWarehouses(): Promise<WarehouseWithStats[]> {
+    return [];
+  }
+
+  async getWarehousesByRegion(regionId: string): Promise<WarehouseWithStats[]> {
     return [];
   }
 
