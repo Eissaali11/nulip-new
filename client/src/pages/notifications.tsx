@@ -510,6 +510,39 @@ export default function Notifications() {
     bulkRejectMutation.mutate({ requestIds: selectedBatchIds, reason: bulkRejectionReason });
   };
 
+  // Calculate total quantities from selected batches
+  const getSelectedBatchesTotals = () => {
+    const totals: Record<string, number> = {};
+    
+    const selectedBatches = groupedTransfers.filter(g => selectedBatchIds.includes(g.requestId));
+    
+    selectedBatches.forEach(batch => {
+      batch.transfers.forEach(transfer => {
+        const key = `${transfer.itemType}_${transfer.packagingType}`;
+        totals[key] = (totals[key] || 0) + transfer.quantity;
+      });
+    });
+    
+    return totals;
+  };
+
+  const getItemDisplayName = (itemType: string, packagingType: string, quantity: number) => {
+    const names: Record<string, string> = {
+      'n950': 'نوفا 950',
+      'i9000s': 'i9000s',
+      'i9100': 'i9100',
+      'rollPaper': 'رول حراري',
+      'stickers': 'ملصقات',
+      'newBatteries': 'بطاريات',
+      'mobilySim': 'موبايلي SIM',
+      'stcSim': 'STC SIM',
+      'zainSim': 'زين SIM',
+    };
+    
+    const packaging = packagingType === 'box' ? 'كرتون' : 'قطعة';
+    return `${names[itemType] || itemType} (${packaging}): ${quantity}`;
+  };
+
   const allCount = isAdmin ? requests.length : transfers.length;
   const pendingCount = isAdmin
     ? requests.filter(r => r.status === 'pending').length
@@ -1013,16 +1046,39 @@ export default function Notifications() {
 
       {/* Bulk Approve Dialog */}
       <Dialog open={bulkApproveDialogOpen} onOpenChange={setBulkApproveDialogOpen}>
-        <DialogContent className="sm:max-w-md bg-[#0f0f15] border-[#18B2B0]/20 text-white">
+        <DialogContent className="sm:max-w-2xl bg-[#0f0f15] border-[#18B2B0]/20 text-white">
           <DialogHeader>
             <DialogTitle className="text-xl">قبول الطلبات المحددة</DialogTitle>
             <DialogDescription className="text-gray-400">
-              هل تريد قبول {selectedBatchIds.length} طلب؟ سيتم إضافة جميع الأصناف إلى مخزونك
+              هل تريد قبول {selectedBatchIds.length} طلب؟ سيتم إضافة جميع الأصناف التالية إلى مخزونك
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4 p-3 bg-white/5 rounded-lg border border-white/10">
-            <p className="text-sm text-gray-400 mb-1">عدد الطلبات:</p>
-            <p className="text-white font-bold text-2xl">{selectedBatchIds.length}</p>
+          <div className="py-4 space-y-4">
+            {/* Number of requests */}
+            <div className="p-3 bg-gradient-to-r from-[#18B2B0]/20 to-teal-500/10 rounded-lg border border-[#18B2B0]/40">
+              <p className="text-sm text-gray-400 mb-1">عدد الطلبات:</p>
+              <p className="text-white font-bold text-2xl">{selectedBatchIds.length}</p>
+            </div>
+            
+            {/* Items breakdown */}
+            <div className="p-4 bg-white/5 rounded-lg border border-white/10 max-h-60 overflow-y-auto">
+              <p className="text-sm font-semibold text-[#18B2B0] mb-3">تفاصيل الكميات:</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {Object.entries(getSelectedBatchesTotals()).map(([key, quantity]) => {
+                  const [itemType, packagingType] = key.split('_');
+                  return (
+                    <div 
+                      key={key}
+                      className="flex items-center justify-between p-2 bg-white/5 rounded border border-white/5 hover:border-[#18B2B0]/30 transition-colors"
+                    >
+                      <span className="text-sm text-gray-300">
+                        {getItemDisplayName(itemType, packagingType, quantity)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
           <DialogFooter className="flex gap-2">
             <Button
@@ -1038,7 +1094,7 @@ export default function Notifications() {
               className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white"
               data-testid="button-confirm-bulk-approve"
             >
-              تأكيد القبول
+              {bulkApproveMutation.isPending ? "جاري القبول..." : "تأكيد القبول"}
             </Button>
           </DialogFooter>
         </DialogContent>
