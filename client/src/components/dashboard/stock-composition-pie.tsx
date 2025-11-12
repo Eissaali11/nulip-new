@@ -39,11 +39,12 @@ export function StockCompositionPie({
                 data={data}
                 cx="50%"
                 cy="50%"
-                labelLine={false}
+                labelLine={{ stroke: 'rgba(255, 255, 255, 0.3)' }}
                 label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                 outerRadius={80}
                 fill="#8884d8"
                 dataKey="value"
+                style={{ fill: '#fff', fontSize: '12px' }}
               >
                 {data.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
@@ -51,10 +52,14 @@ export function StockCompositionPie({
               </Pie>
               <Tooltip 
                 contentStyle={{ 
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px'
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '12px',
+                  color: '#fff'
                 }}
+                labelStyle={{ color: '#fff' }}
+                itemStyle={{ color: '#fff' }}
               />
               <Legend />
             </PieChart>

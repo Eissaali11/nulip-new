@@ -33,19 +33,28 @@ export function TrendLineChart({
         <CardContent>
           <ResponsiveContainer width="100%" height={height}>
             <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
               <XAxis 
                 dataKey="name" 
                 className="text-xs" 
-                tick={{ fill: 'currentColor' }}
+                tick={{ fill: '#fff' }}
+                stroke="rgba(255, 255, 255, 0.2)"
               />
-              <YAxis className="text-xs" tick={{ fill: 'currentColor' }} />
+              <YAxis 
+                className="text-xs" 
+                tick={{ fill: '#fff' }}
+                stroke="rgba(255, 255, 255, 0.2)"
+              />
               <Tooltip 
                 contentStyle={{ 
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px'
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '12px',
+                  color: '#fff'
                 }}
+                labelStyle={{ color: '#fff' }}
+                itemStyle={{ color: '#fff' }}
               />
               <Legend />
               {dataKeys.map((item) => (
