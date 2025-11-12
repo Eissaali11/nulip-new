@@ -552,7 +552,7 @@ export default function AdminPage() {
                           <motion.tr 
                             key={region.id} 
                             data-testid={`row-region-${region.id}`}
-                            className="border-white/5 hover:bg-white/5 transition-colors"
+                            className="border-white/5 hover:bg-white/10 hover:shadow-[0_0_15px_rgba(24,178,176,0.1)] transition-all duration-300"
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: index * 0.05 }}
@@ -565,18 +565,18 @@ export default function AdminPage() {
                               </Badge>
                             </TableCell>
                             <TableCell className="text-right">
-                              <Badge variant="outline" className="border-green-500 text-green-400">
+                              <Badge variant="outline" className="border-white/30 text-green-400 bg-green-500/10">
                                 {region.totalQuantity || 0}
                               </Badge>
                             </TableCell>
                             <TableCell className="text-right">
                               {region.isActive ? (
-                                <Badge className="bg-green-500/20 text-green-400 border border-green-500/30">
+                                <Badge className="bg-green-500/20 text-green-400 border border-white/20">
                                   <CheckCircle className="h-3 w-3 ml-1" />
                                   نشط
                                 </Badge>
                               ) : (
-                                <Badge variant="outline" className="border-gray-500 text-gray-400">
+                                <Badge variant="outline" className="border-white/20 text-gray-400 bg-gray-500/10">
                                   <XCircle className="h-3 w-3 ml-1" />
                                   غير نشط
                                 </Badge>
@@ -805,7 +805,7 @@ export default function AdminPage() {
                           <motion.tr 
                             key={user.id} 
                             data-testid={`row-user-${user.id}`}
-                            className="border-white/5 hover:bg-white/5 transition-colors"
+                            className="border-white/5 hover:bg-white/10 hover:shadow-[0_0_15px_rgba(24,178,176,0.1)] transition-all duration-300"
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: index * 0.05 }}
@@ -828,7 +828,7 @@ export default function AdminPage() {
                                   نشط
                                 </Badge>
                               ) : (
-                                <Badge variant="outline" className="border-gray-500 text-gray-400">
+                                <Badge variant="outline" className="border-white/20 text-gray-400 bg-gray-500/10">
                                   <XCircle className="h-3 w-3 ml-1" />
                                   غير نشط
                                 </Badge>
@@ -892,27 +892,31 @@ export default function AdminPage() {
                       {recentTransactions.slice(0, 20).map((transaction, index) => (
                         <motion.div
                           key={transaction.id}
-                          className="bg-white/5 backdrop-blur-sm p-4 rounded-xl border border-white/10 hover:bg-white/10 transition-all duration-300"
+                          className="bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl p-5 rounded-2xl border border-white/20 hover:border-white/30 hover:shadow-[0_0_20px_rgba(24,178,176,0.2)] transition-all duration-300"
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: index * 0.02 }}
                           data-testid={`transaction-${transaction.id}`}
                         >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="bg-[#18B2B0]/20 p-3 rounded-full">
-                                <Activity className="h-5 w-5 text-[#18B2B0]" />
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-4 flex-1">
+                              <div className="bg-gradient-to-br from-[#18B2B0]/30 to-[#18B2B0]/10 p-3 rounded-xl border border-[#18B2B0]/20">
+                                <Activity className="h-6 w-6 text-[#18B2B0]" />
                               </div>
-                              <div>
-                                <p className="text-white font-bold">{transaction.itemName}</p>
-                                <p className="text-gray-400 text-sm">{transaction.userName || transaction.regionName || "عملية"}</p>
+                              <div className="flex-1">
+                                <p className="text-white font-bold text-lg mb-1">{transaction.itemName}</p>
+                                <p className="text-gray-300 text-sm flex items-center gap-2">
+                                  <span className="text-[#18B2B0]">•</span>
+                                  {transaction.userName || transaction.regionName || "عملية"}
+                                </p>
                               </div>
                             </div>
-                            <div className="text-left">
-                              <Badge variant="outline" className="border-[#18B2B0] text-[#18B2B0] mb-1">
+                            <div className="text-left space-y-2">
+                              <Badge variant="outline" className="border-white/30 text-[#18B2B0] bg-[#18B2B0]/10 text-sm px-3 py-1 font-bold">
                                 الكمية: {transaction.quantity}
                               </Badge>
-                              <p className="text-gray-400 text-xs">
+                              <p className="text-gray-400 text-xs flex items-center justify-end gap-1">
+                                <span className="text-white/40">📅</span>
                                 {transaction.createdAt ? new Date(transaction.createdAt).toLocaleDateString('ar-SA') : 'غير محدد'}
                               </p>
                             </div>
