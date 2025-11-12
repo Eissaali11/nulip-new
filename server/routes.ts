@@ -1501,13 +1501,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/warehouse-transfers", requireAuth, requireAdmin, async (req, res) => {
+  app.post("/api/warehouse-transfers", requireAuth, requireSupervisor, async (req, res) => {
     try {
       const user = (req as any).user;
       const { warehouseId, technicianId, notes, ...items } = req.body;
 
       if (!warehouseId || !technicianId) {
         return res.status(400).json({ message: "warehouseId and technicianId are required" });
+      }
+
+      // Supervisors: validate region access
+      if (user.role === 'supervisor') {
+        if (!user.regionId) {
+          return res.status(400).json({ message: "المشرف يجب أن يكون مرتبط بمنطقة" });
+        }
+
+        // Check warehouse is in supervisor's region
+        const warehouse = await storage.getWarehouse(warehouseId);
+        if (!warehouse) {
+          return res.status(404).json({ message: "Warehouse not found" });
+        }
+        if (warehouse.regionId !== user.regionId) {
+          return res.status(403).json({ message: "لا يمكنك النقل من مستودعات خارج منطقتك" });
+        }
+
+        // Check technician is in supervisor's region
+        const technician = await storage.getUser(technicianId);
+        if (!technician) {
+          return res.status(404).json({ message: "Technician not found" });
+        }
+        if (technician.regionId !== user.regionId) {
+          return res.status(403).json({ message: "لا يمكنك النقل إلى فنيين خارج منطقتك" });
+        }
       }
 
       const itemTypes = ['n950', 'i9000s', 'i9100', 'rollPaper', 'stickers', 'newBatteries', 'mobilySim', 'stcSim', 'zainSim'];
