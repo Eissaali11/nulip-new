@@ -1967,7 +1967,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/inventory-requests/:id/approve", requireAuth, requireAdmin, async (req, res) => {
+  app.patch("/api/inventory-requests/:id/approve", requireAuth, requireSupervisor, async (req, res) => {
     try {
       const user = (req as any).user;
       const { adminNotes, warehouseId } = req.body;
@@ -1990,6 +1990,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (inventoryRequest.status !== 'pending') {
         return res.status(400).json({ message: "Request is not pending" });
+      }
+
+      // Supervisors can only approve requests from technicians in their region
+      if (user.role === 'supervisor') {
+        const [technician] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, inventoryRequest.technicianId))
+          .limit(1);
+
+        if (!technician || technician.regionId !== user.regionId) {
+          return res.status(403).json({ message: "لا يمكنك معالجة طلبات من خارج منطقتك" });
+        }
       }
 
       await db.transaction(async (tx) => {
@@ -2095,13 +2108,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/inventory-requests/:id/reject", requireAuth, requireAdmin, async (req, res) => {
+  app.patch("/api/inventory-requests/:id/reject", requireAuth, requireSupervisor, async (req, res) => {
     try {
       const user = (req as any).user;
       const { adminNotes } = req.body;
 
       if (!adminNotes) {
         return res.status(400).json({ message: "Admin notes are required for rejection" });
+      }
+
+      // Supervisors can only reject requests from technicians in their region
+      if (user.role === 'supervisor') {
+        const [request] = await db
+          .select()
+          .from(inventoryRequests)
+          .where(eq(inventoryRequests.id, req.params.id))
+          .limit(1);
+
+        if (!request) {
+          return res.status(404).json({ message: "Request not found" });
+        }
+
+        const [technician] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, request.technicianId))
+          .limit(1);
+
+        if (!technician || technician.regionId !== user.regionId) {
+          return res.status(403).json({ message: "لا يمكنك معالجة طلبات من خارج منطقتك" });
+        }
       }
 
       const [updatedRequest] = await db
