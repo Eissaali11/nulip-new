@@ -139,7 +139,7 @@ export default function TechnicianDetailsPage() {
               <XCircle className="h-16 w-16 text-red-400 mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-white mb-2">لم يتم العثور على البيانات</h2>
               <p className="text-gray-400 mb-6">لا توجد بيانات متاحة لهذا الفني</p>
-              <Link href="/dashboard">
+              <Link href="/">
                 <Button className="bg-[#18B2B0] hover:bg-[#0ea5a3]">
                   <ArrowLeft className="ml-2 h-4 w-4" />
                   العودة للوحة التحكم
@@ -323,7 +323,7 @@ export default function TechnicianDetailsPage() {
           className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
         >
           <div className="flex items-center gap-4">
-            <Link href="/dashboard">
+            <Link href="/">
               <Button
                 variant="outline"
                 className="border-[#18B2B0]/30 text-[#18B2B0] hover:bg-[#18B2B0]/10"
