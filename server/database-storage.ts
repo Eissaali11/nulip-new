@@ -1609,7 +1609,7 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  async getWarehouseTransfers(warehouseId?: string, technicianId?: string, limit?: number): Promise<WarehouseTransferWithDetails[]> {
+  async getWarehouseTransfers(warehouseId?: string, technicianId?: string, regionId?: string, limit?: number): Promise<WarehouseTransferWithDetails[]> {
     const itemNameMap: Record<string, string> = {
       'n950': 'N950',
       'i9000s': 'I9000s',
@@ -1653,6 +1653,9 @@ export class DatabaseStorage implements IStorage {
     }
     if (technicianId) {
       conditions.push(eq(warehouseTransfers.technicianId, technicianId));
+    }
+    if (regionId) {
+      conditions.push(eq(warehouses.regionId, regionId));
     }
 
     if (conditions.length > 0) {

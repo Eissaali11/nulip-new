@@ -97,7 +97,7 @@ export interface IStorage {
   
   // Warehouse Transfers
   transferFromWarehouse(data: InsertWarehouseTransfer): Promise<WarehouseTransfer>;
-  getWarehouseTransfers(warehouseId?: string, technicianId?: string, limit?: number): Promise<WarehouseTransferWithDetails[]>;
+  getWarehouseTransfers(warehouseId?: string, technicianId?: string, regionId?: string, limit?: number): Promise<WarehouseTransferWithDetails[]>;
   acceptWarehouseTransfer(transferId: string): Promise<WarehouseTransfer>;
   rejectWarehouseTransfer(transferId: string, reason?: string): Promise<WarehouseTransfer>;
   
@@ -886,7 +886,7 @@ export class MemStorage implements IStorage {
     throw new Error("MemStorage does not support warehouse operations. Use DatabaseStorage instead.");
   }
 
-  async getWarehouseTransfers(warehouseId?: string, technicianId?: string, limit?: number): Promise<WarehouseTransferWithDetails[]> {
+  async getWarehouseTransfers(warehouseId?: string, technicianId?: string, regionId?: string, limit?: number): Promise<WarehouseTransferWithDetails[]> {
     return [];
   }
 

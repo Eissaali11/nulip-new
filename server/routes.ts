@@ -1580,14 +1580,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = (req as any).user;
       const warehouseId = req.query.warehouseId as string | undefined;
-      let technicianId = req.query.technicianId as string | undefined;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
       
-      if (user.role !== 'admin') {
+      let technicianId: string | undefined;
+      let regionId: string | undefined;
+
+      if (user.role === 'admin') {
+        // Admins see all transfers
+        technicianId = undefined;
+        regionId = undefined;
+      } else if (user.role === 'supervisor') {
+        // Supervisors see transfers in their region
+        if (!user.regionId) {
+          return res.status(403).json({ message: "المشرف يجب أن يكون مرتبط بمنطقة" });
+        }
+        regionId = user.regionId;
+        technicianId = undefined;
+      } else {
+        // Technicians see only transfers sent to them
         technicianId = user.id;
+        regionId = undefined;
       }
       
-      const transfers = await storage.getWarehouseTransfers(warehouseId, technicianId, limit);
+      const transfers = await storage.getWarehouseTransfers(warehouseId, technicianId, regionId, limit);
       res.json(transfers);
     } catch (error) {
       console.error("Error fetching warehouse transfers:", error);
