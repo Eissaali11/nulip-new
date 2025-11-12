@@ -308,7 +308,7 @@ export default function AdminPage() {
               className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#18B2B0] data-[state=active]:to-teal-500 data-[state=active]:text-white data-[state=active]:shadow-xl font-bold rounded-xl transition-all duration-300 hover:bg-white/10 text-white"
             >
               <Activity className="h-4 w-4 ml-2" />
-              العمليات الأخيرة
+              عمليات النظام
             </TabsTrigger>
           </TabsList>
 
