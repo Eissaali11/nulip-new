@@ -42,6 +42,7 @@ import { InventoryPieCard } from "@/components/dashboard/InventoryPieCard";
 import { InventoryBarCard } from "@/components/dashboard/InventoryBarCard";
 import { TechnicianDashboardCard } from "@/components/dashboard/TechnicianDashboardCard";
 import { WarehouseDashboardCard } from "@/components/dashboard/WarehouseDashboardCard";
+import { CompactWarehouseCard } from "@/components/dashboard/CompactWarehouseCard";
 import { ProductCard } from "@/components/dashboard/ProductCard";
 import { GlobalInventoryChart } from "@/components/dashboard/GlobalInventoryChart";
 import RequestInventoryModal from "@/components/request-inventory-modal";
@@ -679,27 +680,27 @@ export default function Dashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="relative bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl rounded-3xl border border-orange-500/30 p-8 overflow-hidden shadow-2xl mb-8"
+            className="relative bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl rounded-3xl border border-orange-500/30 p-6 md:p-8 overflow-hidden shadow-2xl mb-8"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent" />
             
             <div className="relative">
-              <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                   <Warehouse className="h-6 w-6 text-orange-500" />
-                  <h2 className="text-2xl font-bold text-white">المستودعات</h2>
+                  <h2 className="text-xl md:text-2xl font-bold text-white">المستودعات</h2>
                 </div>
                 <Link href="/warehouses">
-                  <Button className="bg-orange-500 hover:bg-orange-600">
+                  <Button className="bg-orange-500 hover:bg-orange-600 text-sm md:text-base">
                     إدارة المستودعات
                     <ArrowRight className="mr-2 h-4 w-4" />
                   </Button>
                 </Link>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {warehousesData.slice(0, 4).map((warehouse, index) => (
-                  <WarehouseDashboardCard
+              <div className="space-y-4">
+                {warehousesData.map((warehouse, index) => (
+                  <CompactWarehouseCard
                     key={warehouse.id}
                     warehouse={warehouse}
                     index={index}
