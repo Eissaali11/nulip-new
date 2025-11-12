@@ -1266,6 +1266,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Supervisor users endpoints - for viewing technician details
+  app.get("/api/supervisor/users/:userId", requireAuth, requireSupervisor, async (req, res) => {
+    try {
+      const supervisor = (req as any).user;
+      
+      if (!supervisor.regionId) {
+        return res.status(400).json({ message: "المشرف يجب أن يكون مرتبط بمنطقة" });
+      }
+
+      const targetUser = await storage.getUser(req.params.userId);
+      if (!targetUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Supervisors can only access users in their region
+      if (targetUser.regionId !== supervisor.regionId) {
+        return res.status(403).json({ message: "لا يمكنك الوصول إلى مستخدمين خارج منطقتك" });
+      }
+
+      res.json(targetUser);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  app.get("/api/supervisor/users/:userId/fixed-inventory", requireAuth, requireSupervisor, async (req, res) => {
+    try {
+      const supervisor = (req as any).user;
+      
+      if (!supervisor.regionId) {
+        return res.status(400).json({ message: "المشرف يجب أن يكون مرتبط بمنطقة" });
+      }
+
+      const targetUser = await storage.getUser(req.params.userId);
+      if (!targetUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Supervisors can only access users in their region
+      if (targetUser.regionId !== supervisor.regionId) {
+        return res.status(403).json({ message: "لا يمكنك الوصول إلى مستخدمين خارج منطقتك" });
+      }
+
+      const inventory = await storage.getFixedInventory(req.params.userId);
+      res.json(inventory);
+    } catch (error) {
+      console.error("Error fetching fixed inventory:", error);
+      res.status(500).json({ message: "Failed to fetch fixed inventory" });
+    }
+  });
+
+  app.get("/api/supervisor/users/:userId/moving-inventory", requireAuth, requireSupervisor, async (req, res) => {
+    try {
+      const supervisor = (req as any).user;
+      
+      if (!supervisor.regionId) {
+        return res.status(400).json({ message: "المشرف يجب أن يكون مرتبط بمنطقة" });
+      }
+
+      const targetUser = await storage.getUser(req.params.userId);
+      if (!targetUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Supervisors can only access users in their region
+      if (targetUser.regionId !== supervisor.regionId) {
+        return res.status(403).json({ message: "لا يمكنك الوصول إلى مستخدمين خارج منطقتك" });
+      }
+
+      const inventory = await storage.getMovingInventory(req.params.userId);
+      res.json(inventory);
+    } catch (error) {
+      console.error("Error fetching moving inventory:", error);
+      res.status(500).json({ message: "Failed to fetch moving inventory" });
+    }
+  });
+
   app.post("/api/warehouses", requireAuth, requireAdmin, async (req, res) => {
     try {
       const user = (req as any).user;

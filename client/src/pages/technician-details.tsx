@@ -103,12 +103,12 @@ export default function TechnicianDetailsPage() {
   const technicianId = params?.id;
 
   const { data: fixedInventory, isLoading: isLoadingFixed } = useQuery<TechnicianFixedInventory>({
-    queryKey: [`/api/technician-fixed-inventory/${technicianId}`],
+    queryKey: [`/api/supervisor/users/${technicianId}/fixed-inventory`],
     enabled: !!technicianId,
   });
 
   const { data: movingInventory, isLoading: isLoadingMoving } = useQuery<TechnicianMovingInventory>({
-    queryKey: [`/api/technicians/${technicianId}`],
+    queryKey: [`/api/supervisor/users/${technicianId}/moving-inventory`],
     enabled: !!technicianId,
   });
 
