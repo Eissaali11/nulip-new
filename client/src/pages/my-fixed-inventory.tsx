@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Package, Edit, Trash2, Plus, FileDown, Box, Smartphone, FileText, Sticker, Battery, ArrowRightLeft, Sparkles, Home, ArrowRight } from "lucide-react";
+import { Package, Edit, Trash2, Plus, FileDown, Box, Smartphone, FileText, Sticker, Battery, ArrowRightLeft, Sparkles, Home, ArrowRight, TrendingUp, Layers } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -15,6 +15,8 @@ import { motion } from "framer-motion";
 import rasscoLogo from "@assets/image_1762442473114.png";
 import neoleapLogo from "@assets/image_1762442479737.png";
 import madaDevice from "@assets/image_1762442486277.png";
+import { StatsKpiCard } from "@/components/dashboard/stats-kpi-card";
+import { StockCompositionPie } from "@/components/dashboard/stock-composition-pie";
 
 interface FixedInventory {
   id?: string;
@@ -441,6 +443,80 @@ export default function MyFixedInventory() {
 
       {/* Main Content */}
       <div className="container mx-auto p-4 sm:p-6 max-w-7xl">
+        {/* Personal Analytics Section */}
+        {existingInventory && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mb-6"
+          >
+            {/* KPI Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <StatsKpiCard
+                title="إجمالي الأصناف"
+                value={grandTotal}
+                icon={Package}
+                color="primary"
+                delay={0}
+              />
+              <StatsKpiCard
+                title="الأجهزة"
+                value={
+                  getTotalForItem(existingInventory.n950Boxes, existingInventory.n950Units) +
+                  getTotalForItem(existingInventory.i9000sBoxes, existingInventory.i9000sUnits) +
+                  getTotalForItem(existingInventory.i9100Boxes, existingInventory.i9100Units)
+                }
+                icon={Box}
+                color="success"
+                delay={0.1}
+              />
+              <StatsKpiCard
+                title="الشرائح"
+                value={
+                  getTotalForItem(existingInventory.mobilySimBoxes, existingInventory.mobilySimUnits) +
+                  getTotalForItem(existingInventory.stcSimBoxes, existingInventory.stcSimUnits) +
+                  getTotalForItem(existingInventory.zainSimBoxes, existingInventory.zainSimUnits)
+                }
+                icon={Smartphone}
+                color="info"
+                delay={0.2}
+              />
+            </div>
+
+            {/* Pie Chart */}
+            <StockCompositionPie
+              title="توزيع المخزون الثابت"
+              description="تقسيم الأصناف حسب الفئات"
+              data={[
+                {
+                  name: 'أجهزة',
+                  value: getTotalForItem(existingInventory.n950Boxes, existingInventory.n950Units) +
+                        getTotalForItem(existingInventory.i9000sBoxes, existingInventory.i9000sUnits) +
+                        getTotalForItem(existingInventory.i9100Boxes, existingInventory.i9100Units)
+                },
+                {
+                  name: 'شرائح',
+                  value: getTotalForItem(existingInventory.mobilySimBoxes, existingInventory.mobilySimUnits) +
+                        getTotalForItem(existingInventory.stcSimBoxes, existingInventory.stcSimUnits) +
+                        getTotalForItem(existingInventory.zainSimBoxes, existingInventory.zainSimUnits)
+                },
+                {
+                  name: 'أوراق',
+                  value: getTotalForItem(existingInventory.rollPaperBoxes, existingInventory.rollPaperUnits) +
+                        getTotalForItem(existingInventory.stickersBoxes, existingInventory.stickersUnits)
+                },
+                {
+                  name: 'بطاريات',
+                  value: getTotalForItem(existingInventory.newBatteriesBoxes, existingInventory.newBatteriesUnits)
+                },
+              ]}
+              colors={['#18B2B0', '#10B981', '#F59E0B', '#8B5CF6']}
+              height={320}
+            />
+          </motion.div>
+        )}
+
         {/* Action Buttons Card */}
         {existingInventory && (
           <motion.div
