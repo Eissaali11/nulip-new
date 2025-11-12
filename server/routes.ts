@@ -780,6 +780,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/supervisor/technicians-inventory", requireAuth, requireSupervisor, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      
+      if (!user.regionId) {
+        return res.status(400).json({ message: "المشرف يجب أن يكون مرتبط بمنطقة لعرض البيانات" });
+      }
+      
+      const technicians = await storage.getRegionTechniciansWithInventories(user.regionId);
+      res.json({ technicians });
+    } catch (error) {
+      console.error("Error fetching region technicians inventory:", error);
+      res.status(500).json({ message: "Failed to fetch region technicians inventory" });
+    }
+  });
+
   app.get("/api/technician-fixed-inventory/:technicianId", requireAuth, async (req, res) => {
     try {
       const inventory = await storage.getTechnicianFixedInventory(req.params.technicianId);
@@ -1153,6 +1169,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching warehouses:", error);
       res.status(500).json({ message: "Failed to fetch warehouses" });
+    }
+  });
+
+  app.get("/api/supervisor/warehouses", requireAuth, requireSupervisor, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      
+      if (!user.regionId) {
+        return res.status(400).json({ message: "المشرف يجب أن يكون مرتبط بمنطقة لعرض البيانات" });
+      }
+      
+      const warehouses = await storage.getWarehousesByRegion(user.regionId);
+      res.json(warehouses);
+    } catch (error) {
+      console.error("Error fetching region warehouses:", error);
+      res.status(500).json({ message: "Failed to fetch region warehouses" });
     }
   });
 
