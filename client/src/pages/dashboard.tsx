@@ -43,6 +43,7 @@ import { InventoryBarCard } from "@/components/dashboard/InventoryBarCard";
 import { TechnicianDashboardCard } from "@/components/dashboard/TechnicianDashboardCard";
 import { WarehouseDashboardCard } from "@/components/dashboard/WarehouseDashboardCard";
 import { ProductCard } from "@/components/dashboard/ProductCard";
+import { GlobalInventoryChart } from "@/components/dashboard/GlobalInventoryChart";
 import RequestInventoryModal from "@/components/request-inventory-modal";
 import { CreditCard, FileText, Sticker } from "lucide-react";
 
@@ -662,6 +663,14 @@ export default function Dashboard() {
               </motion.div>
             </TabsContent>
           </Tabs>
+        )}
+
+        {/* Global Inventory Chart - للأدمن فقط */}
+        {user?.role === 'admin' && (
+          <GlobalInventoryChart
+            technicians={techniciansData?.technicians}
+            warehouses={warehousesData}
+          />
         )}
 
         {/* المستودعات - للأدمن فقط */}
