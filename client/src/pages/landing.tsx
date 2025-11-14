@@ -358,7 +358,7 @@ export default function LandingPage() {
                 </motion.div>
 
                 <motion.div
-                  className="relative h-64 w-64 lg:h-80 lg:w-80 rounded-full bg-gradient-to-br from-[#18B2B0]/20 via-cyan-500/10 to-purple-500/20 border-2 border-[#18B2B0]/30 flex items-center justify-center"
+                  className="relative h-64 w-64 lg:h-80 lg:w-80 rounded-full bg-gradient-to-br from-[#18B2B0]/20 via-cyan-500/10 to-purple-500/20 border-2 border-[#18B2B0]/30 flex items-center justify-center p-4"
                   animate={{
                     scale: [1, 1.05, 1],
                   }}
@@ -372,7 +372,7 @@ export default function LandingPage() {
                   <img 
                     src={stockProLogo} 
                     alt="Stock Pro" 
-                    className="h-40 w-40 lg:h-48 lg:w-48 object-contain"
+                    className="h-52 w-52 lg:h-64 lg:w-64 object-contain rounded-full bg-gray-900/30 p-2"
                   />
                 </motion.div>
               </div>
