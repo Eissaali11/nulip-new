@@ -12,13 +12,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { insertReceivedDeviceSchema, type InsertReceivedDevice } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
-import { Smartphone, Package, Battery, Cable, CreditCard, AlertCircle, CheckCircle2, Sparkles, ArrowRight } from "lucide-react";
+import { Smartphone, Package, Battery, Cable, CreditCard, AlertCircle, CheckCircle2, Sparkles, ArrowRight, Home } from "lucide-react";
 import { motion } from "framer-motion";
+import { useLocation } from "wouter";
 
 export default function ReceivedDevicesSubmit() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   const form = useForm<InsertReceivedDevice>({
     resolver: zodResolver(insertReceivedDeviceSchema),
@@ -104,6 +106,23 @@ export default function ReceivedDevicesSubmit() {
             >
               يرجى إدخال جميع بيانات الجهاز المستلم بدقة ليتم إرسالها للمشرف
             </motion.p>
+            
+            {/* Back Button */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
+              <Button
+                variant="outline"
+                onClick={() => setLocation("/")}
+                className="border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white"
+                data-testid="button-back-home"
+              >
+                <Home className="w-4 h-4 ml-2" />
+                العودة للصفحة الرئيسية
+              </Button>
+            </motion.div>
           </div>
 
           {/* Info Card */}

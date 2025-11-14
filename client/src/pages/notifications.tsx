@@ -21,7 +21,9 @@ import {
   Warehouse,
   TrendingUp,
   CheckSquare,
-  Square
+  Square,
+  Smartphone,
+  ArrowRight
 } from "lucide-react";
 import { GridBackground } from "@/components/dashboard/GridBackground";
 import { Navbar } from "@/components/dashboard/Navbar";
@@ -111,6 +113,10 @@ interface WarehouseInfo {
   name: string;
 }
 
+interface PendingCountResponse {
+  count: number;
+}
+
 export default function Notifications() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -122,6 +128,12 @@ export default function Notifications() {
   const [selectedRequest, setSelectedRequest] = useState<InventoryRequest | null>(null);
   const [adminNotes, setAdminNotes] = useState("");
   const [selectedWarehouseId, setSelectedWarehouseId] = useState("");
+  
+  // Received devices count query
+  const { data: pendingReceivedDevicesCount } = useQuery<PendingCountResponse>({
+    queryKey: ["/api/received-devices/pending/count"],
+    enabled: !!user?.id && hasRoleOrAbove(user.role, ROLES.SUPERVISOR),
+  });
 
   // Technician state
   const [techRejectDialogOpen, setTechRejectDialogOpen] = useState(false);
@@ -589,6 +601,55 @@ export default function Notifications() {
       <Navbar />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+        {/* Received Devices Card for Supervisors and Admins */}
+        {isAdminOrSupervisor && pendingReceivedDevicesCount && pendingReceivedDevicesCount.count > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6"
+          >
+            <Card 
+              className="relative bg-gradient-to-br from-cyan-500/10 via-blue-500/[0.07] to-indigo-500/[0.03] backdrop-blur-xl border-cyan-500/40 overflow-hidden group hover:border-cyan-500/60 transition-all duration-300 cursor-pointer"
+              onClick={() => window.location.href = '/received-devices/review'}
+              data-testid="card-received-devices"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-transparent to-indigo-500/5" />
+              <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl group-hover:bg-cyan-500/20 transition-all duration-500" />
+              <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl group-hover:bg-indigo-500/20 transition-all duration-500" />
+              
+              <div className="relative p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <div className="p-4 bg-gradient-to-br from-[#0f0f15] via-[#1a1a24] to-[#0f0f15] rounded-2xl border-2 border-cyan-500/40 shadow-lg shadow-cyan-500/30">
+                        <Smartphone className="h-6 w-6 text-cyan-400" />
+                      </div>
+                      <div className="absolute -top-2 -right-2 px-2 py-1 bg-gradient-to-r from-red-500 to-orange-500 rounded-full text-xs font-bold text-white shadow-lg">
+                        {pendingReceivedDevicesCount.count}
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-white mb-1">
+                        مراجعة الأجهزة المستقبلة
+                      </h3>
+                      <p className="text-sm text-gray-400">
+                        لديك {pendingReceivedDevicesCount.count} جهاز بانتظار المراجعة
+                      </p>
+                    </div>
+                  </div>
+                  <Button 
+                    variant="outline"
+                    className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/30 hover:border-cyan-500/60"
+                  >
+                    <ArrowRight className="h-5 w-5 ml-2" />
+                    مراجعة الآن
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+        
         {/* Filter Tabs */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

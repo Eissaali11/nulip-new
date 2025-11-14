@@ -24,11 +24,13 @@ import {
   Package,
   Sparkles,
   TrendingUp,
-  Filter
+  Filter,
+  Home
 } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLocation } from "wouter";
 
 interface ReceivedDevice {
   id: string;
@@ -61,6 +63,7 @@ export default function ReceivedDevicesReview() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   const [selectedDevice, setSelectedDevice] = useState<ReceivedDevice | null>(null);
   const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
   const [adminNotes, setAdminNotes] = useState("");
@@ -330,6 +333,23 @@ export default function ReceivedDevicesReview() {
             <p className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto">
               راجع الأجهزة المستلمة واتخذ القرار المناسب
             </p>
+            
+            {/* Back Button */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              <Button
+                variant="outline"
+                onClick={() => setLocation("/")}
+                className="border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white"
+                data-testid="button-back-home"
+              >
+                <Home className="w-4 h-4 ml-2" />
+                العودة للصفحة الرئيسية
+              </Button>
+            </motion.div>
           </motion.div>
 
           {/* Statistics Cards */}
