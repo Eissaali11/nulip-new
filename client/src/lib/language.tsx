@@ -278,6 +278,12 @@ const translations: Record<Language, Record<string, string>> = {
     'landing.cta.description': 'انضم إلى مئات الشركات التي تستخدم StockPro',
     'landing.cta.button': 'ابدأ الآن',
     
+    'landing.contact.title': 'تواصل معنا',
+    'landing.contact.subtitle': 'نحن هنا للإجابة على استفساراتك ومساعدتك',
+    'landing.contact.email': 'البريد الإلكتروني',
+    'landing.contact.linkedin': 'لينكد إن',
+    'landing.contact.phone': 'رقم الهاتف',
+    
     'landing.footer.powered_by': 'مدعوم من RASSCO',
     'landing.footer.rights': 'جميع الحقوق محفوظة',
   },
@@ -473,6 +479,12 @@ const translations: Record<Language, Record<string, string>> = {
     'landing.cta.title': 'Start Managing Your Inventory Today',
     'landing.cta.description': 'Join hundreds of companies using StockPro',
     'landing.cta.button': 'Get Started',
+    
+    'landing.contact.title': 'Get In Touch',
+    'landing.contact.subtitle': 'We are here to answer your questions and help you',
+    'landing.contact.email': 'Email',
+    'landing.contact.linkedin': 'LinkedIn',
+    'landing.contact.phone': 'Phone Number',
     
     'landing.footer.powered_by': 'Powered by RASSCO',
     'landing.footer.rights': 'All Rights Reserved',

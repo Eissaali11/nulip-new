@@ -11,7 +11,10 @@ import {
   FileSpreadsheet, 
   Globe, 
   Bell, 
-  Smartphone
+  Smartphone,
+  Mail,
+  Linkedin,
+  Phone
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -311,6 +314,96 @@ export default function LandingPage() {
               </p>
             </div>
           </motion.div>
+        </section>
+
+        <section className="container mx-auto px-4 py-20">
+          <motion.div
+            initial={{ y: 50, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-4xl lg:text-5xl font-bold mb-4 bg-gradient-to-r from-[#18B2B0] via-cyan-400 to-[#18B2B0] bg-clip-text text-transparent">
+              {t('landing.contact.title')}
+            </h2>
+            <p className="text-xl text-gray-400">
+              {t('landing.contact.subtitle')}
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            <motion.a
+              href="mailto:skrkhtan@gmail.com"
+              initial={{ y: 30, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="group"
+            >
+              <Card className="backdrop-blur-xl bg-white/5 border-white/10 p-6 h-full hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:border-[#18B2B0]/50 cursor-pointer">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 p-0.5 mb-4 mx-auto group-hover:scale-110 transition-transform">
+                  <div className="w-full h-full rounded-2xl bg-gray-950 flex items-center justify-center">
+                    <Mail className="text-white" size={28} />
+                  </div>
+                </div>
+                <h3 className="text-lg font-bold mb-2 text-[#18B2B0]">
+                  {t('landing.contact.email')}
+                </h3>
+                <p className="text-gray-400 text-sm break-all">
+                  skrkhtan@gmail.com
+                </p>
+              </Card>
+            </motion.a>
+
+            <motion.a
+              href="https://www.linkedin.com/in/eissa-ail-816947257/"
+              target="_blank"
+              rel="noopener noreferrer"
+              initial={{ y: 30, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="group"
+            >
+              <Card className="backdrop-blur-xl bg-white/5 border-white/10 p-6 h-full hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:border-[#18B2B0]/50 cursor-pointer">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 p-0.5 mb-4 mx-auto group-hover:scale-110 transition-transform">
+                  <div className="w-full h-full rounded-2xl bg-gray-950 flex items-center justify-center">
+                    <Linkedin className="text-white" size={28} />
+                  </div>
+                </div>
+                <h3 className="text-lg font-bold mb-2 text-[#18B2B0]">
+                  {t('landing.contact.linkedin')}
+                </h3>
+                <p className="text-gray-400 text-sm">
+                  Eissa Ail
+                </p>
+              </Card>
+            </motion.a>
+
+            <motion.a
+              href="tel:+966558619232"
+              initial={{ y: 30, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="group"
+            >
+              <Card className="backdrop-blur-xl bg-white/5 border-white/10 p-6 h-full hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:border-[#18B2B0]/50 cursor-pointer">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-400 to-green-600 p-0.5 mb-4 mx-auto group-hover:scale-110 transition-transform">
+                  <div className="w-full h-full rounded-2xl bg-gray-950 flex items-center justify-center">
+                    <Phone className="text-white" size={28} />
+                  </div>
+                </div>
+                <h3 className="text-lg font-bold mb-2 text-[#18B2B0]">
+                  {t('landing.contact.phone')}
+                </h3>
+                <p className="text-gray-400 text-sm" dir="ltr">
+                  +966 558 619 232
+                </p>
+              </Card>
+            </motion.a>
+          </div>
         </section>
 
         <footer className="container mx-auto px-4 py-12 border-t border-white/10">
