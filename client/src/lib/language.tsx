@@ -234,6 +234,52 @@ const translations: Record<Language, Record<string, string>> = {
     'messages.loading_products': 'جاري تحميل المنتجات...',
     'messages.no_data': 'لا توجد بيانات',
     'messages.confirm_delete': 'هل أنت متأكد من الحذف؟',
+    
+    // Landing Page
+    'landing.hero.title': 'نظام StockPro المتطور',
+    'landing.hero.subtitle': 'إدارة المخزون بذكاء وكفاءة',
+    'landing.hero.description': 'نظام شامل لإدارة المخزون الثابت والمتحرك مع أدوات متقدمة للتحليل والتقارير',
+    'landing.hero.cta_login': 'تسجيل الدخول',
+    'landing.hero.cta_demo': 'جرّب النظام',
+    
+    'landing.features.title': 'ميزات متقدمة لإدارة فعّالة',
+    'landing.features.subtitle': 'كل ما تحتاجه لإدارة مخزونك بطريقة احترافية',
+    
+    'landing.feature.dual_inventory.title': 'مخزون مزدوج ذكي',
+    'landing.feature.dual_inventory.description': 'إدارة منفصلة للمخزون الثابت والمتحرك مع تتبع دقيق لكل حركة',
+    
+    'landing.feature.roles.title': 'صلاحيات متعددة المستويات',
+    'landing.feature.roles.description': 'ثلاثة مستويات وصول (مدير، مشرف، فني) مع تحكم كامل بالصلاحيات',
+    
+    'landing.feature.warehouses.title': 'إدارة المستودعات',
+    'landing.feature.warehouses.description': 'تتبع شامل للمستودعات مع نظام موافقات ذكي للنقل والتحويل',
+    
+    'landing.feature.analytics.title': 'تحليلات تفاعلية',
+    'landing.feature.analytics.description': 'لوحات معلومات تفصيلية مع رسوم بيانية متقدمة ومؤشرات أداء',
+    
+    'landing.feature.excel.title': 'تصدير Excel احترافي',
+    'landing.feature.excel.description': 'تقارير مفصلة قابلة للتصدير بتنسيق Excel مع تنسيق احترافي',
+    
+    'landing.feature.bilingual.title': 'دعم ثنائي اللغة',
+    'landing.feature.bilingual.description': 'واجهة كاملة بالعربية والإنجليزية مع تبديل فوري',
+    
+    'landing.feature.realtime.title': 'تحديثات فورية',
+    'landing.feature.realtime.description': 'إشعارات آنية لجميع الطلبات والعمليات المهمة',
+    
+    'landing.feature.mobile.title': 'تصميم متجاوب',
+    'landing.feature.mobile.description': 'تجربة سلسة على جميع الأجهزة من الهاتف إلى سطح المكتب',
+    
+    'landing.stats.warehouses': 'مستودعات',
+    'landing.stats.products': 'منتجات',
+    'landing.stats.technicians': 'فنيين',
+    'landing.stats.cities': 'مدن',
+    
+    'landing.cta.title': 'ابدأ في إدارة مخزونك اليوم',
+    'landing.cta.description': 'انضم إلى مئات الشركات التي تستخدم StockPro',
+    'landing.cta.button': 'ابدأ الآن',
+    
+    'landing.footer.powered_by': 'مدعوم من RASSCO',
+    'landing.footer.rights': 'جميع الحقوق محفوظة',
   },
   en: {
     // Common
@@ -384,5 +430,51 @@ const translations: Record<Language, Record<string, string>> = {
     'messages.loading_products': 'Loading products...',
     'messages.no_data': 'No data available',
     'messages.confirm_delete': 'Are you sure you want to delete?',
+    
+    // Landing Page
+    'landing.hero.title': 'Advanced StockPro System',
+    'landing.hero.subtitle': 'Smart & Efficient Inventory Management',
+    'landing.hero.description': 'Comprehensive system for managing fixed and moving inventory with advanced analytics and reporting tools',
+    'landing.hero.cta_login': 'Login',
+    'landing.hero.cta_demo': 'Try Demo',
+    
+    'landing.features.title': 'Advanced Features for Effective Management',
+    'landing.features.subtitle': 'Everything you need to manage your inventory professionally',
+    
+    'landing.feature.dual_inventory.title': 'Smart Dual Inventory',
+    'landing.feature.dual_inventory.description': 'Separate management for fixed and moving inventory with precise tracking',
+    
+    'landing.feature.roles.title': 'Multi-Level Permissions',
+    'landing.feature.roles.description': 'Three access levels (Admin, Supervisor, Technician) with full permission control',
+    
+    'landing.feature.warehouses.title': 'Warehouse Management',
+    'landing.feature.warehouses.description': 'Comprehensive warehouse tracking with smart approval system for transfers',
+    
+    'landing.feature.analytics.title': 'Interactive Analytics',
+    'landing.feature.analytics.description': 'Detailed dashboards with advanced charts and performance indicators',
+    
+    'landing.feature.excel.title': 'Professional Excel Export',
+    'landing.feature.excel.description': 'Detailed exportable reports in Excel format with professional formatting',
+    
+    'landing.feature.bilingual.title': 'Bilingual Support',
+    'landing.feature.bilingual.description': 'Complete interface in Arabic and English with instant switching',
+    
+    'landing.feature.realtime.title': 'Real-time Updates',
+    'landing.feature.realtime.description': 'Instant notifications for all important requests and operations',
+    
+    'landing.feature.mobile.title': 'Responsive Design',
+    'landing.feature.mobile.description': 'Seamless experience on all devices from mobile to desktop',
+    
+    'landing.stats.warehouses': 'Warehouses',
+    'landing.stats.products': 'Products',
+    'landing.stats.technicians': 'Technicians',
+    'landing.stats.cities': 'Cities',
+    
+    'landing.cta.title': 'Start Managing Your Inventory Today',
+    'landing.cta.description': 'Join hundreds of companies using StockPro',
+    'landing.cta.button': 'Get Started',
+    
+    'landing.footer.powered_by': 'Powered by RASSCO',
+    'landing.footer.rights': 'All Rights Reserved',
   }
 };
