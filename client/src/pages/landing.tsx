@@ -153,7 +153,7 @@ export default function LandingPage() {
         >
           <nav className="flex items-center justify-between backdrop-blur-xl bg-white/5 rounded-2xl p-4 border border-white/10">
             <div className="flex items-center gap-3">
-              <img src={stockProLogo} alt="Stock Pro" className="h-16 w-auto" />
+              <img src={stockProLogo} alt="Stock Pro" className="h-20 w-auto" />
               <span className="text-xl font-bold bg-gradient-to-r from-[#18B2B0] to-cyan-300 bg-clip-text text-transparent">
                 StockPro
               </span>
@@ -316,12 +316,7 @@ export default function LandingPage() {
 
         <footer className="container mx-auto px-4 py-12 border-t border-white/10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-3">
-              <img src={stockProLogo} alt="Stock Pro" className="h-12 w-auto" />
-              <div className="text-xs text-gray-500">
-                © 2025 RASSCO. {t('landing.footer.rights')}
-              </div>
-            </div>
+            <img src={stockProLogo} alt="Stock Pro" className="h-20 w-auto" />
             <div className="text-sm text-gray-500">
               StockPro v1.0
             </div>
