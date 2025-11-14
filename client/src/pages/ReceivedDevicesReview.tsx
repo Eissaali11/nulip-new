@@ -160,7 +160,8 @@ export default function ReceivedDevicesReview() {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
         layout
-        className="relative group"
+        className="relative group cursor-pointer"
+        onClick={() => setLocation(`/received-devices/${device.id}`)}
       >
         <div className={`absolute inset-0 bg-gradient-to-r ${status.color} rounded-2xl blur-xl opacity-50 group-hover:opacity-100 transition-opacity`} />
         <Card 
@@ -272,7 +273,10 @@ export default function ReceivedDevicesReview() {
             {device.status === 'pending' && (
               <div className="flex gap-3 pt-4">
                 <Button
-                  onClick={() => handleAction(device, 'approve')}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAction(device, 'approve');
+                  }}
                   className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white shadow-lg shadow-green-500/30"
                   data-testid={`button-approve-${device.id}`}
                 >
@@ -280,7 +284,10 @@ export default function ReceivedDevicesReview() {
                   موافقة
                 </Button>
                 <Button
-                  onClick={() => handleAction(device, 'reject')}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAction(device, 'reject');
+                  }}
                   variant="destructive"
                   className="flex-1 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 shadow-lg shadow-red-500/30"
                   data-testid={`button-reject-${device.id}`}
