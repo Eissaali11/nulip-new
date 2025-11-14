@@ -12,7 +12,8 @@ import {
   Smartphone,
   Home,
   Settings,
-  Languages
+  Languages,
+  PackagePlus
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -62,8 +63,13 @@ export const Navbar = () => {
     enabled: !!user?.id && (user?.role === 'admin' || user?.role === 'supervisor'),
   });
 
+  const { data: pendingReceivedDevicesCount } = useQuery<PendingCountResponse>({
+    queryKey: ["/api/received-devices/pending/count"],
+    enabled: !!user?.id && (user?.role === 'admin' || user?.role === 'supervisor'),
+  });
+
   const notificationsBadgeCount = (user?.role === 'admin' || user?.role === 'supervisor')
-    ? (pendingRequestsCount?.count || 0)
+    ? (pendingRequestsCount?.count || 0) + (pendingReceivedDevicesCount?.count || 0)
     : pendingTransfers.length;
 
   const navItems: NavItem[] = [
@@ -114,6 +120,20 @@ export const Navbar = () => {
       icon: Smartphone,
       gradient: "from-indigo-500 to-purple-600",
       adminOnly: true,
+    },
+    {
+      title: "إدخال أجهزة مستقبلة",
+      href: "/received-devices/submit",
+      icon: PackagePlus,
+      gradient: "from-cyan-500 to-blue-600",
+      technicianOnly: true,
+    },
+    {
+      title: "مراجعة الأجهزة المستقبلة",
+      href: "/received-devices/review",
+      icon: ClipboardCheck,
+      gradient: "from-indigo-500 to-purple-600",
+      supervisorOrAbove: true,
     },
     {
       title: t('nav.notifications'),

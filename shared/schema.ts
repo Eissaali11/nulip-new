@@ -122,6 +122,28 @@ export const withdrawnDevices = pgTable("withdrawn_devices", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Received devices table - tracking devices received by technicians with supervisor approval
+export const receivedDevices = pgTable("received_devices", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  technicianId: varchar("technician_id").notNull().references(() => users.id),
+  supervisorId: varchar("supervisor_id").references(() => users.id),
+  terminalId: text("terminal_id").notNull(),
+  serialNumber: text("serial_number").notNull(),
+  battery: boolean("battery").notNull().default(false),
+  chargerCable: boolean("charger_cable").notNull().default(false),
+  chargerHead: boolean("charger_head").notNull().default(false),
+  hasSim: boolean("has_sim").notNull().default(false),
+  simCardType: text("sim_card_type"),
+  damagePart: text("damage_part").default(""),
+  status: text("status").notNull().default("pending"), // "pending", "approved", "rejected"
+  adminNotes: text("admin_notes"),
+  approvedBy: varchar("approved_by").references(() => users.id),
+  approvedAt: timestamp("approved_at"),
+  regionId: varchar("region_id").references(() => regions.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Technician Fixed Inventories - المخزون الثابت لكل فني
 export const technicianFixedInventories = pgTable("technician_fixed_inventories", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -371,6 +393,16 @@ export const insertWithdrawnDeviceSchema = createInsertSchema(withdrawnDevices).
   updatedAt: true,
 });
 
+export const insertReceivedDeviceSchema = createInsertSchema(receivedDevices).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  approvedBy: true,
+  approvedAt: true,
+  adminNotes: true,
+  status: true,
+});
+
 export const insertTechnicianFixedInventorySchema = createInsertSchema(technicianFixedInventories).omit({
   id: true,
   createdAt: true,
@@ -435,6 +467,8 @@ export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 export type Transaction = typeof transactions.$inferSelect;
 export type InsertWithdrawnDevice = z.infer<typeof insertWithdrawnDeviceSchema>;
 export type WithdrawnDevice = typeof withdrawnDevices.$inferSelect;
+export type InsertReceivedDevice = z.infer<typeof insertReceivedDeviceSchema>;
+export type ReceivedDevice = typeof receivedDevices.$inferSelect;
 export type InsertTechnicianFixedInventory = z.infer<typeof insertTechnicianFixedInventorySchema>;
 export type TechnicianFixedInventory = typeof technicianFixedInventories.$inferSelect;
 export type InsertStockMovement = z.infer<typeof insertStockMovementSchema>;

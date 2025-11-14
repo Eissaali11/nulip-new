@@ -1,4 +1,4 @@
-import { type InventoryItem, type InsertInventoryItem, type Transaction, type InsertTransaction, type InventoryItemWithStatus, type DashboardStats, type Region, type InsertRegion, type User, type InsertUser, type UserSafe, type RegionWithStats, type AdminStats, type TransactionWithDetails, type WithdrawnDevice, type InsertWithdrawnDevice, type TechnicianFixedInventory, type InsertTechnicianFixedInventory, type StockMovement, type InsertStockMovement, type TechnicianWithFixedInventory, type FixedInventorySummary, type StockMovementWithDetails, type Warehouse, type WarehouseInventory, type WarehouseTransfer, type InsertWarehouse, type InsertWarehouseInventory, type InsertWarehouseTransfer, type WarehouseWithStats, type WarehouseWithInventory, type WarehouseTransferWithDetails, type SupervisorTechnician, type SupervisorWarehouse } from "@shared/schema";
+import { type InventoryItem, type InsertInventoryItem, type Transaction, type InsertTransaction, type InventoryItemWithStatus, type DashboardStats, type Region, type InsertRegion, type User, type InsertUser, type UserSafe, type RegionWithStats, type AdminStats, type TransactionWithDetails, type WithdrawnDevice, type InsertWithdrawnDevice, type ReceivedDevice, type InsertReceivedDevice, type TechnicianFixedInventory, type InsertTechnicianFixedInventory, type StockMovement, type InsertStockMovement, type TechnicianWithFixedInventory, type FixedInventorySummary, type StockMovementWithDetails, type Warehouse, type WarehouseInventory, type WarehouseTransfer, type InsertWarehouse, type InsertWarehouseInventory, type InsertWarehouseTransfer, type WarehouseWithStats, type WarehouseWithInventory, type WarehouseTransferWithDetails, type SupervisorTechnician, type SupervisorWarehouse } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -58,6 +58,14 @@ export interface IStorage {
   updateWithdrawnDevice(id: string, updates: Partial<InsertWithdrawnDevice>): Promise<WithdrawnDevice>;
   deleteWithdrawnDevice(id: string): Promise<boolean>;
   
+  // Received Devices
+  getReceivedDevices(filters?: { status?: string; technicianId?: string; supervisorId?: string; regionId?: string }): Promise<ReceivedDevice[]>;
+  getReceivedDevice(id: string): Promise<ReceivedDevice | undefined>;
+  createReceivedDevice(device: InsertReceivedDevice): Promise<ReceivedDevice>;
+  updateReceivedDeviceStatus(id: string, status: string, respondedBy: string, adminNotes?: string): Promise<ReceivedDevice>;
+  deleteReceivedDevice(id: string): Promise<boolean>;
+  getPendingReceivedDevicesCount(supervisorId?: string, regionId?: string | null): Promise<number>;
+  
   // Technician Fixed Inventories
   getTechnicianFixedInventory(technicianId: string): Promise<TechnicianFixedInventory | undefined>;
   createTechnicianFixedInventory(inventory: InsertTechnicianFixedInventory): Promise<TechnicianFixedInventory>;
@@ -105,6 +113,7 @@ export interface IStorage {
   assignTechnicianToSupervisor(supervisorId: string, technicianId: string): Promise<SupervisorTechnician>;
   removeTechnicianFromSupervisor(supervisorId: string, technicianId: string): Promise<boolean>;
   getSupervisorTechnicians(supervisorId: string): Promise<string[]>;
+  getTechnicianSupervisor(technicianId: string): Promise<string | null>;
   assignWarehouseToSupervisor(supervisorId: string, warehouseId: string): Promise<SupervisorWarehouse>;
   removeWarehouseFromSupervisor(supervisorId: string, warehouseId: string): Promise<boolean>;
   getSupervisorWarehouses(supervisorId: string): Promise<string[]>;
@@ -116,6 +125,7 @@ export class MemStorage implements IStorage {
   private regions: Map<string, Region>;
   private users: Map<string, User>;
   private withdrawnDevices: Map<string, WithdrawnDevice>;
+  private receivedDevices: Map<string, ReceivedDevice>;
   private technicianFixedInventories: Map<string, TechnicianFixedInventory>;
   private stockMovements: Map<string, StockMovement>;
   private technicians: Map<string, any>;
@@ -126,6 +136,7 @@ export class MemStorage implements IStorage {
     this.regions = new Map();
     this.users = new Map();
     this.withdrawnDevices = new Map();
+    this.receivedDevices = new Map();
     this.technicianFixedInventories = new Map();
     this.stockMovements = new Map();
     this.technicians = new Map();
@@ -604,6 +615,91 @@ export class MemStorage implements IStorage {
 
   async deleteWithdrawnDevice(id: string): Promise<boolean> {
     return this.withdrawnDevices.delete(id);
+  }
+
+  // Received Devices methods
+  async getReceivedDevices(filters?: { status?: string; technicianId?: string; supervisorId?: string; regionId?: string }): Promise<ReceivedDevice[]> {
+    let devices = Array.from(this.receivedDevices.values());
+    
+    if (filters?.status) {
+      devices = devices.filter(d => d.status === filters.status);
+    }
+    if (filters?.technicianId) {
+      devices = devices.filter(d => d.technicianId === filters.technicianId);
+    }
+    if (filters?.supervisorId) {
+      devices = devices.filter(d => d.supervisorId === filters.supervisorId);
+    }
+    if (filters?.regionId) {
+      devices = devices.filter(d => d.regionId === filters.regionId);
+    }
+    
+    return devices;
+  }
+
+  async getReceivedDevice(id: string): Promise<ReceivedDevice | undefined> {
+    return this.receivedDevices.get(id);
+  }
+
+  async createReceivedDevice(insertDevice: InsertReceivedDevice): Promise<ReceivedDevice> {
+    const id = randomUUID();
+    const device: ReceivedDevice = {
+      id,
+      technicianId: insertDevice.technicianId,
+      supervisorId: insertDevice.supervisorId ?? null,
+      city: insertDevice.city,
+      technicianName: insertDevice.technicianName,
+      terminalId: insertDevice.terminalId,
+      serialNumber: insertDevice.serialNumber,
+      battery: insertDevice.battery,
+      chargerCable: insertDevice.chargerCable,
+      chargerHead: insertDevice.chargerHead,
+      hasSim: insertDevice.hasSim,
+      simCardType: insertDevice.simCardType ?? null,
+      damagePart: insertDevice.damagePart ?? null,
+      notes: insertDevice.notes ?? null,
+      status: 'pending',
+      adminNotes: null,
+      respondedBy: null,
+      respondedAt: null,
+      regionId: insertDevice.regionId ?? null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.receivedDevices.set(id, device);
+    return device;
+  }
+
+  async updateReceivedDeviceStatus(id: string, status: string, respondedBy: string, adminNotes?: string): Promise<ReceivedDevice> {
+    const existingDevice = this.receivedDevices.get(id);
+    if (!existingDevice) {
+      throw new Error(`Received device with id ${id} not found`);
+    }
+    
+    const updatedDevice: ReceivedDevice = {
+      ...existingDevice,
+      status,
+      respondedBy,
+      adminNotes: adminNotes ?? null,
+      respondedAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.receivedDevices.set(id, updatedDevice);
+    return updatedDevice;
+  }
+
+  async deleteReceivedDevice(id: string): Promise<boolean> {
+    return this.receivedDevices.delete(id);
+  }
+
+  async getPendingReceivedDevicesCount(supervisorId?: string): Promise<number> {
+    let devices = Array.from(this.receivedDevices.values()).filter(d => d.status === 'pending');
+    
+    if (supervisorId) {
+      devices = devices.filter(d => d.supervisorId === supervisorId);
+    }
+    
+    return devices.length;
   }
 
   // Technician Fixed Inventory methods (stub implementations)

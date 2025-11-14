@@ -10,6 +10,8 @@ import Dashboard from "@/pages/dashboard";
 import AdminPage from "@/pages/admin";
 import { TransactionHistoryPage } from "@/pages/transaction-history";
 import WithdrawnDevicesPage from "@/pages/withdrawn-devices";
+import ReceivedDevicesSubmit from "@/pages/ReceivedDevicesSubmit";
+import ReceivedDevicesReview from "@/pages/ReceivedDevicesReview";
 import UsersPage from "@/pages/users";
 import FixedInventoryDashboard from "@/pages/fixed-inventory-dashboard";
 import MyFixedInventory from "@/pages/my-fixed-inventory";
@@ -50,6 +52,8 @@ function AuthenticatedRouter() {
       <Route path="/home" component={Dashboard} />
       <Route path="/transactions" component={TransactionHistoryPage} />
       <Route path="/withdrawn-devices" component={WithdrawnDevicesPage} />
+      <Route path="/received-devices/submit" component={ReceivedDevicesSubmit} />
+      <Route path="/received-devices/review" component={ReceivedDevicesReview} />
       <Route path="/notifications" component={NotificationsPage} />
       <Route path="/profile" component={ProfilePage} />
       <Route path="/technician-details/:id" component={TechnicianDetailsPage} />

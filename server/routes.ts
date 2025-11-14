@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertInventoryItemSchema, insertTransactionSchema, insertRegionSchema, insertUserSchema, insertTechnicianInventorySchema, insertWithdrawnDeviceSchema, loginSchema, techniciansInventory, insertWarehouseSchema, insertWarehouseInventorySchema, insertWarehouseTransferSchema, warehouseTransfers, warehouseInventory, inventoryRequests, insertInventoryRequestSchema, users } from "@shared/schema";
+import { insertInventoryItemSchema, insertTransactionSchema, insertRegionSchema, insertUserSchema, insertTechnicianInventorySchema, insertWithdrawnDeviceSchema, insertReceivedDeviceSchema, loginSchema, techniciansInventory, insertWarehouseSchema, insertWarehouseInventorySchema, insertWarehouseTransferSchema, warehouseTransfers, warehouseInventory, inventoryRequests, insertInventoryRequestSchema, users } from "@shared/schema";
 import { ROLES, hasRoleOrAbove, canManageUsers } from "@shared/roles";
 import { z } from "zod";
 import { db } from "./db";
@@ -865,6 +865,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Withdrawn device deleted successfully" });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete withdrawn device" });
+    }
+  });
+
+  // Received Devices Routes
+  app.get("/api/received-devices", requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { status } = req.query;
+      
+      // Build filters based on user role
+      const filters: any = {};
+      if (status) filters.status = status as string;
+      
+      if (user.role === ROLES.TECHNICIAN) {
+        filters.technicianId = user.id;
+      } else if (user.role === ROLES.SUPERVISOR) {
+        // Supervisors see devices from their assigned technicians OR from their region
+        filters.supervisorId = user.id;
+        filters.regionId = user.regionId;
+      }
+      
+      const devices = await storage.getReceivedDevices(filters);
+      res.json(devices);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch received devices" });
+    }
+  });
+
+  app.get("/api/received-devices/pending/count", requireAuth, requireSupervisor, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      let count = 0;
+      
+      if (user.role === ROLES.SUPERVISOR) {
+        // Count devices assigned to this supervisor OR in their region
+        count = await storage.getPendingReceivedDevicesCount(user.id, user.regionId);
+      } else {
+        // Admin sees all pending devices
+        count = await storage.getPendingReceivedDevicesCount();
+      }
+      
+      res.json({ count });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch pending count" });
+    }
+  });
+
+  app.get("/api/received-devices/:id", requireAuth, async (req, res) => {
+    try {
+      const device = await storage.getReceivedDevice(req.params.id);
+      if (!device) {
+        return res.status(404).json({ message: "Received device not found" });
+      }
+      res.json(device);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch received device" });
+    }
+  });
+
+  app.post("/api/received-devices", requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const data = insertReceivedDeviceSchema.parse(req.body);
+      
+      // Determine technicianId and supervisorId
+      const technicianId = data.technicianId || user.id;
+      let supervisorId = data.supervisorId;
+      
+      // If no supervisorId provided, try to get it from technician assignment
+      if (!supervisorId && user.role === ROLES.TECHNICIAN) {
+        supervisorId = await storage.getTechnicianSupervisor(user.id);
+      }
+      
+      const deviceData = {
+        ...data,
+        technicianId,
+        supervisorId,
+        regionId: data.regionId || user.regionId,
+      };
+      
+      const device = await storage.createReceivedDevice(deviceData);
+      
+      res.status(201).json(device);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create received device" });
+    }
+  });
+
+  app.patch("/api/received-devices/:id/status", requireAuth, requireSupervisor, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { status, adminNotes } = req.body;
+      
+      if (!['approved', 'rejected'].includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+      
+      const device = await storage.updateReceivedDeviceStatus(req.params.id, status, user.id, adminNotes);
+      
+      res.json(device);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("not found")) {
+        return res.status(404).json({ message: "Received device not found" });
+      }
+      res.status(500).json({ message: "Failed to update received device status" });
+    }
+  });
+
+  app.delete("/api/received-devices/:id", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const deleted = await storage.deleteReceivedDevice(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Received device not found" });
+      }
+      res.json({ message: "Received device deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete received device" });
     }
   });
 

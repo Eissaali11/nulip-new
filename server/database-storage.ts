@@ -17,6 +17,8 @@ import {
   type InsertTechnicianInventory,
   type WithdrawnDevice,
   type InsertWithdrawnDevice,
+  type ReceivedDevice,
+  type InsertReceivedDevice,
   type TechnicianFixedInventory,
   type InsertTechnicianFixedInventory,
   type StockMovement,
@@ -45,6 +47,7 @@ import {
   techniciansInventory,
   transactions,
   withdrawnDevices,
+  receivedDevices,
   technicianFixedInventories,
   stockMovements,
   warehouses,
@@ -1075,6 +1078,102 @@ export class DatabaseStorage implements IStorage {
     return (result.rowCount || 0) > 0;
   }
 
+  // Received Devices Operations
+  async getReceivedDevices(filters?: { status?: string; technicianId?: string; supervisorId?: string; regionId?: string }): Promise<ReceivedDevice[]> {
+    let query = db.select().from(receivedDevices).orderBy(desc(receivedDevices.createdAt));
+
+    const conditions = [];
+    if (filters?.status) {
+      conditions.push(eq(receivedDevices.status, filters.status));
+    }
+    if (filters?.technicianId) {
+      conditions.push(eq(receivedDevices.technicianId, filters.technicianId));
+    }
+    if (filters?.supervisorId) {
+      conditions.push(eq(receivedDevices.supervisorId, filters.supervisorId));
+    }
+    if (filters?.regionId) {
+      conditions.push(eq(receivedDevices.regionId, filters.regionId));
+    }
+
+    if (conditions.length > 0) {
+      const devices = await db
+        .select()
+        .from(receivedDevices)
+        .where(and(...conditions))
+        .orderBy(desc(receivedDevices.createdAt));
+      return devices;
+    }
+
+    const devices = await query;
+    return devices;
+  }
+
+  async getReceivedDevice(id: string): Promise<ReceivedDevice | undefined> {
+    const [device] = await db
+      .select()
+      .from(receivedDevices)
+      .where(eq(receivedDevices.id, id));
+    return device || undefined;
+  }
+
+  async createReceivedDevice(data: InsertReceivedDevice): Promise<ReceivedDevice> {
+    const [device] = await db
+      .insert(receivedDevices)
+      .values(data)
+      .returning();
+    return device;
+  }
+
+  async updateReceivedDeviceStatus(id: string, status: string, respondedBy: string, adminNotes?: string): Promise<ReceivedDevice> {
+    const [device] = await db
+      .update(receivedDevices)
+      .set({
+        status,
+        respondedBy,
+        adminNotes,
+        respondedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(receivedDevices.id, id))
+      .returning();
+
+    if (!device) {
+      throw new Error(`Received device with id ${id} not found`);
+    }
+    return device;
+  }
+
+  async deleteReceivedDevice(id: string): Promise<boolean> {
+    const result = await db
+      .delete(receivedDevices)
+      .where(eq(receivedDevices.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async getPendingReceivedDevicesCount(supervisorId?: string, regionId?: string | null): Promise<number> {
+    const conditions = [eq(receivedDevices.status, 'pending')];
+    
+    if (supervisorId && regionId) {
+      // Supervisor sees devices assigned to them OR in their region
+      conditions.push(or(
+        eq(receivedDevices.supervisorId, supervisorId),
+        eq(receivedDevices.regionId, regionId)
+      ));
+    } else if (supervisorId) {
+      conditions.push(eq(receivedDevices.supervisorId, supervisorId));
+    } else if (regionId) {
+      conditions.push(eq(receivedDevices.regionId, regionId));
+    }
+
+    const result = await db
+      .select({ count: count() })
+      .from(receivedDevices)
+      .where(and(...conditions));
+
+    return result[0]?.count || 0;
+  }
+
   // Technician Fixed Inventories Operations
   async getTechnicianFixedInventory(technicianId: string): Promise<TechnicianFixedInventory | undefined> {
     const [inventory] = await db
@@ -2046,6 +2145,15 @@ export class DatabaseStorage implements IStorage {
       .from(supervisorTechnicians)
       .where(eq(supervisorTechnicians.supervisorId, supervisorId));
     return assignments.map(a => a.technicianId);
+  }
+
+  async getTechnicianSupervisor(technicianId: string): Promise<string | null> {
+    const assignments = await db
+      .select({ supervisorId: supervisorTechnicians.supervisorId })
+      .from(supervisorTechnicians)
+      .where(eq(supervisorTechnicians.technicianId, technicianId))
+      .limit(1);
+    return assignments.length > 0 ? assignments[0].supervisorId : null;
   }
 
   async assignWarehouseToSupervisor(supervisorId: string, warehouseId: string): Promise<SupervisorWarehouse> {
