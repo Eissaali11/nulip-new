@@ -46,7 +46,7 @@ function AuthenticatedRouter() {
   return (
     <Switch>
       <Route path="/" component={() => <Redirect to="/home" />} />
-      <Route path="/landing" component={LandingPage} />
+      <Route path="/stock" component={LandingPage} />
       <Route path="/home" component={Dashboard} />
       <Route path="/transactions" component={TransactionHistoryPage} />
       <Route path="/withdrawn-devices" component={WithdrawnDevicesPage} />
@@ -98,10 +98,10 @@ function AppContent() {
   if (!isAuthenticated) {
     return (
       <Switch>
-        <Route path="/" component={LandingPage} />
-        <Route path="/landing" component={LandingPage} />
+        <Route path="/" component={() => <Redirect to="/login" />} />
+        <Route path="/stock" component={LandingPage} />
         <Route path="/login" component={Login} />
-        <Route component={() => <Redirect to="/" />} />
+        <Route component={() => <Redirect to="/login" />} />
       </Switch>
     );
   }
