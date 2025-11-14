@@ -11,14 +11,17 @@ import {
   Bell,
   Smartphone,
   Home,
-  Settings
+  Settings,
+  Languages
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { hasRoleOrAbove, ROLES } from "@shared/roles";
+import { useLanguage } from "@/lib/language";
 
 interface NavItem {
   title: string;
@@ -45,6 +48,7 @@ interface PendingCountResponse {
 export const Navbar = () => {
   const [location] = useLocation();
   const { user } = useAuth();
+  const { language, setLanguage, t } = useLanguage();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const { data: pendingTransfers = [] } = useQuery<WarehouseTransfer[]>({
@@ -160,6 +164,29 @@ export const Navbar = () => {
               scrollbarColor: 'rgba(24, 178, 176, 0.5) rgba(255, 255, 255, 0.05)'
             }}
           >
+            {/* Language Switcher */}
+            <div className="flex items-center gap-2 ml-auto pl-4 border-l border-[#18B2B0]/20">
+              <Languages className="h-5 w-5 text-[#18B2B0]" />
+              <Button
+                variant={language === 'ar' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setLanguage('ar')}
+                data-testid="button-lang-ar"
+                className={`text-xs px-3 py-1 ${language === 'ar' ? 'bg-[#18B2B0] hover:bg-[#18B2B0]/90' : 'border-[#18B2B0]/40 text-gray-300 hover:bg-white/10'}`}
+              >
+                ع
+              </Button>
+              <Button
+                variant={language === 'en' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setLanguage('en')}
+                data-testid="button-lang-en"
+                className={`text-xs px-3 py-1 ${language === 'en' ? 'bg-[#18B2B0] hover:bg-[#18B2B0]/90' : 'border-[#18B2B0]/40 text-gray-300 hover:bg-white/10'}`}
+              >
+                EN
+              </Button>
+            </div>
+
             {filteredNavItems.map((item, index) => {
               const Icon = item.icon;
               const active = isActive(item.href);
@@ -242,8 +269,31 @@ export const Navbar = () => {
       <div className="lg:hidden relative z-20">
         {/* Mobile Header */}
         <div className="border-b border-[#18B2B0]/20 bg-gradient-to-r from-[#0a0a0f]/95 via-[#0f0f15]/95 to-[#0a0a0f]/95 backdrop-blur-xl">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="container mx-auto px-4 py-4 flex items-center justify-between gap-4">
             <h2 className="text-lg font-bold text-white">القائمة الرئيسية</h2>
+            
+            {/* Mobile Language Switcher */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant={language === 'ar' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setLanguage('ar')}
+                data-testid="button-mobile-lang-ar"
+                className={`text-xs px-2 py-1 ${language === 'ar' ? 'bg-[#18B2B0] hover:bg-[#18B2B0]/90' : 'border-[#18B2B0]/40 text-gray-300'}`}
+              >
+                ع
+              </Button>
+              <Button
+                variant={language === 'en' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setLanguage('en')}
+                data-testid="button-mobile-lang-en"
+                className={`text-xs px-2 py-1 ${language === 'en' ? 'bg-[#18B2B0] hover:bg-[#18B2B0]/90' : 'border-[#18B2B0]/40 text-gray-300'}`}
+              >
+                EN
+              </Button>
+            </div>
+
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
