@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { useLanguage } from "@/lib/language";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import stockProLogo from "@assets/Gemini_Generated_Image_fe3annfe3annfe3a-removebg-preview_1763137399589.png";
+import stockProLogo from "@assets/image_1763138350041.png";
 import { 
   Package, 
   Users, 
