@@ -68,69 +68,69 @@ export const Navbar = () => {
 
   const navItems: NavItem[] = [
     {
-      title: "الصفحة الرئيسية",
+      title: t('nav.home'),
       href: "/",
       icon: Home,
       gradient: "from-[#18B2B0] to-teal-600",
     },
     {
-      title: "إدارة العمليات",
+      title: t('nav.admin_operations'),
       href: "/admin",
       icon: Settings,
       gradient: "from-violet-500 to-purple-600",
       adminOnly: true,
     },
     {
-      title: "العمليات",
+      title: t('nav.operations'),
       href: "/operations",
       icon: ClipboardCheck,
       gradient: "from-cyan-500 to-teal-600",
       technicianHidden: true,
     },
     {
-      title: "لوحة مخزون الفنيين",
+      title: t('nav.technician_inventory'),
       href: "/admin-inventory-overview",
       icon: LayoutDashboard,
       gradient: "from-purple-500 to-pink-600",
       supervisorOrAbove: true,
     },
     {
-      title: "المخزون المتحرك",
+      title: t('nav.moving_inventory'),
       href: "/my-moving-inventory",
       icon: TruckIcon,
       gradient: "from-emerald-500 to-green-600",
       technicianOnly: true,
     },
     {
-      title: "المخزون الثابت",
+      title: t('nav.fixed_inventory'),
       href: "/my-fixed-inventory",
       icon: Package,
       gradient: "from-blue-500 to-indigo-600",
       technicianOnly: true,
     },
     {
-      title: "الأجهزة",
+      title: t('nav.devices'),
       href: "/devices",
       icon: Smartphone,
       gradient: "from-indigo-500 to-purple-600",
       adminOnly: true,
     },
     {
-      title: "الإشعارات",
+      title: t('nav.notifications'),
       href: "/notifications",
       icon: Bell,
       gradient: "from-orange-500 to-amber-600",
       badge: notificationsBadgeCount > 0 ? notificationsBadgeCount : undefined,
     },
     {
-      title: "المستخدمين",
+      title: t('nav.users'),
       href: "/users",
       icon: Users,
       gradient: "from-rose-500 to-pink-600",
       adminOnly: true,
     },
     {
-      title: "المستودعات",
+      title: t('nav.warehouses'),
       href: "/warehouses",
       icon: Warehouse,
       gradient: "from-amber-500 to-orange-600",
@@ -270,7 +270,7 @@ export const Navbar = () => {
         {/* Mobile Header */}
         <div className="border-b border-[#18B2B0]/20 bg-gradient-to-r from-[#0a0a0f]/95 via-[#0f0f15]/95 to-[#0a0a0f]/95 backdrop-blur-xl">
           <div className="container mx-auto px-4 py-4 flex items-center justify-between gap-4">
-            <h2 className="text-lg font-bold text-white">القائمة الرئيسية</h2>
+            <h2 className="text-lg font-bold text-white">{t('nav.main_menu')}</h2>
             
             {/* Mobile Language Switcher */}
             <div className="flex items-center gap-2">

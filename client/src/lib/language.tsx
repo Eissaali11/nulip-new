@@ -116,6 +116,19 @@ const translations: Record<Language, Record<string, string>> = {
     'dashboard.warehouses': 'المخازن',
     'dashboard.technicians': 'الفنيين',
     
+    // Navigation
+    'nav.home': 'الصفحة الرئيسية',
+    'nav.admin_operations': 'إدارة العمليات',
+    'nav.operations': 'العمليات',
+    'nav.technician_inventory': 'لوحة مخزون الفنيين',
+    'nav.moving_inventory': 'المخزون المتحرك',
+    'nav.fixed_inventory': 'المخزون الثابت',
+    'nav.devices': 'الأجهزة',
+    'nav.notifications': 'الإشعارات',
+    'nav.users': 'المستخدمين',
+    'nav.warehouses': 'المستودعات',
+    'nav.main_menu': 'القائمة الرئيسية',
+    
     // Inventory
     'inventory.title': 'المخزون',
     'inventory.fixed': 'المخزون الثابت',
@@ -226,6 +239,19 @@ const translations: Record<Language, Record<string, string>> = {
     'dashboard.moving_inventory': 'Moving Inventory',
     'dashboard.warehouses': 'Warehouses',
     'dashboard.technicians': 'Technicians',
+    
+    // Navigation
+    'nav.home': 'Home',
+    'nav.admin_operations': 'Operations Management',
+    'nav.operations': 'Operations',
+    'nav.technician_inventory': 'Technician Inventory Dashboard',
+    'nav.moving_inventory': 'Moving Inventory',
+    'nav.fixed_inventory': 'Fixed Inventory',
+    'nav.devices': 'Devices',
+    'nav.notifications': 'Notifications',
+    'nav.users': 'Users',
+    'nav.warehouses': 'Warehouses',
+    'nav.main_menu': 'Main Menu',
     
     // Inventory
     'inventory.title': 'Inventory',
