@@ -20,8 +20,8 @@ export default function ReceivedDevicesSubmit() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const form = useForm<Omit<InsertReceivedDevice, 'technicianId' | 'supervisorId' | 'regionId'>>({
-    resolver: zodResolver(insertReceivedDeviceSchema.omit({ technicianId: true, supervisorId: true, regionId: true })),
+  const form = useForm<InsertReceivedDevice>({
+    resolver: zodResolver(insertReceivedDeviceSchema),
     defaultValues: {
       terminalId: "",
       serialNumber: "",
@@ -35,7 +35,7 @@ export default function ReceivedDevicesSubmit() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: Omit<InsertReceivedDevice, 'technicianId' | 'supervisorId' | 'regionId'>) => 
+    mutationFn: (data: InsertReceivedDevice) => 
       apiRequest("POST", "/api/received-devices", data),
     onSuccess: () => {
       toast({
@@ -54,7 +54,7 @@ export default function ReceivedDevicesSubmit() {
     },
   });
 
-  const onSubmit = (data: Omit<InsertReceivedDevice, 'technicianId' | 'supervisorId' | 'regionId'>) => {
+  const onSubmit = (data: InsertReceivedDevice) => {
     createMutation.mutate(data);
   };
 
