@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/auth";
+import { useLanguage } from "@/lib/language";
 import dashboardBg from "@assets/image_1762515061799.png";
 import rasscoLogo from "@assets/image_1762442473114.png";
 import type { TechnicianWithBothInventories, WarehouseWithStats, TechnicianFixedInventory, TechnicianInventory } from "@shared/schema";
@@ -62,6 +63,7 @@ interface WarehouseTransfer {
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
+  const { t } = useLanguage();
   const [, setLocation] = useLocation();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showRequestInventoryModal, setShowRequestInventoryModal] = useState(false);
@@ -725,7 +727,7 @@ export default function Dashboard() {
               </motion.div>
               <div>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-[#18B2B0] via-[#0ea5a3] to-[#18B2B0] bg-clip-text text-transparent">
-                  STOCKPRO نظام إدارة المخزون
+                  {t('dashboard.app_name')}
                 </h1>
                 <p className="text-xs text-gray-400 font-mono">
                   {currentTime.toLocaleTimeString('ar-SA', { hour12: false })} • النظام متصل
@@ -751,7 +753,7 @@ export default function Dashboard() {
                 </motion.button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56 bg-[#0f0f15] border-[#18B2B0]/20 backdrop-blur-xl" align="start">
-                <DropdownMenuLabel className="text-white">الحساب</DropdownMenuLabel>
+                <DropdownMenuLabel className="text-white">{t('dashboard.account')}</DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-[#18B2B0]/20" />
                 <DropdownMenuItem className="cursor-default focus:bg-white/5">
                   <div className="flex items-center gap-2 w-full">
@@ -768,7 +770,7 @@ export default function Dashboard() {
                   data-testid="dropdown-logout"
                 >
                   <div className="flex items-center gap-2 w-full justify-end">
-                    <span className="font-medium">تسجيل الخروج</span>
+                    <span className="font-medium">{t('logout')}</span>
                     <LogOut className="h-4 w-4" />
                   </div>
                 </DropdownMenuItem>
@@ -789,10 +791,10 @@ export default function Dashboard() {
           className="text-center mb-6 md:mb-8"
         >
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2 bg-gradient-to-r from-white via-[#18B2B0] to-white bg-clip-text text-transparent px-4">
-            مرحباً بك، {user?.fullName}
+            {t('dashboard.welcome')}, {user?.fullName}
           </h2>
           <p className="text-gray-400 text-xs sm:text-sm md:text-base">
-            {user?.role === 'admin' ? 'لوحة التحكم الإدارية' : 'لوحة التحكم الشخصية'}
+            {user?.role === 'admin' ? t('dashboard.admin_panel') : t('dashboard.personal_panel')}
           </p>
           
           {/* زر طلب مخزون للفنيين فقط */}
@@ -809,7 +811,7 @@ export default function Dashboard() {
                 data-testid="button-request-inventory"
               >
                 <Package className="h-4 w-4 md:h-5 md:w-5 ml-2" />
-                طلب مخزون
+                {t('actions.request_inventory')}
               </Button>
             </motion.div>
           )}
@@ -826,14 +828,14 @@ export default function Dashboard() {
                   className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#18B2B0] data-[state=active]:to-teal-500 data-[state=active]:text-white text-gray-300 font-bold text-sm md:text-base transition-all duration-300"
                 >
                   <Package className="h-4 w-4 ml-2" />
-                  المخزون الثابت
+                  {t('dashboard.fixed_inventory')}
                 </TabsTrigger>
                 <TabsTrigger 
                   value="moving" 
                   className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white text-gray-300 font-bold text-sm md:text-base transition-all duration-300"
                 >
                   <TruckIcon className="h-4 w-4 ml-2" />
-                  المخزون المتحرك
+                  {t('dashboard.moving_inventory')}
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -859,13 +861,13 @@ export default function Dashboard() {
                         <Package className="h-6 w-6 text-white" />
                       </motion.div>
                       <div>
-                        <h3 className="text-lg md:text-xl font-bold text-white">المخزون الثابت</h3>
-                        <p className="text-gray-400 text-xs md:text-sm">جميع المنتجات المخزنة بشكل دائم</p>
+                        <h3 className="text-lg md:text-xl font-bold text-white">{t('dashboard.fixed_inventory')}</h3>
+                        <p className="text-gray-400 text-xs md:text-sm">{t('dashboard.all_fixed_products')}</p>
                       </div>
                     </div>
                     <Link href="/my-fixed-inventory">
                       <Button size="sm" className="bg-[#18B2B0] hover:bg-[#159a98] shadow-lg">
-                        <span className="hidden sm:inline">عرض التفاصيل</span>
+                        <span className="hidden sm:inline">{t('actions.view_details')}</span>
                         <ArrowRight className="mr-2 h-4 w-4" />
                       </Button>
                     </Link>
@@ -875,7 +877,7 @@ export default function Dashboard() {
               {fixedLoading ? (
                 <div className="text-center py-12 md:py-16">
                   <div className="inline-block animate-spin rounded-full h-10 w-10 md:h-12 md:w-12 border-b-2 border-[#18B2B0]"></div>
-                  <p className="text-gray-400 text-xs md:text-sm mt-4">جاري تحميل المنتجات...</p>
+                  <p className="text-gray-400 text-xs md:text-sm mt-4">{t('messages.loading_products')}</p>
                 </div>
               ) : myFixedInventory && getFixedInventoryTotal() > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
@@ -964,8 +966,8 @@ export default function Dashboard() {
               ) : (
                 <div className="text-center py-12 md:py-16 bg-white/5 backdrop-blur-sm rounded-2xl md:rounded-3xl border border-white/10">
                   <Package className="h-12 w-12 md:h-16 md:w-16 text-gray-500 mx-auto mb-4" />
-                  <p className="text-gray-400 text-base md:text-lg font-medium px-4">لا يوجد مخزون ثابت حالياً</p>
-                  <p className="text-gray-500 text-xs md:text-sm mt-2 px-4">يمكنك طلب مخزون جديد من خلال زر "طلب مخزون" أعلاه</p>
+                  <p className="text-gray-400 text-base md:text-lg font-medium px-4">{t('dashboard.no_fixed_inventory')}</p>
+                  <p className="text-gray-500 text-xs md:text-sm mt-2 px-4">{t('dashboard.request_inventory_hint')}</p>
                 </div>
               )}
               </motion.div>
@@ -992,13 +994,13 @@ export default function Dashboard() {
                         <TruckIcon className="h-6 w-6 text-white" />
                       </motion.div>
                       <div>
-                        <h3 className="text-lg md:text-xl font-bold text-white">المخزون المتحرك</h3>
-                        <p className="text-gray-400 text-xs md:text-sm">المنتجات الجاهزة للعمليات الميدانية</p>
+                        <h3 className="text-lg md:text-xl font-bold text-white">{t('dashboard.moving_inventory')}</h3>
+                        <p className="text-gray-400 text-xs md:text-sm">{t('dashboard.all_moving_products')}</p>
                       </div>
                     </div>
                     <Link href="/my-moving-inventory">
                       <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600 shadow-lg">
-                        <span className="hidden sm:inline">عرض التفاصيل</span>
+                        <span className="hidden sm:inline">{t('actions.view_details')}</span>
                         <ArrowRight className="mr-2 h-4 w-4" />
                       </Button>
                     </Link>
@@ -1008,7 +1010,7 @@ export default function Dashboard() {
               {movingLoading ? (
                 <div className="text-center py-12 md:py-16">
                   <div className="inline-block animate-spin rounded-full h-10 w-10 md:h-12 md:w-12 border-b-2 border-emerald-500"></div>
-                  <p className="text-gray-400 text-xs md:text-sm mt-4">جاري تحميل المنتجات...</p>
+                  <p className="text-gray-400 text-xs md:text-sm mt-4">{t('messages.loading_products')}</p>
                 </div>
               ) : myMovingInventory && getMovingInventoryTotal() > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
@@ -1097,8 +1099,8 @@ export default function Dashboard() {
               ) : (
                 <div className="text-center py-12 md:py-16 bg-white/5 backdrop-blur-sm rounded-2xl md:rounded-3xl border border-white/10">
                   <TruckIcon className="h-12 w-12 md:h-16 md:w-16 text-gray-500 mx-auto mb-4" />
-                  <p className="text-gray-400 text-base md:text-lg font-medium px-4">لا يوجد مخزون متحرك حالياً</p>
-                  <p className="text-gray-500 text-xs md:text-sm mt-2 px-4">سيظهر المخزون المتحرك بعد قبول طلبات النقل من المستودعات</p>
+                  <p className="text-gray-400 text-base md:text-lg font-medium px-4">{t('dashboard.no_moving_inventory')}</p>
+                  <p className="text-gray-500 text-xs md:text-sm mt-2 px-4">{t('dashboard.moving_inventory_hint')}</p>
                 </div>
               )}
               </motion.div>
@@ -1128,14 +1130,14 @@ export default function Dashboard() {
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                 <div className="flex items-center gap-3">
                   <Warehouse className="h-6 w-6 text-orange-500" />
-                  <h2 className="text-xl md:text-2xl font-bold text-white">المستودعات</h2>
+                  <h2 className="text-xl md:text-2xl font-bold text-white">{t('dashboard.warehouses')}</h2>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="relative flex-1 md:min-w-[300px]">
                     <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
                       type="text"
-                      placeholder="بحث بالاسم أو المدينة..."
+                      placeholder={t('dashboard.search_placeholder')}
                       value={warehouseSearchQuery}
                       onChange={(e) => setWarehouseSearchQuery(e.target.value)}
                       className="pr-10 bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:border-orange-500/50"
@@ -1144,7 +1146,7 @@ export default function Dashboard() {
                   </div>
                   <Link href="/warehouses">
                     <Button className="bg-orange-500 hover:bg-orange-600 text-sm md:text-base whitespace-nowrap">
-                      إدارة المستودعات
+                      {t('dashboard.warehouse_management')}
                       <ArrowRight className="mr-2 h-4 w-4" />
                     </Button>
                   </Link>
@@ -1164,8 +1166,8 @@ export default function Dashboard() {
               ) : (
                 <div className="text-center py-12 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10">
                   <Warehouse className="h-16 w-16 text-gray-500 mx-auto mb-4" />
-                  <p className="text-gray-400 text-lg font-medium">لا توجد مستودعات مطابقة للبحث</p>
-                  <p className="text-gray-500 text-sm mt-2">جرب كلمات بحث أخرى</p>
+                  <p className="text-gray-400 text-lg font-medium">{t('dashboard.no_warehouses_found')}</p>
+                  <p className="text-gray-500 text-sm mt-2">{t('dashboard.try_other_search')}</p>
                 </div>
               )}
             </div>
@@ -1220,8 +1222,8 @@ export default function Dashboard() {
                     <Users className="h-7 w-7 text-white drop-shadow-md" />
                   </motion.div>
                   <div>
-                    <h2 className="text-2xl font-bold text-white">لوحة الفنيين</h2>
-                    <p className="text-gray-400 text-sm">نظرة شاملة على مخزون جميع الفنيين</p>
+                    <h2 className="text-2xl font-bold text-white">{t('dashboard.technicians_panel')}</h2>
+                    <p className="text-gray-400 text-sm">{t('dashboard.technicians_overview')}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 flex-wrap">
@@ -1231,13 +1233,13 @@ export default function Dashboard() {
                     data-testid="button-export-technicians"
                   >
                     <FileDown className="h-4 w-4 ml-2" />
-                    تصدير Excel
+                    {t('actions.export_excel')}
                   </Button>
                   <div className="relative flex-1 md:min-w-[300px]">
                     <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
                       type="text"
-                      placeholder="بحث بالاسم أو المدينة..."
+                      placeholder={t('dashboard.search_placeholder')}
                       value={technicianSearchQuery}
                       onChange={(e) => setTechnicianSearchQuery(e.target.value)}
                       className="pr-10 bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:border-[#18B2B0]/50"
@@ -1245,7 +1247,7 @@ export default function Dashboard() {
                     />
                   </div>
                   <Badge className="bg-[#18B2B0]/20 text-[#18B2B0] border-[#18B2B0]/30 px-4 py-2 whitespace-nowrap">
-                    {filteredTechnicians.length} فني
+                    {filteredTechnicians.length} {t('users.technician')}
                   </Badge>
                 </div>
               </div>
@@ -1263,8 +1265,8 @@ export default function Dashboard() {
               ) : (
                 <div className="text-center py-12 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10">
                   <Users className="h-16 w-16 text-gray-500 mx-auto mb-4" />
-                  <p className="text-gray-400 text-lg font-medium">لا يوجد فنيين مطابقين للبحث</p>
-                  <p className="text-gray-500 text-sm mt-2">جرب كلمات بحث أخرى</p>
+                  <p className="text-gray-400 text-lg font-medium">{t('dashboard.no_technicians_found')}</p>
+                  <p className="text-gray-500 text-sm mt-2">{t('dashboard.try_other_search')}</p>
                 </div>
               )}
             </div>

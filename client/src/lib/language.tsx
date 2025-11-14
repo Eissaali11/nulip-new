@@ -193,6 +193,9 @@ const translations: Record<Language, Record<string, string>> = {
     'actions.generate_report': 'تقرير المخزون',
     'actions.view_transactions': 'سجل المعاملات',
     'actions.view_operations': 'العمليات',
+    'actions.request_inventory': 'طلب مخزون',
+    'actions.view_details': 'عرض التفاصيل',
+    'actions.export_excel': 'تصدير Excel',
     
     // Sidebar
     'sidebar.home': 'الصفحة الرئيسية',
@@ -202,10 +205,33 @@ const translations: Record<Language, Record<string, string>> = {
     'sidebar.operations': 'العمليات',
     'sidebar.admin': 'لوحة الإدارة',
     
+    // Dashboard Page
+    'dashboard.app_name': 'STOCKPRO نظام إدارة المخزون',
+    'dashboard.welcome': 'مرحباً بك',
+    'dashboard.admin_panel': 'لوحة التحكم الإدارية',
+    'dashboard.personal_panel': 'لوحة التحكم الشخصية',
+    'dashboard.account': 'الحساب',
+    'dashboard.all_fixed_products': 'جميع المنتجات المخزنة بشكل دائم',
+    'dashboard.all_moving_products': 'المنتجات الجاهزة للعمليات الميدانية',
+    'dashboard.no_fixed_inventory': 'لا يوجد مخزون ثابت حالياً',
+    'dashboard.no_moving_inventory': 'لا يوجد مخزون متحرك حالياً',
+    'dashboard.request_inventory_hint': 'يمكنك طلب مخزون جديد من خلال زر "طلب مخزون" أعلاه',
+    'dashboard.moving_inventory_hint': 'سيظهر المخزون المتحرك بعد قبول طلبات النقل من المستودعات',
+    'dashboard.search_placeholder': 'بحث بالاسم أو المدينة...',
+    'dashboard.warehouse_management': 'إدارة المستودعات',
+    'dashboard.no_warehouses_found': 'لا توجد مستودعات مطابقة للبحث',
+    'dashboard.try_other_search': 'جرب كلمات بحث أخرى',
+    'dashboard.technicians_panel': 'لوحة الفنيين',
+    'dashboard.technicians_overview': 'نظرة شاملة على مخزون جميع الفنيين',
+    'dashboard.no_technicians_found': 'لا يوجد فنيين مطابقين للبحث',
+    'dashboard.report_date': 'تاريخ التقرير: ',
+    'dashboard.report_filename': 'تقرير_المخزون_',
+    
     // Messages
     'messages.success': 'تمت العملية بنجاح',
     'messages.error': 'حدث خطأ',
     'messages.loading': 'جاري التحميل...',
+    'messages.loading_products': 'جاري تحميل المنتجات...',
     'messages.no_data': 'لا توجد بيانات',
     'messages.confirm_delete': 'هل أنت متأكد من الحذف؟',
   },
@@ -317,6 +343,9 @@ const translations: Record<Language, Record<string, string>> = {
     'actions.generate_report': 'Generate Report',
     'actions.view_transactions': 'View Transactions',
     'actions.view_operations': 'Operations',
+    'actions.request_inventory': 'Request Inventory',
+    'actions.view_details': 'View Details',
+    'actions.export_excel': 'Export Excel',
     
     // Sidebar
     'sidebar.home': 'Home',
@@ -326,10 +355,33 @@ const translations: Record<Language, Record<string, string>> = {
     'sidebar.operations': 'Operations',
     'sidebar.admin': 'Admin Panel',
     
+    // Dashboard Page
+    'dashboard.app_name': 'STOCKPRO Inventory Management System',
+    'dashboard.welcome': 'Welcome',
+    'dashboard.admin_panel': 'Admin Control Panel',
+    'dashboard.personal_panel': 'Personal Dashboard',
+    'dashboard.account': 'Account',
+    'dashboard.all_fixed_products': 'All permanently stored products',
+    'dashboard.all_moving_products': 'Products ready for field operations',
+    'dashboard.no_fixed_inventory': 'No fixed inventory available',
+    'dashboard.no_moving_inventory': 'No moving inventory available',
+    'dashboard.request_inventory_hint': 'You can request new inventory using the "Request Inventory" button above',
+    'dashboard.moving_inventory_hint': 'Moving inventory will appear after warehouse transfer requests are accepted',
+    'dashboard.search_placeholder': 'Search by name or city...',
+    'dashboard.warehouse_management': 'Warehouse Management',
+    'dashboard.no_warehouses_found': 'No warehouses match your search',
+    'dashboard.try_other_search': 'Try different search terms',
+    'dashboard.technicians_panel': 'Technicians Panel',
+    'dashboard.technicians_overview': 'Comprehensive view of all technicians inventory',
+    'dashboard.no_technicians_found': 'No technicians match your search',
+    'dashboard.report_date': 'Report Date: ',
+    'dashboard.report_filename': 'inventory_report_',
+    
     // Messages
     'messages.success': 'Operation successful',
     'messages.error': 'An error occurred',
     'messages.loading': 'Loading...',
+    'messages.loading_products': 'Loading products...',
     'messages.no_data': 'No data available',
     'messages.confirm_delete': 'Are you sure you want to delete?',
   }
