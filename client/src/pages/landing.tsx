@@ -152,7 +152,7 @@ export default function LandingPage() {
         >
           <nav className="flex items-center justify-between backdrop-blur-xl bg-white/5 rounded-2xl p-3 border border-white/10">
             <div className="flex items-center gap-2">
-              <img src={stockProLogo} alt="Stock Pro" className="h-12 w-auto" />
+              <img src={stockProLogo} alt="Stock Pro" className="h-12 w-12 rounded-full object-cover" />
               <span className="text-lg font-bold bg-gradient-to-r from-[#18B2B0] to-cyan-300 bg-clip-text text-transparent">
                 StockPro
               </span>
@@ -182,7 +182,7 @@ export default function LandingPage() {
               <motion.img 
                 src={stockProLogo} 
                 alt="Stock Pro" 
-                className="relative h-32 lg:h-40 w-auto mx-auto"
+                className="relative h-32 lg:h-40 w-32 lg:w-40 rounded-full object-cover mx-auto"
                 animate={{
                   y: [0, -10, 0],
                 }}
@@ -315,7 +315,7 @@ export default function LandingPage() {
 
         <footer className="container mx-auto px-4 py-12 border-t border-white/10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <img src={stockProLogo} alt="Stock Pro" className="h-20 w-auto" />
+            <img src={stockProLogo} alt="Stock Pro" className="h-20 w-20 rounded-full object-cover" />
             <div className="text-sm text-gray-500">
               StockPro v1.0
             </div>
