@@ -11,8 +11,7 @@ import {
   FileSpreadsheet, 
   Globe, 
   Bell, 
-  Smartphone,
-  CheckCircle
+  Smartphone
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -151,10 +150,10 @@ export default function LandingPage() {
           transition={{ duration: 0.8 }}
           className="container mx-auto px-4 py-6"
         >
-          <nav className="flex items-center justify-between backdrop-blur-xl bg-white/5 rounded-2xl p-4 border border-white/10">
-            <div className="flex items-center gap-3">
-              <img src={stockProLogo} alt="Stock Pro" className="h-20 w-auto" />
-              <span className="text-xl font-bold bg-gradient-to-r from-[#18B2B0] to-cyan-300 bg-clip-text text-transparent">
+          <nav className="flex items-center justify-between backdrop-blur-xl bg-white/5 rounded-2xl p-3 border border-white/10">
+            <div className="flex items-center gap-2">
+              <img src={stockProLogo} alt="Stock Pro" className="h-12 w-auto" />
+              <span className="text-lg font-bold bg-gradient-to-r from-[#18B2B0] to-cyan-300 bg-clip-text text-transparent">
                 StockPro
               </span>
             </div>
@@ -171,80 +170,58 @@ export default function LandingPage() {
           </nav>
         </motion.div>
 
-        <section className="container mx-auto px-4 py-20 lg:py-32">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <section className="container mx-auto px-4 py-16 lg:py-24">
+          <div className="max-w-4xl mx-auto text-center">
             <motion.div
-              initial={{ x: language === 'ar' ? 100 : -100, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.6 }}
+              className="mb-8 relative inline-block"
             >
-              <h1 className="text-5xl lg:text-7xl font-bold mb-6 leading-tight">
-                <span className="bg-gradient-to-r from-white via-[#18B2B0] to-white bg-clip-text text-transparent">
-                  {t('landing.hero.title')}
-                </span>
-              </h1>
-              <p className="text-2xl lg:text-3xl text-[#18B2B0] font-semibold mb-4">
-                {t('landing.hero.subtitle')}
-              </p>
-              <p className="text-lg text-gray-400 mb-8 leading-relaxed">
-                {t('landing.hero.description')}
-              </p>
+              <div className="absolute inset-0 bg-gradient-to-r from-[#18B2B0]/20 to-cyan-500/20 rounded-full blur-3xl" />
+              <motion.img 
+                src={stockProLogo} 
+                alt="Stock Pro" 
+                className="relative h-32 lg:h-40 w-auto mx-auto"
+                animate={{
+                  y: [0, -10, 0],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              />
             </motion.div>
 
-            <motion.div
-              initial={{ x: language === 'ar' ? -100 : 100, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="relative"
-              style={{ perspective: '1000px' }}
+            <motion.h1 
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="text-4xl lg:text-6xl font-bold mb-4 leading-tight"
             >
-              <div className="relative">
-                <div className="absolute -top-4 -right-4 w-32 h-32 bg-gradient-to-br from-[#18B2B0] to-cyan-500 rounded-full blur-3xl opacity-60 animate-pulse" />
-                <div className="absolute -bottom-4 -left-4 w-40 h-40 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full blur-3xl opacity-40 animate-pulse" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-br from-[#18B2B0]/30 to-cyan-500/30 rounded-full blur-3xl" />
-                
-                <motion.div
-                  animate={{
-                    rotateY: [0, 10, 0, -10, 0],
-                    rotateX: [0, 5, 0, -5, 0],
-                    scale: [1, 1.05, 1, 1.05, 1],
-                  }}
-                  transition={{
-                    duration: 8,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
-                  whileHover={{
-                    scale: 1.1,
-                    rotateY: 15,
-                    rotateX: 15,
-                    transition: { duration: 0.3 }
-                  }}
-                  className="relative backdrop-blur-2xl bg-gradient-to-br from-white/10 to-white/5 rounded-3xl p-12 border border-white/20 shadow-2xl"
-                  style={{
-                    transformStyle: 'preserve-3d',
-                  }}
-                >
-                  <motion.img 
-                    src={stockProLogo} 
-                    alt="Stock Pro" 
-                    className="w-full h-auto drop-shadow-2xl"
-                    animate={{
-                      filter: [
-                        'drop-shadow(0 0 20px rgba(24, 178, 176, 0.5))',
-                        'drop-shadow(0 0 40px rgba(24, 178, 176, 0.8))',
-                        'drop-shadow(0 0 20px rgba(24, 178, 176, 0.5))',
-                      ]
-                    }}
-                    transition={{
-                      duration: 3,
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }}
-                  />
-                </motion.div>
-              </div>
-            </motion.div>
+              <span className="bg-gradient-to-r from-white via-[#18B2B0] to-white bg-clip-text text-transparent">
+                {t('landing.hero.title')}
+              </span>
+            </motion.h1>
+
+            <motion.p 
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="text-xl lg:text-2xl text-[#18B2B0] font-semibold mb-3"
+            >
+              {t('landing.hero.subtitle')}
+            </motion.p>
+
+            <motion.p 
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="text-base lg:text-lg text-gray-400 leading-relaxed max-w-2xl mx-auto"
+            >
+              {t('landing.hero.description')}
+            </motion.p>
           </div>
         </section>
 
