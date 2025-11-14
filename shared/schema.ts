@@ -393,7 +393,11 @@ export const insertWithdrawnDeviceSchema = createInsertSchema(withdrawnDevices).
   updatedAt: true,
 });
 
-export const insertReceivedDeviceSchema = createInsertSchema(receivedDevices).omit({
+export const insertReceivedDeviceSchema = createInsertSchema(receivedDevices, {
+  technicianId: z.string().optional(),
+  supervisorId: z.string().nullable().optional(),
+  regionId: z.string().nullable().optional(),
+}).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
