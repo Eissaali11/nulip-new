@@ -300,18 +300,82 @@ export default function LandingPage() {
             whileInView={{ y: 0, opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="relative backdrop-blur-xl bg-gradient-to-br from-white/10 to-white/5 rounded-3xl p-12 lg:p-20 border border-white/20 overflow-hidden"
+            className="relative backdrop-blur-xl bg-gradient-to-br from-purple-900/40 via-slate-900/60 to-slate-950/80 rounded-3xl p-8 lg:p-16 border border-white/10 overflow-hidden"
           >
-            <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#18B2B0] to-cyan-500 rounded-full blur-3xl opacity-20" />
-            <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full blur-3xl opacity-20" />
+            <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-br from-[#18B2B0]/20 to-cyan-500/20 rounded-full blur-3xl" />
             
-            <div className="relative text-center">
-              <h2 className="text-4xl lg:text-5xl font-bold mb-6 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                {t('landing.cta.title')}
-              </h2>
-              <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-                {t('landing.cta.description')}
-              </p>
+            <div className="relative grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-12 items-center">
+              <div className={language === 'ar' ? 'text-right' : 'text-left'}>
+                <h2 className="text-3xl lg:text-5xl font-black mb-4 text-white leading-tight">
+                  {t('landing.cta.title')}
+                </h2>
+                <p className="text-base lg:text-lg text-gray-300 mb-8">
+                  {t('landing.cta.description')}
+                </p>
+                <a href="#contact">
+                  <Button 
+                    size="lg"
+                    className="bg-gradient-to-r from-[#18B2B0] to-cyan-500 hover:from-[#0ea5a3] hover:to-cyan-400 text-white text-base lg:text-lg px-8 py-6 shadow-lg shadow-[#18B2B0]/30"
+                    data-testid="button-start-now"
+                  >
+                    {t('landing.cta.button_primary')}
+                  </Button>
+                </a>
+              </div>
+
+              <div className="relative flex items-center justify-center">
+                <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/30 via-blue-600/20 to-purple-700/30 rounded-full blur-2xl" />
+                
+                <motion.div 
+                  className="absolute top-8 left-4 lg:left-0"
+                  animate={{ y: [0, -8, 0] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-full p-3">
+                    <Warehouse className="text-[#18B2B0]" size={24} />
+                  </div>
+                </motion.div>
+
+                <motion.div 
+                  className="absolute top-4 right-4 lg:right-0"
+                  animate={{ y: [0, -10, 0] }}
+                  transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                >
+                  <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-full p-3">
+                    <Users className="text-cyan-400" size={24} />
+                  </div>
+                </motion.div>
+
+                <motion.div 
+                  className="absolute bottom-8 left-8"
+                  animate={{ y: [0, -6, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                >
+                  <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-full p-3">
+                    <Package className="text-purple-400" size={24} />
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  className="relative h-64 w-64 lg:h-80 lg:w-80 rounded-full bg-gradient-to-br from-[#18B2B0]/20 via-cyan-500/10 to-purple-500/20 border-2 border-[#18B2B0]/30 flex items-center justify-center"
+                  animate={{
+                    scale: [1, 1.05, 1],
+                  }}
+                  transition={{
+                    duration: 4,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                >
+                  <div className="absolute inset-4 rounded-full border border-[#18B2B0]/20" />
+                  <img 
+                    src={stockProLogo} 
+                    alt="Stock Pro" 
+                    className="h-40 w-40 lg:h-48 lg:w-48 object-contain"
+                  />
+                </motion.div>
+              </div>
             </div>
           </motion.div>
         </section>

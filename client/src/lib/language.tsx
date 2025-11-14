@@ -277,6 +277,7 @@ const translations: Record<Language, Record<string, string>> = {
     'landing.cta.title': 'ابدأ في إدارة مخزونك اليوم',
     'landing.cta.description': 'انضم إلى مئات الشركات التي تستخدم StockPro',
     'landing.cta.button': 'ابدأ الآن',
+    'landing.cta.button_primary': 'ابدأ الآن معنا',
     
     'landing.contact.title': 'تواصل معنا',
     'landing.contact.subtitle': 'نحن هنا للإجابة على استفساراتك ومساعدتك',
@@ -479,6 +480,7 @@ const translations: Record<Language, Record<string, string>> = {
     'landing.cta.title': 'Start Managing Your Inventory Today',
     'landing.cta.description': 'Join hundreds of companies using StockPro',
     'landing.cta.button': 'Get Started',
+    'landing.cta.button_primary': 'Start Now With Us',
     
     'landing.contact.title': 'Get In Touch',
     'landing.contact.subtitle': 'We are here to answer your questions and help you',
