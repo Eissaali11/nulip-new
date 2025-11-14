@@ -5,12 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Minus, Plus, FileText, TriangleAlert, Settings, LogOut, User, Shield, History, Smartphone, Package, TruckIcon, Home } from "lucide-react";
+import { Minus, Plus, FileText, TriangleAlert, Settings, LogOut, User, Shield, History, Smartphone, Package, TruckIcon, Home, Languages } from "lucide-react";
 import { InventoryItemWithStatus, Transaction } from "@shared/schema";
 import AddItemModal from "./add-item-modal";
 import WithdrawalModal from "./withdrawal-modal";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
+import { useLanguage } from "@/lib/language";
 
 interface SidebarProps {
   inventory?: InventoryItemWithStatus[];
@@ -19,6 +20,7 @@ interface SidebarProps {
 export default function Sidebar({ inventory }: SidebarProps) {
   const { toast } = useToast();
   const { user, logout } = useAuth();
+  const { language, setLanguage, t } = useLanguage();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -136,7 +138,7 @@ ${inventory.map(item =>
             <div className="flex-1">
               <p className="font-medium text-sm">{user?.fullName}</p>
               <p className="text-xs text-muted-foreground">
-                {user?.role === 'admin' ? 'مدير النظام' : 'فني'}
+                {user?.role === 'admin' ? t('users.admin') : user?.role === 'supervisor' ? t('users.supervisor') : t('users.technician')}
               </p>
             </div>
             <Button 
@@ -157,16 +159,48 @@ ${inventory.map(item =>
               data-testid="button-home"
             >
               <Home className="h-4 w-4" />
-              <span>الصفحة الرئيسية</span>
+              <span>{t('sidebar.home')}</span>
             </Button>
           </Link>
+        </CardContent>
+      </Card>
+
+      {/* Language Switcher */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Languages className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">{t('language')}</span>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant={language === 'ar' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setLanguage('ar')}
+                data-testid="button-lang-ar"
+                className="text-xs"
+              >
+                {t('arabic')}
+              </Button>
+              <Button
+                variant={language === 'en' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setLanguage('en')}
+                data-testid="button-lang-en"
+                className="text-xs"
+              >
+                {t('english')}
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
       {/* Quick Actions */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">إجراءات سريعة</CardTitle>
+          <CardTitle className="text-lg font-semibold">{t('sidebar.quick_actions')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <Button
@@ -176,7 +210,7 @@ ${inventory.map(item =>
             data-testid="button-quick-withdraw"
           >
             <Minus className="h-4 w-4" />
-            <span>سحب من المخزون</span>
+            <span>{t('actions.quick_withdraw')}</span>
           </Button>
           
           <Button
@@ -185,7 +219,7 @@ ${inventory.map(item =>
             data-testid="button-quick-add-stock"
           >
             <Plus className="h-4 w-4" />
-            <span>إضافة للمخزون</span>
+            <span>{t('actions.quick_add')}</span>
           </Button>
           
           <Button
@@ -195,7 +229,7 @@ ${inventory.map(item =>
             data-testid="button-generate-report"
           >
             <FileText className="h-4 w-4" />
-            <span>تقرير المخزون</span>
+            <span>{t('actions.generate_report')}</span>
           </Button>
           
           <Link href="/transactions">
@@ -205,7 +239,7 @@ ${inventory.map(item =>
               data-testid="button-transaction-history"
             >
               <History className="h-4 w-4" />
-              <span>سجل المعاملات</span>
+              <span>{t('actions.view_transactions')}</span>
             </Button>
           </Link>
           

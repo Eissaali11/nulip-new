@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/lib/auth";
+import { LanguageProvider } from "@/lib/language";
 import Dashboard from "@/pages/dashboard";
 import AdminPage from "@/pages/admin";
 import { TransactionHistoryPage } from "@/pages/transaction-history";
@@ -113,13 +114,15 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          {showSplash && <SplashScreen />}
-          <AppContent />
-        </TooltipProvider>
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            {showSplash && <SplashScreen />}
+            <AppContent />
+          </TooltipProvider>
+        </AuthProvider>
+      </LanguageProvider>
     </QueryClientProvider>
   );
 }
