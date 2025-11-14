@@ -242,32 +242,32 @@ const translations: Record<Language, Record<string, string>> = {
     'landing.hero.cta_login': 'تسجيل الدخول',
     'landing.hero.cta_demo': 'جرّب النظام',
     
-    'landing.features.title': 'ميزات متقدمة لإدارة فعّالة',
-    'landing.features.subtitle': 'كل ما تحتاجه لإدارة مخزونك بطريقة احترافية',
+    'landing.features.title': 'منظومة متكاملة من الحلول الذكية',
+    'landing.features.subtitle': 'تقنيات متطورة تُعيد تعريف مفهوم إدارة المخزون الحديثة',
     
-    'landing.feature.dual_inventory.title': 'مخزون مزدوج ذكي',
-    'landing.feature.dual_inventory.description': 'إدارة منفصلة للمخزون الثابت والمتحرك مع تتبع دقيق لكل حركة',
+    'landing.feature.dual_inventory.title': 'إدارة ثنائية متقدمة',
+    'landing.feature.dual_inventory.description': 'نظام فريد يجمع بين المخزون الثابت والمتحرك في منصة واحدة، مع آليات تتبع دقيقة لكل عملية وحركة في الوقت الفعلي',
     
-    'landing.feature.roles.title': 'صلاحيات متعددة المستويات',
-    'landing.feature.roles.description': 'ثلاثة مستويات وصول (مدير، مشرف، فني) مع تحكم كامل بالصلاحيات',
+    'landing.feature.roles.title': 'تحكم هرمي متطور',
+    'landing.feature.roles.description': 'هيكلية صلاحيات ثلاثية المستويات توفر أمان محكم ومرونة كاملة، من المدير إلى المشرف وصولاً للفني',
     
-    'landing.feature.warehouses.title': 'إدارة المستودعات',
-    'landing.feature.warehouses.description': 'تتبع شامل للمستودعات مع نظام موافقات ذكي للنقل والتحويل',
+    'landing.feature.warehouses.title': 'منظومة مستودعات ذكية',
+    'landing.feature.warehouses.description': 'نظام شامل لتتبع وإدارة المستودعات مزود بآلية موافقات ذكية تضمن سلاسة عمليات النقل والتحويل',
     
-    'landing.feature.analytics.title': 'تحليلات تفاعلية',
-    'landing.feature.analytics.description': 'لوحات معلومات تفصيلية مع رسوم بيانية متقدمة ومؤشرات أداء',
+    'landing.feature.analytics.title': 'رؤى تحليلية بصرية',
+    'landing.feature.analytics.description': 'لوحات معلومات تفاعلية غنية بالمخططات البيانية الديناميكية ومؤشرات الأداء الرئيسية لقرارات استراتيجية أذكى',
     
-    'landing.feature.excel.title': 'تصدير Excel احترافي',
-    'landing.feature.excel.description': 'تقارير مفصلة قابلة للتصدير بتنسيق Excel مع تنسيق احترافي',
+    'landing.feature.excel.title': 'تقارير احترافية متقدمة',
+    'landing.feature.excel.description': 'تصدير فوري لتقارير مفصلة بصيغة Excel مع تنسيق احترافي متقن يسهل التحليل والمشاركة',
     
-    'landing.feature.bilingual.title': 'دعم ثنائي اللغة',
-    'landing.feature.bilingual.description': 'واجهة كاملة بالعربية والإنجليزية مع تبديل فوري',
+    'landing.feature.bilingual.title': 'تجربة ثنائية اللغة',
+    'landing.feature.bilingual.description': 'واجهة متكاملة باللغتين العربية والإنجليزية مع خاصية التبديل الفوري لتجربة استخدام عالمية',
     
-    'landing.feature.realtime.title': 'تحديثات فورية',
-    'landing.feature.realtime.description': 'إشعارات آنية لجميع الطلبات والعمليات المهمة',
+    'landing.feature.realtime.title': 'إشعارات ذكية فورية',
+    'landing.feature.realtime.description': 'نظام تنبيهات متقدم يوفر إشعارات آنية لكل العمليات الحيوية، لتبقى على اطلاع دائم بكل جديد',
     
-    'landing.feature.mobile.title': 'تصميم متجاوب',
-    'landing.feature.mobile.description': 'تجربة سلسة على جميع الأجهزة من الهاتف إلى سطح المكتب',
+    'landing.feature.mobile.title': 'تصميم عصري متجاوب',
+    'landing.feature.mobile.description': 'تجربة مستخدم سلسة وأنيقة على جميع الأجهزة والشاشات، من الهاتف الذكي إلى الحاسب المكتبي',
     
     'landing.stats.warehouses': 'مستودعات',
     'landing.stats.products': 'منتجات',
@@ -438,32 +438,32 @@ const translations: Record<Language, Record<string, string>> = {
     'landing.hero.cta_login': 'Login',
     'landing.hero.cta_demo': 'Try Demo',
     
-    'landing.features.title': 'Advanced Features for Effective Management',
-    'landing.features.subtitle': 'Everything you need to manage your inventory professionally',
+    'landing.features.title': 'Integrated Ecosystem of Intelligent Solutions',
+    'landing.features.subtitle': 'Advanced technologies redefining modern inventory management',
     
-    'landing.feature.dual_inventory.title': 'Smart Dual Inventory',
-    'landing.feature.dual_inventory.description': 'Separate management for fixed and moving inventory with precise tracking',
+    'landing.feature.dual_inventory.title': 'Advanced Dual Management',
+    'landing.feature.dual_inventory.description': 'Unique system combining fixed and moving inventory in one platform, with precise tracking mechanisms for every operation in real-time',
     
-    'landing.feature.roles.title': 'Multi-Level Permissions',
-    'landing.feature.roles.description': 'Three access levels (Admin, Supervisor, Technician) with full permission control',
+    'landing.feature.roles.title': 'Sophisticated Hierarchical Control',
+    'landing.feature.roles.description': 'Three-tier permission structure providing robust security and complete flexibility, from Admin to Supervisor down to Technician',
     
-    'landing.feature.warehouses.title': 'Warehouse Management',
-    'landing.feature.warehouses.description': 'Comprehensive warehouse tracking with smart approval system for transfers',
+    'landing.feature.warehouses.title': 'Intelligent Warehouse Ecosystem',
+    'landing.feature.warehouses.description': 'Comprehensive system for warehouse tracking and management equipped with smart approval mechanisms ensuring seamless transfer operations',
     
-    'landing.feature.analytics.title': 'Interactive Analytics',
-    'landing.feature.analytics.description': 'Detailed dashboards with advanced charts and performance indicators',
+    'landing.feature.analytics.title': 'Visual Analytical Insights',
+    'landing.feature.analytics.description': 'Interactive dashboards rich with dynamic charts and key performance indicators for smarter strategic decisions',
     
-    'landing.feature.excel.title': 'Professional Excel Export',
-    'landing.feature.excel.description': 'Detailed exportable reports in Excel format with professional formatting',
+    'landing.feature.excel.title': 'Advanced Professional Reports',
+    'landing.feature.excel.description': 'Instant export of detailed reports in Excel format with refined professional formatting for easy analysis and sharing',
     
-    'landing.feature.bilingual.title': 'Bilingual Support',
-    'landing.feature.bilingual.description': 'Complete interface in Arabic and English with instant switching',
+    'landing.feature.bilingual.title': 'Bilingual Experience',
+    'landing.feature.bilingual.description': 'Complete interface in Arabic and English with instant switching capability for a truly global user experience',
     
-    'landing.feature.realtime.title': 'Real-time Updates',
-    'landing.feature.realtime.description': 'Instant notifications for all important requests and operations',
+    'landing.feature.realtime.title': 'Smart Instant Notifications',
+    'landing.feature.realtime.description': 'Advanced alert system providing instant notifications for all critical operations, keeping you constantly informed',
     
-    'landing.feature.mobile.title': 'Responsive Design',
-    'landing.feature.mobile.description': 'Seamless experience on all devices from mobile to desktop',
+    'landing.feature.mobile.title': 'Modern Responsive Design',
+    'landing.feature.mobile.description': 'Smooth and elegant user experience across all devices and screens, from smartphone to desktop computer',
     
     'landing.stats.warehouses': 'Warehouses',
     'landing.stats.products': 'Products',
