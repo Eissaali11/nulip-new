@@ -46,6 +46,7 @@ function AuthenticatedRouter() {
   return (
     <Switch>
       <Route path="/" component={() => <Redirect to="/home" />} />
+      <Route path="/landing" component={LandingPage} />
       <Route path="/home" component={Dashboard} />
       <Route path="/transactions" component={TransactionHistoryPage} />
       <Route path="/withdrawn-devices" component={WithdrawnDevicesPage} />
@@ -98,6 +99,7 @@ function AppContent() {
     return (
       <Switch>
         <Route path="/" component={LandingPage} />
+        <Route path="/landing" component={LandingPage} />
         <Route path="/login" component={Login} />
         <Route component={() => <Redirect to="/" />} />
       </Switch>
