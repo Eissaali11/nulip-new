@@ -12,15 +12,12 @@ import {
   Globe, 
   Bell, 
   Smartphone,
-  ArrowRight,
   CheckCircle
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useLocation } from "wouter";
 
 export default function LandingPage() {
-  const { t, language } = useLanguage();
-  const [, setLocation] = useLocation();
+  const { t, language, setLanguage } = useLanguage();
   const statsRef = useRef<HTMLDivElement>(null);
   const [isStatsInView, setIsStatsInView] = useState(false);
   
@@ -162,11 +159,14 @@ export default function LandingPage() {
               </span>
             </div>
             <Button 
-              onClick={() => setLocation('/login')}
-              className="bg-gradient-to-r from-[#18B2B0] to-cyan-500 hover:from-[#0ea5a3] hover:to-cyan-400 text-white"
-              data-testid="nav-login-button"
+              onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')}
+              variant="ghost"
+              size="sm"
+              className="backdrop-blur-sm bg-white/5 hover:bg-white/10 border border-white/10 text-white font-medium"
+              data-testid="landing-language-toggle"
             >
-              {t('landing.hero.cta_login')}
+              <Globe className="w-4 h-4 mr-2" />
+              {language === 'ar' ? 'EN' : 'AR'}
             </Button>
           </nav>
         </motion.div>
@@ -189,17 +189,6 @@ export default function LandingPage() {
               <p className="text-lg text-gray-400 mb-8 leading-relaxed">
                 {t('landing.hero.description')}
               </p>
-              <div className="flex flex-wrap gap-4">
-                <Button 
-                  size="lg"
-                  onClick={() => setLocation('/login')}
-                  className="bg-gradient-to-r from-[#18B2B0] to-cyan-500 hover:from-[#0ea5a3] hover:to-cyan-400 text-white text-lg px-8 py-6 group"
-                  data-testid="hero-login-button"
-                >
-                  {t('landing.hero.cta_login')}
-                  <ArrowRight className={`${language === 'ar' ? 'mr-2' : 'ml-2'} group-hover:translate-x-1 transition-transform`} />
-                </Button>
-              </div>
             </motion.div>
 
             <motion.div
@@ -318,17 +307,9 @@ export default function LandingPage() {
               <h2 className="text-4xl lg:text-5xl font-bold mb-6 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
                 {t('landing.cta.title')}
               </h2>
-              <p className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
+              <p className="text-xl text-gray-400 max-w-2xl mx-auto">
                 {t('landing.cta.description')}
               </p>
-              <Button 
-                size="lg"
-                onClick={() => setLocation('/login')}
-                className="bg-gradient-to-r from-[#18B2B0] to-cyan-500 hover:from-[#0ea5a3] hover:to-cyan-400 text-white text-lg px-12 py-6"
-                data-testid="cta-button"
-              >
-                {t('landing.cta.button')}
-              </Button>
             </div>
           </motion.div>
         </section>
@@ -337,13 +318,8 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
               <img src={rasscoLogo} alt="RASSCO" className="h-8 w-auto" />
-              <div>
-                <div className="text-sm text-gray-400">
-                  {t('landing.footer.powered_by')}
-                </div>
-                <div className="text-xs text-gray-500">
-                  © 2025 RASSCO. {t('landing.footer.rights')}
-                </div>
+              <div className="text-xs text-gray-500">
+                © 2025 RASSCO. {t('landing.footer.rights')}
               </div>
             </div>
             <div className="text-sm text-gray-500">
