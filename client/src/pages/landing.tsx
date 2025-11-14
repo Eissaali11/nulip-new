@@ -196,31 +196,53 @@ export default function LandingPage() {
               animate={{ x: 0, opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.4 }}
               className="relative"
+              style={{ perspective: '1000px' }}
             >
-              <div className="relative backdrop-blur-xl bg-gradient-to-br from-white/10 to-white/5 rounded-3xl p-8 border border-white/20 shadow-2xl">
-                <div className="absolute -top-4 -right-4 w-24 h-24 bg-gradient-to-br from-[#18B2B0] to-cyan-500 rounded-full blur-3xl opacity-50" />
-                <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full blur-3xl opacity-30" />
+              <div className="relative">
+                <div className="absolute -top-4 -right-4 w-32 h-32 bg-gradient-to-br from-[#18B2B0] to-cyan-500 rounded-full blur-3xl opacity-60 animate-pulse" />
+                <div className="absolute -bottom-4 -left-4 w-40 h-40 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full blur-3xl opacity-40 animate-pulse" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-br from-[#18B2B0]/30 to-cyan-500/30 rounded-full blur-3xl" />
                 
-                <div className="relative bg-gray-950 rounded-2xl overflow-hidden border border-white/10">
-                  <div className="flex items-center gap-2 bg-gray-800/50 px-4 py-2 border-b border-white/10">
-                    <div className="w-3 h-3 rounded-full bg-red-500" />
-                    <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                    <div className="w-3 h-3 rounded-full bg-green-500" />
-                  </div>
-                  <div className="p-6 space-y-4">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[#18B2B0]/20 to-cyan-500/20 flex items-center justify-center">
-                          <CheckCircle className="text-[#18B2B0]" size={24} />
-                        </div>
-                        <div className="flex-1">
-                          <div className="h-3 bg-gradient-to-r from-[#18B2B0]/30 to-transparent rounded mb-2" style={{ width: `${90 - i * 15}%` }} />
-                          <div className="h-2 bg-white/10 rounded" style={{ width: `${70 - i * 10}%` }} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <motion.div
+                  animate={{
+                    rotateY: [0, 10, 0, -10, 0],
+                    rotateX: [0, 5, 0, -5, 0],
+                    scale: [1, 1.05, 1, 1.05, 1],
+                  }}
+                  transition={{
+                    duration: 8,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                  whileHover={{
+                    scale: 1.1,
+                    rotateY: 15,
+                    rotateX: 15,
+                    transition: { duration: 0.3 }
+                  }}
+                  className="relative backdrop-blur-2xl bg-gradient-to-br from-white/10 to-white/5 rounded-3xl p-12 border border-white/20 shadow-2xl"
+                  style={{
+                    transformStyle: 'preserve-3d',
+                  }}
+                >
+                  <motion.img 
+                    src={stockProLogo} 
+                    alt="Stock Pro" 
+                    className="w-full h-auto drop-shadow-2xl"
+                    animate={{
+                      filter: [
+                        'drop-shadow(0 0 20px rgba(24, 178, 176, 0.5))',
+                        'drop-shadow(0 0 40px rgba(24, 178, 176, 0.8))',
+                        'drop-shadow(0 0 20px rgba(24, 178, 176, 0.5))',
+                      ]
+                    }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                  />
+                </motion.div>
               </div>
             </motion.div>
           </div>
