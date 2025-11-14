@@ -26,9 +26,8 @@ import TechnicianDetailsPage from "@/pages/technician-details";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import { Loader2 } from "lucide-react";
-import { SplashScreen } from "@/components/SplashScreen";
-import { useState, useEffect } from "react";
 import { hasRoleOrAbove, ROLES } from "@shared/roles";
+import { useEffect } from "react";
 
 function Redirect({ to }: { to: string }) {
   const [, setLocation] = useLocation();
@@ -109,23 +108,12 @@ function AppContent() {
 }
 
 function App() {
-  const [showSplash, setShowSplash] = useState(true);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-    }, 2500);
-
-    return () => clearTimeout(timer);
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
         <AuthProvider>
           <TooltipProvider>
             <Toaster />
-            {showSplash && <SplashScreen />}
             <AppContent />
           </TooltipProvider>
         </AuthProvider>
