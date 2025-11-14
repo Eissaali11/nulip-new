@@ -1,0 +1,357 @@
+import { motion } from "framer-motion";
+import { useLanguage } from "@/lib/language";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import rasscoLogo from "@assets/image_1762442473114.png";
+import { 
+  Package, 
+  Users, 
+  Warehouse, 
+  BarChart3, 
+  FileSpreadsheet, 
+  Globe, 
+  Bell, 
+  Smartphone,
+  ArrowRight,
+  CheckCircle
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useLocation } from "wouter";
+
+export default function LandingPage() {
+  const { t, language } = useLanguage();
+  const [, setLocation] = useLocation();
+  const statsRef = useRef<HTMLDivElement>(null);
+  const [isStatsInView, setIsStatsInView] = useState(false);
+  
+  const features = [
+    {
+      icon: Package,
+      titleKey: 'landing.feature.dual_inventory.title',
+      descKey: 'landing.feature.dual_inventory.description',
+      color: 'from-cyan-400 to-blue-500'
+    },
+    {
+      icon: Users,
+      titleKey: 'landing.feature.roles.title',
+      descKey: 'landing.feature.roles.description',
+      color: 'from-purple-400 to-pink-500'
+    },
+    {
+      icon: Warehouse,
+      titleKey: 'landing.feature.warehouses.title',
+      descKey: 'landing.feature.warehouses.description',
+      color: 'from-orange-400 to-red-500'
+    },
+    {
+      icon: BarChart3,
+      titleKey: 'landing.feature.analytics.title',
+      descKey: 'landing.feature.analytics.description',
+      color: 'from-green-400 to-emerald-500'
+    },
+    {
+      icon: FileSpreadsheet,
+      titleKey: 'landing.feature.excel.title',
+      descKey: 'landing.feature.excel.description',
+      color: 'from-blue-400 to-indigo-500'
+    },
+    {
+      icon: Globe,
+      titleKey: 'landing.feature.bilingual.title',
+      descKey: 'landing.feature.bilingual.description',
+      color: 'from-teal-400 to-cyan-500'
+    },
+    {
+      icon: Bell,
+      titleKey: 'landing.feature.realtime.title',
+      descKey: 'landing.feature.realtime.description',
+      color: 'from-yellow-400 to-orange-500'
+    },
+    {
+      icon: Smartphone,
+      titleKey: 'landing.feature.mobile.title',
+      descKey: 'landing.feature.mobile.description',
+      color: 'from-pink-400 to-rose-500'
+    }
+  ];
+
+  const stats = [
+    { valueKey: '50+', labelKey: 'landing.stats.warehouses' },
+    { valueKey: '1000+', labelKey: 'landing.stats.products' },
+    { valueKey: '200+', labelKey: 'landing.stats.technicians' },
+    { valueKey: '30+', labelKey: 'landing.stats.cities' }
+  ];
+
+  const [animatedStats, setAnimatedStats] = useState(stats.map(() => 0));
+  const [hasAnimated, setHasAnimated] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasAnimated) {
+          setIsStatsInView(true);
+          setHasAnimated(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    if (statsRef.current) {
+      observer.observe(statsRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [hasAnimated]);
+
+  useEffect(() => {
+    if (!isStatsInView) return;
+    
+    const targets = [50, 1000, 200, 30];
+    const durations = [1500, 2000, 1500, 1200];
+    const timers: ReturnType<typeof setInterval>[] = [];
+    
+    targets.forEach((target, index) => {
+      let current = 0;
+      const increment = target / (durations[index] / 16);
+      const timer = setInterval(() => {
+        current += increment;
+        if (current >= target) {
+          current = target;
+          clearInterval(timer);
+        }
+        setAnimatedStats(prev => {
+          const newStats = [...prev];
+          newStats[index] = Math.floor(current);
+          return newStats;
+        });
+      }, 16);
+      timers.push(timer);
+    });
+
+    return () => {
+      timers.forEach(timer => clearInterval(timer));
+    };
+  }, [isStatsInView]);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black text-white overflow-hidden relative">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#18B2B0]/20 via-transparent to-transparent pointer-events-none" />
+      
+      <div className="absolute inset-0 opacity-30">
+        <div className="absolute inset-0" style={{
+          backgroundImage: `radial-gradient(circle at 2px 2px, rgba(24, 178, 176, 0.15) 1px, transparent 0)`,
+          backgroundSize: '50px 50px'
+        }} />
+      </div>
+
+      <div className="relative">
+        <motion.div 
+          initial={{ y: -100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.8 }}
+          className="container mx-auto px-4 py-6"
+        >
+          <nav className="flex items-center justify-between backdrop-blur-xl bg-white/5 rounded-2xl p-4 border border-white/10">
+            <div className="flex items-center gap-3">
+              <img src={rasscoLogo} alt="RASSCO" className="h-10 w-auto" />
+              <span className="text-xl font-bold bg-gradient-to-r from-[#18B2B0] to-cyan-300 bg-clip-text text-transparent">
+                StockPro
+              </span>
+            </div>
+            <Button 
+              onClick={() => setLocation('/login')}
+              className="bg-gradient-to-r from-[#18B2B0] to-cyan-500 hover:from-[#0ea5a3] hover:to-cyan-400 text-white"
+              data-testid="nav-login-button"
+            >
+              {t('landing.hero.cta_login')}
+            </Button>
+          </nav>
+        </motion.div>
+
+        <section className="container mx-auto px-4 py-20 lg:py-32">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <motion.div
+              initial={{ x: language === 'ar' ? 100 : -100, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+            >
+              <h1 className="text-5xl lg:text-7xl font-bold mb-6 leading-tight">
+                <span className="bg-gradient-to-r from-white via-[#18B2B0] to-white bg-clip-text text-transparent">
+                  {t('landing.hero.title')}
+                </span>
+              </h1>
+              <p className="text-2xl lg:text-3xl text-[#18B2B0] font-semibold mb-4">
+                {t('landing.hero.subtitle')}
+              </p>
+              <p className="text-lg text-gray-400 mb-8 leading-relaxed">
+                {t('landing.hero.description')}
+              </p>
+              <div className="flex flex-wrap gap-4">
+                <Button 
+                  size="lg"
+                  onClick={() => setLocation('/login')}
+                  className="bg-gradient-to-r from-[#18B2B0] to-cyan-500 hover:from-[#0ea5a3] hover:to-cyan-400 text-white text-lg px-8 py-6 group"
+                  data-testid="hero-login-button"
+                >
+                  {t('landing.hero.cta_login')}
+                  <ArrowRight className={`${language === 'ar' ? 'mr-2' : 'ml-2'} group-hover:translate-x-1 transition-transform`} />
+                </Button>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ x: language === 'ar' ? -100 : 100, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="relative"
+            >
+              <div className="relative backdrop-blur-xl bg-gradient-to-br from-white/10 to-white/5 rounded-3xl p-8 border border-white/20 shadow-2xl">
+                <div className="absolute -top-4 -right-4 w-24 h-24 bg-gradient-to-br from-[#18B2B0] to-cyan-500 rounded-full blur-3xl opacity-50" />
+                <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full blur-3xl opacity-30" />
+                
+                <div className="relative bg-gray-950 rounded-2xl overflow-hidden border border-white/10">
+                  <div className="flex items-center gap-2 bg-gray-800/50 px-4 py-2 border-b border-white/10">
+                    <div className="w-3 h-3 rounded-full bg-red-500" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                    <div className="w-3 h-3 rounded-full bg-green-500" />
+                  </div>
+                  <div className="p-6 space-y-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[#18B2B0]/20 to-cyan-500/20 flex items-center justify-center">
+                          <CheckCircle className="text-[#18B2B0]" size={24} />
+                        </div>
+                        <div className="flex-1">
+                          <div className="h-3 bg-gradient-to-r from-[#18B2B0]/30 to-transparent rounded mb-2" style={{ width: `${90 - i * 15}%` }} />
+                          <div className="h-2 bg-white/10 rounded" style={{ width: `${70 - i * 10}%` }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+
+        <section className="container mx-auto px-4 py-20">
+          <motion.div
+            initial={{ y: 50, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl lg:text-5xl font-bold mb-4 bg-gradient-to-r from-[#18B2B0] via-cyan-400 to-[#18B2B0] bg-clip-text text-transparent">
+              {t('landing.features.title')}
+            </h2>
+            <p className="text-xl text-gray-400">
+              {t('landing.features.subtitle')}
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {features.map((feature, index) => (
+              <motion.div
+                key={index}
+                initial={{ y: 50, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                <Card className="backdrop-blur-xl bg-white/5 border-white/10 p-6 h-full hover:bg-white/10 transition-all duration-300 group hover:scale-105 hover:border-[#18B2B0]/50">
+                  <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color} p-0.5 mb-4 group-hover:scale-110 transition-transform`}>
+                    <div className="w-full h-full rounded-2xl bg-gray-950 flex items-center justify-center">
+                      <feature.icon className="text-white" size={28} />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-bold mb-3 text-[#18B2B0]">
+                    {t(feature.titleKey)}
+                  </h3>
+                  <p className="text-gray-400 leading-relaxed">
+                    {t(feature.descKey)}
+                  </p>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
+        <section ref={statsRef} className="container mx-auto px-4 py-20">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            whileInView={{ scale: 1, opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="backdrop-blur-xl bg-gradient-to-r from-[#18B2B0]/10 via-cyan-500/10 to-[#18B2B0]/10 rounded-3xl p-8 lg:p-12 border border-[#18B2B0]/20"
+          >
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+              {stats.map((stat, index) => (
+                <div key={index} className="text-center">
+                  <div className="text-4xl lg:text-6xl font-bold bg-gradient-to-r from-[#18B2B0] to-cyan-300 bg-clip-text text-transparent mb-2">
+                    {animatedStats[index]}{index === 1 || index === 2 || index === 3 ? '+' : ''}
+                  </div>
+                  <div className="text-gray-400 text-lg">
+                    {t(stat.labelKey)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </section>
+
+        <section className="container mx-auto px-4 py-20">
+          <motion.div
+            initial={{ y: 50, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="relative backdrop-blur-xl bg-gradient-to-br from-white/10 to-white/5 rounded-3xl p-12 lg:p-20 border border-white/20 overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#18B2B0] to-cyan-500 rounded-full blur-3xl opacity-20" />
+            <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full blur-3xl opacity-20" />
+            
+            <div className="relative text-center">
+              <h2 className="text-4xl lg:text-5xl font-bold mb-6 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                {t('landing.cta.title')}
+              </h2>
+              <p className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
+                {t('landing.cta.description')}
+              </p>
+              <Button 
+                size="lg"
+                onClick={() => setLocation('/login')}
+                className="bg-gradient-to-r from-[#18B2B0] to-cyan-500 hover:from-[#0ea5a3] hover:to-cyan-400 text-white text-lg px-12 py-6"
+                data-testid="cta-button"
+              >
+                {t('landing.cta.button')}
+              </Button>
+            </div>
+          </motion.div>
+        </section>
+
+        <footer className="container mx-auto px-4 py-12 border-t border-white/10">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-3">
+              <img src={rasscoLogo} alt="RASSCO" className="h-8 w-auto" />
+              <div>
+                <div className="text-sm text-gray-400">
+                  {t('landing.footer.powered_by')}
+                </div>
+                <div className="text-xs text-gray-500">
+                  © 2025 RASSCO. {t('landing.footer.rights')}
+                </div>
+              </div>
+            </div>
+            <div className="text-sm text-gray-500">
+              StockPro v1.0
+            </div>
+          </div>
+        </footer>
+      </div>
+    </div>
+  );
+}
