@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { useLanguage } from "@/lib/language";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import rasscoLogo from "@assets/image_1762442473114.png";
+import stockProLogo from "@assets/Gemini_Generated_Image_fe3annfe3annfe3a-removebg-preview_1763137399589.png";
 import { 
   Package, 
   Users, 
@@ -153,7 +153,7 @@ export default function LandingPage() {
         >
           <nav className="flex items-center justify-between backdrop-blur-xl bg-white/5 rounded-2xl p-4 border border-white/10">
             <div className="flex items-center gap-3">
-              <img src={rasscoLogo} alt="RASSCO" className="h-10 w-auto" />
+              <img src={stockProLogo} alt="Stock Pro" className="h-16 w-auto" />
               <span className="text-xl font-bold bg-gradient-to-r from-[#18B2B0] to-cyan-300 bg-clip-text text-transparent">
                 StockPro
               </span>
@@ -317,7 +317,7 @@ export default function LandingPage() {
         <footer className="container mx-auto px-4 py-12 border-t border-white/10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
-              <img src={rasscoLogo} alt="RASSCO" className="h-8 w-auto" />
+              <img src={stockProLogo} alt="Stock Pro" className="h-12 w-auto" />
               <div className="text-xs text-gray-500">
                 © 2025 RASSCO. {t('landing.footer.rights')}
               </div>
