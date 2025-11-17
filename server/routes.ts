@@ -1427,6 +1427,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       await Promise.all(movements);
+      
+      // Log the transfer operation
+      const technician = await storage.getUser(technicianId);
+      if (technician) {
+        await storage.createSystemLog({
+          userId: user.id,
+          userName: user.fullName,
+          userRole: user.role,
+          regionId: technician.regionId,
+          action: 'transfer',
+          entityType: 'stock_transfer',
+          entityId: technicianId,
+          entityName: technician.fullName,
+          description: `نقل مخزون من الثابت إلى المتحرك للفني: ${technician.fullName}`,
+          severity: 'info',
+          success: true,
+        });
+      }
 
       res.json({ success: true, message: "Transfer completed successfully" });
     } catch (error) {
@@ -1875,6 +1893,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const transfer of transfers) {
         await storage.transferFromWarehouse(transfer);
       }
+      
+      // Log the warehouse transfer operation
+      const warehouse = await storage.getWarehouse(warehouseId);
+      const technician = await storage.getUser(technicianId);
+      if (warehouse && technician) {
+        await storage.createSystemLog({
+          userId: user.id,
+          userName: user.fullName,
+          userRole: user.role,
+          regionId: warehouse.regionId,
+          action: 'transfer',
+          entityType: 'warehouse_transfer',
+          entityId: warehouseId,
+          entityName: `${warehouse.name} -> ${technician.fullName}`,
+          description: `نقل مخزون من المستودع ${warehouse.name} إلى الفني ${technician.fullName}`,
+          severity: 'info',
+          success: true,
+        });
+      }
 
       res.json({ success: true, message: "Transfer completed successfully" });
     } catch (error) {
@@ -1940,6 +1977,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const updatedTransfer = await storage.acceptWarehouseTransfer(req.params.id);
+      
+      // Log the accept operation
+      const warehouse = await storage.getWarehouse(transfer.warehouseId);
+      const technician = await storage.getUser(transfer.technicianId);
+      if (warehouse && technician) {
+        await storage.createSystemLog({
+          userId: user.id,
+          userName: user.fullName,
+          userRole: user.role,
+          regionId: warehouse.regionId,
+          action: 'accept',
+          entityType: 'warehouse_transfer',
+          entityId: req.params.id,
+          entityName: `${warehouse.name} -> ${technician.fullName}`,
+          description: `قبول طلب نقل من المستودع ${warehouse.name} إلى ${technician.fullName}`,
+          severity: 'info',
+          success: true,
+        });
+      }
+      
       res.json(updatedTransfer);
     } catch (error) {
       console.error("Error accepting transfer:", error);
@@ -1968,6 +2025,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { reason } = req.body;
       const updatedTransfer = await storage.rejectWarehouseTransfer(req.params.id, reason);
+      
+      // Log the reject operation
+      const warehouse = await storage.getWarehouse(transfer.warehouseId);
+      const technician = await storage.getUser(transfer.technicianId);
+      if (warehouse && technician) {
+        await storage.createSystemLog({
+          userId: user.id,
+          userName: user.fullName,
+          userRole: user.role,
+          regionId: warehouse.regionId,
+          action: 'reject',
+          entityType: 'warehouse_transfer',
+          entityId: req.params.id,
+          entityName: `${warehouse.name} -> ${technician.fullName}`,
+          description: `رفض طلب نقل من المستودع ${warehouse.name} إلى ${technician.fullName}${reason ? `: ${reason}` : ''}`,
+          severity: 'warning',
+          success: true,
+        });
+      }
+      
       res.json(updatedTransfer);
     } catch (error) {
       console.error("Error rejecting transfer:", error);
