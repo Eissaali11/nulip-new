@@ -749,14 +749,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (technician) {
         await storage.createSystemLog({
           userId: user.id,
-          userName: user.fullName,
+          userName: user.fullName || user.username || 'Unknown',
           userRole: user.role,
           regionId: technician.regionId,
           action: 'update',
           entityType: 'technician_moving_inventory',
           entityId: req.params.id,
-          entityName: technician.fullName,
-          description: `تحديث المخزون المتحرك للفني: ${technician.fullName}`,
+          entityName: technician.fullName || technician.username,
+          description: `تحديث المخزون المتحرك للفني: ${technician.fullName || technician.username}`,
           severity: 'info',
           success: true,
         });
@@ -1084,14 +1084,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Log the update
         await storage.createSystemLog({
           userId: user.id,
-          userName: user.fullName,
+          userName: user.fullName || user.username || 'Unknown',
           userRole: user.role,
           regionId: technician.regionId,
           action: 'update',
           entityType: 'technician_fixed_inventory',
           entityId: technicianId,
-          entityName: technician.fullName,
-          description: `تحديث المخزون الثابت للفني: ${technician.fullName}`,
+          entityName: technician.fullName || technician.username,
+          description: `تحديث المخزون الثابت للفني: ${technician.fullName || technician.username}`,
           severity: 'info',
           success: true,
         });
@@ -1106,14 +1106,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Log the creation
         await storage.createSystemLog({
           userId: user.id,
-          userName: user.fullName,
+          userName: user.fullName || user.username || 'Unknown',
           userRole: user.role,
           regionId: technician.regionId,
           action: 'create',
           entityType: 'technician_fixed_inventory',
           entityId: technicianId,
-          entityName: technician.fullName,
-          description: `إنشاء مخزون ثابت للفني: ${technician.fullName}`,
+          entityName: technician.fullName || technician.username,
+          description: `إنشاء مخزون ثابت للفني: ${technician.fullName || technician.username}`,
           severity: 'info',
           success: true,
         });
@@ -1433,14 +1433,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (technician) {
         await storage.createSystemLog({
           userId: user.id,
-          userName: user.fullName,
+          userName: user.fullName || user.username || 'Unknown',
           userRole: user.role,
           regionId: technician.regionId,
           action: 'transfer',
           entityType: 'stock_transfer',
           entityId: technicianId,
-          entityName: technician.fullName,
-          description: `نقل مخزون من الثابت إلى المتحرك للفني: ${technician.fullName}`,
+          entityName: technician.fullName || technician.username,
+          description: `نقل مخزون من الثابت إلى المتحرك للفني: ${technician.fullName || technician.username}`,
           severity: 'info',
           success: true,
         });
@@ -1807,7 +1807,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Log the operation
       await storage.createSystemLog({
         userId: user.id,
-        userName: user.fullName,
+        userName: user.fullName || user.username || 'Unknown',
         userRole: user.role,
         regionId: warehouse.regionId,
         action: 'update',
@@ -1900,14 +1900,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (warehouse && technician) {
         await storage.createSystemLog({
           userId: user.id,
-          userName: user.fullName,
+          userName: user.fullName || user.username || 'Unknown',
           userRole: user.role,
           regionId: warehouse.regionId,
           action: 'transfer',
           entityType: 'warehouse_transfer',
           entityId: warehouseId,
-          entityName: `${warehouse.name} -> ${technician.fullName}`,
-          description: `نقل مخزون من المستودع ${warehouse.name} إلى الفني ${technician.fullName}`,
+          entityName: `${warehouse.name} -> ${technician.fullName || technician.username}`,
+          description: `نقل مخزون من المستودع ${warehouse.name} إلى الفني ${technician.fullName || technician.username}`,
           severity: 'info',
           success: true,
         });
@@ -1984,14 +1984,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (warehouse && technician) {
         await storage.createSystemLog({
           userId: user.id,
-          userName: user.fullName,
+          userName: user.fullName || user.username || 'Unknown',
           userRole: user.role,
           regionId: warehouse.regionId,
           action: 'accept',
           entityType: 'warehouse_transfer',
           entityId: req.params.id,
-          entityName: `${warehouse.name} -> ${technician.fullName}`,
-          description: `قبول طلب نقل من المستودع ${warehouse.name} إلى ${technician.fullName}`,
+          entityName: `${warehouse.name} -> ${technician.fullName || technician.username}`,
+          description: `قبول طلب نقل من المستودع ${warehouse.name} إلى ${technician.fullName || technician.username}`,
           severity: 'info',
           success: true,
         });
@@ -2032,14 +2032,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (warehouse && technician) {
         await storage.createSystemLog({
           userId: user.id,
-          userName: user.fullName,
+          userName: user.fullName || user.username || 'Unknown',
           userRole: user.role,
           regionId: warehouse.regionId,
           action: 'reject',
           entityType: 'warehouse_transfer',
           entityId: req.params.id,
-          entityName: `${warehouse.name} -> ${technician.fullName}`,
-          description: `رفض طلب نقل من المستودع ${warehouse.name} إلى ${technician.fullName}${reason ? `: ${reason}` : ''}`,
+          entityName: `${warehouse.name} -> ${technician.fullName || technician.username}`,
+          description: `رفض طلب نقل من المستودع ${warehouse.name} إلى ${technician.fullName || technician.username}${reason ? `: ${reason}` : ''}`,
           severity: 'warning',
           success: true,
         });
