@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Users, MapPin, Activity, Trash2, Edit, ArrowRight, LayoutDashboard, TrendingUp, Database, AlertTriangle, BarChart3, PieChart as PieChartIcon, Shield, CheckCircle, XCircle } from "lucide-react";
+import { Plus, Users, MapPin, Activity, Trash2, Edit, ArrowRight, LayoutDashboard, TrendingUp, Database, AlertTriangle, BarChart3, PieChart as PieChartIcon, Shield, CheckCircle, XCircle, Search } from "lucide-react";
 import type { RegionWithStats, UserSafe, AdminStats, Region, InsertRegion, InsertUser, SystemLog } from "@shared/schema";
 import { ROLES, ROLE_LABELS_AR } from "@shared/roles";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -49,6 +49,8 @@ export default function AdminPage() {
   const [showUserModal, setShowUserModal] = useState(false);
   const [editingRegion, setEditingRegion] = useState<Region | null>(null);
   const [editingUser, setEditingUser] = useState<UserSafe | null>(null);
+  const [regionSearchTerm, setRegionSearchTerm] = useState("");
+  const [userSearchTerm, setUserSearchTerm] = useState("");
 
   const { data: adminStats } = useQuery<AdminStats>({
     queryKey: ["/api/admin/stats"],
@@ -124,8 +126,21 @@ export default function AdminPage() {
       toast({ title: "تم حذف المنطقة بنجاح" });
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : "فشل في حذف المنطقة";
-      toast({ title: message, variant: "destructive" });
+      let message = "فشل في حذف المنطقة";
+      if (error instanceof Error) {
+        if (error.message.includes("Cannot delete region that has assigned users")) {
+          message = "لا يمكن حذف هذه المنطقة لأنها مرتبطة بموظفين. يرجى نقل الموظفين إلى منطقة أخرى أولاً.";
+        } else if (error.message.includes("Cannot delete region")) {
+          message = "لا يمكن حذف هذه المنطقة لأنها مرتبطة ببيانات أخرى في النظام.";
+        } else {
+          message = error.message;
+        }
+      }
+      toast({ 
+        title: "تعذر حذف المنطقة", 
+        description: message,
+        variant: "destructive" 
+      });
     },
   });
 
@@ -223,6 +238,17 @@ export default function AdminPage() {
     setEditingUser(null);
     userForm.reset();
   };
+
+  const filteredRegions = regions.filter(region =>
+    region.name.toLowerCase().includes(regionSearchTerm.toLowerCase()) ||
+    (region.description && region.description.toLowerCase().includes(regionSearchTerm.toLowerCase()))
+  );
+
+  const filteredUsers = users.filter(user =>
+    user.username.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+    user.fullName.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(userSearchTerm.toLowerCase())
+  );
 
   return (
     <div 
@@ -496,11 +522,24 @@ export default function AdminPage() {
           {/* Regions Tab */}
           <TabsContent value="regions" className="space-y-4 mt-6">
             <motion.div 
-              className="flex justify-between items-center bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl p-4 rounded-2xl border border-white/20 shadow-2xl"
+              className="flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl p-4 rounded-2xl border border-white/20 shadow-2xl"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <h2 className="text-2xl font-black text-[#18B2B0]">المناطق</h2>
+              <div className="flex items-center gap-4 flex-1">
+                <h2 className="text-2xl font-black text-[#18B2B0]">المناطق</h2>
+                <div className="relative flex-1 max-w-md">
+                  <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#18B2B0]/50 h-5 w-5" />
+                  <Input
+                    type="text"
+                    placeholder="ابحث عن منطقة..."
+                    value={regionSearchTerm}
+                    onChange={(e) => setRegionSearchTerm(e.target.value)}
+                    className="pr-10 bg-white/5 border-white/20 text-white placeholder:text-gray-400 focus:border-[#18B2B0]/50"
+                    data-testid="input-search-region"
+                  />
+                </div>
+              </div>
               <Dialog open={showRegionModal} onOpenChange={setShowRegionModal}>
                 <DialogTrigger asChild>
                   <Button 
@@ -604,7 +643,19 @@ export default function AdminPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {regions.map((region, index) => (
+                        {filteredRegions.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={6} className="text-center py-12">
+                              <div className="flex flex-col items-center gap-3">
+                                <Search className="w-12 h-12 text-gray-500" />
+                                <p className="text-gray-400 text-lg">
+                                  {regionSearchTerm ? 'لا توجد مناطق تطابق بحثك' : 'لا توجد مناطق'}
+                                </p>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          filteredRegions.map((region, index) => (
                           <motion.tr 
                             key={region.id} 
                             data-testid={`row-region-${region.id}`}
@@ -665,7 +716,8 @@ export default function AdminPage() {
                               </div>
                             </TableCell>
                           </motion.tr>
-                        ))}
+                          ))
+                        )}
                       </TableBody>
                     </Table>
                   </div>
@@ -677,11 +729,24 @@ export default function AdminPage() {
           {/* Users Tab */}
           <TabsContent value="users" className="space-y-4 mt-6">
             <motion.div 
-              className="flex justify-between items-center bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl p-4 rounded-2xl border border-white/20 shadow-2xl"
+              className="flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl p-4 rounded-2xl border border-white/20 shadow-2xl"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <h2 className="text-2xl font-black text-[#18B2B0]">الموظفين</h2>
+              <div className="flex items-center gap-4 flex-1">
+                <h2 className="text-2xl font-black text-[#18B2B0]">الموظفين</h2>
+                <div className="relative flex-1 max-w-md">
+                  <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#18B2B0]/50 h-5 w-5" />
+                  <Input
+                    type="text"
+                    placeholder="ابحث عن موظف..."
+                    value={userSearchTerm}
+                    onChange={(e) => setUserSearchTerm(e.target.value)}
+                    className="pr-10 bg-white/5 border-white/20 text-white placeholder:text-gray-400 focus:border-[#18B2B0]/50"
+                    data-testid="input-search-user"
+                  />
+                </div>
+              </div>
               <Dialog open={showUserModal} onOpenChange={setShowUserModal}>
                 <DialogTrigger asChild>
                   <Button 
@@ -856,7 +921,19 @@ export default function AdminPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {users.map((user, index) => (
+                        {filteredUsers.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={7} className="text-center py-12">
+                              <div className="flex flex-col items-center gap-3">
+                                <Search className="w-12 h-12 text-gray-500" />
+                                <p className="text-gray-400 text-lg">
+                                  {userSearchTerm ? 'لا يوجد موظفون يطابقون بحثك' : 'لا يوجد موظفون'}
+                                </p>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          filteredUsers.map((user, index) => (
                           <motion.tr 
                             key={user.id} 
                             data-testid={`row-user-${user.id}`}
@@ -916,7 +993,8 @@ export default function AdminPage() {
                               </div>
                             </TableCell>
                           </motion.tr>
-                        ))}
+                          ))
+                        )}
                       </TableBody>
                     </Table>
                   </div>
