@@ -2254,4 +2254,9 @@ export class DatabaseStorage implements IStorage {
 
     return logs;
   }
+
+  async createSystemLog(log: InsertSystemLog): Promise<SystemLog> {
+    const [created] = await db.insert(systemLogs).values(log).returning();
+    return created;
+  }
 }
