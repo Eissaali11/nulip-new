@@ -740,8 +740,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/technicians/:id", requireAuth, async (req, res) => {
     try {
+      const user = (req as any).user;
       const updates = insertTechnicianInventorySchema.partial().parse(req.body);
       const tech = await storage.updateTechnicianInventory(req.params.id, updates);
+      
+      // Get technician info for logging
+      const technician = await storage.getUser(req.params.id);
+      if (technician) {
+        await storage.createSystemLog({
+          userId: user.id,
+          userName: user.fullName,
+          userRole: user.role,
+          regionId: technician.regionId,
+          action: 'update',
+          entityType: 'technician_moving_inventory',
+          entityId: req.params.id,
+          entityName: technician.fullName,
+          description: `تحديث المخزون المتحرك للفني: ${technician.fullName}`,
+          severity: 'info',
+          success: true,
+        });
+      }
+      
       res.json(tech);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1047,6 +1067,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Forbidden: You can only update your own inventory" });
       }
       
+      // Get technician info for logging
+      const technician = await storage.getUser(technicianId);
+      if (!technician) {
+        return res.status(404).json({ message: "Technician not found" });
+      }
+      
       // Remove timestamp fields from request body as they're auto-managed by DB
       const { createdAt, updatedAt, id, ...inventoryData } = req.body;
       
@@ -1054,12 +1080,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (existingInventory) {
         const updated = await storage.updateTechnicianFixedInventory(technicianId, inventoryData);
+        
+        // Log the update
+        await storage.createSystemLog({
+          userId: user.id,
+          userName: user.fullName,
+          userRole: user.role,
+          regionId: technician.regionId,
+          action: 'update',
+          entityType: 'technician_fixed_inventory',
+          entityId: technicianId,
+          entityName: technician.fullName,
+          description: `تحديث المخزون الثابت للفني: ${technician.fullName}`,
+          severity: 'info',
+          success: true,
+        });
+        
         res.json(updated);
       } else {
         const created = await storage.createTechnicianFixedInventory({
           technicianId,
           ...inventoryData,
         });
+        
+        // Log the creation
+        await storage.createSystemLog({
+          userId: user.id,
+          userName: user.fullName,
+          userRole: user.role,
+          regionId: technician.regionId,
+          action: 'create',
+          entityType: 'technician_fixed_inventory',
+          entityId: technicianId,
+          entityName: technician.fullName,
+          description: `إنشاء مخزون ثابت للفني: ${technician.fullName}`,
+          severity: 'info',
+          success: true,
+        });
+        
         res.status(201).json(created);
       }
     } catch (error) {
@@ -1712,12 +1770,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = (req as any).user;
 
+      // Get warehouse info for logging
+      const warehouse = await storage.getWarehouse(req.params.warehouseId);
+      if (!warehouse) {
+        return res.status(404).json({ message: "Warehouse not found" });
+      }
+
       // Supervisors can only update warehouse inventory in their region
       if (user.role === 'supervisor') {
-        const warehouse = await storage.getWarehouse(req.params.warehouseId);
-        if (!warehouse) {
-          return res.status(404).json({ message: "Warehouse not found" });
-        }
         if (warehouse.regionId !== user.regionId) {
           return res.status(403).json({ message: "لا يمكنك تعديل مستودعات خارج منطقتك" });
         }
@@ -1725,6 +1785,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const validatedData = insertWarehouseInventorySchema.parse(req.body);
       const inventory = await storage.updateWarehouseInventory(req.params.warehouseId, validatedData);
+      
+      // Log the operation
+      await storage.createSystemLog({
+        userId: user.id,
+        userName: user.fullName,
+        userRole: user.role,
+        regionId: warehouse.regionId,
+        action: 'update',
+        entityType: 'warehouse',
+        entityId: warehouse.id,
+        entityName: warehouse.name,
+        description: `تحديث مخزون المستودع: ${warehouse.name}`,
+        severity: 'info',
+        success: true,
+      });
+      
       res.json(inventory);
     } catch (error) {
       console.error("Error updating warehouse inventory:", error);

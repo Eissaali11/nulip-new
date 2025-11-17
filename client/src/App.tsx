@@ -26,6 +26,7 @@ import OperationDetailsPage from "@/pages/operation-details";
 import NotificationsPage from "@/pages/notifications";
 import ProfilePage from "@/pages/profile";
 import TechnicianDetailsPage from "@/pages/technician-details";
+import SystemLogsPage from "@/pages/system-logs";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import { Loader2 } from "lucide-react";
@@ -59,6 +60,7 @@ function AuthenticatedRouter() {
       <Route path="/notifications" component={NotificationsPage} />
       <Route path="/profile" component={ProfilePage} />
       <Route path="/technician-details/:id" component={TechnicianDetailsPage} />
+      <Route path="/system-logs" component={SystemLogsPage} />
       {user?.role === "technician" && (
         <>
           <Route path="/my-fixed-inventory" component={MyFixedInventory} />
