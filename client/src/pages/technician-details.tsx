@@ -31,9 +31,12 @@ import {
   TruckIcon,
   BarChart3,
   PieChart as PieChartIcon,
-  Activity
+  Activity,
+  Download
 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
+import { exportTechnicianToExcel } from "@/lib/exportToExcel";
+import { useToast } from "@/hooks/use-toast";
 
 interface TechnicianFixedInventory {
   id: string;
@@ -101,6 +104,7 @@ interface ProductInfo {
 export default function TechnicianDetailsPage() {
   const [match, params] = useRoute("/technician-details/:id");
   const technicianId = params?.id;
+  const { toast } = useToast();
 
   const { data: fixedInventory, isLoading: isLoadingFixed } = useQuery<TechnicianFixedInventory>({
     queryKey: [`/api/supervisor/users/${technicianId}/fixed-inventory`],
@@ -338,6 +342,75 @@ export default function TechnicianDetailsPage() {
               <p className="text-gray-400 text-sm">المخزون الشامل</p>
             </div>
           </div>
+          
+          <Button
+            onClick={async () => {
+              if (fixedInventory && movingInventory) {
+                try {
+                  await exportTechnicianToExcel({
+                    technicianName,
+                    city,
+                    fixedInventory: {
+                      n950Boxes: fixedInventory.n950Boxes,
+                      n950Units: fixedInventory.n950Units,
+                      i9000sBoxes: fixedInventory.i9000sBoxes,
+                      i9000sUnits: fixedInventory.i9000sUnits,
+                      i9100Boxes: fixedInventory.i9100Boxes,
+                      i9100Units: fixedInventory.i9100Units,
+                      rollPaperBoxes: fixedInventory.rollPaperBoxes,
+                      rollPaperUnits: fixedInventory.rollPaperUnits,
+                      stickersBoxes: fixedInventory.stickersBoxes,
+                      stickersUnits: fixedInventory.stickersUnits,
+                      newBatteriesBoxes: fixedInventory.newBatteriesBoxes,
+                      newBatteriesUnits: fixedInventory.newBatteriesUnits,
+                      mobilySimBoxes: fixedInventory.mobilySimBoxes,
+                      mobilySimUnits: fixedInventory.mobilySimUnits,
+                      stcSimBoxes: fixedInventory.stcSimBoxes,
+                      stcSimUnits: fixedInventory.stcSimUnits,
+                      zainSimBoxes: fixedInventory.zainSimBoxes,
+                      zainSimUnits: fixedInventory.zainSimUnits,
+                    },
+                    movingInventory: {
+                      n950Boxes: movingInventory.n950Boxes,
+                      n950Units: movingInventory.n950Units,
+                      i9000sBoxes: movingInventory.i9000sBoxes,
+                      i9000sUnits: movingInventory.i9000sUnits,
+                      i9100Boxes: movingInventory.i9100Boxes,
+                      i9100Units: movingInventory.i9100Units,
+                      rollPaperBoxes: movingInventory.rollPaperBoxes,
+                      rollPaperUnits: movingInventory.rollPaperUnits,
+                      stickersBoxes: movingInventory.stickersBoxes,
+                      stickersUnits: movingInventory.stickersUnits,
+                      newBatteriesBoxes: movingInventory.newBatteriesBoxes,
+                      newBatteriesUnits: movingInventory.newBatteriesUnits,
+                      mobilySimBoxes: movingInventory.mobilySimBoxes,
+                      mobilySimUnits: movingInventory.mobilySimUnits,
+                      stcSimBoxes: movingInventory.stcSimBoxes,
+                      stcSimUnits: movingInventory.stcSimUnits,
+                      zainSimBoxes: movingInventory.zainSimBoxes,
+                      zainSimUnits: movingInventory.zainSimUnits,
+                    }
+                  });
+                  toast({
+                    title: "تم التصدير بنجاح",
+                    description: "تم تصدير بيانات الفني إلى ملف Excel",
+                  });
+                } catch (error) {
+                  toast({
+                    title: "فشل التصدير",
+                    description: "حدث خطأ أثناء تصدير البيانات",
+                    variant: "destructive",
+                  });
+                }
+              }
+            }}
+            disabled={!fixedInventory || !movingInventory}
+            className="bg-gradient-to-r from-[#18B2B0] to-teal-600 hover:from-[#16a09e] hover:to-teal-700 text-white shadow-lg"
+            data-testid="button-export"
+          >
+            <Download className="ml-2 h-4 w-4" />
+            تصدير Excel
+          </Button>
         </motion.div>
 
         {/* Stats Cards */}
