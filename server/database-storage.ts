@@ -1858,6 +1858,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteWarehouse(id: string): Promise<boolean> {
+    // Delete warehouse transfers first (they reference this warehouse)
+    await db
+      .delete(warehouseTransfers)
+      .where(eq(warehouseTransfers.warehouseId, id));
+    
+    // Delete warehouse inventory (CASCADE from schema should handle this, but let's be explicit)
+    await db
+      .delete(warehouseInventory)
+      .where(eq(warehouseInventory.warehouseId, id));
+    
+    // Delete inventory requests that reference this warehouse
+    await db
+      .delete(inventoryRequests)
+      .where(eq(inventoryRequests.warehouseId, id));
+    
+    // Finally delete the warehouse
     const result = await db
       .delete(warehouses)
       .where(eq(warehouses.id, id));
