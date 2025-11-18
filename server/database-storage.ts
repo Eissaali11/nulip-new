@@ -421,10 +421,10 @@ export class DatabaseStorage implements IStorage {
         eq(warehouseTransfers.performedBy, id)
       ));
     
-    // Delete warehouse inventory
+    // Delete warehouses created by this user (with CASCADE this will delete warehouseInventory too)
     await db
-      .delete(warehouseInventory)
-      .where(eq(warehouseInventory.technicianId, id));
+      .delete(warehouses)
+      .where(eq(warehouses.createdBy, id));
     
     // Delete technician's fixed inventories
     await db
@@ -455,12 +455,6 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(techniciansInventory)
       .where(eq(techniciansInventory.createdBy, id));
-    
-    // Set warehouses createdBy to null instead of deleting warehouses
-    await db
-      .update(warehouses)
-      .set({ createdBy: null })
-      .where(eq(warehouses.createdBy, id));
     
     // Finally, delete the user
     const result = await db
@@ -1163,14 +1157,14 @@ export class DatabaseStorage implements IStorage {
     return device;
   }
 
-  async updateReceivedDeviceStatus(id: string, status: string, respondedBy: string, adminNotes?: string): Promise<ReceivedDevice> {
+  async updateReceivedDeviceStatus(id: string, status: string, approvedBy: string, adminNotes?: string): Promise<ReceivedDevice> {
     const [device] = await db
       .update(receivedDevices)
       .set({
         status,
-        respondedBy,
+        approvedBy,
         adminNotes,
-        respondedAt: new Date(),
+        approvedAt: new Date(),
         updatedAt: new Date(),
       })
       .where(eq(receivedDevices.id, id))
@@ -1194,10 +1188,13 @@ export class DatabaseStorage implements IStorage {
     
     if (supervisorId && regionId) {
       // Supervisor sees devices assigned to them OR in their region
-      conditions.push(or(
+      const orCondition = or(
         eq(receivedDevices.supervisorId, supervisorId),
         eq(receivedDevices.regionId, regionId)
-      ));
+      );
+      if (orCondition) {
+        conditions.push(orCondition);
+      }
     } else if (supervisorId) {
       conditions.push(eq(receivedDevices.supervisorId, supervisorId));
     } else if (regionId) {
