@@ -116,13 +116,6 @@ export const Navbar = () => {
       technicianOnly: true,
     },
     {
-      title: t('nav.devices'),
-      href: "/devices",
-      icon: Smartphone,
-      gradient: "from-indigo-500 to-purple-600",
-      adminOnly: true,
-    },
-    {
       title: "إدخال أجهزة مستقبلة",
       href: "/received-devices/submit",
       icon: PackagePlus,
