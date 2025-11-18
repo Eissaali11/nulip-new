@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Download, Upload, Database, AlertTriangle, ArrowLeft } from "lucide-react";
+import { Download, Upload, Database, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { apiRequest } from "@/lib/queryClient";
+import { Navbar } from "@/components/dashboard/Navbar";
 
 export default function BackupManagementPage() {
   const { toast } = useToast();
@@ -94,34 +94,24 @@ export default function BackupManagementPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4 md:p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+      <Navbar />
+      
+      <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
         >
-          <div className="flex items-center gap-4">
-            <Link href="/home">
-              <Button
-                variant="outline"
-                className="border-[#18B2B0]/30 text-[#18B2B0] hover:bg-[#18B2B0]/10"
-                data-testid="button-back"
-              >
-                <ArrowLeft className="ml-2 h-4 w-4" />
-                العودة
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-2">
-                <Database className="h-8 w-8 text-[#18B2B0]" />
-                إدارة النسخ الاحتياطية
-              </h1>
-              <p className="text-gray-400 mt-1">
-                تصدير واستعادة جميع بيانات النظام
-              </p>
-            </div>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-2">
+              <Database className="h-8 w-8 text-[#18B2B0]" />
+              إدارة النسخ الاحتياطية
+            </h1>
+            <p className="text-gray-400 mt-1">
+              تصدير واستعادة جميع بيانات النظام
+            </p>
           </div>
           <Button
             onClick={handleExportBackup}

@@ -13,7 +13,8 @@ import {
   Home,
   Settings,
   Languages,
-  PackagePlus
+  PackagePlus,
+  Database
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -155,6 +156,13 @@ export const Navbar = () => {
       icon: Warehouse,
       gradient: "from-amber-500 to-orange-600",
       supervisorOrAbove: true,
+    },
+    {
+      title: "النسخ الاحتياطية",
+      href: "/backup",
+      icon: Database,
+      gradient: "from-gray-500 to-slate-600",
+      adminOnly: true,
     },
   ];
 
