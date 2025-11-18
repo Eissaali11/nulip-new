@@ -51,6 +51,7 @@ function AuthenticatedRouter() {
   return (
     <Switch>
       <Route path="/" component={() => <Redirect to="/home" />} />
+      <Route path="/devices" component={() => <Redirect to="/home" />} />
       <Route path="/stock" component={LandingPage} />
       <Route path="/home" component={Dashboard} />
       <Route path="/transactions" component={TransactionHistoryPage} />
