@@ -2851,7 +2851,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/restore", requireAuth, requireAdmin, async (req, res) => {
     try {
-      const user = (req as any).user;
       const backup = req.body;
       
       if (!backup || !backup.data) {
@@ -2859,21 +2858,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       await storage.importAllData(backup);
-      
-      // Log the restore operation
-      await storage.createSystemLog({
-        userId: user.id,
-        userName: user.fullName || user.username || 'Unknown',
-        userRole: user.role,
-        regionId: user.regionId,
-        action: 'import',
-        entityType: 'backup',
-        entityId: 'system',
-        entityName: 'استعادة من نسخة احتياطية',
-        description: `استعادة بيانات النظام من نسخة احتياطية بتاريخ ${backup.timestamp || 'Unknown'}`,
-        severity: 'warning',
-        success: true,
-      });
       
       res.json({ success: true, message: "Backup restored successfully" });
     } catch (error) {
