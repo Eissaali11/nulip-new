@@ -2268,6 +2268,8 @@ export class DatabaseStorage implements IStorage {
       data: {
         regions: await db.select().from(regions),
         users: await db.select().from(users),
+        inventoryItems: await db.select().from(inventoryItems),
+        transactions: await db.select().from(transactions),
         warehouses: await db.select().from(warehouses),
         warehouseInventory: await db.select().from(warehouseInventory),
         techniciansInventory: await db.select().from(techniciansInventory),
@@ -2288,7 +2290,7 @@ export class DatabaseStorage implements IStorage {
       throw new Error('Invalid backup file');
     }
 
-    // Clear all tables in reverse dependency order
+    // Clear all tables in reverse dependency order (children first)
     await db.delete(systemLogs);
     await db.delete(receivedDevices);
     await db.delete(stockMovements);
@@ -2297,16 +2299,24 @@ export class DatabaseStorage implements IStorage {
     await db.delete(technicianFixedInventories);
     await db.delete(techniciansInventory);
     await db.delete(warehouseInventory);
+    await db.delete(transactions);
     await db.delete(warehouses);
+    await db.delete(inventoryItems);
     await db.delete(users);
     await db.delete(regions);
 
-    // Insert data in dependency order
+    // Insert data in dependency order (parents first)
     if (backup.data.regions?.length > 0) {
       await db.insert(regions).values(backup.data.regions);
     }
     if (backup.data.users?.length > 0) {
       await db.insert(users).values(backup.data.users);
+    }
+    if (backup.data.inventoryItems?.length > 0) {
+      await db.insert(inventoryItems).values(backup.data.inventoryItems);
+    }
+    if (backup.data.transactions?.length > 0) {
+      await db.insert(transactions).values(backup.data.transactions);
     }
     if (backup.data.warehouses?.length > 0) {
       await db.insert(warehouses).values(backup.data.warehouses);
