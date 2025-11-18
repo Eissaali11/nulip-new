@@ -394,6 +394,38 @@ export class DatabaseStorage implements IStorage {
   async deleteUser(id: string): Promise<boolean> {
     // Delete all related records first to avoid foreign key constraint violations
     
+    // Delete system logs
+    await db
+      .delete(systemLogs)
+      .where(eq(systemLogs.userId, id));
+    
+    // Delete received devices (as technician, supervisor, or approver)
+    await db
+      .delete(receivedDevices)
+      .where(or(
+        eq(receivedDevices.technicianId, id),
+        eq(receivedDevices.supervisorId, id),
+        eq(receivedDevices.approvedBy, id)
+      ));
+    
+    // Delete inventory requests (as responder)
+    await db
+      .delete(inventoryRequests)
+      .where(eq(inventoryRequests.respondedBy, id));
+    
+    // Delete warehouse transfers (as technician or performer)
+    await db
+      .delete(warehouseTransfers)
+      .where(or(
+        eq(warehouseTransfers.technicianId, id),
+        eq(warehouseTransfers.performedBy, id)
+      ));
+    
+    // Delete warehouse inventory
+    await db
+      .delete(warehouseInventory)
+      .where(eq(warehouseInventory.technicianId, id));
+    
     // Delete technician's fixed inventories
     await db
       .delete(technicianFixedInventories)
@@ -423,6 +455,12 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(techniciansInventory)
       .where(eq(techniciansInventory.createdBy, id));
+    
+    // Set warehouses createdBy to null instead of deleting warehouses
+    await db
+      .update(warehouses)
+      .set({ createdBy: null })
+      .where(eq(warehouses.createdBy, id));
     
     // Finally, delete the user
     const result = await db
