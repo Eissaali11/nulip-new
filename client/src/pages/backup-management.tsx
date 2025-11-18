@@ -66,14 +66,7 @@ export default function BackupManagementPage() {
       const text = await file.text();
       const backup = JSON.parse(text);
 
-      const response = await apiRequest('/api/admin/restore', {
-        method: 'POST',
-        body: JSON.stringify(backup),
-      });
-
-      if (!response.ok) {
-        throw new Error('فشل في استعادة النسخة الاحتياطية');
-      }
+      await apiRequest('POST', '/api/admin/restore', backup);
 
       toast({
         title: "تمت الاستعادة بنجاح",
