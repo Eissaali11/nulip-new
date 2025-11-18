@@ -408,18 +408,18 @@ export class DatabaseStorage implements IStorage {
         eq(receivedDevices.approvedBy, id)
       ));
     
-    // Delete inventory requests (as responder)
-    await db
-      .delete(inventoryRequests)
-      .where(eq(inventoryRequests.respondedBy, id));
-    
-    // Delete warehouse transfers (as technician or performer)
+    // Delete warehouse transfers first (they reference inventory_requests)
     await db
       .delete(warehouseTransfers)
       .where(or(
         eq(warehouseTransfers.technicianId, id),
         eq(warehouseTransfers.performedBy, id)
       ));
+    
+    // Delete inventory requests (as responder)
+    await db
+      .delete(inventoryRequests)
+      .where(eq(inventoryRequests.respondedBy, id));
     
     // Delete warehouses created by this user (with CASCADE this will delete warehouseInventory too)
     await db
