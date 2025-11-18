@@ -14,7 +14,8 @@ import { Switch } from "@/components/ui/switch";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Users, MapPin, Activity, Trash2, Edit, ArrowRight, LayoutDashboard, TrendingUp, Database, AlertTriangle, BarChart3, PieChart as PieChartIcon, Shield, CheckCircle, XCircle, Search } from "lucide-react";
+import { Plus, Users, MapPin, Activity, Trash2, Edit, ArrowRight, LayoutDashboard, TrendingUp, Database, AlertTriangle, BarChart3, PieChart as PieChartIcon, Shield, CheckCircle, XCircle, Search, FileSpreadsheet } from "lucide-react";
+import ExcelJS from 'exceljs';
 import type { RegionWithStats, UserSafe, AdminStats, Region, InsertRegion, InsertUser, SystemLog } from "@shared/schema";
 import { ROLES, ROLE_LABELS_AR } from "@shared/roles";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -249,6 +250,165 @@ export default function AdminPage() {
     user.fullName.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(userSearchTerm.toLowerCase())
   );
+
+  const handleExportUsers = async () => {
+    if (!filteredUsers || filteredUsers.length === 0) {
+      toast({
+        title: "لا توجد بيانات للتصدير",
+        description: "يجب أن يكون هناك موظفين لتصديرهم",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('بيانات الموظفين');
+    
+    const currentDate = new Date().toLocaleDateString('ar-EG', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    
+    worksheet.mergeCells('A1:H1');
+    const titleCell = worksheet.getCell('A1');
+    titleCell.value = 'تقرير بيانات الموظفين';
+    titleCell.font = { size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+    titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF18B2B0' } };
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    worksheet.getRow(1).height = 35;
+    
+    worksheet.mergeCells('A2:H2');
+    const dateCell = worksheet.getCell('A2');
+    dateCell.value = `تاريخ التقرير: ${currentDate}`;
+    dateCell.font = { size: 12, bold: true };
+    dateCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    dateCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF3F4F6' } };
+    worksheet.getRow(2).height = 25;
+    
+    const headerRow = worksheet.getRow(4);
+    headerRow.values = [
+      '#',
+      'اسم المستخدم',
+      'البريد الإلكتروني',
+      'الاسم الكامل',
+      'الدور',
+      'المنطقة',
+      'الحالة',
+      'تاريخ الإنشاء'
+    ];
+    headerRow.font = { bold: true, size: 11, color: { argb: 'FFFFFFFF' } };
+    headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF475569' } };
+    headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    headerRow.height = 25;
+    
+    headerRow.eachCell((cell) => {
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
+      };
+    });
+    
+    filteredUsers.forEach((user, index) => {
+      const region = regions.find(r => r.id === user.regionId);
+      const row = worksheet.addRow([
+        index + 1,
+        user.username,
+        user.email,
+        user.fullName,
+        ROLE_LABELS_AR[user.role as keyof typeof ROLE_LABELS_AR],
+        region?.name || '-',
+        user.isActive ? 'نشط' : 'غير نشط',
+        user.createdAt ? new Date(user.createdAt).toLocaleDateString('ar-EG') : '-'
+      ]);
+      
+      row.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+      row.height = 22;
+      
+      if (index % 2 === 0) {
+        row.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF9FAFB' } };
+      }
+      
+      row.eachCell((cell) => {
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+          left: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+          bottom: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+          right: { style: 'thin', color: { argb: 'FFE5E7EB' } }
+        };
+      });
+      
+      row.getCell(2).alignment = { horizontal: 'right', vertical: 'middle' };
+      row.getCell(3).alignment = { horizontal: 'right', vertical: 'middle' };
+      row.getCell(4).alignment = { horizontal: 'right', vertical: 'middle' };
+      
+      if (!user.isActive) {
+        row.getCell(7).font = { color: { argb: 'FFEF4444' }, bold: true };
+      } else {
+        row.getCell(7).font = { color: { argb: 'FF10B981' }, bold: true };
+      }
+    });
+    
+    const statsStartRow = worksheet.lastRow!.number + 2;
+    
+    worksheet.mergeCells(`A${statsStartRow}:H${statsStartRow}`);
+    const statsTitle = worksheet.getCell(`A${statsStartRow}`);
+    statsTitle.value = 'الإحصائيات الإجمالية';
+    statsTitle.font = { size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+    statsTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF059669' } };
+    statsTitle.alignment = { horizontal: 'center', vertical: 'middle' };
+    worksheet.getRow(statsStartRow).height = 30;
+    
+    const statsData = [
+      ['', 'إجمالي عدد الموظفين', filteredUsers.length],
+      ['', 'الموظفين النشطين', filteredUsers.filter(u => u.isActive).length],
+      ['', 'الموظفين غير النشطين', filteredUsers.filter(u => !u.isActive).length],
+      ['', 'المدراء', filteredUsers.filter(u => u.role === 'admin').length],
+      ['', 'المشرفين', filteredUsers.filter(u => u.role === 'supervisor').length],
+      ['', 'الفنيين', filteredUsers.filter(u => u.role === 'technician').length],
+    ];
+    
+    statsData.forEach((stat, index) => {
+      const statsRow = worksheet.getRow(statsStartRow + 1 + index);
+      statsRow.values = stat;
+      statsRow.height = 25;
+      statsRow.getCell(2).font = { bold: true };
+      statsRow.getCell(2).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0F2FE' } };
+      statsRow.getCell(2).alignment = { horizontal: 'right', vertical: 'middle' };
+      statsRow.getCell(3).font = { bold: true, color: { argb: 'FF1E40AF' } };
+      statsRow.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' };
+    });
+    
+    worksheet.columns = [
+      { width: 6 },
+      { width: 20 },
+      { width: 30 },
+      { width: 25 },
+      { width: 15 },
+      { width: 20 },
+      { width: 12 },
+      { width: 18 },
+    ];
+    
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `تقرير_الموظفين_${new Date().toISOString().split('T')[0]}.xlsx`;
+    link.click();
+    window.URL.revokeObjectURL(url);
+    
+    toast({
+      title: "تم تصدير التقرير بنجاح",
+      description: `تم تصدير بيانات ${filteredUsers.length} موظف بتنسيق احترافي`,
+    });
+  };
 
   return (
     <div 
@@ -747,17 +907,27 @@ export default function AdminPage() {
                   />
                 </div>
               </div>
-              <Dialog open={showUserModal} onOpenChange={setShowUserModal}>
-                <DialogTrigger asChild>
-                  <Button 
-                    onClick={() => setShowUserModal(true)} 
-                    data-testid="button-add-user"
-                    className="bg-gradient-to-r from-[#18B2B0] to-teal-500 hover:from-[#16a09e] hover:to-teal-600 text-white shadow-lg hover:shadow-2xl transition-all duration-300 font-bold"
-                  >
-                    <Plus className="h-4 w-4 ml-2" />
-                    إضافة موظف جديد
-                  </Button>
-                </DialogTrigger>
+              <div className="flex gap-2 flex-wrap">
+                <Button 
+                  onClick={handleExportUsers}
+                  variant="outline"
+                  data-testid="button-export-users"
+                  className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white border-0 shadow-lg hover:shadow-2xl transition-all duration-300 font-bold"
+                >
+                  <FileSpreadsheet className="h-4 w-4 ml-2" />
+                  تصدير Excel
+                </Button>
+                <Dialog open={showUserModal} onOpenChange={setShowUserModal}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      onClick={() => setShowUserModal(true)} 
+                      data-testid="button-add-user"
+                      className="bg-gradient-to-r from-[#18B2B0] to-teal-500 hover:from-[#16a09e] hover:to-teal-600 text-white shadow-lg hover:shadow-2xl transition-all duration-300 font-bold"
+                    >
+                      <Plus className="h-4 w-4 ml-2" />
+                      إضافة موظف جديد
+                    </Button>
+                  </DialogTrigger>
                 <DialogContent className="max-w-md bg-gradient-to-br from-white/10 to-white/[0.03] backdrop-blur-xl border border-white/20" data-testid="modal-user">
                   <DialogHeader>
                     <DialogTitle className="text-2xl text-[#18B2B0] font-black">{editingUser ? "تحديث بيانات الموظف" : "إضافة موظف جديد"}</DialogTitle>
@@ -894,6 +1064,7 @@ export default function AdminPage() {
                   </Form>
                 </DialogContent>
               </Dialog>
+              </div>
             </motion.div>
 
             <motion.div
