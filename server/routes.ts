@@ -2817,6 +2817,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Backup & Restore Routes (Admin only)
+  app.get("/api/admin/backup", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const backup = await storage.exportAllData();
+      
+      // Log the backup operation
+      await storage.createSystemLog({
+        userId: user.id,
+        userName: user.fullName || user.username || 'Unknown',
+        userRole: user.role,
+        regionId: user.regionId,
+        action: 'export',
+        entityType: 'backup',
+        entityId: 'system',
+        entityName: 'نسخة احتياطية كاملة',
+        description: 'تصدير نسخة احتياطية كاملة لجميع بيانات النظام',
+        severity: 'info',
+        success: true,
+      });
+      
+      // Set headers for file download
+      const filename = `backup_${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.json(backup);
+    } catch (error) {
+      console.error("Error creating backup:", error);
+      res.status(500).json({ message: "Failed to create backup" });
+    }
+  });
+
+  app.post("/api/admin/restore", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const backup = req.body;
+      
+      if (!backup || !backup.data) {
+        return res.status(400).json({ message: "Invalid backup file" });
+      }
+      
+      await storage.importAllData(backup);
+      
+      // Log the restore operation
+      await storage.createSystemLog({
+        userId: user.id,
+        userName: user.fullName || user.username || 'Unknown',
+        userRole: user.role,
+        regionId: user.regionId,
+        action: 'import',
+        entityType: 'backup',
+        entityId: 'system',
+        entityName: 'استعادة من نسخة احتياطية',
+        description: `استعادة بيانات النظام من نسخة احتياطية بتاريخ ${backup.timestamp || 'Unknown'}`,
+        severity: 'warning',
+        success: true,
+      });
+      
+      res.json({ success: true, message: "Backup restored successfully" });
+    } catch (error) {
+      console.error("Error restoring backup:", error);
+      res.status(500).json({ message: "Failed to restore backup" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

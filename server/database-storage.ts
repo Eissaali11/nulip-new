@@ -2259,4 +2259,81 @@ export class DatabaseStorage implements IStorage {
     const [created] = await db.insert(systemLogs).values(log).returning();
     return created;
   }
+
+  async exportAllData(): Promise<any> {
+    // Export all tables in dependency order (no foreign key violations)
+    const backup = {
+      version: '1.0',
+      timestamp: new Date().toISOString(),
+      data: {
+        regions: await db.select().from(regions),
+        users: await db.select().from(users),
+        warehouses: await db.select().from(warehouses),
+        warehouseInventory: await db.select().from(warehouseInventory),
+        techniciansInventory: await db.select().from(techniciansInventory),
+        technicianFixedInventories: await db.select().from(technicianFixedInventories),
+        inventoryRequests: await db.select().from(inventoryRequests),
+        warehouseTransfers: await db.select().from(warehouseTransfers),
+        stockMovements: await db.select().from(stockMovements),
+        receivedDevices: await db.select().from(receivedDevices),
+        systemLogs: await db.select().from(systemLogs),
+      }
+    };
+    
+    return backup;
+  }
+
+  async importAllData(backup: any): Promise<void> {
+    if (!backup || !backup.data) {
+      throw new Error('Invalid backup file');
+    }
+
+    // Clear all tables in reverse dependency order
+    await db.delete(systemLogs);
+    await db.delete(receivedDevices);
+    await db.delete(stockMovements);
+    await db.delete(warehouseTransfers);
+    await db.delete(inventoryRequests);
+    await db.delete(technicianFixedInventories);
+    await db.delete(techniciansInventory);
+    await db.delete(warehouseInventory);
+    await db.delete(warehouses);
+    await db.delete(users);
+    await db.delete(regions);
+
+    // Insert data in dependency order
+    if (backup.data.regions?.length > 0) {
+      await db.insert(regions).values(backup.data.regions);
+    }
+    if (backup.data.users?.length > 0) {
+      await db.insert(users).values(backup.data.users);
+    }
+    if (backup.data.warehouses?.length > 0) {
+      await db.insert(warehouses).values(backup.data.warehouses);
+    }
+    if (backup.data.warehouseInventory?.length > 0) {
+      await db.insert(warehouseInventory).values(backup.data.warehouseInventory);
+    }
+    if (backup.data.techniciansInventory?.length > 0) {
+      await db.insert(techniciansInventory).values(backup.data.techniciansInventory);
+    }
+    if (backup.data.technicianFixedInventories?.length > 0) {
+      await db.insert(technicianFixedInventories).values(backup.data.technicianFixedInventories);
+    }
+    if (backup.data.inventoryRequests?.length > 0) {
+      await db.insert(inventoryRequests).values(backup.data.inventoryRequests);
+    }
+    if (backup.data.warehouseTransfers?.length > 0) {
+      await db.insert(warehouseTransfers).values(backup.data.warehouseTransfers);
+    }
+    if (backup.data.stockMovements?.length > 0) {
+      await db.insert(stockMovements).values(backup.data.stockMovements);
+    }
+    if (backup.data.receivedDevices?.length > 0) {
+      await db.insert(receivedDevices).values(backup.data.receivedDevices);
+    }
+    if (backup.data.systemLogs?.length > 0) {
+      await db.insert(systemLogs).values(backup.data.systemLogs);
+    }
+  }
 }
