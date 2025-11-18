@@ -2285,6 +2285,29 @@ export class DatabaseStorage implements IStorage {
     return backup;
   }
 
+  private convertDates(obj: any): any {
+    if (!obj) return obj;
+    if (Array.isArray(obj)) {
+      return obj.map(item => this.convertDates(item));
+    }
+    if (typeof obj === 'object') {
+      const converted: any = {};
+      for (const key in obj) {
+        const value = obj[key];
+        if (typeof value === 'string' && (key.includes('At') || key.includes('Date') || key.includes('date') || key.includes('Time') || key.includes('time'))) {
+          const date = new Date(value);
+          converted[key] = isNaN(date.getTime()) ? value : date;
+        } else if (typeof value === 'object') {
+          converted[key] = this.convertDates(value);
+        } else {
+          converted[key] = value;
+        }
+      }
+      return converted;
+    }
+    return obj;
+  }
+
   async importAllData(backup: any): Promise<void> {
     if (!backup || !backup.data) {
       throw new Error('Invalid backup file');
@@ -2307,43 +2330,43 @@ export class DatabaseStorage implements IStorage {
 
     // Insert data in dependency order (parents first)
     if (backup.data.regions?.length > 0) {
-      await db.insert(regions).values(backup.data.regions);
+      await db.insert(regions).values(this.convertDates(backup.data.regions));
     }
     if (backup.data.users?.length > 0) {
-      await db.insert(users).values(backup.data.users);
+      await db.insert(users).values(this.convertDates(backup.data.users));
     }
     if (backup.data.inventoryItems?.length > 0) {
-      await db.insert(inventoryItems).values(backup.data.inventoryItems);
+      await db.insert(inventoryItems).values(this.convertDates(backup.data.inventoryItems));
     }
     if (backup.data.transactions?.length > 0) {
-      await db.insert(transactions).values(backup.data.transactions);
+      await db.insert(transactions).values(this.convertDates(backup.data.transactions));
     }
     if (backup.data.warehouses?.length > 0) {
-      await db.insert(warehouses).values(backup.data.warehouses);
+      await db.insert(warehouses).values(this.convertDates(backup.data.warehouses));
     }
     if (backup.data.warehouseInventory?.length > 0) {
-      await db.insert(warehouseInventory).values(backup.data.warehouseInventory);
+      await db.insert(warehouseInventory).values(this.convertDates(backup.data.warehouseInventory));
     }
     if (backup.data.techniciansInventory?.length > 0) {
-      await db.insert(techniciansInventory).values(backup.data.techniciansInventory);
+      await db.insert(techniciansInventory).values(this.convertDates(backup.data.techniciansInventory));
     }
     if (backup.data.technicianFixedInventories?.length > 0) {
-      await db.insert(technicianFixedInventories).values(backup.data.technicianFixedInventories);
+      await db.insert(technicianFixedInventories).values(this.convertDates(backup.data.technicianFixedInventories));
     }
     if (backup.data.inventoryRequests?.length > 0) {
-      await db.insert(inventoryRequests).values(backup.data.inventoryRequests);
+      await db.insert(inventoryRequests).values(this.convertDates(backup.data.inventoryRequests));
     }
     if (backup.data.warehouseTransfers?.length > 0) {
-      await db.insert(warehouseTransfers).values(backup.data.warehouseTransfers);
+      await db.insert(warehouseTransfers).values(this.convertDates(backup.data.warehouseTransfers));
     }
     if (backup.data.stockMovements?.length > 0) {
-      await db.insert(stockMovements).values(backup.data.stockMovements);
+      await db.insert(stockMovements).values(this.convertDates(backup.data.stockMovements));
     }
     if (backup.data.receivedDevices?.length > 0) {
-      await db.insert(receivedDevices).values(backup.data.receivedDevices);
+      await db.insert(receivedDevices).values(this.convertDates(backup.data.receivedDevices));
     }
     if (backup.data.systemLogs?.length > 0) {
-      await db.insert(systemLogs).values(backup.data.systemLogs);
+      await db.insert(systemLogs).values(this.convertDates(backup.data.systemLogs));
     }
   }
 }
