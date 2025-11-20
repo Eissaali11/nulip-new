@@ -2584,6 +2584,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       await db.transaction(async (tx) => {
+        const warehouseInv = await tx
+          .select()
+          .from(warehouseInventory)
+          .where(eq(warehouseInventory.warehouseId, warehouseId))
+          .limit(1);
+
+        if (!warehouseInv || warehouseInv.length === 0) {
+          throw new Error("Warehouse inventory not found");
+        }
+
+        const currentInv = warehouseInv[0];
+
+        const stockChecks = [
+          { name: 'N950 (صناديق)', current: currentInv.n950Boxes || 0, requested: inventoryRequest.n950Boxes || 0 },
+          { name: 'N950 (وحدات)', current: currentInv.n950Units || 0, requested: inventoryRequest.n950Units || 0 },
+          { name: 'I9000s (صناديق)', current: currentInv.i9000sBoxes || 0, requested: inventoryRequest.i9000sBoxes || 0 },
+          { name: 'I9000s (وحدات)', current: currentInv.i9000sUnits || 0, requested: inventoryRequest.i9000sUnits || 0 },
+          { name: 'I9100 (صناديق)', current: currentInv.i9100Boxes || 0, requested: inventoryRequest.i9100Boxes || 0 },
+          { name: 'I9100 (وحدات)', current: currentInv.i9100Units || 0, requested: inventoryRequest.i9100Units || 0 },
+          { name: 'ورق حراري (صناديق)', current: currentInv.rollPaperBoxes || 0, requested: inventoryRequest.rollPaperBoxes || 0 },
+          { name: 'ورق حراري (وحدات)', current: currentInv.rollPaperUnits || 0, requested: inventoryRequest.rollPaperUnits || 0 },
+          { name: 'ملصقات (صناديق)', current: currentInv.stickersBoxes || 0, requested: inventoryRequest.stickersBoxes || 0 },
+          { name: 'ملصقات (وحدات)', current: currentInv.stickersUnits || 0, requested: inventoryRequest.stickersUnits || 0 },
+          { name: 'بطاريات جديدة (صناديق)', current: currentInv.newBatteriesBoxes || 0, requested: inventoryRequest.newBatteriesBoxes || 0 },
+          { name: 'بطاريات جديدة (وحدات)', current: currentInv.newBatteriesUnits || 0, requested: inventoryRequest.newBatteriesUnits || 0 },
+          { name: 'شريحة موبايلي (صناديق)', current: currentInv.mobilySimBoxes || 0, requested: inventoryRequest.mobilySimBoxes || 0 },
+          { name: 'شريحة موبايلي (وحدات)', current: currentInv.mobilySimUnits || 0, requested: inventoryRequest.mobilySimUnits || 0 },
+          { name: 'شريحة STC (صناديق)', current: currentInv.stcSimBoxes || 0, requested: inventoryRequest.stcSimBoxes || 0 },
+          { name: 'شريحة STC (وحدات)', current: currentInv.stcSimUnits || 0, requested: inventoryRequest.stcSimUnits || 0 },
+          { name: 'شريحة زين (صناديق)', current: currentInv.zainSimBoxes || 0, requested: inventoryRequest.zainSimBoxes || 0 },
+          { name: 'شريحة زين (وحدات)', current: currentInv.zainSimUnits || 0, requested: inventoryRequest.zainSimUnits || 0 },
+        ];
+
+        for (const check of stockChecks) {
+          if (check.requested > 0 && check.current < check.requested) {
+            throw new Error(`Insufficient stock in warehouse. Available: ${check.current}, Requested: ${check.requested} for ${check.name}`);
+          }
+        }
+
         await tx
           .update(inventoryRequests)
           .set({
@@ -2635,18 +2674,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
           }
         }
-
-        const warehouseInv = await tx
-          .select()
-          .from(warehouseInventory)
-          .where(eq(warehouseInventory.warehouseId, warehouseId))
-          .limit(1);
-
-        if (!warehouseInv || warehouseInv.length === 0) {
-          throw new Error("Warehouse inventory not found");
-        }
-
-        const currentInv = warehouseInv[0];
 
         await tx
           .update(warehouseInventory)
