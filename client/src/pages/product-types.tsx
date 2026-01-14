@@ -307,8 +307,8 @@ export default function ProductTypesPage() {
                             <Input 
                               type="number" 
                               min={1}
-                              {...field}
-                              onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                              value={field.value ?? ""}
+                              onChange={(e) => field.onChange(e.target.value === "" ? 1 : parseInt(e.target.value) || 1)}
                             />
                           </FormControl>
                           <FormMessage />
@@ -326,8 +326,8 @@ export default function ProductTypesPage() {
                           <Input 
                             type="number" 
                             min={0}
-                            {...field}
-                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                            value={field.value ?? ""}
+                            onChange={(e) => field.onChange(e.target.value === "" ? 0 : parseInt(e.target.value) || 0)}
                           />
                         </FormControl>
                         <FormDescription>
