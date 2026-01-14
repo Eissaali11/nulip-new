@@ -200,7 +200,8 @@ export const exportWarehousesToExcel = async ({
   });
   const time = currentDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
 
-  const activeProductTypes = productTypes.filter(pt => pt.isActive);
+  const staticProductNames = ['N950', 'I9000s', 'I9100', 'ورق حراري', 'ملصقات', 'بطاريات', 'موبايلي', 'STC', 'زين', 'n950', 'i9000s', 'i9100', 'roll paper', 'stickers', 'batteries', 'mobily', 'stc', 'zain'];
+  const activeProductTypes = productTypes.filter(pt => pt.isActive && !staticProductNames.some(name => pt.name.toLowerCase().includes(name.toLowerCase()) || pt.code.toLowerCase().includes(name.toLowerCase())));
   const dynamicColsCount = activeProductTypes.length * 2;
   const totalColsCount = 23 + dynamicColsCount;
 
