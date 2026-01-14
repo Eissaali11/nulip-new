@@ -3157,6 +3157,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Dynamic Warehouse Inventory APIs
   // =====================================================
 
+  // Get all dynamic inventory for all warehouses (for export)
+  app.get("/api/warehouse-dynamic-inventory", requireAuth, async (req, res) => {
+    try {
+      const inventory = await db.select({
+        warehouseId: warehouseDynamicInventory.warehouseId,
+        productTypeId: warehouseDynamicInventory.productTypeId,
+        boxes: warehouseDynamicInventory.boxes,
+        units: warehouseDynamicInventory.units,
+        productType: productTypes,
+      })
+      .from(warehouseDynamicInventory)
+      .innerJoin(productTypes, eq(warehouseDynamicInventory.productTypeId, productTypes.id));
+      
+      res.json(inventory);
+    } catch (error) {
+      console.error("Error fetching all warehouse dynamic inventory:", error);
+      res.status(500).json({ message: "Failed to fetch inventory" });
+    }
+  });
+
   // Get dynamic inventory for a warehouse
   app.get("/api/warehouses/:warehouseId/dynamic-inventory", requireAuth, async (req, res) => {
     try {

@@ -1199,3 +1199,203 @@ export const exportTechnicianToExcel = async (data: TechnicianInventoryData) => 
   const fileName = `تقرير_مخزون_الفني_${data.technicianName}_${new Date().toISOString().split('T')[0]}.xlsx`;
   saveAs(blob, fileName);
 };
+
+interface DynamicInventoryItem {
+  productTypeId: string;
+  boxes: number;
+  units: number;
+  productType?: {
+    id: string;
+    name: string;
+    code: string;
+    category: string;
+  };
+}
+
+interface ProductTypeInfo {
+  id: string;
+  name: string;
+  code: string;
+  category: string;
+}
+
+interface WarehouseDynamicData {
+  id: string;
+  name: string;
+  location: string;
+  isActive: boolean;
+  dynamicInventory: DynamicInventoryItem[];
+}
+
+interface DynamicWarehouseExportData {
+  warehouses: WarehouseDynamicData[];
+  productTypes: ProductTypeInfo[];
+  companyName?: string;
+  reportTitle?: string;
+}
+
+export const exportDynamicWarehousesToExcel = async ({
+  warehouses,
+  productTypes,
+  companyName = 'نظام إدارة المخزون - RAS Saudi',
+  reportTitle = 'تقرير المستودعات الشامل (الأصناف الديناميكية)'
+}: DynamicWarehouseExportData) => {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('تقرير المستودعات');
+
+  worksheet.views = [{ rightToLeft: true }];
+
+  const currentDate = new Date();
+  const arabicDate = currentDate.toLocaleDateString('ar-SA', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+  const time = currentDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+
+  const totalColumns = 4 + (productTypes.length * 2) + 1;
+  
+  worksheet.mergeCells(1, 1, 1, totalColumns);
+  const titleCell = worksheet.getCell('A1');
+  titleCell.value = companyName;
+  titleCell.font = { size: 20, bold: true, color: { argb: 'FFFFFFFF' } };
+  titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  titleCell.fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FF18B2B0' }
+  };
+  worksheet.getRow(1).height = 35;
+
+  worksheet.mergeCells(2, 1, 2, totalColumns);
+  const subtitleCell = worksheet.getCell('A2');
+  subtitleCell.value = reportTitle;
+  subtitleCell.font = { size: 16, bold: true, color: { argb: 'FF18B2B0' } };
+  subtitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  subtitleCell.fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FFE0F7F6' }
+  };
+  worksheet.getRow(2).height = 28;
+
+  worksheet.mergeCells(3, 1, 3, totalColumns);
+  const dateCell = worksheet.getCell('A3');
+  dateCell.value = `تاريخ التقرير: ${arabicDate} - الساعة: ${time}`;
+  dateCell.font = { size: 12, bold: true };
+  dateCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  dateCell.fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FFF0F9FF' }
+  };
+  worksheet.getRow(3).height = 25;
+
+  worksheet.addRow([]);
+
+  const headers = ['#', 'اسم المستودع', 'الموقع', 'الحالة'];
+  productTypes.forEach(pt => {
+    headers.push(`${pt.name} (صناديق)`);
+    headers.push(`${pt.name} (قطع)`);
+  });
+  headers.push('إجمالي الأصناف');
+
+  const headerRow = worksheet.addRow(headers);
+  headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+  headerRow.height = 30;
+  headerRow.eachCell((cell) => {
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF4A5568' }
+    };
+    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    cell.border = {
+      top: { style: 'thin', color: { argb: 'FF000000' } },
+      left: { style: 'thin', color: { argb: 'FF000000' } },
+      bottom: { style: 'thin', color: { argb: 'FF000000' } },
+      right: { style: 'thin', color: { argb: 'FF000000' } }
+    };
+  });
+
+  const totals: Record<string, { boxes: number; units: number }> = {};
+  productTypes.forEach(pt => {
+    totals[pt.id] = { boxes: 0, units: 0 };
+  });
+  let grandTotalItems = 0;
+
+  warehouses.forEach((warehouse, index) => {
+    const rowData: (string | number)[] = [
+      index + 1,
+      warehouse.name,
+      warehouse.location,
+      warehouse.isActive ? 'نشط' : 'غير نشط'
+    ];
+
+    let warehouseTotal = 0;
+
+    productTypes.forEach(pt => {
+      const inv = warehouse.dynamicInventory.find(i => i.productTypeId === pt.id);
+      const boxes = inv?.boxes || 0;
+      const units = inv?.units || 0;
+      rowData.push(boxes);
+      rowData.push(units);
+      totals[pt.id].boxes += boxes;
+      totals[pt.id].units += units;
+      warehouseTotal += boxes + units;
+    });
+
+    rowData.push(warehouseTotal);
+    grandTotalItems += warehouseTotal;
+
+    const dataRow = worksheet.addRow(rowData);
+    dataRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    dataRow.eachCell((cell) => {
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+  });
+
+  const totalRowData: (string | number)[] = ['', 'الإجمالي', '', ''];
+  productTypes.forEach(pt => {
+    totalRowData.push(totals[pt.id].boxes);
+    totalRowData.push(totals[pt.id].units);
+  });
+  totalRowData.push(grandTotalItems);
+
+  const totalRow = worksheet.addRow(totalRowData);
+  totalRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
+  totalRow.alignment = { horizontal: 'center', vertical: 'middle' };
+  totalRow.height = 25;
+  totalRow.eachCell((cell) => {
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF16A085' }
+    };
+    cell.border = {
+      top: { style: 'medium', color: { argb: 'FF000000' } },
+      left: { style: 'thin', color: { argb: 'FF000000' } },
+      bottom: { style: 'medium', color: { argb: 'FF000000' } },
+      right: { style: 'thin', color: { argb: 'FF000000' } }
+    };
+  });
+
+  const columnWidths = [6, 25, 25, 12];
+  productTypes.forEach(() => {
+    columnWidths.push(15, 12);
+  });
+  columnWidths.push(15);
+
+  worksheet.columns = columnWidths.map(width => ({ width }));
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const fileName = `تقرير_المستودعات_الديناميكي_${new Date().toISOString().split('T')[0]}.xlsx`;
+  saveAs(blob, fileName);
+};

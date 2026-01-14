@@ -23,7 +23,7 @@ import {
 import CreateWarehouseModal from "@/components/create-warehouse-modal";
 import EditWarehouseModal from "@/components/edit-warehouse-modal";
 import dashboardBg from "@assets/image_1762515061799.png";
-import { exportWarehousesToExcel } from "@/lib/exportToExcel";
+import { exportWarehousesToExcel, exportDynamicWarehousesToExcel } from "@/lib/exportToExcel";
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/dashboard/Navbar";
 import { GridBackground } from "@/components/dashboard/GridBackground";
@@ -75,6 +75,14 @@ export default function WarehousesPage() {
     enabled: !!user?.id && (user?.role === 'admin' || user?.role === 'supervisor'),
   });
 
+  const { data: productTypes = [] } = useQuery<{ id: string; name: string; code: string; category: string; isActive: boolean }[]>({
+    queryKey: ["/api/product-types"],
+  });
+
+  const { data: allDynamicInventory = [] } = useQuery<{ warehouseId: string; productTypeId: string; boxes: number; units: number; productType?: { id: string; name: string; code: string; category: string } }[]>({
+    queryKey: ["/api/warehouse-dynamic-inventory"],
+  });
+
   const warehouses = allWarehouses.filter(warehouse => 
     warehouse.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     warehouse.location.toLowerCase().includes(searchQuery.toLowerCase())
@@ -84,9 +92,26 @@ export default function WarehousesPage() {
     if (warehouses && warehouses.length > 0) {
       try {
         await exportWarehousesToExcel({ warehouses });
+        
+        const activeProductTypes = productTypes.filter(pt => pt.isActive);
+        if (activeProductTypes.length > 0) {
+          const warehousesWithDynamic = warehouses.map(w => ({
+            id: w.id,
+            name: w.name,
+            location: w.location,
+            isActive: w.isActive,
+            dynamicInventory: allDynamicInventory.filter(inv => inv.warehouseId === w.id)
+          }));
+          
+          await exportDynamicWarehousesToExcel({ 
+            warehouses: warehousesWithDynamic, 
+            productTypes: activeProductTypes 
+          });
+        }
+        
         toast({ 
           title: "تم تصدير التقرير بنجاح", 
-          description: "تم حفظ ملف Excel في جهازك" 
+          description: "تم حفظ ملفات Excel في جهازك" 
         });
       } catch (error) {
         toast({ 
