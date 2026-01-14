@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -65,7 +65,7 @@ export default function UpdateWarehouseInventoryModal({
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: currentInventory || {
+    defaultValues: {
       n950Boxes: 0,
       n950Units: 0,
       i9000sBoxes: 0,
@@ -87,11 +87,17 @@ export default function UpdateWarehouseInventoryModal({
     },
   });
 
+  const hasInitialized = useRef(false);
+
   useEffect(() => {
-    if (open && currentInventory) {
+    if (open && currentInventory && !hasInitialized.current) {
       form.reset(currentInventory);
+      hasInitialized.current = true;
     }
-  }, [open]);
+    if (!open) {
+      hasInitialized.current = false;
+    }
+  }, [open, currentInventory]);
 
   const updateInventoryMutation = useMutation({
     mutationFn: async (data: FormData) => {
