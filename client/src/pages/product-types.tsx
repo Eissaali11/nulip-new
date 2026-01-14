@@ -150,10 +150,14 @@ export default function ProductTypesPage() {
     }
   };
 
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setEditingProduct(null);
-    form.reset();
+  const handleCloseModal = (open: boolean) => {
+    if (!open) {
+      setShowModal(false);
+      setEditingProduct(null);
+      form.reset();
+    } else {
+      setShowModal(true);
+    }
   };
 
   const filteredProducts = productTypes.filter(
@@ -357,7 +361,7 @@ export default function ProductTypesPage() {
                     >
                       {editingProduct ? "حفظ التعديلات" : "إضافة الصنف"}
                     </Button>
-                    <Button type="button" variant="outline" onClick={handleCloseModal}>
+                    <Button type="button" variant="outline" onClick={() => handleCloseModal(false)}>
                       إلغاء
                     </Button>
                   </div>
