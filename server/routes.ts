@@ -3549,13 +3549,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const requests = await db.select({
         request: dynamicInventoryRequests,
+        technician: {
+          id: users.id,
+          name: users.name,
+          username: users.username,
+          city: users.city,
+        },
       })
         .from(dynamicInventoryRequests)
+        .innerJoin(users, eq(dynamicInventoryRequests.technicianId, users.id))
         .where(eq(dynamicInventoryRequests.status, 'pending'))
         .orderBy(desc(dynamicInventoryRequests.createdAt));
 
       // Get items for each request
-      const result = await Promise.all(requests.map(async ({ request }) => {
+      const result = await Promise.all(requests.map(async ({ request, technician }) => {
         const items = await db.select({
           item: dynamicRequestItems,
           productType: productTypes,
@@ -3566,6 +3573,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         return {
           ...request,
+          technicianName: technician.name,
+          technicianUsername: technician.username,
+          technicianCity: technician.city,
           items: items.map(i => ({
             ...i.item,
             productType: i.productType,
