@@ -5,7 +5,7 @@ import { insertInventoryItemSchema, insertTransactionSchema, insertRegionSchema,
 import { ROLES, hasRoleOrAbove, canManageUsers } from "@shared/roles";
 import { z } from "zod";
 import { db } from "./db";
-import { eq, inArray, or, and } from "drizzle-orm";
+import { eq, inArray, or, and, desc } from "drizzle-orm";
 
 // Simple session store for demo purposes (in production, use proper session store)
 const activeSessions = new Map<string, { userId: string; role: string; username: string; regionId: string | null; expiry: number }>();
@@ -3475,6 +3475,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error migrating technician inventory:", error);
       res.status(500).json({ message: "Failed to migrate inventory" });
+    }
+  });
+
+  // Create dynamic inventory request
+  app.post("/api/dynamic-inventory-requests", requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { items, notes } = req.body;
+
+      if (!items || !Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ message: "يجب تحديد صنف واحد على الأقل" });
+      }
+
+      // Create the main request
+      const [request] = await db.insert(dynamicInventoryRequests).values({
+        technicianId: user.id,
+        notes: notes || null,
+        status: 'pending',
+      }).returning();
+
+      // Create request items
+      for (const item of items) {
+        if (item.boxes > 0 || item.units > 0) {
+          await db.insert(dynamicRequestItems).values({
+            requestId: request.id,
+            productTypeId: item.productTypeId,
+            boxes: item.boxes || 0,
+            units: item.units || 0,
+          });
+        }
+      }
+
+      await storage.createSystemLog({
+        userId: user.id,
+        userName: user.username,
+        userRole: user.role,
+        regionId: user.regionId,
+        action: 'create',
+        entityType: 'dynamic_inventory_request',
+        entityId: request.id,
+        entityName: `طلب مخزون - ${user.fullName || user.username}`,
+        description: `تم إنشاء طلب مخزون جديد يحتوي على ${items.length} صنف`,
+        severity: 'info',
+        success: true,
+      });
+
+      res.status(201).json(request);
+    } catch (error) {
+      console.error("Error creating dynamic inventory request:", error);
+      res.status(500).json({ message: "Failed to create inventory request" });
+    }
+  });
+
+  // Get my dynamic inventory requests
+  app.get("/api/dynamic-inventory-requests/my", requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const requests = await db.select()
+        .from(dynamicInventoryRequests)
+        .where(eq(dynamicInventoryRequests.technicianId, user.id))
+        .orderBy(desc(dynamicInventoryRequests.createdAt));
+      
+      res.json(requests);
+    } catch (error) {
+      console.error("Error fetching my dynamic requests:", error);
+      res.status(500).json({ message: "Failed to fetch requests" });
+    }
+  });
+
+  // Get all pending dynamic inventory requests (for admin/supervisor)
+  app.get("/api/dynamic-inventory-requests/pending", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const requests = await db.select({
+        request: dynamicInventoryRequests,
+      })
+        .from(dynamicInventoryRequests)
+        .where(eq(dynamicInventoryRequests.status, 'pending'))
+        .orderBy(desc(dynamicInventoryRequests.createdAt));
+
+      // Get items for each request
+      const result = await Promise.all(requests.map(async ({ request }) => {
+        const items = await db.select({
+          item: dynamicRequestItems,
+          productType: productTypes,
+        })
+          .from(dynamicRequestItems)
+          .innerJoin(productTypes, eq(dynamicRequestItems.productTypeId, productTypes.id))
+          .where(eq(dynamicRequestItems.requestId, request.id));
+        
+        return {
+          ...request,
+          items: items.map(i => ({
+            ...i.item,
+            productType: i.productType,
+          })),
+        };
+      }));
+
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching pending dynamic requests:", error);
+      res.status(500).json({ message: "Failed to fetch requests" });
     }
   });
 
