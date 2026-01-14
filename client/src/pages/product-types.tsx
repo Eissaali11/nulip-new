@@ -70,6 +70,7 @@ export default function ProductTypesPage() {
       apiRequest("POST", "/api/product-types", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/product-types"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/product-types/active"] });
       setShowModal(false);
       form.reset();
       toast({ title: "تم إنشاء الصنف بنجاح" });
@@ -88,6 +89,7 @@ export default function ProductTypesPage() {
       apiRequest("PATCH", `/api/product-types/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/product-types"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/product-types/active"] });
       setShowModal(false);
       setEditingProduct(null);
       form.reset();
@@ -106,6 +108,7 @@ export default function ProductTypesPage() {
     mutationFn: (id: string) => apiRequest("PATCH", `/api/product-types/${id}/toggle-active`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/product-types"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/product-types/active"] });
       toast({ title: "تم تحديث حالة الصنف" });
     },
     onError: () => {
@@ -117,6 +120,7 @@ export default function ProductTypesPage() {
     mutationFn: (id: string) => apiRequest("DELETE", `/api/product-types/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/product-types"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/product-types/active"] });
       toast({ title: "تم حذف الصنف بنجاح" });
     },
     onError: (error: any) => {
