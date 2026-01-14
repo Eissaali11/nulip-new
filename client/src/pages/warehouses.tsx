@@ -23,7 +23,7 @@ import {
 import CreateWarehouseModal from "@/components/create-warehouse-modal";
 import EditWarehouseModal from "@/components/edit-warehouse-modal";
 import dashboardBg from "@assets/image_1762515061799.png";
-import { exportWarehousesToExcel, exportDynamicWarehousesToExcel } from "@/lib/exportToExcel";
+import { exportWarehousesToExcel } from "@/lib/exportToExcel";
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/dashboard/Navbar";
 import { GridBackground } from "@/components/dashboard/GridBackground";
@@ -91,27 +91,15 @@ export default function WarehousesPage() {
   const handleExportWarehouses = async () => {
     if (warehouses && warehouses.length > 0) {
       try {
-        await exportWarehousesToExcel({ warehouses });
-        
-        const activeProductTypes = productTypes.filter(pt => pt.isActive);
-        if (activeProductTypes.length > 0) {
-          const warehousesWithDynamic = warehouses.map(w => ({
-            id: w.id,
-            name: w.name,
-            location: w.location,
-            isActive: w.isActive,
-            dynamicInventory: allDynamicInventory.filter(inv => inv.warehouseId === w.id)
-          }));
-          
-          await exportDynamicWarehousesToExcel({ 
-            warehouses: warehousesWithDynamic, 
-            productTypes: activeProductTypes 
-          });
-        }
+        await exportWarehousesToExcel({ 
+          warehouses,
+          dynamicInventory: allDynamicInventory,
+          productTypes: productTypes
+        });
         
         toast({ 
           title: "تم تصدير التقرير بنجاح", 
-          description: "تم حفظ ملفات Excel في جهازك" 
+          description: "تم حفظ ملف Excel في جهازك" 
         });
       } catch (error) {
         toast({ 

@@ -41,10 +41,27 @@ interface WarehouseData {
   inventory: WarehouseInventory | null;
 }
 
+interface DynamicInventoryForExport {
+  warehouseId: string;
+  productTypeId: string;
+  boxes: number;
+  units: number;
+}
+
+interface ProductTypeForExport {
+  id: string;
+  name: string;
+  code: string;
+  category: string;
+  isActive: boolean;
+}
+
 interface WarehouseExportData {
   warehouses: WarehouseData[];
   companyName?: string;
   reportTitle?: string;
+  dynamicInventory?: DynamicInventoryForExport[];
+  productTypes?: ProductTypeForExport[];
 }
 
 const getTypeNameArabic = (type: string): string => {
@@ -165,7 +182,9 @@ export const exportInventoryToExcel = async ({
 export const exportWarehousesToExcel = async ({
   warehouses,
   companyName = 'نظام إدارة المخزون - RAS Saudi',
-  reportTitle = 'تقرير المستودعات الشامل'
+  reportTitle = 'تقرير المستودعات الشامل',
+  dynamicInventory = [],
+  productTypes = []
 }: WarehouseExportData) => {
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet('تقرير المستودعات');
@@ -843,6 +862,153 @@ export const exportWarehousesToExcel = async ({
       right: { style: 'thin', color: { argb: 'FF000000' } }
     };
   });
+
+  // Add dynamic inventory sheet if there are active product types
+  const activeProductTypes = productTypes.filter(pt => pt.isActive);
+  if (activeProductTypes.length > 0 && dynamicInventory.length > 0) {
+    const dynamicSheet = workbook.addWorksheet('الأصناف الديناميكية');
+    dynamicSheet.views = [{ rightToLeft: true }];
+
+    const dynamicColCount = 4 + (activeProductTypes.length * 2) + 1;
+    
+    dynamicSheet.mergeCells(1, 1, 1, dynamicColCount);
+    const dynamicTitleCell = dynamicSheet.getCell('A1');
+    dynamicTitleCell.value = companyName;
+    dynamicTitleCell.font = { size: 20, bold: true, color: { argb: 'FFFFFFFF' } };
+    dynamicTitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    dynamicTitleCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF18B2B0' }
+    };
+    dynamicSheet.getRow(1).height = 35;
+
+    dynamicSheet.mergeCells(2, 1, 2, dynamicColCount);
+    const dynamicSubtitleCell = dynamicSheet.getCell('A2');
+    dynamicSubtitleCell.value = 'تقرير الأصناف الديناميكية';
+    dynamicSubtitleCell.font = { size: 16, bold: true, color: { argb: 'FF18B2B0' } };
+    dynamicSubtitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    dynamicSubtitleCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFE0F7F6' }
+    };
+    dynamicSheet.getRow(2).height = 28;
+
+    dynamicSheet.mergeCells(3, 1, 3, dynamicColCount);
+    const dynamicDateCell = dynamicSheet.getCell('A3');
+    dynamicDateCell.value = `تاريخ التقرير: ${arabicDate} - الساعة: ${time}`;
+    dynamicDateCell.font = { size: 12, bold: true };
+    dynamicDateCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    dynamicDateCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFF0F9FF' }
+    };
+    dynamicSheet.getRow(3).height = 25;
+
+    dynamicSheet.addRow([]);
+
+    const dynamicHeaders = ['#', 'اسم المستودع', 'الموقع', 'الحالة'];
+    activeProductTypes.forEach(pt => {
+      dynamicHeaders.push(`${pt.name} (صناديق)`);
+      dynamicHeaders.push(`${pt.name} (قطع)`);
+    });
+    dynamicHeaders.push('إجمالي الأصناف');
+
+    const dynamicHeaderRow = dynamicSheet.addRow(dynamicHeaders);
+    dynamicHeaderRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+    dynamicHeaderRow.height = 30;
+    dynamicHeaderRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF4A5568' }
+      };
+      cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+
+    const dynamicTotals: Record<string, { boxes: number; units: number }> = {};
+    activeProductTypes.forEach(pt => {
+      dynamicTotals[pt.id] = { boxes: 0, units: 0 };
+    });
+    let dynamicGrandTotal = 0;
+
+    warehouses.forEach((warehouse, index) => {
+      const rowData: (string | number)[] = [
+        index + 1,
+        warehouse.name,
+        warehouse.location,
+        warehouse.isActive ? 'نشط' : 'غير نشط'
+      ];
+
+      let warehouseTotal = 0;
+
+      activeProductTypes.forEach(pt => {
+        const inv = dynamicInventory.find(i => i.warehouseId === warehouse.id && i.productTypeId === pt.id);
+        const boxes = inv?.boxes || 0;
+        const units = inv?.units || 0;
+        rowData.push(boxes);
+        rowData.push(units);
+        dynamicTotals[pt.id].boxes += boxes;
+        dynamicTotals[pt.id].units += units;
+        warehouseTotal += boxes + units;
+      });
+
+      rowData.push(warehouseTotal);
+      dynamicGrandTotal += warehouseTotal;
+
+      const dataRow = dynamicSheet.addRow(rowData);
+      dataRow.alignment = { horizontal: 'center', vertical: 'middle' };
+      dataRow.eachCell((cell) => {
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FF000000' } },
+          left: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } },
+          right: { style: 'thin', color: { argb: 'FF000000' } }
+        };
+      });
+    });
+
+    const dynamicTotalRowData: (string | number)[] = ['', 'الإجمالي', '', ''];
+    activeProductTypes.forEach(pt => {
+      dynamicTotalRowData.push(dynamicTotals[pt.id].boxes);
+      dynamicTotalRowData.push(dynamicTotals[pt.id].units);
+    });
+    dynamicTotalRowData.push(dynamicGrandTotal);
+
+    const dynamicTotalRow = dynamicSheet.addRow(dynamicTotalRowData);
+    dynamicTotalRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
+    dynamicTotalRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    dynamicTotalRow.height = 25;
+    dynamicTotalRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF16A085' }
+      };
+      cell.border = {
+        top: { style: 'medium', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'medium', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+
+    const dynamicColumnWidths = [6, 25, 25, 12];
+    activeProductTypes.forEach(() => {
+      dynamicColumnWidths.push(15, 12);
+    });
+    dynamicColumnWidths.push(15);
+
+    dynamicSheet.columns = dynamicColumnWidths.map(width => ({ width }));
+  }
 
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
