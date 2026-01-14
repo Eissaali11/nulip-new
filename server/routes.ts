@@ -3302,6 +3302,182 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // =====================================================
+  // Data Migration API - Migrate from legacy to dynamic
+  // =====================================================
+
+  // Migrate warehouse inventory from legacy to dynamic
+  app.post("/api/migrate-warehouse-inventory", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      
+      // Get all product types
+      const allProductTypes = await db.select().from(productTypes).where(eq(productTypes.isActive, true));
+      
+      // Map legacy field names to product type codes
+      const legacyToCodeMap: Record<string, { boxField: string; unitField: string }> = {
+        'n950': { boxField: 'n950Boxes', unitField: 'n950Units' },
+        'i9000s': { boxField: 'i9000sBoxes', unitField: 'i9000sUnits' },
+        'i9100': { boxField: 'i9100Boxes', unitField: 'i9100Units' },
+        'rollPaper': { boxField: 'rollPaperBoxes', unitField: 'rollPaperUnits' },
+        'stickers': { boxField: 'stickersBoxes', unitField: 'stickersUnits' },
+        'newBatteries': { boxField: 'newBatteriesBoxes', unitField: 'newBatteriesUnits' },
+        'mobilySim': { boxField: 'mobilySimBoxes', unitField: 'mobilySimUnits' },
+        'stcSim': { boxField: 'stcSimBoxes', unitField: 'stcSimUnits' },
+        'zainSim': { boxField: 'zainSimBoxes', unitField: 'zainSimUnits' },
+      };
+
+      // Get all warehouses with inventory
+      const warehouses = await db.select().from(warehouseInventory);
+      
+      let migratedCount = 0;
+      
+      for (const warehouse of warehouses) {
+        for (const productType of allProductTypes) {
+          const mapping = legacyToCodeMap[productType.code];
+          if (!mapping) continue;
+          
+          const boxes = (warehouse as any)[mapping.boxField] || 0;
+          const units = (warehouse as any)[mapping.unitField] || 0;
+          
+          if (boxes === 0 && units === 0) continue;
+          
+          // Check if already migrated
+          const [existing] = await db.select().from(warehouseDynamicInventory)
+            .where(and(
+              eq(warehouseDynamicInventory.warehouseId, warehouse.warehouseId),
+              eq(warehouseDynamicInventory.productTypeId, productType.id)
+            ));
+          
+          if (existing) {
+            // Update existing
+            await db.update(warehouseDynamicInventory)
+              .set({ boxes, units, updatedAt: new Date() })
+              .where(eq(warehouseDynamicInventory.id, existing.id));
+          } else {
+            // Insert new
+            await db.insert(warehouseDynamicInventory).values({
+              warehouseId: warehouse.warehouseId,
+              productTypeId: productType.id,
+              boxes,
+              units,
+            });
+          }
+          migratedCount++;
+        }
+      }
+
+      await storage.createSystemLog({
+        userId: user.id,
+        userName: user.username,
+        userRole: user.role,
+        regionId: user.regionId,
+        action: 'migrate',
+        entityType: 'warehouse_inventory',
+        entityId: 'all',
+        entityName: 'Warehouse Inventory Migration',
+        description: `تم ترحيل ${migratedCount} سجل مخزون للنظام الديناميكي`,
+        severity: 'info',
+        success: true,
+      });
+
+      res.json({ 
+        success: true, 
+        message: `تم ترحيل ${migratedCount} سجل بنجاح`,
+        migratedCount 
+      });
+    } catch (error) {
+      console.error("Error migrating warehouse inventory:", error);
+      res.status(500).json({ message: "Failed to migrate inventory" });
+    }
+  });
+
+  // Migrate technician inventory from legacy to dynamic
+  app.post("/api/migrate-technician-inventory", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      
+      // Get all product types
+      const allProductTypes = await db.select().from(productTypes).where(eq(productTypes.isActive, true));
+      
+      // Map legacy field names to product type codes
+      const legacyToCodeMap: Record<string, { boxField: string; unitField: string }> = {
+        'n950': { boxField: 'n950Boxes', unitField: 'n950Units' },
+        'i9000s': { boxField: 'i9000sBoxes', unitField: 'i9000sUnits' },
+        'i9100': { boxField: 'i9100Boxes', unitField: 'i9100Units' },
+        'rollPaper': { boxField: 'rollPaperBoxes', unitField: 'rollPaperUnits' },
+        'stickers': { boxField: 'stickersBoxes', unitField: 'stickersUnits' },
+        'newBatteries': { boxField: 'newBatteriesBoxes', unitField: 'newBatteriesUnits' },
+        'mobilySim': { boxField: 'mobilySimBoxes', unitField: 'mobilySimUnits' },
+        'stcSim': { boxField: 'stcSimBoxes', unitField: 'stcSimUnits' },
+        'zainSim': { boxField: 'zainSimBoxes', unitField: 'zainSimUnits' },
+      };
+
+      // Get all technicians with inventory
+      const technicians = await db.select().from(techniciansInventory);
+      
+      let migratedCount = 0;
+      
+      for (const tech of technicians) {
+        for (const productType of allProductTypes) {
+          const mapping = legacyToCodeMap[productType.code];
+          if (!mapping) continue;
+          
+          const boxes = (tech as any)[mapping.boxField] || 0;
+          const units = (tech as any)[mapping.unitField] || 0;
+          
+          if (boxes === 0 && units === 0) continue;
+          
+          // Check if already migrated
+          const [existing] = await db.select().from(technicianDynamicInventory)
+            .where(and(
+              eq(technicianDynamicInventory.technicianId, tech.id),
+              eq(technicianDynamicInventory.productTypeId, productType.id)
+            ));
+          
+          if (existing) {
+            // Update existing
+            await db.update(technicianDynamicInventory)
+              .set({ boxes, units, updatedAt: new Date() })
+              .where(eq(technicianDynamicInventory.id, existing.id));
+          } else {
+            // Insert new
+            await db.insert(technicianDynamicInventory).values({
+              technicianId: tech.id,
+              productTypeId: productType.id,
+              boxes,
+              units,
+            });
+          }
+          migratedCount++;
+        }
+      }
+
+      await storage.createSystemLog({
+        userId: user.id,
+        userName: user.username,
+        userRole: user.role,
+        regionId: user.regionId,
+        action: 'migrate',
+        entityType: 'technician_inventory',
+        entityId: 'all',
+        entityName: 'Technician Inventory Migration',
+        description: `تم ترحيل ${migratedCount} سجل مخزون فني للنظام الديناميكي`,
+        severity: 'info',
+        success: true,
+      });
+
+      res.json({ 
+        success: true, 
+        message: `تم ترحيل ${migratedCount} سجل بنجاح`,
+        migratedCount 
+      });
+    } catch (error) {
+      console.error("Error migrating technician inventory:", error);
+      res.status(500).json({ message: "Failed to migrate inventory" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

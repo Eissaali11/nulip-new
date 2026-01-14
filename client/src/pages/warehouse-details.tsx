@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { motion } from "framer-motion";
@@ -50,8 +50,8 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
-import UpdateWarehouseInventoryModal from "@/components/update-warehouse-inventory-modal";
-import TransferFromWarehouseModal from "@/components/transfer-from-warehouse-modal";
+import UpdateDynamicInventoryModal from "@/components/update-dynamic-inventory-modal";
+import TransferDynamicInventoryModal from "@/components/transfer-dynamic-inventory-modal";
 import { GridBackground } from "@/components/dashboard/GridBackground";
 import { Navbar } from "@/components/dashboard/Navbar";
 import { CircularProgress } from "@/components/dashboard/CircularProgress";
@@ -67,6 +67,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { User, UserCircle, LogOut } from "lucide-react";
+import type { ProductType } from "@shared/schema";
 
 interface WarehouseInventory {
   id: string;
@@ -90,6 +91,60 @@ interface WarehouseInventory {
   zainSimBoxes: number;
   zainSimUnits: number;
 }
+
+interface DynamicInventoryRecord {
+  id: string;
+  warehouseId: string;
+  productTypeId: string;
+  boxes: number;
+  units: number;
+  productType: ProductType;
+}
+
+const getCategoryIcon = (category: string) => {
+  switch (category) {
+    case "devices":
+      return Smartphone;
+    case "papers":
+      return FileText;
+    case "accessories":
+      return Battery;
+    case "sim":
+      return Box;
+    default:
+      return Package;
+  }
+};
+
+const getCategoryGradient = (category: string) => {
+  switch (category) {
+    case "devices":
+      return "from-blue-500 to-cyan-600";
+    case "papers":
+      return "from-amber-500 to-orange-600";
+    case "accessories":
+      return "from-green-500 to-emerald-600";
+    case "sim":
+      return "from-purple-500 to-pink-600";
+    default:
+      return "from-gray-500 to-slate-600";
+  }
+};
+
+const getCategoryColor = (category: string) => {
+  switch (category) {
+    case "devices":
+      return "#3b82f6";
+    case "papers":
+      return "#f59e0b";
+    case "accessories":
+      return "#10b981";
+    case "sim":
+      return "#8b5cf6";
+    default:
+      return "#6b7280";
+  }
+};
 
 interface WarehouseData {
   id: string;
@@ -175,6 +230,15 @@ export default function WarehouseDetailsPage() {
   const { data: warehouse, isLoading: warehouseLoading } = useQuery<WarehouseData>({
     queryKey: ["/api/warehouses", warehouseId],
     enabled: !!warehouseId,
+  });
+
+  const { data: dynamicInventory, isLoading: dynamicInventoryLoading } = useQuery<DynamicInventoryRecord[]>({
+    queryKey: ["/api/warehouses", warehouseId, "dynamic-inventory"],
+    enabled: !!warehouseId,
+  });
+
+  const { data: productTypes } = useQuery<ProductType[]>({
+    queryKey: ["/api/product-types/active"],
   });
 
   const { data: rawTransfers, isLoading: transfersLoading } = useQuery<WarehouseTransferRaw[]>({
@@ -266,89 +330,29 @@ export default function WarehouseDetailsPage() {
     },
   });
 
-  const inventoryItems = [
-    { 
-      name: "N950", 
-      nameAr: "N950",
-      boxes: warehouse?.inventory?.n950Boxes || 0,
-      units: warehouse?.inventory?.n950Units || 0,
-      icon: Smartphone,
-      color: "#3b82f6",
-      gradient: "from-blue-500 to-blue-600"
-    },
-    { 
-      name: "I9000S", 
-      nameAr: "I9000S",
-      boxes: warehouse?.inventory?.i9000sBoxes || 0,
-      units: warehouse?.inventory?.i9000sUnits || 0,
-      icon: Smartphone,
-      color: "#8b5cf6",
-      gradient: "from-purple-500 to-violet-600"
-    },
-    { 
-      name: "I9100", 
-      nameAr: "I9100",
-      boxes: warehouse?.inventory?.i9100Boxes || 0,
-      units: warehouse?.inventory?.i9100Units || 0,
-      icon: Smartphone,
-      color: "#ec4899",
-      gradient: "from-pink-500 to-rose-600"
-    },
-    { 
-      name: "Roll Paper", 
-      nameAr: "ورق الطباعة",
-      boxes: warehouse?.inventory?.rollPaperBoxes || 0,
-      units: warehouse?.inventory?.rollPaperUnits || 0,
-      icon: FileText,
-      color: "#f59e0b",
-      gradient: "from-amber-500 to-orange-600"
-    },
-    { 
-      name: "Stickers", 
-      nameAr: "الملصقات",
-      boxes: warehouse?.inventory?.stickersBoxes || 0,
-      units: warehouse?.inventory?.stickersUnits || 0,
-      icon: Sticker,
-      color: "#14b8a6",
-      gradient: "from-teal-500 to-cyan-600"
-    },
-    { 
-      name: "Batteries", 
-      nameAr: "البطاريات",
-      boxes: warehouse?.inventory?.newBatteriesBoxes || 0,
-      units: warehouse?.inventory?.newBatteriesUnits || 0,
-      icon: Battery,
-      color: "#10b981",
-      gradient: "from-emerald-500 to-green-600"
-    },
-    { 
-      name: "Mobily SIM", 
-      nameAr: "موبايلي",
-      boxes: warehouse?.inventory?.mobilySimBoxes || 0,
-      units: warehouse?.inventory?.mobilySimUnits || 0,
-      icon: Smartphone,
-      color: "#06b6d4",
-      gradient: "from-cyan-500 to-sky-600"
-    },
-    { 
-      name: "STC SIM", 
-      nameAr: "STC",
-      boxes: warehouse?.inventory?.stcSimBoxes || 0,
-      units: warehouse?.inventory?.stcSimUnits || 0,
-      icon: Smartphone,
-      color: "#6366f1",
-      gradient: "from-indigo-500 to-blue-600"
-    },
-    { 
-      name: "Zain SIM", 
-      nameAr: "زين",
-      boxes: warehouse?.inventory?.zainSimBoxes || 0,
-      units: warehouse?.inventory?.zainSimUnits || 0,
-      icon: Smartphone,
-      color: "#f97316",
-      gradient: "from-orange-500 to-red-600"
-    },
-  ];
+  const inventoryItems = useMemo(() => {
+    if (!productTypes || productTypes.length === 0) {
+      return [];
+    }
+    
+    return productTypes
+      .filter(pt => pt.isActive)
+      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+      .map(pt => {
+        const inv = dynamicInventory?.find(d => d.productTypeId === pt.id);
+        return {
+          id: pt.id,
+          name: pt.code,
+          nameAr: pt.name,
+          boxes: inv?.boxes || 0,
+          units: inv?.units || 0,
+          icon: getCategoryIcon(pt.category),
+          color: getCategoryColor(pt.category),
+          gradient: getCategoryGradient(pt.category),
+          packagingType: pt.packagingType,
+        };
+      });
+  }, [productTypes, dynamicInventory]);
 
   if (warehouseLoading) {
     return (
@@ -842,19 +846,27 @@ export default function WarehouseDetailsPage() {
       </div>
 
       {/* Modals */}
-      <UpdateWarehouseInventoryModal
+      <UpdateDynamicInventoryModal
         open={showUpdateInventoryModal}
         onOpenChange={setShowUpdateInventoryModal}
         warehouseId={warehouseId}
-        currentInventory={warehouse.inventory}
+        currentInventory={dynamicInventory?.map(inv => ({
+          productTypeId: inv.productTypeId,
+          boxes: inv.boxes,
+          units: inv.units,
+        })) || []}
       />
 
-      <TransferFromWarehouseModal
+      <TransferDynamicInventoryModal
         open={showTransferModal}
         onOpenChange={setShowTransferModal}
         warehouseId={warehouseId}
         warehouseName={warehouse.name}
-        currentInventory={warehouse.inventory}
+        currentInventory={dynamicInventory?.map(inv => ({
+          productTypeId: inv.productTypeId,
+          boxes: inv.boxes,
+          units: inv.units,
+        })) || []}
       />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
