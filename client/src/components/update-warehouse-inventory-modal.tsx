@@ -88,10 +88,10 @@ export default function UpdateWarehouseInventoryModal({
   });
 
   useEffect(() => {
-    if (currentInventory) {
+    if (open && currentInventory) {
       form.reset(currentInventory);
     }
-  }, [currentInventory, form]);
+  }, [open]);
 
   const updateInventoryMutation = useMutation({
     mutationFn: async (data: FormData) => {
