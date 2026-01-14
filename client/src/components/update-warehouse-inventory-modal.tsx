@@ -219,8 +219,11 @@ export default function UpdateWarehouseInventoryModal({
                               <Input
                                 type="number"
                                 min="0"
-                                {...field}
-                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                value={field.value ?? 0}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  field.onChange(val === "" ? 0 : parseInt(val) || 0);
+                                }}
                                 data-testid={`input-${item.boxesKey}`}
                               />
                             </FormControl>
@@ -238,8 +241,11 @@ export default function UpdateWarehouseInventoryModal({
                               <Input
                                 type="number"
                                 min="0"
-                                {...field}
-                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                value={field.value ?? 0}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  field.onChange(val === "" ? 0 : parseInt(val) || 0);
+                                }}
                                 data-testid={`input-${item.unitsKey}`}
                               />
                             </FormControl>
