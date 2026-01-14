@@ -23,8 +23,7 @@ const productTypeFormSchema = z.object({
   code: z.string().min(1, "كود الصنف مطلوب").regex(/^[a-zA-Z0-9_]+$/, "الكود يجب أن يحتوي على حروف إنجليزية وأرقام فقط"),
   category: z.enum(["devices", "sim", "papers", "accessories", "general"]),
   packagingType: z.enum(["box_only", "unit_only", "both"]),
-  unitsPerBox: z.number().min(1).optional(),
-  sortOrder: z.number().min(0).default(0),
+  unitsPerBox: z.number().min(1).optional().default(10),
   isActive: z.boolean().default(true),
 });
 
@@ -60,7 +59,6 @@ export default function ProductTypesPage() {
       category: "general",
       packagingType: "both",
       unitsPerBox: 10,
-      sortOrder: 0,
       isActive: true,
     },
   });
@@ -140,7 +138,6 @@ export default function ProductTypesPage() {
       category: product.category as any,
       packagingType: product.packagingType as any,
       unitsPerBox: product.unitsPerBox || 10,
-      sortOrder: product.sortOrder || 0,
       isActive: product.isActive,
     });
     setShowModal(true);
@@ -318,27 +315,6 @@ export default function ProductTypesPage() {
                   )}
                   <FormField
                     control={form.control}
-                    name="sortOrder"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>ترتيب العرض</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            min={0}
-                            value={field.value ?? ""}
-                            onChange={(e) => field.onChange(e.target.value === "" ? 0 : parseInt(e.target.value) || 0)}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          الأرقام الأصغر تظهر أولاً
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
                     name="isActive"
                     render={({ field }) => (
                       <FormItem className="flex items-center justify-between rounded-lg border p-3">
@@ -448,7 +424,6 @@ export default function ProductTypesPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-right">الترتيب</TableHead>
                     <TableHead className="text-right">الاسم</TableHead>
                     <TableHead className="text-right">الكود</TableHead>
                     <TableHead className="text-right">الفئة</TableHead>
@@ -461,9 +436,6 @@ export default function ProductTypesPage() {
                 <TableBody>
                   {filteredProducts.map((product) => (
                     <TableRow key={product.id}>
-                      <TableCell>
-                        <Badge variant="outline">{product.sortOrder}</Badge>
-                      </TableCell>
                       <TableCell className="font-medium">{product.name}</TableCell>
                       <TableCell>
                         <code className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded text-sm">
