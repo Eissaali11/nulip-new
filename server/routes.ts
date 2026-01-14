@@ -3551,7 +3551,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         request: dynamicInventoryRequests,
         technician: {
           id: users.id,
-          name: users.name,
+          name: users.fullName,
           username: users.username,
           city: users.city,
         },
