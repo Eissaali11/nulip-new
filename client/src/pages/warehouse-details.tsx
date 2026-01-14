@@ -620,7 +620,7 @@ export default function WarehouseDetailsPage() {
                         description: warehouse.description,
                         isActive: warehouse.isActive
                       },
-                      staticInventory: inventory || null,
+                      staticInventory: warehouse.inventory || null,
                       dynamicInventory: dynamicInventory || [],
                       productTypes: productTypes || []
                     });
