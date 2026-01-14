@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   Dialog,
@@ -73,8 +73,10 @@ export default function UpdateDynamicInventoryModal({
     enabled: open,
   });
 
+  const hasInitialized = useRef(false);
+
   useEffect(() => {
-    if (productTypes && open) {
+    if (productTypes && open && !hasInitialized.current) {
       const initialValues: Record<string, { boxes: number; units: number }> = {};
       
       productTypes.forEach(pt => {
@@ -86,8 +88,12 @@ export default function UpdateDynamicInventoryModal({
       });
       
       setInventoryValues(initialValues);
+      hasInitialized.current = true;
     }
-  }, [productTypes, currentInventory, open]);
+    if (!open) {
+      hasInitialized.current = false;
+    }
+  }, [productTypes, open]);
 
   const updateInventoryMutation = useMutation({
     mutationFn: async (items: { productTypeId: string; boxes: number; units: number }[]) => {
