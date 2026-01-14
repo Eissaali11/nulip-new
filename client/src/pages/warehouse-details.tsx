@@ -44,7 +44,8 @@ import {
   CheckCircle,
   XCircle,
   Search,
-  AlertTriangle
+  AlertTriangle,
+  Download
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -52,6 +53,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
 import UpdateDynamicInventoryModal from "@/components/update-dynamic-inventory-modal";
 import TransferDynamicInventoryModal from "@/components/transfer-dynamic-inventory-modal";
+import { exportSingleWarehouseToExcel } from "@/lib/exportToExcel";
 import { GridBackground } from "@/components/dashboard/GridBackground";
 import { Navbar } from "@/components/dashboard/Navbar";
 import { CircularProgress } from "@/components/dashboard/CircularProgress";
@@ -606,6 +608,28 @@ export default function WarehouseDetailsPage() {
                 >
                   <Send className="h-4 w-4 ml-2" />
                   نقل إلى فني
+                </Button>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  onClick={() => {
+                    exportSingleWarehouseToExcel({
+                      warehouse: {
+                        name: warehouse.name,
+                        location: warehouse.location,
+                        description: warehouse.description,
+                        isActive: warehouse.isActive
+                      },
+                      staticInventory: inventory || null,
+                      dynamicInventory: dynamicInventory || [],
+                      productTypes: productTypes || []
+                    });
+                  }}
+                  className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                  data-testid="button-export-excel"
+                >
+                  <Download className="h-4 w-4 ml-2" />
+                  تصدير Excel
                 </Button>
               </motion.div>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
