@@ -1912,81 +1912,88 @@ export class DatabaseStorage implements IStorage {
 
   async transferFromWarehouse(data: InsertWarehouseTransfer): Promise<WarehouseTransfer> {
     return await db.transaction(async (tx) => {
-      // Check if it's a dynamic item first
-      const [dynamicProductType] = await tx
+      // 1. Get the product type
+      const [productType] = await tx
         .select()
         .from(productTypes)
         .where(eq(productTypes.code, data.itemType));
 
-      if (dynamicProductType) {
-        const [inv] = await tx
-          .select()
-          .from(warehouseDynamicInventory)
-          .where(
-            and(
-              eq(warehouseDynamicInventory.warehouseId, data.warehouseId),
-              eq(warehouseDynamicInventory.productTypeId, dynamicProductType.id)
-            )
-          );
+      if (!productType) {
+        throw new Error(`Invalid item type: ${data.itemType}`);
+      }
 
-        if (!inv) throw new Error(`هذا الصنف (${dynamicProductType.name}) غير متوفر في المستودع`);
-        
-        const available = data.packagingType === 'box' ? inv.boxes : inv.units;
-        if (available < data.quantity) {
-          throw new Error(`الكمية المطلوبة من ${dynamicProductType.name} غير متوفرة. المتاح: ${available}`);
-        }
+      // 2. Check Dynamic Inventory
+      const [dynInv] = await tx
+        .select()
+        .from(warehouseDynamicInventory)
+        .where(
+          and(
+            eq(warehouseDynamicInventory.warehouseId, data.warehouseId),
+            eq(warehouseDynamicInventory.productTypeId, productType.id)
+          )
+        );
 
-        // Deduct from warehouse
+      const dynAvailable = data.packagingType === 'box' ? (dynInv?.boxes || 0) : (dynInv?.units || 0);
+
+      // 3. Check Static Inventory (Legacy)
+      const [staticInv] = await tx
+        .select()
+        .from(warehouseInventory)
+        .where(eq(warehouseInventory.warehouseId, data.warehouseId));
+
+      const legacyFieldMap: Record<string, { boxes: string; units: string }> = {
+        'n950': { boxes: 'n950Boxes', units: 'n950Units' },
+        'i9000s': { boxes: 'i9000sBoxes', units: 'i9000sUnits' },
+        'i9100': { boxes: 'i9100Boxes', units: 'i9100Units' },
+        'rollPaper': { boxes: 'rollPaperBoxes', units: 'rollPaperUnits' },
+        'stickers': { boxes: 'stickersBoxes', units: 'stickersUnits' },
+        'newBatteries': { boxes: 'newBatteriesBoxes', units: 'newBatteriesUnits' },
+        'mobilySim': { boxes: 'mobilySimBoxes', units: 'mobilySimUnits' },
+        'stcSim': { boxes: 'stcSimBoxes', units: 'stcSimUnits' },
+        'zainSim': { boxes: 'zainSimBoxes', units: 'zainSimUnits' },
+      };
+
+      let staticAvailable = 0;
+      const legacyFields = legacyFieldMap[data.itemType];
+      if (staticInv && legacyFields) {
+        const fieldName = data.packagingType === 'box' ? legacyFields.boxes : legacyFields.units;
+        staticAvailable = (staticInv as any)[fieldName] || 0;
+      }
+
+      const totalAvailable = dynAvailable + staticAvailable;
+
+      if (totalAvailable < data.quantity) {
+        throw new Error(`هذا الصنف (${productType.name}) غير متوفر بالكمية المطلوبة. المتاح: ${totalAvailable}`);
+      }
+
+      // 4. Deduct from Dynamic Inventory first
+      let remainingToDeduct = data.quantity;
+      if (dynInv && dynAvailable > 0) {
+        const deduction = Math.min(dynAvailable, remainingToDeduct);
         await tx
           .update(warehouseDynamicInventory)
           .set({
-            boxes: data.packagingType === 'box' ? inv.boxes - data.quantity : inv.boxes,
-            units: data.packagingType === 'unit' ? inv.units - data.quantity : inv.units,
+            boxes: data.packagingType === 'box' ? dynInv.boxes - deduction : dynInv.boxes,
+            units: data.packagingType === 'unit' ? dynInv.units - deduction : dynInv.units,
             updatedAt: new Date(),
           })
-          .where(eq(warehouseDynamicInventory.id, inv.id));
-      } else {
-        const [inventory] = await tx
-          .select()
-          .from(warehouseInventory)
-          .where(eq(warehouseInventory.warehouseId, data.warehouseId));
+          .where(eq(warehouseDynamicInventory.id, dynInv.id));
+        remainingToDeduct -= deduction;
+      }
 
-        if (!inventory) {
-          throw new Error(`Warehouse inventory not found`);
-        }
-
-        const fieldMap: Record<string, { boxes: string; units: string }> = {
-          'n950': { boxes: 'n950Boxes', units: 'n950Units' },
-          'i9000s': { boxes: 'i9000sBoxes', units: 'i9000sUnits' },
-          'i9100': { boxes: 'i9100Boxes', units: 'i9100Units' },
-          'rollPaper': { boxes: 'rollPaperBoxes', units: 'rollPaperUnits' },
-          'stickers': { boxes: 'stickersBoxes', units: 'stickersUnits' },
-          'newBatteries': { boxes: 'newBatteriesBoxes', units: 'newBatteriesUnits' },
-          'mobilySim': { boxes: 'mobilySimBoxes', units: 'mobilySimUnits' },
-          'stcSim': { boxes: 'stcSimBoxes', units: 'stcSimUnits' },
-          'zainSim': { boxes: 'zainSimBoxes', units: 'zainSimUnits' },
-        };
-
-        const fields = fieldMap[data.itemType];
-        if (!fields) {
-          throw new Error(`Invalid item type: ${data.itemType}`);
-        }
-
-        const fieldName = data.packagingType === 'box' ? fields.boxes : fields.units;
-        const currentStock = (inventory as any)[fieldName] || 0;
-
-        if (currentStock < data.quantity) {
-          throw new Error(`Insufficient stock in warehouse. Available: ${currentStock}, Requested: ${data.quantity}`);
-        }
-
+      // 5. Deduct remaining from Static Inventory
+      if (remainingToDeduct > 0 && staticInv && legacyFields) {
+        const fieldName = data.packagingType === 'box' ? legacyFields.boxes : legacyFields.units;
+        const currentStatic = (staticInv as any)[fieldName] || 0;
         await tx
           .update(warehouseInventory)
           .set({
-            [fieldName]: currentStock - data.quantity,
+            [fieldName]: currentStatic - remainingToDeduct,
           })
           .where(eq(warehouseInventory.warehouseId, data.warehouseId));
       }
 
+      // 6. Create transfer record
       const [transfer] = await tx
         .insert(warehouseTransfers)
         .values({

@@ -170,11 +170,15 @@ export default function TransferFromWarehouseModal({
     onError: (error: any) => {
       let errorMessage = "حدث خطأ أثناء نقل الأصناف";
       try {
-        if (typeof error.message === 'string' && error.message.startsWith('{')) {
-          const parsed = JSON.parse(error.message);
-          errorMessage = parsed.message || errorMessage;
-        } else {
-          errorMessage = error.message || errorMessage;
+        const errorText = typeof error === 'string' ? error : (error.message || JSON.stringify(error));
+        if (typeof errorText === 'string') {
+          const jsonMatch = errorText.match(/\{.*\}/);
+          if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
+            errorMessage = parsed.message || errorMessage;
+          } else {
+            errorMessage = errorText;
+          }
         }
       } catch (e) {
         errorMessage = error.message || errorMessage;
