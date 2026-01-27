@@ -2095,8 +2095,64 @@ export class DatabaseStorage implements IStorage {
       };
 
       const fields = fieldMap[transfer.itemType];
+      
+      // Handle dynamic items if not in fieldMap
       if (!fields) {
-        throw new Error(`Unknown item type: ${transfer.itemType}`);
+        const [dynamicProductType] = await tx
+          .select()
+          .from(productTypes)
+          .where(eq(productTypes.code, transfer.itemType));
+
+        if (!dynamicProductType) {
+          throw new Error(`Unknown item type: ${transfer.itemType}`);
+        }
+
+        // Handle dynamic inventory transfer
+        // Deduct from warehouse dynamic inventory (already done in transferFromWarehouse, 
+        // but we need to ensure consistency or if it was not deducted there)
+        // Wait, in transferFromWarehouse it's ALREADY deducted. 
+        // So here we only need to ADD to technician dynamic inventory.
+
+        const [techInv] = await tx
+          .select()
+          .from(technicianDynamicInventory)
+          .where(
+            and(
+              eq(technicianDynamicInventory.technicianId, transfer.technicianId),
+              eq(technicianDynamicInventory.productTypeId, dynamicProductType.id)
+            )
+          );
+
+        if (techInv) {
+          await tx
+            .update(technicianDynamicInventory)
+            .set({
+              boxes: transfer.packagingType === 'box' ? techInv.boxes + transfer.quantity : techInv.boxes,
+              units: transfer.packagingType === 'unit' ? techInv.units + transfer.quantity : techInv.units,
+              updatedAt: new Date(),
+            })
+            .where(eq(technicianDynamicInventory.id, techInv.id));
+        } else {
+          await tx
+            .insert(technicianDynamicInventory)
+            .values({
+              technicianId: transfer.technicianId,
+              productTypeId: dynamicProductType.id,
+              boxes: transfer.packagingType === 'box' ? transfer.quantity : 0,
+              units: transfer.packagingType === 'unit' ? transfer.quantity : 0,
+            });
+        }
+
+        const [updatedTransfer] = await tx
+          .update(warehouseTransfers)
+          .set({
+            status: 'accepted',
+            respondedAt: new Date(),
+          })
+          .where(eq(warehouseTransfers.id, transferId))
+          .returning();
+
+        return updatedTransfer;
       }
       
       const fieldName = transfer.packagingType === 'box' ? fields.boxes : fields.units;
