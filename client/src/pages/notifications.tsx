@@ -117,36 +117,6 @@ interface PendingCountResponse {
   count: number;
 }
 
-interface DynamicRequestItem {
-  id: string;
-  requestId: string;
-  productTypeId: string;
-  boxes: number;
-  units: number;
-  productType: {
-    id: string;
-    name: string;
-    code: string;
-    category: string;
-  };
-}
-
-interface DynamicInventoryRequest {
-  id: string;
-  technicianId: string;
-  technicianName: string;
-  technicianUsername?: string;
-  technicianCity?: string;
-  warehouseId?: string;
-  notes?: string;
-  status: 'pending' | 'approved' | 'rejected';
-  adminNotes?: string;
-  respondedBy?: string;
-  respondedAt?: string;
-  createdAt: string;
-  items: DynamicRequestItem[];
-}
-
 export default function Notifications() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -182,12 +152,6 @@ export default function Notifications() {
   const { data: requests = [], isLoading: requestsLoading } = useQuery<InventoryRequest[]>({
     queryKey: user?.role === 'admin' ? ["/api/inventory-requests"] : ["/api/supervisor/inventory-requests"],
     enabled: user?.role === 'admin' || user?.role === 'supervisor',
-  });
-
-  // Dynamic inventory requests (new system)
-  const { data: dynamicRequests = [], isLoading: dynamicRequestsLoading } = useQuery<DynamicInventoryRequest[]>({
-    queryKey: ["/api/dynamic-inventory-requests/pending"],
-    enabled: user?.role === 'admin',
   });
 
   const { data: warehouses = [] } = useQuery<WarehouseInfo[]>({
@@ -770,148 +734,13 @@ export default function Notifications() {
           </motion.div>
         )}
 
-        {/* Dynamic Inventory Requests Section (for Admin) */}
-        {isAdminOrSupervisor && filter === 'pending' && dynamicRequests.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
-          >
-            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-              <Package className="h-5 w-5 text-[#18B2B0]" />
-              طلبات المخزون الجديدة ({dynamicRequests.length})
-            </h2>
-            <div className="space-y-4">
-              {dynamicRequests.map((dynReq, index) => (
-                <motion.div
-                  key={dynReq.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  whileHover={{ scale: 1.01 }}
-                >
-                  <Card className="relative bg-gradient-to-br from-white/10 via-white/[0.07] to-white/[0.03] backdrop-blur-xl border-[#18B2B0]/30 overflow-hidden group hover:border-[#18B2B0]/50 transition-all duration-300">
-                    <div className="absolute inset-0 bg-gradient-to-br from-[#18B2B0]/10 via-transparent to-violet-500/5" />
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#18B2B0]/10 rounded-full blur-3xl group-hover:bg-[#18B2B0]/20 transition-all duration-500" />
-                    
-                    <div className="relative p-6">
-                      <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
-                        <div className="flex items-center gap-3">
-                          <div className="p-3 bg-gradient-to-br from-[#18B2B0]/30 to-[#18B2B0]/10 rounded-xl shadow-lg shadow-[#18B2B0]/20">
-                            <Package className="h-6 w-6 text-[#18B2B0]" />
-                          </div>
-                          <div>
-                            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                              طلب مخزون جديد
-                              <Badge className="bg-[#18B2B0]/20 text-[#18B2B0] text-xs">ديناميكي</Badge>
-                            </h3>
-                            <p className="text-gray-400 text-sm flex items-center gap-1">
-                              <Calendar className="h-4 w-4" />
-                              {formatDistanceToNow(new Date(dynReq.createdAt), {
-                                addSuffix: true,
-                                locale: ar,
-                              })}
-                            </p>
-                          </div>
-                        </div>
-                        <Badge className="bg-gradient-to-r from-yellow-500/30 to-orange-500/30 text-yellow-300 border border-yellow-500/40 px-4 py-1.5 text-sm font-semibold shadow-lg shadow-yellow-500/20 animate-pulse">
-                          ⏳ قيد الانتظار
-                        </Badge>
-                      </div>
-
-                      {/* Technician Info */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-4 bg-white/5 rounded-xl border border-white/10">
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-[#18B2B0]" />
-                          <span className="text-gray-400 text-sm">الفني:</span>
-                          <span className="text-white font-semibold">{dynReq.technicianName}</span>
-                        </div>
-                        {dynReq.technicianUsername && (
-                          <div className="flex items-center gap-2">
-                            <AtSign className="h-4 w-4 text-[#18B2B0]" />
-                            <span className="text-gray-400 text-sm">المستخدم:</span>
-                            <span className="text-white">{dynReq.technicianUsername}</span>
-                          </div>
-                        )}
-                        {dynReq.technicianCity && (
-                          <div className="flex items-center gap-2">
-                            <MapPin className="h-4 w-4 text-[#18B2B0]" />
-                            <span className="text-gray-400 text-sm">المدينة:</span>
-                            <span className="text-white">{dynReq.technicianCity}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Requested Items */}
-                      <div className="mb-4">
-                        <h4 className="text-sm font-semibold text-gray-300 mb-2 flex items-center gap-2">
-                          <Package className="h-4 w-4" />
-                          الأصناف المطلوبة:
-                        </h4>
-                        <div className="flex flex-wrap gap-2">
-                          {dynReq.items.map((item, idx) => (
-                            <Badge
-                              key={idx}
-                              className="bg-white/10 text-white border border-white/20 px-3 py-1.5"
-                            >
-                              {item.productType.name}: {item.boxes > 0 && `${item.boxes} كرتون`}{item.boxes > 0 && item.units > 0 && ' + '}{item.units > 0 && `${item.units} قطعة`}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-
-                      {dynReq.notes && (
-                        <div className="p-3 bg-white/5 rounded-lg border border-white/10 mb-4">
-                          <p className="text-gray-300 text-sm flex items-start gap-2">
-                            <FileText className="h-4 w-4 text-[#18B2B0] mt-0.5" />
-                            {dynReq.notes}
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Actions */}
-                      <div className="flex gap-3 justify-end">
-                        <Button
-                          onClick={() => {
-                            toast({
-                              title: "قريباً",
-                              description: "سيتم إضافة خاصية الموافقة على الطلبات الديناميكية قريباً",
-                            });
-                          }}
-                          className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg shadow-green-500/20"
-                        >
-                          <Check className="h-4 w-4 ml-2" />
-                          قبول
-                        </Button>
-                        <Button
-                          onClick={() => {
-                            toast({
-                              title: "قريباً",
-                              description: "سيتم إضافة خاصية رفض الطلبات الديناميكية قريباً",
-                            });
-                          }}
-                          variant="outline"
-                          className="bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20"
-                        >
-                          <X className="h-4 w-4 ml-2" />
-                          رفض
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
         {/* Notifications List */}
         {isLoading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#18B2B0]"></div>
             <p className="mt-4 text-gray-400">جاري تحميل الإشعارات...</p>
           </div>
-        ) : filteredItems.length === 0 && dynamicRequests.length === 0 ? (
+        ) : filteredItems.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -1057,12 +886,12 @@ export default function Notifications() {
 
                       {/* Rejection reason */}
                       {item.status === 'rejected' && (request?.adminNotes || groupedTransfer?.rejectionReason) && (
-                        <div className="mb-5 p-4 bg-red-950/20 rounded-xl border border-red-500/20 hover:border-red-500/30 transition-all duration-300">
+                        <div className="mb-5 p-4 bg-gradient-to-br from-red-500/20 to-red-500/10 rounded-xl border border-red-500/30 hover:border-red-500/40 transition-all duration-300">
                           <div className="flex items-start gap-2">
-                            <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
+                            <AlertCircle className="h-4 w-4 text-red-400 mt-0.5 flex-shrink-0" />
                             <div>
-                              <p className="text-xs font-semibold text-red-500 mb-1">سبب الرفض</p>
-                              <p className="text-sm text-red-200/90 leading-relaxed font-medium">
+                              <p className="text-xs font-semibold text-red-400 mb-1">سبب الرفض</p>
+                              <p className="text-sm text-red-300 leading-relaxed">
                                 {request?.adminNotes || groupedTransfer?.rejectionReason}
                               </p>
                             </div>
@@ -1086,7 +915,7 @@ export default function Notifications() {
                             onClick={() => request ? handleRejectClick(request) : handleTechRejectBatchClick(groupedTransfer!)}
                             disabled={request ? rejectMutation.isPending : techRejectBatchMutation.isPending}
                             variant="outline"
-                            className="flex-1 bg-red-500/10 border-red-500/40 text-red-500 hover:bg-red-500/20 hover:border-red-500/60 font-bold shadow-lg shadow-red-500/5 transition-all duration-300 h-11"
+                            className="flex-1 bg-gradient-to-r from-red-500/10 to-red-600/10 border-red-500/30 text-red-400 hover:bg-red-500/20 hover:border-red-500/50 font-semibold shadow-lg shadow-red-500/10 hover:shadow-red-500/20 transition-all duration-300 h-11"
                             data-testid={`button-reject-${request ? request.id : groupedTransfer?.requestId}`}
                           >
                             <X className="h-4 w-4 ml-2" />

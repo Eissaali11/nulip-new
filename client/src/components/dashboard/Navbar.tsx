@@ -151,13 +151,6 @@ export const Navbar = () => {
       supervisorOrAbove: true,
     },
     {
-      title: "إدارة الأصناف",
-      href: "/product-types",
-      icon: Package,
-      gradient: "from-teal-500 to-cyan-600",
-      supervisorOrAbove: true,
-    },
-    {
       title: "النسخ الاحتياطية",
       href: "/backup",
       icon: Database,

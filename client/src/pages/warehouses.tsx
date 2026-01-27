@@ -75,14 +75,6 @@ export default function WarehousesPage() {
     enabled: !!user?.id && (user?.role === 'admin' || user?.role === 'supervisor'),
   });
 
-  const { data: productTypes = [] } = useQuery<{ id: string; name: string; code: string; category: string; isActive: boolean }[]>({
-    queryKey: ["/api/product-types"],
-  });
-
-  const { data: allDynamicInventory = [] } = useQuery<{ warehouseId: string; productTypeId: string; boxes: number; units: number; productType?: { id: string; name: string; code: string; category: string } }[]>({
-    queryKey: ["/api/warehouse-dynamic-inventory"],
-  });
-
   const warehouses = allWarehouses.filter(warehouse => 
     warehouse.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     warehouse.location.toLowerCase().includes(searchQuery.toLowerCase())
@@ -91,12 +83,7 @@ export default function WarehousesPage() {
   const handleExportWarehouses = async () => {
     if (warehouses && warehouses.length > 0) {
       try {
-        await exportWarehousesToExcel({ 
-          warehouses,
-          dynamicInventory: allDynamicInventory,
-          productTypes: productTypes
-        });
-        
+        await exportWarehousesToExcel({ warehouses });
         toast({ 
           title: "تم تصدير التقرير بنجاح", 
           description: "تم حفظ ملف Excel في جهازك" 

@@ -100,11 +100,6 @@ export default function MyMovingInventory() {
     enabled: !!user?.id,
   });
 
-  const { data: dynamicInventory } = useQuery<{ productTypeId: string; productTypeName: string; boxes: number; units: number }[]>({
-    queryKey: [`/api/my-dynamic-inventory`],
-    enabled: !!user?.id,
-  });
-
   const { data: fixedInventory } = useQuery<FixedInventory>({
     queryKey: [`/api/technician-fixed-inventory/${user?.id}`],
     enabled: !!user?.id,
@@ -244,12 +239,6 @@ export default function MyMovingInventory() {
       };
     });
 
-    const dynamicData = (dynamicInventory || []).map(item => [
-      `${item.productTypeName} - كرتون`, item.boxes || 0, 'كرتون'
-    ]).concat((dynamicInventory || []).map(item => [
-      `${item.productTypeName} - وحدات`, item.units || 0, 'جهاز'
-    ]));
-
     const data = [
       ['أجهزة N950 - كرتون', inventory.n950Boxes || 0, 'كرتون'],
       ['أجهزة N950 - وحدات', inventory.n950Units || 0, 'جهاز'],
@@ -269,7 +258,6 @@ export default function MyMovingInventory() {
       ['شرائح STC - وحدات', inventory.stcSimUnits || 0, 'شريحة'],
       ['شرائح زين - كرتون', inventory.zainSimBoxes || 0, 'كرتون'],
       ['شرائح زين - وحدات', inventory.zainSimUnits || 0, 'شريحة'],
-      ...dynamicData
     ];
 
     data.forEach(row => {
@@ -449,15 +437,6 @@ export default function MyMovingInventory() {
         { label: "وحدات", value: inventory.zainSimUnits || 0 }
       ]
     },
-    ...(dynamicInventory || []).map(item => ({
-      category: item.productTypeName || 'صنف غير معروف',
-      icon: "📦",
-      color: "from-slate-500 to-slate-600",
-      items: [
-        { label: "كرتون", value: item.boxes || 0 },
-        { label: "وحدات", value: item.units || 0 }
-      ]
-    }))
   ];
 
   return (

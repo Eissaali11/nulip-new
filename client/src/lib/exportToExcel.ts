@@ -41,27 +41,10 @@ interface WarehouseData {
   inventory: WarehouseInventory | null;
 }
 
-interface DynamicInventoryForExport {
-  warehouseId: string;
-  productTypeId: string;
-  boxes: number;
-  units: number;
-}
-
-interface ProductTypeForExport {
-  id: string;
-  name: string;
-  code: string;
-  category: string;
-  isActive: boolean;
-}
-
 interface WarehouseExportData {
   warehouses: WarehouseData[];
   companyName?: string;
   reportTitle?: string;
-  dynamicInventory?: DynamicInventoryForExport[];
-  productTypes?: ProductTypeForExport[];
 }
 
 const getTypeNameArabic = (type: string): string => {
@@ -182,9 +165,7 @@ export const exportInventoryToExcel = async ({
 export const exportWarehousesToExcel = async ({
   warehouses,
   companyName = 'نظام إدارة المخزون - RAS Saudi',
-  reportTitle = 'تقرير المستودعات الشامل',
-  dynamicInventory = [],
-  productTypes = []
+  reportTitle = 'تقرير المستودعات الشامل'
 }: WarehouseExportData) => {
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet('تقرير المستودعات');
@@ -200,12 +181,7 @@ export const exportWarehousesToExcel = async ({
   });
   const time = currentDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
 
-  const staticProductNames = ['N950', 'I9000s', 'I9100', 'ورق حراري', 'ملصقات', 'بطاريات', 'موبايلي', 'STC', 'زين', 'n950', 'i9000s', 'i9100', 'roll paper', 'stickers', 'batteries', 'mobily', 'stc', 'zain'];
-  const activeProductTypes = productTypes.filter(pt => pt.isActive && !staticProductNames.some(name => pt.name.toLowerCase().includes(name.toLowerCase()) || pt.code.toLowerCase().includes(name.toLowerCase())));
-  const dynamicColsCount = activeProductTypes.length * 2;
-  const totalColsCount = 23 + dynamicColsCount;
-
-  worksheet.mergeCells(1, 1, 1, totalColsCount);
+  worksheet.mergeCells('A1:W1');
   const titleCell = worksheet.getCell('A1');
   titleCell.value = companyName;
   titleCell.font = { size: 20, bold: true, color: { argb: 'FFFFFFFF' } };
@@ -223,7 +199,7 @@ export const exportWarehousesToExcel = async ({
   };
   worksheet.getRow(1).height = 35;
 
-  worksheet.mergeCells(2, 1, 2, totalColsCount);
+  worksheet.mergeCells('A2:W2');
   const subtitleCell = worksheet.getCell('A2');
   subtitleCell.value = reportTitle;
   subtitleCell.font = { size: 16, bold: true, color: { argb: 'FF18B2B0' } };
@@ -235,7 +211,7 @@ export const exportWarehousesToExcel = async ({
   };
   worksheet.getRow(2).height = 28;
 
-  worksheet.mergeCells(3, 1, 3, totalColsCount);
+  worksheet.mergeCells('A3:W3');
   const dateCell = worksheet.getCell('A3');
   dateCell.value = `تاريخ التقرير: ${arabicDate} - الساعة: ${time}`;
   dateCell.font = { size: 12, bold: true };
@@ -249,7 +225,7 @@ export const exportWarehousesToExcel = async ({
 
   worksheet.addRow([]);
 
-  const headers = [
+  const headerRow = worksheet.addRow([
     '#',
     'اسم المستودع',
     'الموقع',
@@ -271,16 +247,9 @@ export const exportWarehousesToExcel = async ({
     'STC (صناديق)',
     'STC (قطع)',
     'زين (صناديق)',
-    'زين (قطع)'
-  ];
-  
-  activeProductTypes.forEach(pt => {
-    headers.push(`${pt.name} (صناديق)`);
-    headers.push(`${pt.name} (قطع)`);
-  });
-  headers.push('إجمالي الأصناف');
-
-  const headerRow = worksheet.addRow(headers);
+    'زين (قطع)',
+    'إجمالي الأصناف'
+  ]);
   
   headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
   headerRow.height = 30;
@@ -315,11 +284,6 @@ export const exportWarehousesToExcel = async ({
     zainSimBoxes: 0, zainSimUnits: 0
   };
 
-  const dynamicTotals: Record<string, { boxes: number; units: number }> = {};
-  activeProductTypes.forEach(pt => {
-    dynamicTotals[pt.id] = { boxes: 0, units: 0 };
-  });
-
   warehouses.forEach((warehouse, index) => {
     const inv = warehouse.inventory;
     
@@ -329,7 +293,7 @@ export const exportWarehousesToExcel = async ({
       totalInactive++;
     }
 
-    let staticTotal = inv ? (
+    const totalItems = inv ? (
       inv.n950Boxes + inv.n950Units +
       inv.i9000sBoxes + inv.i9000sUnits +
       inv.i9100Boxes + inv.i9100Units +
@@ -340,6 +304,8 @@ export const exportWarehousesToExcel = async ({
       inv.stcSimBoxes + inv.stcSimUnits +
       inv.zainSimBoxes + inv.zainSimUnits
     ) : 0;
+
+    grandTotalItems += totalItems;
 
     if (inv) {
       totals.n950Boxes += inv.n950Boxes || 0;
@@ -362,7 +328,7 @@ export const exportWarehousesToExcel = async ({
       totals.zainSimUnits += inv.zainSimUnits || 0;
     }
 
-    const rowData: (string | number)[] = [
+    const dataRow = worksheet.addRow([
       index + 1,
       warehouse.name,
       warehouse.location,
@@ -384,26 +350,9 @@ export const exportWarehousesToExcel = async ({
       inv?.stcSimBoxes || 0,
       inv?.stcSimUnits || 0,
       inv?.zainSimBoxes || 0,
-      inv?.zainSimUnits || 0
-    ];
-    
-    let dynamicTotal = 0;
-    activeProductTypes.forEach(pt => {
-      const dynInv = dynamicInventory.find(d => d.warehouseId === warehouse.id && d.productTypeId === pt.id);
-      const boxes = dynInv?.boxes || 0;
-      const units = dynInv?.units || 0;
-      rowData.push(boxes);
-      rowData.push(units);
-      dynamicTotals[pt.id].boxes += boxes;
-      dynamicTotals[pt.id].units += units;
-      dynamicTotal += boxes + units;
-    });
-    
-    const totalItems = staticTotal + dynamicTotal;
-    rowData.push(totalItems);
-    grandTotalItems += totalItems;
-
-    const dataRow = worksheet.addRow(rowData);
+      inv?.zainSimUnits || 0,
+      totalItems
+    ]);
     
     dataRow.alignment = { horizontal: 'center', vertical: 'middle' };
     dataRow.eachCell((cell) => {
@@ -416,7 +365,7 @@ export const exportWarehousesToExcel = async ({
     });
   });
 
-  const totalRowData: (string | number)[] = [
+  const totalRow = worksheet.addRow([
     '',
     'الإجمالي',
     '',
@@ -438,16 +387,9 @@ export const exportWarehousesToExcel = async ({
     totals.stcSimBoxes,
     totals.stcSimUnits,
     totals.zainSimBoxes,
-    totals.zainSimUnits
-  ];
-  
-  activeProductTypes.forEach(pt => {
-    totalRowData.push(dynamicTotals[pt.id].boxes);
-    totalRowData.push(dynamicTotals[pt.id].units);
-  });
-  totalRowData.push(grandTotalItems);
-
-  const totalRow = worksheet.addRow(totalRowData);
+    totals.zainSimUnits,
+    grandTotalItems
+  ]);
 
   totalRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
   totalRow.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -466,7 +408,7 @@ export const exportWarehousesToExcel = async ({
     };
   });
 
-  const totalBoxRowData: (string | number)[] = [
+  const totalBoxRow = worksheet.addRow([
     '',
     'إجمالي الصناديق',
     '',
@@ -488,16 +430,9 @@ export const exportWarehousesToExcel = async ({
     totals.stcSimBoxes,
     '',
     totals.zainSimBoxes,
+    '',
     ''
-  ];
-  
-  activeProductTypes.forEach(pt => {
-    totalBoxRowData.push(dynamicTotals[pt.id].boxes);
-    totalBoxRowData.push('');
-  });
-  totalBoxRowData.push('');
-
-  const totalBoxRow = worksheet.addRow(totalBoxRowData);
+  ]);
 
   totalBoxRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
   totalBoxRow.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -516,7 +451,7 @@ export const exportWarehousesToExcel = async ({
     };
   });
 
-  const columnWidths = [
+  worksheet.columns = [
     { width: 6 },
     { width: 25 },
     { width: 25 },
@@ -539,15 +474,8 @@ export const exportWarehousesToExcel = async ({
     { width: 12 },
     { width: 15 },
     { width: 12 },
+    { width: 15 },
   ];
-  
-  activeProductTypes.forEach(() => {
-    columnWidths.push({ width: 15 });
-    columnWidths.push({ width: 12 });
-  });
-  columnWidths.push({ width: 15 });
-  
-  worksheet.columns = columnWidths;
 
   worksheet.addRow([]);
   
@@ -657,9 +585,7 @@ export const exportWarehousesToExcel = async ({
   const unitsSheet = workbook.addWorksheet('الوحدات - Units');
   unitsSheet.views = [{ rightToLeft: true }];
 
-  const unitsColCount = 12 + activeProductTypes.length;
-
-  unitsSheet.mergeCells(1, 1, 1, unitsColCount);
+  unitsSheet.mergeCells('A1:L1');
   const unitsTitleCell = unitsSheet.getCell('A1');
   unitsTitleCell.value = companyName;
   unitsTitleCell.font = { size: 20, bold: true, color: { argb: 'FFFFFFFF' } };
@@ -677,7 +603,7 @@ export const exportWarehousesToExcel = async ({
   };
   unitsSheet.getRow(1).height = 35;
 
-  unitsSheet.mergeCells(2, 1, 2, unitsColCount);
+  unitsSheet.mergeCells('A2:L2');
   const unitsSubtitleCell = unitsSheet.getCell('A2');
   unitsSubtitleCell.value = 'تقرير الوحدات - Units Report';
   unitsSubtitleCell.font = { size: 16, bold: true, color: { argb: 'FF18B2B0' } };
@@ -689,7 +615,7 @@ export const exportWarehousesToExcel = async ({
   };
   unitsSheet.getRow(2).height = 28;
 
-  unitsSheet.mergeCells(3, 1, 3, unitsColCount);
+  unitsSheet.mergeCells('A3:L3');
   const unitsDateCell = unitsSheet.getCell('A3');
   unitsDateCell.value = `تاريخ التقرير: ${arabicDate} - الساعة: ${time}`;
   unitsDateCell.font = { size: 12, bold: true };
@@ -703,7 +629,7 @@ export const exportWarehousesToExcel = async ({
 
   unitsSheet.addRow([]);
 
-  const unitsHeaders = [
+  const unitsHeaderRow = unitsSheet.addRow([
     '#',
     'اسم المستودع',
     'الموقع',
@@ -716,13 +642,7 @@ export const exportWarehousesToExcel = async ({
     'موبايلي',
     'STC',
     'زين'
-  ];
-  
-  activeProductTypes.forEach(pt => {
-    unitsHeaders.push(pt.name);
-  });
-
-  const unitsHeaderRow = unitsSheet.addRow(unitsHeaders);
+  ]);
   
   unitsHeaderRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
   unitsHeaderRow.height = 30;
@@ -744,7 +664,7 @@ export const exportWarehousesToExcel = async ({
   warehouses.forEach((warehouse, index) => {
     const inv = warehouse.inventory;
     
-    const unitsRowData: (string | number)[] = [
+    const unitsDataRow = unitsSheet.addRow([
       index + 1,
       warehouse.name,
       warehouse.location,
@@ -757,14 +677,7 @@ export const exportWarehousesToExcel = async ({
       inv?.mobilySimUnits || 0,
       inv?.stcSimUnits || 0,
       inv?.zainSimUnits || 0
-    ];
-    
-    activeProductTypes.forEach(pt => {
-      const dynInv = dynamicInventory.find(d => d.warehouseId === warehouse.id && d.productTypeId === pt.id);
-      unitsRowData.push(dynInv?.units || 0);
-    });
-    
-    const unitsDataRow = unitsSheet.addRow(unitsRowData);
+    ]);
     
     unitsDataRow.alignment = { horizontal: 'center', vertical: 'middle' };
     unitsDataRow.eachCell((cell) => {
@@ -777,7 +690,7 @@ export const exportWarehousesToExcel = async ({
     });
   });
 
-  const unitsTotalRowData: (string | number)[] = [
+  const unitsTotalRow = unitsSheet.addRow([
     '',
     'الإجمالي',
     '',
@@ -790,13 +703,7 @@ export const exportWarehousesToExcel = async ({
     totals.mobilySimUnits,
     totals.stcSimUnits,
     totals.zainSimUnits
-  ];
-  
-  activeProductTypes.forEach(pt => {
-    unitsTotalRowData.push(dynamicTotals[pt.id].units);
-  });
-
-  const unitsTotalRow = unitsSheet.addRow(unitsTotalRowData);
+  ]);
 
   unitsTotalRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
   unitsTotalRow.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -815,7 +722,7 @@ export const exportWarehousesToExcel = async ({
     };
   });
 
-  const unitsColumnWidths = [
+  unitsSheet.columns = [
     { width: 6 },
     { width: 25 },
     { width: 25 },
@@ -829,12 +736,6 @@ export const exportWarehousesToExcel = async ({
     { width: 15 },
     { width: 15 }
   ];
-  
-  activeProductTypes.forEach(() => {
-    unitsColumnWidths.push({ width: 15 });
-  });
-
-  unitsSheet.columns = unitsColumnWidths;
 
   unitsSheet.addRow([]);
   
@@ -1296,402 +1197,5 @@ export const exportTechnicianToExcel = async (data: TechnicianInventoryData) => 
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   const fileName = `تقرير_مخزون_الفني_${data.technicianName}_${new Date().toISOString().split('T')[0]}.xlsx`;
-  saveAs(blob, fileName);
-};
-
-interface DynamicInventoryItem {
-  productTypeId: string;
-  boxes: number;
-  units: number;
-  productType?: {
-    id: string;
-    name: string;
-    code: string;
-    category: string;
-  };
-}
-
-interface ProductTypeInfo {
-  id: string;
-  name: string;
-  code: string;
-  category: string;
-}
-
-interface WarehouseDynamicData {
-  id: string;
-  name: string;
-  location: string;
-  isActive: boolean;
-  dynamicInventory: DynamicInventoryItem[];
-}
-
-interface DynamicWarehouseExportData {
-  warehouses: WarehouseDynamicData[];
-  productTypes: ProductTypeInfo[];
-  companyName?: string;
-  reportTitle?: string;
-}
-
-export const exportDynamicWarehousesToExcel = async ({
-  warehouses,
-  productTypes,
-  companyName = 'نظام إدارة المخزون - RAS Saudi',
-  reportTitle = 'تقرير المستودعات الشامل (الأصناف الديناميكية)'
-}: DynamicWarehouseExportData) => {
-  const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet('تقرير المستودعات');
-
-  worksheet.views = [{ rightToLeft: true }];
-
-  const currentDate = new Date();
-  const arabicDate = currentDate.toLocaleDateString('ar-SA', { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  });
-  const time = currentDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
-
-  const totalColumns = 4 + (productTypes.length * 2) + 1;
-  
-  worksheet.mergeCells(1, 1, 1, totalColumns);
-  const titleCell = worksheet.getCell('A1');
-  titleCell.value = companyName;
-  titleCell.font = { size: 20, bold: true, color: { argb: 'FFFFFFFF' } };
-  titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-  titleCell.fill = {
-    type: 'pattern',
-    pattern: 'solid',
-    fgColor: { argb: 'FF18B2B0' }
-  };
-  worksheet.getRow(1).height = 35;
-
-  worksheet.mergeCells(2, 1, 2, totalColumns);
-  const subtitleCell = worksheet.getCell('A2');
-  subtitleCell.value = reportTitle;
-  subtitleCell.font = { size: 16, bold: true, color: { argb: 'FF18B2B0' } };
-  subtitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-  subtitleCell.fill = {
-    type: 'pattern',
-    pattern: 'solid',
-    fgColor: { argb: 'FFE0F7F6' }
-  };
-  worksheet.getRow(2).height = 28;
-
-  worksheet.mergeCells(3, 1, 3, totalColumns);
-  const dateCell = worksheet.getCell('A3');
-  dateCell.value = `تاريخ التقرير: ${arabicDate} - الساعة: ${time}`;
-  dateCell.font = { size: 12, bold: true };
-  dateCell.alignment = { horizontal: 'center', vertical: 'middle' };
-  dateCell.fill = {
-    type: 'pattern',
-    pattern: 'solid',
-    fgColor: { argb: 'FFF0F9FF' }
-  };
-  worksheet.getRow(3).height = 25;
-
-  worksheet.addRow([]);
-
-  const headers = ['#', 'اسم المستودع', 'الموقع', 'الحالة'];
-  productTypes.forEach(pt => {
-    headers.push(`${pt.name} (صناديق)`);
-    headers.push(`${pt.name} (قطع)`);
-  });
-  headers.push('إجمالي الأصناف');
-
-  const headerRow = worksheet.addRow(headers);
-  headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
-  headerRow.height = 30;
-  headerRow.eachCell((cell) => {
-    cell.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FF4A5568' }
-    };
-    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-    cell.border = {
-      top: { style: 'thin', color: { argb: 'FF000000' } },
-      left: { style: 'thin', color: { argb: 'FF000000' } },
-      bottom: { style: 'thin', color: { argb: 'FF000000' } },
-      right: { style: 'thin', color: { argb: 'FF000000' } }
-    };
-  });
-
-  const totals: Record<string, { boxes: number; units: number }> = {};
-  productTypes.forEach(pt => {
-    totals[pt.id] = { boxes: 0, units: 0 };
-  });
-  let grandTotalItems = 0;
-
-  warehouses.forEach((warehouse, index) => {
-    const rowData: (string | number)[] = [
-      index + 1,
-      warehouse.name,
-      warehouse.location,
-      warehouse.isActive ? 'نشط' : 'غير نشط'
-    ];
-
-    let warehouseTotal = 0;
-
-    productTypes.forEach(pt => {
-      const inv = warehouse.dynamicInventory.find(i => i.productTypeId === pt.id);
-      const boxes = inv?.boxes || 0;
-      const units = inv?.units || 0;
-      rowData.push(boxes);
-      rowData.push(units);
-      totals[pt.id].boxes += boxes;
-      totals[pt.id].units += units;
-      warehouseTotal += boxes + units;
-    });
-
-    rowData.push(warehouseTotal);
-    grandTotalItems += warehouseTotal;
-
-    const dataRow = worksheet.addRow(rowData);
-    dataRow.alignment = { horizontal: 'center', vertical: 'middle' };
-    dataRow.eachCell((cell) => {
-      cell.border = {
-        top: { style: 'thin', color: { argb: 'FF000000' } },
-        left: { style: 'thin', color: { argb: 'FF000000' } },
-        bottom: { style: 'thin', color: { argb: 'FF000000' } },
-        right: { style: 'thin', color: { argb: 'FF000000' } }
-      };
-    });
-  });
-
-  const totalRowData: (string | number)[] = ['', 'الإجمالي', '', ''];
-  productTypes.forEach(pt => {
-    totalRowData.push(totals[pt.id].boxes);
-    totalRowData.push(totals[pt.id].units);
-  });
-  totalRowData.push(grandTotalItems);
-
-  const totalRow = worksheet.addRow(totalRowData);
-  totalRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
-  totalRow.alignment = { horizontal: 'center', vertical: 'middle' };
-  totalRow.height = 25;
-  totalRow.eachCell((cell) => {
-    cell.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FF16A085' }
-    };
-    cell.border = {
-      top: { style: 'medium', color: { argb: 'FF000000' } },
-      left: { style: 'thin', color: { argb: 'FF000000' } },
-      bottom: { style: 'medium', color: { argb: 'FF000000' } },
-      right: { style: 'thin', color: { argb: 'FF000000' } }
-    };
-  });
-
-  const columnWidths = [6, 25, 25, 12];
-  productTypes.forEach(() => {
-    columnWidths.push(15, 12);
-  });
-  columnWidths.push(15);
-
-  worksheet.columns = columnWidths.map(width => ({ width }));
-
-  const buffer = await workbook.xlsx.writeBuffer();
-  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-  const fileName = `تقرير_المستودعات_الديناميكي_${new Date().toISOString().split('T')[0]}.xlsx`;
-  saveAs(blob, fileName);
-};
-
-// تصدير مستودع واحد إلى Excel
-interface SingleWarehouseExportData {
-  warehouse: {
-    name: string;
-    location: string;
-    description?: string | null;
-    isActive: boolean;
-  };
-  staticInventory: WarehouseInventory | null;
-  dynamicInventory: DynamicInventoryItem[];
-  productTypes: ProductTypeInfo[];
-  companyName?: string;
-}
-
-export const exportSingleWarehouseToExcel = async ({
-  warehouse,
-  staticInventory,
-  dynamicInventory,
-  productTypes,
-  companyName = 'نظام إدارة المخزون - RAS Saudi'
-}: SingleWarehouseExportData) => {
-  const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet('مخزون المستودع');
-
-  worksheet.views = [{ rightToLeft: true }];
-
-  const currentDate = new Date();
-  const arabicDate = currentDate.toLocaleDateString('ar-SA', { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  });
-  const time = currentDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
-
-  // Title Row
-  worksheet.mergeCells('A1:E1');
-  const titleCell = worksheet.getCell('A1');
-  titleCell.value = companyName;
-  titleCell.font = { size: 20, bold: true, color: { argb: 'FFFFFFFF' } };
-  titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-  titleCell.fill = {
-    type: 'pattern',
-    pattern: 'solid',
-    fgColor: { argb: 'FF18B2B0' }
-  };
-  worksheet.getRow(1).height = 35;
-
-  // Warehouse Name
-  worksheet.mergeCells('A2:E2');
-  const warehouseCell = worksheet.getCell('A2');
-  warehouseCell.value = `تقرير مخزون: ${warehouse.name}`;
-  warehouseCell.font = { size: 16, bold: true, color: { argb: 'FF18B2B0' } };
-  warehouseCell.alignment = { horizontal: 'center', vertical: 'middle' };
-  warehouseCell.fill = {
-    type: 'pattern',
-    pattern: 'solid',
-    fgColor: { argb: 'FFE0F7F6' }
-  };
-  worksheet.getRow(2).height = 28;
-
-  // Date
-  worksheet.mergeCells('A3:E3');
-  const dateCell = worksheet.getCell('A3');
-  dateCell.value = `تاريخ التقرير: ${arabicDate} - الساعة: ${time}`;
-  dateCell.font = { size: 12, bold: true };
-  dateCell.alignment = { horizontal: 'center', vertical: 'middle' };
-  dateCell.fill = {
-    type: 'pattern',
-    pattern: 'solid',
-    fgColor: { argb: 'FFF0F9FF' }
-  };
-  worksheet.getRow(3).height = 25;
-
-  // Location info
-  worksheet.mergeCells('A4:E4');
-  const locationCell = worksheet.getCell('A4');
-  locationCell.value = `الموقع: ${warehouse.location} | الحالة: ${warehouse.isActive ? 'نشط' : 'غير نشط'}`;
-  locationCell.font = { size: 11, italic: true };
-  locationCell.alignment = { horizontal: 'center', vertical: 'middle' };
-  worksheet.getRow(4).height = 22;
-
-  worksheet.addRow([]);
-
-  // Headers
-  const headers = ['#', 'اسم الصنف', 'الفئة', 'صناديق', 'قطع'];
-  const headerRow = worksheet.addRow(headers);
-  headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
-  headerRow.height = 28;
-  headerRow.eachCell((cell) => {
-    cell.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FF4A5568' }
-    };
-    cell.alignment = { horizontal: 'center', vertical: 'middle' };
-    cell.border = {
-      top: { style: 'thin', color: { argb: 'FF000000' } },
-      left: { style: 'thin', color: { argb: 'FF000000' } },
-      bottom: { style: 'thin', color: { argb: 'FF000000' } },
-      right: { style: 'thin', color: { argb: 'FF000000' } }
-    };
-  });
-
-  let rowIndex = 1;
-  let totalBoxes = 0;
-  let totalUnits = 0;
-
-  // Static inventory items
-  const staticItems = [
-    { name: 'N950', category: 'أجهزة', boxes: staticInventory?.n950Boxes || 0, units: staticInventory?.n950Units || 0 },
-    { name: 'I9000s', category: 'أجهزة', boxes: staticInventory?.i9000sBoxes || 0, units: staticInventory?.i9000sUnits || 0 },
-    { name: 'I9100', category: 'أجهزة', boxes: staticInventory?.i9100Boxes || 0, units: staticInventory?.i9100Units || 0 },
-    { name: 'ورق حراري', category: 'أوراق', boxes: staticInventory?.rollPaperBoxes || 0, units: staticInventory?.rollPaperUnits || 0 },
-    { name: 'ملصقات', category: 'أوراق', boxes: staticInventory?.stickersBoxes || 0, units: staticInventory?.stickersUnits || 0 },
-    { name: 'بطاريات', category: 'إكسسوارات', boxes: staticInventory?.newBatteriesBoxes || 0, units: staticInventory?.newBatteriesUnits || 0 },
-    { name: 'موبايلي', category: 'شرائح', boxes: staticInventory?.mobilySimBoxes || 0, units: staticInventory?.mobilySimUnits || 0 },
-    { name: 'STC', category: 'شرائح', boxes: staticInventory?.stcSimBoxes || 0, units: staticInventory?.stcSimUnits || 0 },
-    { name: 'زين', category: 'شرائح', boxes: staticInventory?.zainSimBoxes || 0, units: staticInventory?.zainSimUnits || 0 },
-  ];
-
-  // Add static items
-  staticItems.forEach((item) => {
-    const dataRow = worksheet.addRow([rowIndex++, item.name, item.category, item.boxes, item.units]);
-    dataRow.alignment = { horizontal: 'center', vertical: 'middle' };
-    totalBoxes += item.boxes;
-    totalUnits += item.units;
-    dataRow.eachCell((cell) => {
-      cell.border = {
-        top: { style: 'thin', color: { argb: 'FF000000' } },
-        left: { style: 'thin', color: { argb: 'FF000000' } },
-        bottom: { style: 'thin', color: { argb: 'FF000000' } },
-        right: { style: 'thin', color: { argb: 'FF000000' } }
-      };
-    });
-  });
-
-  // Filter and add dynamic items (exclude those matching static names)
-  const staticNames = ['N950', 'I9000s', 'I9100', 'ورق حراري', 'ملصقات', 'بطاريات', 'موبايلي', 'STC', 'زين'];
-  
-  dynamicInventory.forEach((inv) => {
-    const pt = productTypes.find(p => p.id === inv.productTypeId);
-    if (pt && !staticNames.includes(pt.name) && !staticNames.includes(pt.code)) {
-      const categoryName = pt.category === 'devices' ? 'أجهزة' : 
-                           pt.category === 'papers' ? 'أوراق' : 
-                           pt.category === 'sim' ? 'شرائح' : 
-                           pt.category === 'accessories' ? 'إكسسوارات' : 'أخرى';
-      
-      const dataRow = worksheet.addRow([rowIndex++, pt.name, categoryName, inv.boxes, inv.units]);
-      dataRow.alignment = { horizontal: 'center', vertical: 'middle' };
-      totalBoxes += inv.boxes;
-      totalUnits += inv.units;
-      dataRow.eachCell((cell) => {
-        cell.border = {
-          top: { style: 'thin', color: { argb: 'FF000000' } },
-          left: { style: 'thin', color: { argb: 'FF000000' } },
-          bottom: { style: 'thin', color: { argb: 'FF000000' } },
-          right: { style: 'thin', color: { argb: 'FF000000' } }
-        };
-      });
-    }
-  });
-
-  // Total row
-  const totalRow = worksheet.addRow(['', 'الإجمالي', '', totalBoxes, totalUnits]);
-  totalRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
-  totalRow.alignment = { horizontal: 'center', vertical: 'middle' };
-  totalRow.height = 25;
-  totalRow.eachCell((cell) => {
-    cell.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FF16A085' }
-    };
-    cell.border = {
-      top: { style: 'medium', color: { argb: 'FF000000' } },
-      left: { style: 'thin', color: { argb: 'FF000000' } },
-      bottom: { style: 'medium', color: { argb: 'FF000000' } },
-      right: { style: 'thin', color: { argb: 'FF000000' } }
-    };
-  });
-
-  // Set column widths
-  worksheet.columns = [
-    { width: 6 },
-    { width: 25 },
-    { width: 15 },
-    { width: 12 },
-    { width: 12 }
-  ];
-
-  const buffer = await workbook.xlsx.writeBuffer();
-  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-  const fileName = `مخزون_${warehouse.name}_${new Date().toISOString().split('T')[0]}.xlsx`;
   saveAs(blob, fileName);
 };

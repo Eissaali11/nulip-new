@@ -56,13 +56,7 @@ import {
   supervisorTechnicians,
   supervisorWarehouses,
   inventoryRequests,
-  systemLogs,
-  productTypes,
-  warehouseDynamicInventory,
-  technicianDynamicInventory,
-  dynamicInventoryRequests,
-  dynamicRequestItems,
-  dynamicWarehouseTransfers
+  systemLogs
 } from "@shared/schema";
 import { IStorage } from "./storage";
 import { db } from "./db";
@@ -1912,36 +1906,16 @@ export class DatabaseStorage implements IStorage {
 
   async transferFromWarehouse(data: InsertWarehouseTransfer): Promise<WarehouseTransfer> {
     return await db.transaction(async (tx) => {
-      // 1. Get the product type
-      const [productType] = await tx
-        .select()
-        .from(productTypes)
-        .where(eq(productTypes.code, data.itemType));
-
-      if (!productType) {
-        throw new Error(`Invalid item type: ${data.itemType}`);
-      }
-
-      // 2. Check Dynamic Inventory
-      const [dynInv] = await tx
-        .select()
-        .from(warehouseDynamicInventory)
-        .where(
-          and(
-            eq(warehouseDynamicInventory.warehouseId, data.warehouseId),
-            eq(warehouseDynamicInventory.productTypeId, productType.id)
-          )
-        );
-
-      const dynAvailable = data.packagingType === 'box' ? (dynInv?.boxes || 0) : (dynInv?.units || 0);
-
-      // 3. Check Static Inventory (Legacy)
-      const [staticInv] = await tx
+      const [inventory] = await tx
         .select()
         .from(warehouseInventory)
         .where(eq(warehouseInventory.warehouseId, data.warehouseId));
 
-      const legacyFieldMap: Record<string, { boxes: string; units: string }> = {
+      if (!inventory) {
+        throw new Error(`Warehouse inventory not found`);
+      }
+
+      const fieldMap: Record<string, { boxes: string; units: string }> = {
         'n950': { boxes: 'n950Boxes', units: 'n950Units' },
         'i9000s': { boxes: 'i9000sBoxes', units: 'i9000sUnits' },
         'i9100': { boxes: 'i9100Boxes', units: 'i9100Units' },
@@ -1953,47 +1927,18 @@ export class DatabaseStorage implements IStorage {
         'zainSim': { boxes: 'zainSimBoxes', units: 'zainSimUnits' },
       };
 
-      let staticAvailable = 0;
-      const legacyFields = legacyFieldMap[data.itemType];
-      if (staticInv && legacyFields) {
-        const fieldName = data.packagingType === 'box' ? legacyFields.boxes : legacyFields.units;
-        staticAvailable = (staticInv as any)[fieldName] || 0;
+      const fields = fieldMap[data.itemType];
+      if (!fields) {
+        throw new Error(`Invalid item type: ${data.itemType}`);
       }
 
-      const totalAvailable = dynAvailable + staticAvailable;
+      const fieldName = data.packagingType === 'box' ? fields.boxes : fields.units;
+      const currentStock = (inventory as any)[fieldName] || 0;
 
-      if (totalAvailable < data.quantity) {
-        throw new Error(`هذا الصنف (${productType.name}) غير متوفر بالكمية المطلوبة. المتاح: ${totalAvailable}`);
+      if (currentStock < data.quantity) {
+        throw new Error(`Insufficient stock in warehouse. Available: ${currentStock}, Requested: ${data.quantity}`);
       }
 
-      // 4. Deduct from Dynamic Inventory first
-      let remainingToDeduct = data.quantity;
-      if (dynInv && dynAvailable > 0) {
-        const deduction = Math.min(dynAvailable, remainingToDeduct);
-        await tx
-          .update(warehouseDynamicInventory)
-          .set({
-            boxes: data.packagingType === 'box' ? dynInv.boxes - deduction : dynInv.boxes,
-            units: data.packagingType === 'unit' ? dynInv.units - deduction : dynInv.units,
-            updatedAt: new Date(),
-          })
-          .where(eq(warehouseDynamicInventory.id, dynInv.id));
-        remainingToDeduct -= deduction;
-      }
-
-      // 5. Deduct remaining from Static Inventory
-      if (remainingToDeduct > 0 && staticInv && legacyFields) {
-        const fieldName = data.packagingType === 'box' ? legacyFields.boxes : legacyFields.units;
-        const currentStatic = (staticInv as any)[fieldName] || 0;
-        await tx
-          .update(warehouseInventory)
-          .set({
-            [fieldName]: currentStatic - remainingToDeduct,
-          })
-          .where(eq(warehouseInventory.warehouseId, data.warehouseId));
-      }
-
-      // 6. Create transfer record
       const [transfer] = await tx
         .insert(warehouseTransfers)
         .values({
@@ -2102,64 +2047,8 @@ export class DatabaseStorage implements IStorage {
       };
 
       const fields = fieldMap[transfer.itemType];
-      
-      // Handle dynamic items if not in fieldMap
       if (!fields) {
-        const [dynamicProductType] = await tx
-          .select()
-          .from(productTypes)
-          .where(eq(productTypes.code, transfer.itemType));
-
-        if (!dynamicProductType) {
-          throw new Error(`Unknown item type: ${transfer.itemType}`);
-        }
-
-        // Handle dynamic inventory transfer
-        // Deduct from warehouse dynamic inventory (already done in transferFromWarehouse, 
-        // but we need to ensure consistency or if it was not deducted there)
-        // Wait, in transferFromWarehouse it's ALREADY deducted. 
-        // So here we only need to ADD to technician dynamic inventory.
-
-        const [techInv] = await tx
-          .select()
-          .from(technicianDynamicInventory)
-          .where(
-            and(
-              eq(technicianDynamicInventory.technicianId, transfer.technicianId),
-              eq(technicianDynamicInventory.productTypeId, dynamicProductType.id)
-            )
-          );
-
-        if (techInv) {
-          await tx
-            .update(technicianDynamicInventory)
-            .set({
-              boxes: transfer.packagingType === 'box' ? techInv.boxes + transfer.quantity : techInv.boxes,
-              units: transfer.packagingType === 'unit' ? techInv.units + transfer.quantity : techInv.units,
-              updatedAt: new Date(),
-            })
-            .where(eq(technicianDynamicInventory.id, techInv.id));
-        } else {
-          await tx
-            .insert(technicianDynamicInventory)
-            .values({
-              technicianId: transfer.technicianId,
-              productTypeId: dynamicProductType.id,
-              boxes: transfer.packagingType === 'box' ? transfer.quantity : 0,
-              units: transfer.packagingType === 'unit' ? transfer.quantity : 0,
-            });
-        }
-
-        const [updatedTransfer] = await tx
-          .update(warehouseTransfers)
-          .set({
-            status: 'accepted',
-            respondedAt: new Date(),
-          })
-          .where(eq(warehouseTransfers.id, transferId))
-          .returning();
-
-        return updatedTransfer;
+        throw new Error(`Unknown item type: ${transfer.itemType}`);
       }
       
       const fieldName = transfer.packagingType === 'box' ? fields.boxes : fields.units;
@@ -2482,20 +2371,14 @@ export class DatabaseStorage implements IStorage {
     await db.delete(systemLogs);
     await db.delete(receivedDevices);
     await db.delete(stockMovements);
-    await db.delete(dynamicWarehouseTransfers);
     await db.delete(warehouseTransfers);
-    await db.delete(dynamicRequestItems);
-    await db.delete(dynamicInventoryRequests);
     await db.delete(inventoryRequests);
-    await db.delete(technicianDynamicInventory);
     await db.delete(technicianFixedInventories);
     await db.delete(techniciansInventory);
-    await db.delete(warehouseDynamicInventory);
     await db.delete(warehouseInventory);
     await db.delete(transactions);
     await db.delete(warehouses);
     await db.delete(inventoryItems);
-    await db.delete(productTypes);
     await db.delete(users);
     await db.delete(regions);
 
@@ -2505,9 +2388,6 @@ export class DatabaseStorage implements IStorage {
     }
     if (backup.data.users?.length > 0) {
       await db.insert(users).values(this.convertDates(backup.data.users));
-    }
-    if (backup.data.productTypes?.length > 0) {
-      await db.insert(productTypes).values(this.convertDates(backup.data.productTypes));
     }
     if (backup.data.inventoryItems?.length > 0) {
       await db.insert(inventoryItems).values(this.convertDates(backup.data.inventoryItems));
@@ -2521,32 +2401,17 @@ export class DatabaseStorage implements IStorage {
     if (backup.data.warehouseInventory?.length > 0) {
       await db.insert(warehouseInventory).values(this.convertDates(backup.data.warehouseInventory));
     }
-    if (backup.data.warehouseDynamicInventory?.length > 0) {
-      await db.insert(warehouseDynamicInventory).values(this.convertDates(backup.data.warehouseDynamicInventory));
-    }
     if (backup.data.techniciansInventory?.length > 0) {
       await db.insert(techniciansInventory).values(this.convertDates(backup.data.techniciansInventory));
     }
     if (backup.data.technicianFixedInventories?.length > 0) {
       await db.insert(technicianFixedInventories).values(this.convertDates(backup.data.technicianFixedInventories));
     }
-    if (backup.data.technicianDynamicInventory?.length > 0) {
-      await db.insert(technicianDynamicInventory).values(this.convertDates(backup.data.technicianDynamicInventory));
-    }
     if (backup.data.inventoryRequests?.length > 0) {
       await db.insert(inventoryRequests).values(this.convertDates(backup.data.inventoryRequests));
     }
-    if (backup.data.dynamicInventoryRequests?.length > 0) {
-      await db.insert(dynamicInventoryRequests).values(this.convertDates(backup.data.dynamicInventoryRequests));
-    }
-    if (backup.data.dynamicRequestItems?.length > 0) {
-      await db.insert(dynamicRequestItems).values(this.convertDates(backup.data.dynamicRequestItems));
-    }
     if (backup.data.warehouseTransfers?.length > 0) {
       await db.insert(warehouseTransfers).values(this.convertDates(backup.data.warehouseTransfers));
-    }
-    if (backup.data.dynamicWarehouseTransfers?.length > 0) {
-      await db.insert(dynamicWarehouseTransfers).values(this.convertDates(backup.data.dynamicWarehouseTransfers));
     }
     if (backup.data.stockMovements?.length > 0) {
       await db.insert(stockMovements).values(this.convertDates(backup.data.stockMovements));

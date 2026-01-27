@@ -92,25 +92,9 @@ export default function WithdrawalModal({
       onOpenChange(false);
     },
     onError: (error: any) => {
-      let errorMessage = "حدث خطأ أثناء السحب من المخزون";
-      try {
-        const errorText = typeof error === 'string' ? error : (error.message || JSON.stringify(error));
-        if (typeof errorText === 'string') {
-          const jsonMatch = errorText.match(/\{.*\}/);
-          if (jsonMatch) {
-            const parsed = JSON.parse(jsonMatch[0]);
-            errorMessage = parsed.message || errorMessage;
-          } else {
-            errorMessage = errorText;
-          }
-        }
-      } catch (e) {
-        errorMessage = error.message || errorMessage;
-      }
-
       toast({
         title: "خطأ في السحب",
-        description: errorMessage,
+        description: error.message || "حدث خطأ أثناء السحب من المخزون",
         variant: "destructive",
       });
     },

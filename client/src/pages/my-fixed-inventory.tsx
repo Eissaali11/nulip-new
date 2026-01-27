@@ -55,11 +55,6 @@ export default function MyFixedInventory() {
     enabled: !!user?.id,
   });
 
-  const { data: dynamicInventory } = useQuery<{ productTypeId: string; productTypeName: string; boxes: number; units: number }[]>({
-    queryKey: [`/api/technicians/${user?.id}/dynamic-inventory`],
-    enabled: !!user?.id,
-  });
-
   const deleteMutation = useMutation({
     mutationFn: async () => {
       return await apiRequest(
@@ -137,9 +132,6 @@ export default function MyFixedInventory() {
       ['شرائح موبايلي', existingInventory.mobilySimBoxes, existingInventory.mobilySimUnits, getTotalForItem(existingInventory.mobilySimBoxes, existingInventory.mobilySimUnits)],
       ['شرائح STC', existingInventory.stcSimBoxes, existingInventory.stcSimUnits, getTotalForItem(existingInventory.stcSimBoxes, existingInventory.stcSimUnits)],
       ['شرائح زين', existingInventory.zainSimBoxes, existingInventory.zainSimUnits, getTotalForItem(existingInventory.zainSimBoxes, existingInventory.zainSimUnits)],
-      ...(dynamicInventory || []).map(item => [
-        item.productTypeName, item.boxes, item.units, getTotalForItem(item.boxes, item.units)
-      ]),
     ];
 
     data.forEach((rowData) => {
@@ -279,16 +271,6 @@ export default function MyFixedInventory() {
       borderColor: 'border-violet-300/50',
       glowColor: 'shadow-violet-500/20',
     },
-    ...(dynamicInventory || []).map(item => ({
-      name: item.productTypeName || 'صنف غير معروف',
-      icon: Package,
-      boxes: item.boxes || 0,
-      units: item.units || 0,
-      gradient: 'from-slate-500 via-slate-600 to-slate-700',
-      bgGradient: 'from-slate-50/50 via-slate-100/30 to-slate-50/50',
-      borderColor: 'border-slate-300/50',
-      glowColor: 'shadow-slate-500/20',
-    })),
   ];
 
   const grandTotal = itemsConfig.reduce((sum, item) => sum + getTotalForItem(item.boxes, item.units), 0);
@@ -519,10 +501,6 @@ export default function MyFixedInventory() {
                         getTotalForItem(existingInventory.stcSimBoxes, existingInventory.stcSimUnits) +
                         getTotalForItem(existingInventory.zainSimBoxes, existingInventory.zainSimUnits)
                 },
-                ...(dynamicInventory || []).map(item => ({
-                  name: item.productTypeName,
-                  value: getTotalForItem(item.boxes, item.units)
-                })),
                 {
                   name: 'أوراق',
                   value: getTotalForItem(existingInventory.rollPaperBoxes, existingInventory.rollPaperUnits) +
@@ -533,7 +511,7 @@ export default function MyFixedInventory() {
                   value: getTotalForItem(existingInventory.newBatteriesBoxes, existingInventory.newBatteriesUnits)
                 },
               ]}
-              colors={['#18B2B0', '#10B981', '#F59E0B', '#8B5CF6', '#64748b', '#94a3b8', '#cbd5e1']}
+              colors={['#18B2B0', '#10B981', '#F59E0B', '#8B5CF6']}
               height={320}
             />
           </motion.div>

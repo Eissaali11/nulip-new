@@ -15,17 +15,8 @@ import { useAuth } from "@/lib/auth";
 import { useLanguage } from "@/lib/language";
 import dashboardBg from "@assets/image_1762515061799.png";
 import rasscoLogo from "@assets/image_1762442473114.png";
-import type { TechnicianWithBothInventories, WarehouseWithStats, TechnicianFixedInventory, TechnicianInventory, ProductType } from "@shared/schema";
+import type { TechnicianWithBothInventories, WarehouseWithStats, TechnicianFixedInventory, TechnicianInventory } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
-
-interface DynamicInventoryItem {
-  id: string;
-  technicianId: string;
-  productTypeId: string;
-  boxes: number;
-  units: number;
-  productType: ProductType;
-}
 import { motion } from "framer-motion";
 import {
   Activity,
@@ -63,36 +54,6 @@ import { GlobalInventoryChart } from "@/components/dashboard/GlobalInventoryChar
 import RequestInventoryModal from "@/components/request-inventory-modal";
 import { CreditCard, FileText, Sticker } from "lucide-react";
 import { getRoleLabel } from "@shared/roles";
-
-const getCategoryIcon = (category: string) => {
-  switch (category) {
-    case "devices": return <Smartphone className="h-6 w-6" />;
-    case "sim": return <CreditCard className="h-6 w-6" />;
-    case "papers": return <FileText className="h-6 w-6" />;
-    case "accessories": return <Battery className="h-6 w-6" />;
-    default: return <Package className="h-6 w-6" />;
-  }
-};
-
-const getCategoryColor = (category: string) => {
-  switch (category) {
-    case "devices": return "#3b82f6";
-    case "sim": return "#a855f7";
-    case "papers": return "#10b981";
-    case "accessories": return "#f59e0b";
-    default: return "#6b7280";
-  }
-};
-
-const getCategoryGradient = (category: string) => {
-  switch (category) {
-    case "devices": return "from-blue-500/20 via-blue-600/10 to-transparent";
-    case "sim": return "from-purple-500/20 via-purple-600/10 to-transparent";
-    case "papers": return "from-emerald-500/20 via-emerald-600/10 to-transparent";
-    case "accessories": return "from-amber-500/20 via-amber-600/10 to-transparent";
-    default: return "from-gray-500/20 via-gray-600/10 to-transparent";
-  }
-};
 
 interface WarehouseTransfer {
   id: string;
@@ -132,16 +93,6 @@ export default function Dashboard() {
 
   const { data: myMovingInventory = null, isLoading: movingLoading } = useQuery<TechnicianInventory | null>({
     queryKey: ["/api/my-moving-inventory"],
-    enabled: !!user?.id,
-  });
-
-  const { data: productTypes = [] } = useQuery<ProductType[]>({
-    queryKey: ["/api/product-types/active"],
-    enabled: !!user?.id,
-  });
-
-  const { data: myDynamicInventory = [], isLoading: dynamicLoading } = useQuery<DynamicInventoryItem[]>({
-    queryKey: ["/api/my-dynamic-inventory"],
     enabled: !!user?.id,
   });
 
@@ -923,30 +874,94 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-              {dynamicLoading ? (
+              {fixedLoading ? (
                 <div className="text-center py-12 md:py-16">
                   <div className="inline-block animate-spin rounded-full h-10 w-10 md:h-12 md:w-12 border-b-2 border-[#18B2B0]"></div>
                   <p className="text-gray-400 text-xs md:text-sm mt-4">{t('messages.loading_products')}</p>
                 </div>
-              ) : productTypes.length > 0 ? (
+              ) : myFixedInventory && getFixedInventoryTotal() > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                  {productTypes
-                    .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
-                    .map((pt, index) => {
-                      const inv = myDynamicInventory.find(i => i.productTypeId === pt.id);
-                      return (
-                        <ProductCard
-                          key={pt.id}
-                          icon={getCategoryIcon(pt.category)}
-                          title={pt.name}
-                          boxes={inv?.boxes || 0}
-                          units={inv?.units || 0}
-                          color={getCategoryColor(pt.category)}
-                          gradient={getCategoryGradient(pt.category)}
-                          index={index}
-                        />
-                      );
-                    })}
+                  <ProductCard
+                    icon={<Smartphone className="h-6 w-6" />}
+                    title="جهاز N950"
+                    boxes={myFixedInventory.n950Boxes || 0}
+                    units={myFixedInventory.n950Units || 0}
+                    color="#3b82f6"
+                    gradient="from-blue-500/20 via-blue-600/10 to-transparent"
+                    index={0}
+                  />
+                  <ProductCard
+                    icon={<Smartphone className="h-6 w-6" />}
+                    title="جهاز i9000S"
+                    boxes={myFixedInventory.i9000sBoxes || 0}
+                    units={myFixedInventory.i9000sUnits || 0}
+                    color="#8b5cf6"
+                    gradient="from-violet-500/20 via-violet-600/10 to-transparent"
+                    index={1}
+                  />
+                  <ProductCard
+                    icon={<Smartphone className="h-6 w-6" />}
+                    title="جهاز i9100"
+                    boxes={myFixedInventory.i9100Boxes || 0}
+                    units={myFixedInventory.i9100Units || 0}
+                    color="#06b6d4"
+                    gradient="from-cyan-500/20 via-cyan-600/10 to-transparent"
+                    index={2}
+                  />
+                  <ProductCard
+                    icon={<FileText className="h-6 w-6" />}
+                    title="ورق حراري"
+                    boxes={myFixedInventory.rollPaperBoxes || 0}
+                    units={myFixedInventory.rollPaperUnits || 0}
+                    color="#10b981"
+                    gradient="from-emerald-500/20 via-emerald-600/10 to-transparent"
+                    index={3}
+                  />
+                  <ProductCard
+                    icon={<Sticker className="h-6 w-6" />}
+                    title="ملصقات"
+                    boxes={myFixedInventory.stickersBoxes || 0}
+                    units={myFixedInventory.stickersUnits || 0}
+                    color="#f59e0b"
+                    gradient="from-amber-500/20 via-amber-600/10 to-transparent"
+                    index={4}
+                  />
+                  <ProductCard
+                    icon={<Battery className="h-6 w-6" />}
+                    title="بطاريات جديدة"
+                    boxes={myFixedInventory.newBatteriesBoxes || 0}
+                    units={myFixedInventory.newBatteriesUnits || 0}
+                    color="#eab308"
+                    gradient="from-yellow-500/20 via-yellow-600/10 to-transparent"
+                    index={5}
+                  />
+                  <ProductCard
+                    icon={<CreditCard className="h-6 w-6" />}
+                    title="شريحة موبايلي"
+                    boxes={myFixedInventory.mobilySimBoxes || 0}
+                    units={myFixedInventory.mobilySimUnits || 0}
+                    color="#22c55e"
+                    gradient="from-green-500/20 via-green-600/10 to-transparent"
+                    index={6}
+                  />
+                  <ProductCard
+                    icon={<CreditCard className="h-6 w-6" />}
+                    title="شريحة STC"
+                    boxes={myFixedInventory.stcSimBoxes || 0}
+                    units={myFixedInventory.stcSimUnits || 0}
+                    color="#a855f7"
+                    gradient="from-purple-500/20 via-purple-600/10 to-transparent"
+                    index={7}
+                  />
+                  <ProductCard
+                    icon={<CreditCard className="h-6 w-6" />}
+                    title="شريحة زين"
+                    boxes={myFixedInventory.zainSimBoxes || 0}
+                    units={myFixedInventory.zainSimUnits || 0}
+                    color="#ec4899"
+                    gradient="from-pink-500/20 via-pink-600/10 to-transparent"
+                    index={8}
+                  />
                 </div>
               ) : (
                 <div className="text-center py-12 md:py-16 bg-white/5 backdrop-blur-sm rounded-2xl md:rounded-3xl border border-white/10">
@@ -992,30 +1007,94 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-              {dynamicLoading ? (
+              {movingLoading ? (
                 <div className="text-center py-12 md:py-16">
                   <div className="inline-block animate-spin rounded-full h-10 w-10 md:h-12 md:w-12 border-b-2 border-emerald-500"></div>
                   <p className="text-gray-400 text-xs md:text-sm mt-4">{t('messages.loading_products')}</p>
                 </div>
-              ) : productTypes.length > 0 ? (
+              ) : myMovingInventory && getMovingInventoryTotal() > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                  {productTypes
-                    .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
-                    .map((pt, index) => {
-                      const inv = myDynamicInventory.find(i => i.productTypeId === pt.id);
-                      return (
-                        <ProductCard
-                          key={pt.id}
-                          icon={getCategoryIcon(pt.category)}
-                          title={pt.name}
-                          boxes={inv?.boxes || 0}
-                          units={inv?.units || 0}
-                          color={getCategoryColor(pt.category)}
-                          gradient={getCategoryGradient(pt.category)}
-                          index={index}
-                        />
-                      );
-                    })}
+                  <ProductCard
+                    icon={<Smartphone className="h-6 w-6" />}
+                    title="جهاز N950"
+                    boxes={myMovingInventory.n950Boxes || 0}
+                    units={myMovingInventory.n950Units || 0}
+                    color="#14b8a6"
+                    gradient="from-teal-500/20 via-teal-600/10 to-transparent"
+                    index={0}
+                  />
+                  <ProductCard
+                    icon={<Smartphone className="h-6 w-6" />}
+                    title="جهاز i9000S"
+                    boxes={myMovingInventory.i9000sBoxes || 0}
+                    units={myMovingInventory.i9000sUnits || 0}
+                    color="#06b6d4"
+                    gradient="from-cyan-500/20 via-cyan-600/10 to-transparent"
+                    index={1}
+                  />
+                  <ProductCard
+                    icon={<Smartphone className="h-6 w-6" />}
+                    title="جهاز i9100"
+                    boxes={myMovingInventory.i9100Boxes || 0}
+                    units={myMovingInventory.i9100Units || 0}
+                    color="#0ea5e9"
+                    gradient="from-sky-500/20 via-sky-600/10 to-transparent"
+                    index={2}
+                  />
+                  <ProductCard
+                    icon={<FileText className="h-6 w-6" />}
+                    title="ورق حراري"
+                    boxes={myMovingInventory.rollPaperBoxes || 0}
+                    units={myMovingInventory.rollPaperUnits || 0}
+                    color="#84cc16"
+                    gradient="from-lime-500/20 via-lime-600/10 to-transparent"
+                    index={3}
+                  />
+                  <ProductCard
+                    icon={<Sticker className="h-6 w-6" />}
+                    title="ملصقات"
+                    boxes={myMovingInventory.stickersBoxes || 0}
+                    units={myMovingInventory.stickersUnits || 0}
+                    color="#fb923c"
+                    gradient="from-orange-400/20 via-orange-500/10 to-transparent"
+                    index={4}
+                  />
+                  <ProductCard
+                    icon={<Battery className="h-6 w-6" />}
+                    title="بطاريات جديدة"
+                    boxes={myMovingInventory.newBatteriesBoxes || 0}
+                    units={myMovingInventory.newBatteriesUnits || 0}
+                    color="#facc15"
+                    gradient="from-yellow-400/20 via-yellow-500/10 to-transparent"
+                    index={5}
+                  />
+                  <ProductCard
+                    icon={<CreditCard className="h-6 w-6" />}
+                    title="شريحة موبايلي"
+                    boxes={myMovingInventory.mobilySimBoxes || 0}
+                    units={myMovingInventory.mobilySimUnits || 0}
+                    color="#4ade80"
+                    gradient="from-green-400/20 via-green-500/10 to-transparent"
+                    index={6}
+                  />
+                  <ProductCard
+                    icon={<CreditCard className="h-6 w-6" />}
+                    title="شريحة STC"
+                    boxes={myMovingInventory.stcSimBoxes || 0}
+                    units={myMovingInventory.stcSimUnits || 0}
+                    color="#c084fc"
+                    gradient="from-purple-400/20 via-purple-500/10 to-transparent"
+                    index={7}
+                  />
+                  <ProductCard
+                    icon={<CreditCard className="h-6 w-6" />}
+                    title="شريحة زين"
+                    boxes={myMovingInventory.zainSimBoxes || 0}
+                    units={myMovingInventory.zainSimUnits || 0}
+                    color="#f472b6"
+                    gradient="from-pink-400/20 via-pink-500/10 to-transparent"
+                    index={8}
+                  />
                 </div>
               ) : (
                 <div className="text-center py-12 md:py-16 bg-white/5 backdrop-blur-sm rounded-2xl md:rounded-3xl border border-white/10">

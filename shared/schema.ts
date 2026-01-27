@@ -336,80 +336,6 @@ export const inventoryRequests = pgTable("inventory_requests", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Product Types - أنواع الأصناف الديناميكية
-export const productTypes = pgTable("product_types", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  name: text("name").notNull(), // اسم الصنف بالعربي
-  code: text("code").notNull().unique(), // كود الصنف للاستخدام في الكود (مثل n950, rollPaper)
-  category: text("category").notNull().default("general"), // فئة الصنف (devices, sim, papers, accessories)
-  packagingType: text("packaging_type").notNull().default("both"), // نوع التغليف: "box_only", "unit_only", "both"
-  unitsPerBox: integer("units_per_box").default(10), // عدد الوحدات في الكرتون
-  isActive: boolean("is_active").notNull().default(true),
-  sortOrder: integer("sort_order").notNull().default(0), // ترتيب العرض
-  createdBy: varchar("created_by").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-// Dynamic Warehouse Inventory - مخزون المستودع الديناميكي
-export const warehouseDynamicInventory = pgTable("warehouse_dynamic_inventory", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  warehouseId: varchar("warehouse_id").notNull().references(() => warehouses.id, { onDelete: 'cascade' }),
-  productTypeId: varchar("product_type_id").notNull().references(() => productTypes.id, { onDelete: 'cascade' }),
-  boxes: integer("boxes").notNull().default(0),
-  units: integer("units").notNull().default(0),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-// Dynamic Technician Inventory - مخزون الفني الديناميكي
-export const technicianDynamicInventory = pgTable("technician_dynamic_inventory", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  technicianId: varchar("technician_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  productTypeId: varchar("product_type_id").notNull().references(() => productTypes.id, { onDelete: 'cascade' }),
-  boxes: integer("boxes").notNull().default(0),
-  units: integer("units").notNull().default(0),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-// Dynamic Inventory Requests - طلبات المخزون الديناميكية
-export const dynamicInventoryRequests = pgTable("dynamic_inventory_requests", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  technicianId: varchar("technician_id").notNull().references(() => users.id),
-  warehouseId: varchar("warehouse_id").references(() => warehouses.id),
-  notes: text("notes"),
-  status: text("status").notNull().default("pending"), // "pending", "approved", "rejected"
-  adminNotes: text("admin_notes"),
-  respondedBy: varchar("responded_by").references(() => users.id),
-  respondedAt: timestamp("responded_at"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-// Dynamic Inventory Request Items - عناصر طلب المخزون الديناميكي
-export const dynamicRequestItems = pgTable("dynamic_request_items", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  requestId: varchar("request_id").notNull().references(() => dynamicInventoryRequests.id, { onDelete: 'cascade' }),
-  productTypeId: varchar("product_type_id").notNull().references(() => productTypes.id),
-  boxes: integer("boxes").notNull().default(0),
-  units: integer("units").notNull().default(0),
-});
-
-// Dynamic Warehouse Transfers - تحويلات المستودع الديناميكية
-export const dynamicWarehouseTransfers = pgTable("dynamic_warehouse_transfers", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  requestId: varchar("request_id").references(() => dynamicInventoryRequests.id),
-  warehouseId: varchar("warehouse_id").notNull().references(() => warehouses.id),
-  technicianId: varchar("technician_id").notNull().references(() => users.id),
-  productTypeId: varchar("product_type_id").notNull().references(() => productTypes.id),
-  packagingType: text("packaging_type").notNull(), // "box", "unit"
-  quantity: integer("quantity").notNull(),
-  performedBy: varchar("performed_by").notNull().references(() => users.id),
-  notes: text("notes"),
-  status: text("status").notNull().default("pending"), // "pending", "accepted", "rejected"
-  rejectionReason: text("rejection_reason"),
-  respondedAt: timestamp("responded_at"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
 // System Activity Logs - سجل شامل لجميع عمليات النظام
 export const systemLogs = pgTable("system_logs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -532,40 +458,6 @@ export const insertSystemLogSchema = createInsertSchema(systemLogs).omit({
   createdAt: true,
 });
 
-// Dynamic Product Types schemas
-export const insertProductTypeSchema = createInsertSchema(productTypes).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  createdBy: true,
-});
-
-export const insertWarehouseDynamicInventorySchema = createInsertSchema(warehouseDynamicInventory).omit({
-  id: true,
-  updatedAt: true,
-});
-
-export const insertTechnicianDynamicInventorySchema = createInsertSchema(technicianDynamicInventory).omit({
-  id: true,
-  updatedAt: true,
-});
-
-export const insertDynamicInventoryRequestSchema = createInsertSchema(dynamicInventoryRequests).omit({
-  id: true,
-  createdAt: true,
-  respondedBy: true,
-  respondedAt: true,
-});
-
-export const insertDynamicRequestItemSchema = createInsertSchema(dynamicRequestItems).omit({
-  id: true,
-});
-
-export const insertDynamicWarehouseTransferSchema = createInsertSchema(dynamicWarehouseTransfers).omit({
-  id: true,
-  createdAt: true,
-});
-
 // Types
 export type InsertRegion = z.infer<typeof insertRegionSchema>;
 export type Region = typeof regions.$inferSelect;
@@ -599,20 +491,6 @@ export type InsertSupervisorWarehouse = z.infer<typeof insertSupervisorWarehouse
 export type SupervisorWarehouse = typeof supervisorWarehouses.$inferSelect;
 export type InsertSystemLog = z.infer<typeof insertSystemLogSchema>;
 export type SystemLog = typeof systemLogs.$inferSelect;
-
-// Dynamic Product Types
-export type InsertProductType = z.infer<typeof insertProductTypeSchema>;
-export type ProductType = typeof productTypes.$inferSelect;
-export type InsertWarehouseDynamicInventory = z.infer<typeof insertWarehouseDynamicInventorySchema>;
-export type WarehouseDynamicInventory = typeof warehouseDynamicInventory.$inferSelect;
-export type InsertTechnicianDynamicInventory = z.infer<typeof insertTechnicianDynamicInventorySchema>;
-export type TechnicianDynamicInventory = typeof technicianDynamicInventory.$inferSelect;
-export type InsertDynamicInventoryRequest = z.infer<typeof insertDynamicInventoryRequestSchema>;
-export type DynamicInventoryRequest = typeof dynamicInventoryRequests.$inferSelect;
-export type InsertDynamicRequestItem = z.infer<typeof insertDynamicRequestItemSchema>;
-export type DynamicRequestItem = typeof dynamicRequestItems.$inferSelect;
-export type InsertDynamicWarehouseTransfer = z.infer<typeof insertDynamicWarehouseTransferSchema>;
-export type DynamicWarehouseTransfer = typeof dynamicWarehouseTransfers.$inferSelect;
 
 // Additional types for API responses
 export type InventoryItemWithStatus = InventoryItem & {
@@ -718,46 +596,6 @@ export type WarehouseTransferWithDetails = WarehouseTransfer & {
   technicianName?: string;
   performedByName?: string;
   itemNameAr?: string;
-};
-
-// Dynamic Types for UI
-export type ProductTypeWithStats = ProductType & {
-  totalInWarehouses: number;
-  totalWithTechnicians: number;
-};
-
-export type DynamicInventoryItem = {
-  productType: ProductType;
-  boxes: number;
-  units: number;
-  total: number;
-};
-
-export type WarehouseWithDynamicInventory = Warehouse & {
-  inventory: DynamicInventoryItem[];
-  creatorName?: string;
-};
-
-export type TechnicianWithDynamicInventory = {
-  technicianId: string;
-  technicianName: string;
-  city: string;
-  regionId?: string | null;
-  inventory: DynamicInventoryItem[];
-};
-
-export type DynamicInventoryRequestWithDetails = DynamicInventoryRequest & {
-  technicianName?: string;
-  warehouseName?: string;
-  respondedByName?: string;
-  items: (DynamicRequestItem & { productTypeName?: string })[];
-};
-
-export type DynamicWarehouseTransferWithDetails = DynamicWarehouseTransfer & {
-  warehouseName?: string;
-  technicianName?: string;
-  performedByName?: string;
-  productTypeName?: string;
 };
 
 // Authentication schemas

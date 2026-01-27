@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -65,7 +65,7 @@ export default function UpdateWarehouseInventoryModal({
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
+    defaultValues: currentInventory || {
       n950Boxes: 0,
       n950Units: 0,
       i9000sBoxes: 0,
@@ -87,28 +87,20 @@ export default function UpdateWarehouseInventoryModal({
     },
   });
 
-  const hasInitialized = useRef(false);
-
   useEffect(() => {
-    if (open && currentInventory && !hasInitialized.current) {
+    if (currentInventory) {
       form.reset(currentInventory);
-      hasInitialized.current = true;
     }
-    if (!open) {
-      hasInitialized.current = false;
-    }
-  }, [open, currentInventory]);
+  }, [currentInventory, form]);
 
   const updateInventoryMutation = useMutation({
     mutationFn: async (data: FormData) => {
       return await apiRequest("PUT", `/api/warehouse-inventory/${warehouseId}`, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/warehouses", warehouseId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ["/api/warehouse-inventory", warehouseId], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ["/api/warehouses"], refetchType: 'active' });
-      queryClient.refetchQueries({ queryKey: ["/api/warehouses", warehouseId] });
-      queryClient.refetchQueries({ queryKey: ["/api/warehouses", warehouseId, "dynamic-inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/warehouses", warehouseId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/warehouse-inventory", warehouseId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/warehouses"] });
       toast({
         title: "تم تحديث المخزون بنجاح",
         description: "تم تحديث كميات المخزون في المستودع",
@@ -227,11 +219,8 @@ export default function UpdateWarehouseInventoryModal({
                               <Input
                                 type="number"
                                 min="0"
-                                value={field.value ?? 0}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  field.onChange(val === "" ? 0 : parseInt(val) || 0);
-                                }}
+                                {...field}
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                                 data-testid={`input-${item.boxesKey}`}
                               />
                             </FormControl>
@@ -249,11 +238,8 @@ export default function UpdateWarehouseInventoryModal({
                               <Input
                                 type="number"
                                 min="0"
-                                value={field.value ?? 0}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  field.onChange(val === "" ? 0 : parseInt(val) || 0);
-                                }}
+                                {...field}
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                                 data-testid={`input-${item.unitsKey}`}
                               />
                             </FormControl>

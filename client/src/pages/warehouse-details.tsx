@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { motion } from "framer-motion";
@@ -44,16 +44,14 @@ import {
   CheckCircle,
   XCircle,
   Search,
-  AlertTriangle,
-  Download
+  AlertTriangle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
-import UpdateDynamicInventoryModal from "@/components/update-dynamic-inventory-modal";
-import TransferDynamicInventoryModal from "@/components/transfer-dynamic-inventory-modal";
-import { exportSingleWarehouseToExcel } from "@/lib/exportToExcel";
+import UpdateWarehouseInventoryModal from "@/components/update-warehouse-inventory-modal";
+import TransferFromWarehouseModal from "@/components/transfer-from-warehouse-modal";
 import { GridBackground } from "@/components/dashboard/GridBackground";
 import { Navbar } from "@/components/dashboard/Navbar";
 import { CircularProgress } from "@/components/dashboard/CircularProgress";
@@ -69,7 +67,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { User, UserCircle, LogOut } from "lucide-react";
-import type { ProductType } from "@shared/schema";
 
 interface WarehouseInventory {
   id: string;
@@ -93,60 +90,6 @@ interface WarehouseInventory {
   zainSimBoxes: number;
   zainSimUnits: number;
 }
-
-interface DynamicInventoryRecord {
-  id: string;
-  warehouseId: string;
-  productTypeId: string;
-  boxes: number;
-  units: number;
-  productType: ProductType;
-}
-
-const getCategoryIcon = (category: string) => {
-  switch (category) {
-    case "devices":
-      return Smartphone;
-    case "papers":
-      return FileText;
-    case "accessories":
-      return Battery;
-    case "sim":
-      return Box;
-    default:
-      return Package;
-  }
-};
-
-const getCategoryGradient = (category: string) => {
-  switch (category) {
-    case "devices":
-      return "from-blue-500 to-cyan-600";
-    case "papers":
-      return "from-amber-500 to-orange-600";
-    case "accessories":
-      return "from-green-500 to-emerald-600";
-    case "sim":
-      return "from-purple-500 to-pink-600";
-    default:
-      return "from-gray-500 to-slate-600";
-  }
-};
-
-const getCategoryColor = (category: string) => {
-  switch (category) {
-    case "devices":
-      return "#3b82f6";
-    case "papers":
-      return "#f59e0b";
-    case "accessories":
-      return "#10b981";
-    case "sim":
-      return "#8b5cf6";
-    default:
-      return "#6b7280";
-  }
-};
 
 interface WarehouseData {
   id: string;
@@ -232,17 +175,6 @@ export default function WarehouseDetailsPage() {
   const { data: warehouse, isLoading: warehouseLoading } = useQuery<WarehouseData>({
     queryKey: ["/api/warehouses", warehouseId],
     enabled: !!warehouseId,
-    staleTime: 0,
-  });
-
-  const { data: dynamicInventory, isLoading: dynamicInventoryLoading } = useQuery<DynamicInventoryRecord[]>({
-    queryKey: ["/api/warehouses", warehouseId, "dynamic-inventory"],
-    enabled: !!warehouseId,
-    staleTime: 0,
-  });
-
-  const { data: productTypes } = useQuery<ProductType[]>({
-    queryKey: ["/api/product-types/active"],
   });
 
   const { data: rawTransfers, isLoading: transfersLoading } = useQuery<WarehouseTransferRaw[]>({
@@ -334,47 +266,89 @@ export default function WarehouseDetailsPage() {
     },
   });
 
-  const inventoryItems = useMemo(() => {
-    if (!productTypes || productTypes.length === 0) {
-      return [];
-    }
-    
-    return productTypes
-      .filter(pt => pt.isActive)
-      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
-      .map(pt => {
-        // Try to find in dynamic inventory first
-        const dynInv = dynamicInventory?.find(d => d.productTypeId === pt.id);
-        
-        // Try to find in static inventory as fallback for legacy items
-        let boxes = dynInv?.boxes || 0;
-        let units = dynInv?.units || 0;
-        
-        if (warehouse?.inventory) {
-          const legacyBoxesKey = `${pt.code}Boxes` as keyof WarehouseInventory;
-          const legacyUnitsKey = `${pt.code}Units` as keyof WarehouseInventory;
-          
-          if (warehouse.inventory[legacyBoxesKey] !== undefined) {
-            boxes += (warehouse.inventory[legacyBoxesKey] as number) || 0;
-          }
-          if (warehouse.inventory[legacyUnitsKey] !== undefined) {
-            units += (warehouse.inventory[legacyUnitsKey] as number) || 0;
-          }
-        }
-
-        return {
-          id: pt.id,
-          name: pt.code,
-          nameAr: pt.name,
-          boxes,
-          units,
-          icon: getCategoryIcon(pt.category),
-          color: getCategoryColor(pt.category),
-          gradient: getCategoryGradient(pt.category),
-          packagingType: pt.packagingType,
-        };
-      });
-  }, [productTypes, dynamicInventory, warehouse?.inventory]);
+  const inventoryItems = [
+    { 
+      name: "N950", 
+      nameAr: "N950",
+      boxes: warehouse?.inventory?.n950Boxes || 0,
+      units: warehouse?.inventory?.n950Units || 0,
+      icon: Smartphone,
+      color: "#3b82f6",
+      gradient: "from-blue-500 to-blue-600"
+    },
+    { 
+      name: "I9000S", 
+      nameAr: "I9000S",
+      boxes: warehouse?.inventory?.i9000sBoxes || 0,
+      units: warehouse?.inventory?.i9000sUnits || 0,
+      icon: Smartphone,
+      color: "#8b5cf6",
+      gradient: "from-purple-500 to-violet-600"
+    },
+    { 
+      name: "I9100", 
+      nameAr: "I9100",
+      boxes: warehouse?.inventory?.i9100Boxes || 0,
+      units: warehouse?.inventory?.i9100Units || 0,
+      icon: Smartphone,
+      color: "#ec4899",
+      gradient: "from-pink-500 to-rose-600"
+    },
+    { 
+      name: "Roll Paper", 
+      nameAr: "ورق الطباعة",
+      boxes: warehouse?.inventory?.rollPaperBoxes || 0,
+      units: warehouse?.inventory?.rollPaperUnits || 0,
+      icon: FileText,
+      color: "#f59e0b",
+      gradient: "from-amber-500 to-orange-600"
+    },
+    { 
+      name: "Stickers", 
+      nameAr: "الملصقات",
+      boxes: warehouse?.inventory?.stickersBoxes || 0,
+      units: warehouse?.inventory?.stickersUnits || 0,
+      icon: Sticker,
+      color: "#14b8a6",
+      gradient: "from-teal-500 to-cyan-600"
+    },
+    { 
+      name: "Batteries", 
+      nameAr: "البطاريات",
+      boxes: warehouse?.inventory?.newBatteriesBoxes || 0,
+      units: warehouse?.inventory?.newBatteriesUnits || 0,
+      icon: Battery,
+      color: "#10b981",
+      gradient: "from-emerald-500 to-green-600"
+    },
+    { 
+      name: "Mobily SIM", 
+      nameAr: "موبايلي",
+      boxes: warehouse?.inventory?.mobilySimBoxes || 0,
+      units: warehouse?.inventory?.mobilySimUnits || 0,
+      icon: Smartphone,
+      color: "#06b6d4",
+      gradient: "from-cyan-500 to-sky-600"
+    },
+    { 
+      name: "STC SIM", 
+      nameAr: "STC",
+      boxes: warehouse?.inventory?.stcSimBoxes || 0,
+      units: warehouse?.inventory?.stcSimUnits || 0,
+      icon: Smartphone,
+      color: "#6366f1",
+      gradient: "from-indigo-500 to-blue-600"
+    },
+    { 
+      name: "Zain SIM", 
+      nameAr: "زين",
+      boxes: warehouse?.inventory?.zainSimBoxes || 0,
+      units: warehouse?.inventory?.zainSimUnits || 0,
+      icon: Smartphone,
+      color: "#f97316",
+      gradient: "from-orange-500 to-red-600"
+    },
+  ];
 
   if (warehouseLoading) {
     return (
@@ -632,28 +606,6 @@ export default function WarehouseDetailsPage() {
               </motion.div>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button
-                  onClick={() => {
-                    exportSingleWarehouseToExcel({
-                      warehouse: {
-                        name: warehouse.name,
-                        location: warehouse.location,
-                        description: warehouse.description,
-                        isActive: warehouse.isActive
-                      },
-                      staticInventory: warehouse.inventory || null,
-                      dynamicInventory: dynamicInventory || [],
-                      productTypes: productTypes || []
-                    });
-                  }}
-                  className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
-                  data-testid="button-export-excel"
-                >
-                  <Download className="h-4 w-4 ml-2" />
-                  تصدير Excel
-                </Button>
-              </motion.div>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button
                   variant="destructive"
                   onClick={() => setShowDeleteDialog(true)}
                   data-testid="button-delete-warehouse"
@@ -890,27 +842,19 @@ export default function WarehouseDetailsPage() {
       </div>
 
       {/* Modals */}
-      <UpdateDynamicInventoryModal
+      <UpdateWarehouseInventoryModal
         open={showUpdateInventoryModal}
         onOpenChange={setShowUpdateInventoryModal}
         warehouseId={warehouseId}
-        currentInventory={dynamicInventory?.map(inv => ({
-          productTypeId: inv.productTypeId,
-          boxes: inv.boxes,
-          units: inv.units,
-        })) || []}
+        currentInventory={warehouse.inventory}
       />
 
-      <TransferDynamicInventoryModal
+      <TransferFromWarehouseModal
         open={showTransferModal}
         onOpenChange={setShowTransferModal}
         warehouseId={warehouseId}
         warehouseName={warehouse.name}
-        currentInventory={inventoryItems.map(item => ({
-          productTypeId: item.id,
-          boxes: item.boxes,
-          units: item.units,
-        }))}
+        currentInventory={warehouse.inventory}
       />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

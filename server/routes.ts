@@ -1,11 +1,11 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertInventoryItemSchema, insertTransactionSchema, insertRegionSchema, insertUserSchema, insertTechnicianInventorySchema, insertWithdrawnDeviceSchema, insertReceivedDeviceSchema, loginSchema, techniciansInventory, insertWarehouseSchema, insertWarehouseInventorySchema, insertWarehouseTransferSchema, warehouseTransfers, warehouseInventory, inventoryRequests, insertInventoryRequestSchema, users, productTypes, insertProductTypeSchema, warehouseDynamicInventory, technicianDynamicInventory, dynamicInventoryRequests, dynamicRequestItems, dynamicWarehouseTransfers } from "@shared/schema";
+import { insertInventoryItemSchema, insertTransactionSchema, insertRegionSchema, insertUserSchema, insertTechnicianInventorySchema, insertWithdrawnDeviceSchema, insertReceivedDeviceSchema, loginSchema, techniciansInventory, insertWarehouseSchema, insertWarehouseInventorySchema, insertWarehouseTransferSchema, warehouseTransfers, warehouseInventory, inventoryRequests, insertInventoryRequestSchema, users } from "@shared/schema";
 import { ROLES, hasRoleOrAbove, canManageUsers } from "@shared/roles";
 import { z } from "zod";
 import { db } from "./db";
-import { eq, inArray, or, and, desc } from "drizzle-orm";
+import { eq, inArray, or, and } from "drizzle-orm";
 
 // Simple session store for demo purposes (in production, use proper session store)
 const activeSessions = new Map<string, { userId: string; role: string; username: string; regionId: string | null; expiry: number }>();
@@ -129,38 +129,6 @@ async function initializeDefaults() {
       console.log("   - Admin: admin/admin123");
       console.log("   - Supervisor: supervisor1/super123");
       console.log("   - Technician: tech1/tech123");
-    }
-
-    // Initialize default product types if none exist
-    const existingProductTypes = await db.select().from(productTypes);
-    if (existingProductTypes.length === 0) {
-      console.log("🔧 No product types found. Creating default product types...");
-      
-      const defaultProductTypes = [
-        { name: "جهاز N950", code: "n950", category: "devices", packagingType: "both", unitsPerBox: 10, sortOrder: 1 },
-        { name: "جهاز I9000s", code: "i9000s", category: "devices", packagingType: "both", unitsPerBox: 10, sortOrder: 2 },
-        { name: "جهاز I9100", code: "i9100", category: "devices", packagingType: "both", unitsPerBox: 10, sortOrder: 3 },
-        { name: "ورق حراري", code: "rollPaper", category: "papers", packagingType: "both", unitsPerBox: 50, sortOrder: 4 },
-        { name: "ملصقات", code: "stickers", category: "papers", packagingType: "both", unitsPerBox: 100, sortOrder: 5 },
-        { name: "بطاريات جديدة", code: "newBatteries", category: "accessories", packagingType: "both", unitsPerBox: 20, sortOrder: 6 },
-        { name: "شريحة موبايلي", code: "mobilySim", category: "sim", packagingType: "both", unitsPerBox: 50, sortOrder: 7 },
-        { name: "شريحة STC", code: "stcSim", category: "sim", packagingType: "both", unitsPerBox: 50, sortOrder: 8 },
-        { name: "شريحة زين", code: "zainSim", category: "sim", packagingType: "both", unitsPerBox: 50, sortOrder: 9 },
-      ];
-
-      for (const pt of defaultProductTypes) {
-        await db.insert(productTypes).values({
-          name: pt.name,
-          code: pt.code,
-          category: pt.category,
-          packagingType: pt.packagingType,
-          unitsPerBox: pt.unitsPerBox,
-          sortOrder: pt.sortOrder,
-          isActive: true,
-        });
-      }
-
-      console.log("✅ Created 9 default product types");
     }
   } catch (error) {
     console.error("❌ Error initializing defaults:", error);
@@ -1868,60 +1836,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/warehouse-transfers", requireAuth, requireSupervisor, async (req, res) => {
     try {
       const user = (req as any).user;
-      const { warehouseId, technicianId, notes, itemType, packagingType, quantity, ...otherItems } = req.body;
+      const { warehouseId, technicianId, notes, ...items } = req.body;
 
       if (!warehouseId || !technicianId) {
         return res.status(400).json({ message: "warehouseId and technicianId are required" });
       }
 
-      // Support both single item (from modal) and multiple items (old way)
-      const transfers: any[] = [];
-
-      if (itemType && packagingType && quantity) {
-        // Single item transfer (from dynamic modal)
-        // We allow any itemType now since they are dynamic
-        transfers.push({
-          warehouseId,
-          technicianId,
-          itemType,
-          packagingType,
-          quantity,
-          performedBy: user.id,
-          notes,
-        });
-      } else {
-        // Multi-item transfer (old way)
-        const possibleItemTypes = ['n950', 'i9000s', 'i9100', 'rollPaper', 'stickers', 'newBatteries', 'mobilySim', 'stcSim', 'zainSim'];
-        const items = otherItems;
-        
-        for (const type of possibleItemTypes) {
-          const qty = items[type];
-          const pkg = items[`${type}PackagingType`];
-
-          if (qty && qty > 0 && pkg) {
-            transfers.push({
-              warehouseId,
-              technicianId,
-              itemType: type,
-              packagingType: pkg,
-              quantity: qty,
-              performedBy: user.id,
-              notes,
-            });
-          }
-        }
-      }
-
-      if (transfers.length === 0) {
-        return res.status(400).json({ message: "No items to transfer" });
-      }
-
-      // Supervisors: validate region access (Moved down to support dynamic items)
+      // Supervisors: validate region access
       if (user.role === 'supervisor') {
         if (!user.regionId) {
           return res.status(400).json({ message: "المشرف يجب أن يكون مرتبط بمنطقة" });
         }
 
+        // Check warehouse is in supervisor's region
         const warehouse = await storage.getWarehouse(warehouseId);
         if (!warehouse) {
           return res.status(404).json({ message: "Warehouse not found" });
@@ -1930,6 +1857,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(403).json({ message: "لا يمكنك النقل من مستودعات خارج منطقتك" });
         }
 
+        // Check technician is in supervisor's region
         const technician = await storage.getUser(technicianId);
         if (!technician) {
           return res.status(404).json({ message: "Technician not found" });
@@ -1937,6 +1865,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (technician.regionId !== user.regionId) {
           return res.status(403).json({ message: "لا يمكنك النقل إلى فنيين خارج منطقتك" });
         }
+      }
+
+      const itemTypes = ['n950', 'i9000s', 'i9100', 'rollPaper', 'stickers', 'newBatteries', 'mobilySim', 'stcSim', 'zainSim'];
+      const transfers: any[] = [];
+
+      for (const itemType of itemTypes) {
+        const quantity = items[itemType];
+        const packagingType = items[`${itemType}PackagingType`];
+
+        if (quantity && quantity > 0 && packagingType) {
+          transfers.push({
+            warehouseId,
+            technicianId,
+            itemType,
+            packagingType,
+            quantity,
+            performedBy: user.id,
+            notes,
+          });
+        }
+      }
+
+      if (transfers.length === 0) {
+        return res.status(400).json({ message: "No items to transfer" });
       }
 
       for (const transfer of transfers) {
@@ -2939,690 +2891,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error restoring backup:", error);
       res.status(500).json({ message: "Failed to restore backup" });
-    }
-  });
-
-  // =====================================================
-  // Dynamic Product Types APIs - إدارة الأصناف الديناميكية
-  // =====================================================
-
-  // Get all product types
-  app.get("/api/product-types", requireAuth, async (req, res) => {
-    try {
-      const allProductTypes = await db.select().from(productTypes).orderBy(productTypes.sortOrder);
-      res.json(allProductTypes);
-    } catch (error) {
-      console.error("Error fetching product types:", error);
-      res.status(500).json({ message: "Failed to fetch product types" });
-    }
-  });
-
-  // Get active product types only
-  app.get("/api/product-types/active", requireAuth, async (req, res) => {
-    try {
-      const activeTypes = await db.select().from(productTypes)
-        .where(eq(productTypes.isActive, true))
-        .orderBy(productTypes.sortOrder);
-      res.json(activeTypes);
-    } catch (error) {
-      console.error("Error fetching active product types:", error);
-      res.status(500).json({ message: "Failed to fetch product types" });
-    }
-  });
-
-  // Get single product type
-  app.get("/api/product-types/:id", requireAuth, async (req, res) => {
-    try {
-      const [productType] = await db.select().from(productTypes)
-        .where(eq(productTypes.id, req.params.id));
-      if (!productType) {
-        return res.status(404).json({ message: "Product type not found" });
-      }
-      res.json(productType);
-    } catch (error) {
-      console.error("Error fetching product type:", error);
-      res.status(500).json({ message: "Failed to fetch product type" });
-    }
-  });
-
-  // Create new product type (Admin/Supervisor only)
-  app.post("/api/product-types", requireAuth, requireSupervisor, async (req, res) => {
-    try {
-      const user = (req as any).user;
-      const parsed = insertProductTypeSchema.safeParse(req.body);
-      
-      if (!parsed.success) {
-        return res.status(400).json({ message: "Invalid data", errors: parsed.error.errors });
-      }
-
-      // Check if code already exists
-      const [existing] = await db.select().from(productTypes)
-        .where(eq(productTypes.code, parsed.data.code));
-      if (existing) {
-        return res.status(400).json({ message: "كود الصنف موجود مسبقاً" });
-      }
-
-      const [newProductType] = await db.insert(productTypes).values({
-        ...parsed.data,
-        createdBy: user.id,
-      }).returning();
-
-      // Log the action
-      await storage.createSystemLog({
-        userId: user.id,
-        userName: user.username,
-        userRole: user.role,
-        regionId: user.regionId,
-        action: 'create',
-        entityType: 'product_type',
-        entityId: newProductType.id,
-        entityName: newProductType.name,
-        description: `إنشاء صنف جديد: ${newProductType.name}`,
-        severity: 'info',
-        success: true,
-      });
-
-      res.status(201).json(newProductType);
-    } catch (error) {
-      console.error("Error creating product type:", error);
-      res.status(500).json({ message: "Failed to create product type" });
-    }
-  });
-
-  // Update product type (Admin/Supervisor only)
-  app.patch("/api/product-types/:id", requireAuth, requireSupervisor, async (req, res) => {
-    try {
-      const user = (req as any).user;
-      const [existing] = await db.select().from(productTypes)
-        .where(eq(productTypes.id, req.params.id));
-      
-      if (!existing) {
-        return res.status(404).json({ message: "Product type not found" });
-      }
-
-      // If code is being changed, check uniqueness
-      if (req.body.code && req.body.code !== existing.code) {
-        const [codeExists] = await db.select().from(productTypes)
-          .where(eq(productTypes.code, req.body.code));
-        if (codeExists) {
-          return res.status(400).json({ message: "كود الصنف موجود مسبقاً" });
-        }
-      }
-
-      const [updated] = await db.update(productTypes)
-        .set({
-          ...req.body,
-          updatedAt: new Date(),
-        })
-        .where(eq(productTypes.id, req.params.id))
-        .returning();
-
-      // Log the action
-      await storage.createSystemLog({
-        userId: user.id,
-        userName: user.username,
-        userRole: user.role,
-        regionId: user.regionId,
-        action: 'update',
-        entityType: 'product_type',
-        entityId: updated.id,
-        entityName: updated.name,
-        description: `تحديث صنف: ${updated.name}`,
-        severity: 'info',
-        success: true,
-      });
-
-      res.json(updated);
-    } catch (error) {
-      console.error("Error updating product type:", error);
-      res.status(500).json({ message: "Failed to update product type" });
-    }
-  });
-
-  // Toggle product type active status (Admin/Supervisor only)
-  app.patch("/api/product-types/:id/toggle-active", requireAuth, requireSupervisor, async (req, res) => {
-    try {
-      const user = (req as any).user;
-      const [existing] = await db.select().from(productTypes)
-        .where(eq(productTypes.id, req.params.id));
-      
-      if (!existing) {
-        return res.status(404).json({ message: "Product type not found" });
-      }
-
-      const [updated] = await db.update(productTypes)
-        .set({
-          isActive: !existing.isActive,
-          updatedAt: new Date(),
-        })
-        .where(eq(productTypes.id, req.params.id))
-        .returning();
-
-      // Log the action
-      await storage.createSystemLog({
-        userId: user.id,
-        userName: user.username,
-        userRole: user.role,
-        regionId: user.regionId,
-        action: 'update',
-        entityType: 'product_type',
-        entityId: updated.id,
-        entityName: updated.name,
-        description: `${updated.isActive ? 'تفعيل' : 'إلغاء تفعيل'} صنف: ${updated.name}`,
-        severity: 'info',
-        success: true,
-      });
-
-      res.json(updated);
-    } catch (error) {
-      console.error("Error toggling product type:", error);
-      res.status(500).json({ message: "Failed to toggle product type" });
-    }
-  });
-
-  // Delete product type (Admin only) - only if no inventory exists
-  app.delete("/api/product-types/:id", requireAuth, requireAdmin, async (req, res) => {
-    try {
-      const user = (req as any).user;
-      const [existing] = await db.select().from(productTypes)
-        .where(eq(productTypes.id, req.params.id));
-      
-      if (!existing) {
-        return res.status(404).json({ message: "Product type not found" });
-      }
-
-      // Check if there's any inventory using this product type
-      const [warehouseInv] = await db.select().from(warehouseDynamicInventory)
-        .where(eq(warehouseDynamicInventory.productTypeId, req.params.id))
-        .limit(1);
-      const [techInv] = await db.select().from(technicianDynamicInventory)
-        .where(eq(technicianDynamicInventory.productTypeId, req.params.id))
-        .limit(1);
-
-      if (warehouseInv || techInv) {
-        return res.status(400).json({ 
-          message: "لا يمكن حذف هذا الصنف لوجود مخزون مرتبط به. يمكنك إلغاء تفعيله بدلاً من ذلك." 
-        });
-      }
-
-      await db.delete(productTypes).where(eq(productTypes.id, req.params.id));
-
-      // Log the action
-      await storage.createSystemLog({
-        userId: user.id,
-        userName: user.username,
-        userRole: user.role,
-        regionId: user.regionId,
-        action: 'delete',
-        entityType: 'product_type',
-        entityId: existing.id,
-        entityName: existing.name,
-        description: `حذف صنف: ${existing.name}`,
-        severity: 'warn',
-        success: true,
-      });
-
-      res.status(204).send();
-    } catch (error) {
-      console.error("Error deleting product type:", error);
-      res.status(500).json({ message: "Failed to delete product type" });
-    }
-  });
-
-  // =====================================================
-  // Dynamic Warehouse Inventory APIs
-  // =====================================================
-
-  // Get all dynamic inventory for all warehouses (for export)
-  app.get("/api/warehouse-dynamic-inventory", requireAuth, async (req, res) => {
-    try {
-      const inventory = await db.select({
-        warehouseId: warehouseDynamicInventory.warehouseId,
-        productTypeId: warehouseDynamicInventory.productTypeId,
-        boxes: warehouseDynamicInventory.boxes,
-        units: warehouseDynamicInventory.units,
-        productType: productTypes,
-      })
-      .from(warehouseDynamicInventory)
-      .innerJoin(productTypes, eq(warehouseDynamicInventory.productTypeId, productTypes.id));
-      
-      res.json(inventory);
-    } catch (error) {
-      console.error("Error fetching all warehouse dynamic inventory:", error);
-      res.status(500).json({ message: "Failed to fetch inventory" });
-    }
-  });
-
-  // Get dynamic inventory for a warehouse
-  app.get("/api/warehouses/:warehouseId/dynamic-inventory", requireAuth, async (req, res) => {
-    try {
-      const inventory = await db.select({
-        id: warehouseDynamicInventory.id,
-        warehouseId: warehouseDynamicInventory.warehouseId,
-        productTypeId: warehouseDynamicInventory.productTypeId,
-        boxes: warehouseDynamicInventory.boxes,
-        units: warehouseDynamicInventory.units,
-        productType: productTypes,
-      })
-      .from(warehouseDynamicInventory)
-      .innerJoin(productTypes, eq(warehouseDynamicInventory.productTypeId, productTypes.id))
-      .where(eq(warehouseDynamicInventory.warehouseId, req.params.warehouseId));
-      
-      res.json(inventory);
-    } catch (error) {
-      console.error("Error fetching warehouse dynamic inventory:", error);
-      res.status(500).json({ message: "Failed to fetch inventory" });
-    }
-  });
-
-  // Update dynamic inventory for a warehouse
-  app.post("/api/warehouses/:warehouseId/dynamic-inventory", requireAuth, requireSupervisor, async (req, res) => {
-    try {
-      const user = (req as any).user;
-      const { productTypeId, boxes, units, action } = req.body;
-
-      if (!productTypeId) {
-        return res.status(400).json({ message: "Product type ID is required" });
-      }
-
-      // Get existing inventory record
-      const [existing] = await db.select().from(warehouseDynamicInventory)
-        .where(and(
-          eq(warehouseDynamicInventory.warehouseId, req.params.warehouseId),
-          eq(warehouseDynamicInventory.productTypeId, productTypeId)
-        ));
-
-      let result;
-      if (existing) {
-        // Update existing record
-        const newBoxes = action === 'add' 
-          ? (existing.boxes || 0) + (boxes || 0) 
-          : action === 'subtract' 
-            ? Math.max(0, (existing.boxes || 0) - (boxes || 0))
-            : (boxes || 0);
-        const newUnits = action === 'add' 
-          ? (existing.units || 0) + (units || 0) 
-          : action === 'subtract'
-            ? Math.max(0, (existing.units || 0) - (units || 0))
-            : (units || 0);
-
-        [result] = await db.update(warehouseDynamicInventory)
-          .set({
-            boxes: newBoxes,
-            units: newUnits,
-            updatedAt: new Date(),
-          })
-          .where(eq(warehouseDynamicInventory.id, existing.id))
-          .returning();
-      } else {
-        // Create new record
-        [result] = await db.insert(warehouseDynamicInventory).values({
-          warehouseId: req.params.warehouseId,
-          productTypeId,
-          boxes: boxes || 0,
-          units: units || 0,
-        }).returning();
-      }
-
-      // Get product type name for logging
-      const [productType] = await db.select().from(productTypes)
-        .where(eq(productTypes.id, productTypeId));
-
-      await storage.createSystemLog({
-        userId: user.id,
-        userName: user.username,
-        userRole: user.role,
-        regionId: user.regionId,
-        action: action || 'update',
-        entityType: 'warehouse_inventory',
-        entityId: req.params.warehouseId,
-        entityName: productType?.name || 'Unknown',
-        description: `تحديث مخزون المستودع: ${productType?.name || ''} - صناديق: ${boxes || 0}، وحدات: ${units || 0}`,
-        severity: 'info',
-        success: true,
-      });
-
-      res.json(result);
-    } catch (error) {
-      console.error("Error updating warehouse dynamic inventory:", error);
-      res.status(500).json({ message: "Failed to update inventory" });
-    }
-  });
-
-  // =====================================================
-  // Dynamic Technician Inventory APIs
-  // =====================================================
-
-  // Get dynamic inventory for a technician
-  app.get("/api/technicians/:technicianId/dynamic-inventory", requireAuth, async (req, res) => {
-    try {
-      const inventory = await db.select({
-        id: technicianDynamicInventory.id,
-        technicianId: technicianDynamicInventory.technicianId,
-        productTypeId: technicianDynamicInventory.productTypeId,
-        productTypeName: productTypes.name,
-        boxes: technicianDynamicInventory.boxes,
-        units: technicianDynamicInventory.units,
-      })
-      .from(technicianDynamicInventory)
-      .innerJoin(productTypes, eq(technicianDynamicInventory.productTypeId, productTypes.id))
-      .where(eq(technicianDynamicInventory.technicianId, req.params.technicianId));
-      
-      res.json(inventory);
-    } catch (error) {
-      console.error("Error fetching technician dynamic inventory:", error);
-      res.status(500).json({ message: "Failed to fetch inventory" });
-    }
-  });
-
-  // Get my dynamic inventory (for logged-in technician)
-  app.get("/api/my-dynamic-inventory", requireAuth, async (req, res) => {
-    try {
-      const user = (req as any).user;
-      const inventory = await db.select({
-        id: technicianDynamicInventory.id,
-        technicianId: technicianDynamicInventory.technicianId,
-        productTypeId: technicianDynamicInventory.productTypeId,
-        productTypeName: productTypes.name,
-        boxes: technicianDynamicInventory.boxes,
-        units: technicianDynamicInventory.units,
-      })
-      .from(technicianDynamicInventory)
-      .innerJoin(productTypes, eq(technicianDynamicInventory.productTypeId, productTypes.id))
-      .where(eq(technicianDynamicInventory.technicianId, user.id));
-      
-      res.json(inventory);
-    } catch (error) {
-      console.error("Error fetching my dynamic inventory:", error);
-      res.status(500).json({ message: "Failed to fetch inventory" });
-    }
-  });
-
-  // =====================================================
-  // Data Migration API - Migrate from legacy to dynamic
-  // =====================================================
-
-  // Migrate warehouse inventory from legacy to dynamic
-  app.post("/api/migrate-warehouse-inventory", requireAuth, requireAdmin, async (req, res) => {
-    try {
-      const user = (req as any).user;
-      
-      // Get all product types
-      const allProductTypes = await db.select().from(productTypes).where(eq(productTypes.isActive, true));
-      
-      // Map legacy field names to product type codes
-      const legacyToCodeMap: Record<string, { boxField: string; unitField: string }> = {
-        'n950': { boxField: 'n950Boxes', unitField: 'n950Units' },
-        'i9000s': { boxField: 'i9000sBoxes', unitField: 'i9000sUnits' },
-        'i9100': { boxField: 'i9100Boxes', unitField: 'i9100Units' },
-        'rollPaper': { boxField: 'rollPaperBoxes', unitField: 'rollPaperUnits' },
-        'stickers': { boxField: 'stickersBoxes', unitField: 'stickersUnits' },
-        'newBatteries': { boxField: 'newBatteriesBoxes', unitField: 'newBatteriesUnits' },
-        'mobilySim': { boxField: 'mobilySimBoxes', unitField: 'mobilySimUnits' },
-        'stcSim': { boxField: 'stcSimBoxes', unitField: 'stcSimUnits' },
-        'zainSim': { boxField: 'zainSimBoxes', unitField: 'zainSimUnits' },
-      };
-
-      // Get all warehouses with inventory
-      const warehouses = await db.select().from(warehouseInventory);
-      
-      let migratedCount = 0;
-      
-      for (const warehouse of warehouses) {
-        for (const productType of allProductTypes) {
-          const mapping = legacyToCodeMap[productType.code];
-          if (!mapping) continue;
-          
-          const boxes = (warehouse as any)[mapping.boxField] || 0;
-          const units = (warehouse as any)[mapping.unitField] || 0;
-          
-          if (boxes === 0 && units === 0) continue;
-          
-          // Check if already migrated
-          const [existing] = await db.select().from(warehouseDynamicInventory)
-            .where(and(
-              eq(warehouseDynamicInventory.warehouseId, warehouse.warehouseId),
-              eq(warehouseDynamicInventory.productTypeId, productType.id)
-            ));
-          
-          if (existing) {
-            // Update existing
-            await db.update(warehouseDynamicInventory)
-              .set({ boxes, units, updatedAt: new Date() })
-              .where(eq(warehouseDynamicInventory.id, existing.id));
-          } else {
-            // Insert new
-            await db.insert(warehouseDynamicInventory).values({
-              warehouseId: warehouse.warehouseId,
-              productTypeId: productType.id,
-              boxes,
-              units,
-            });
-          }
-          migratedCount++;
-        }
-      }
-
-      await storage.createSystemLog({
-        userId: user.id,
-        userName: user.username,
-        userRole: user.role,
-        regionId: user.regionId,
-        action: 'migrate',
-        entityType: 'warehouse_inventory',
-        entityId: 'all',
-        entityName: 'Warehouse Inventory Migration',
-        description: `تم ترحيل ${migratedCount} سجل مخزون للنظام الديناميكي`,
-        severity: 'info',
-        success: true,
-      });
-
-      res.json({ 
-        success: true, 
-        message: `تم ترحيل ${migratedCount} سجل بنجاح`,
-        migratedCount 
-      });
-    } catch (error) {
-      console.error("Error migrating warehouse inventory:", error);
-      res.status(500).json({ message: "Failed to migrate inventory" });
-    }
-  });
-
-  // Migrate technician inventory from legacy to dynamic
-  app.post("/api/migrate-technician-inventory", requireAuth, requireAdmin, async (req, res) => {
-    try {
-      const user = (req as any).user;
-      
-      // Get all product types
-      const allProductTypes = await db.select().from(productTypes).where(eq(productTypes.isActive, true));
-      
-      // Map legacy field names to product type codes
-      const legacyToCodeMap: Record<string, { boxField: string; unitField: string }> = {
-        'n950': { boxField: 'n950Boxes', unitField: 'n950Units' },
-        'i9000s': { boxField: 'i9000sBoxes', unitField: 'i9000sUnits' },
-        'i9100': { boxField: 'i9100Boxes', unitField: 'i9100Units' },
-        'rollPaper': { boxField: 'rollPaperBoxes', unitField: 'rollPaperUnits' },
-        'stickers': { boxField: 'stickersBoxes', unitField: 'stickersUnits' },
-        'newBatteries': { boxField: 'newBatteriesBoxes', unitField: 'newBatteriesUnits' },
-        'mobilySim': { boxField: 'mobilySimBoxes', unitField: 'mobilySimUnits' },
-        'stcSim': { boxField: 'stcSimBoxes', unitField: 'stcSimUnits' },
-        'zainSim': { boxField: 'zainSimBoxes', unitField: 'zainSimUnits' },
-      };
-
-      // Get all technicians with inventory
-      const technicians = await db.select().from(techniciansInventory);
-      
-      let migratedCount = 0;
-      
-      for (const tech of technicians) {
-        for (const productType of allProductTypes) {
-          const mapping = legacyToCodeMap[productType.code];
-          if (!mapping) continue;
-          
-          const boxes = (tech as any)[mapping.boxField] || 0;
-          const units = (tech as any)[mapping.unitField] || 0;
-          
-          if (boxes === 0 && units === 0) continue;
-          
-          // Check if already migrated
-          const [existing] = await db.select().from(technicianDynamicInventory)
-            .where(and(
-              eq(technicianDynamicInventory.technicianId, tech.id),
-              eq(technicianDynamicInventory.productTypeId, productType.id)
-            ));
-          
-          if (existing) {
-            // Update existing
-            await db.update(technicianDynamicInventory)
-              .set({ boxes, units, updatedAt: new Date() })
-              .where(eq(technicianDynamicInventory.id, existing.id));
-          } else {
-            // Insert new
-            await db.insert(technicianDynamicInventory).values({
-              technicianId: tech.id,
-              productTypeId: productType.id,
-              boxes,
-              units,
-            });
-          }
-          migratedCount++;
-        }
-      }
-
-      await storage.createSystemLog({
-        userId: user.id,
-        userName: user.username,
-        userRole: user.role,
-        regionId: user.regionId,
-        action: 'migrate',
-        entityType: 'technician_inventory',
-        entityId: 'all',
-        entityName: 'Technician Inventory Migration',
-        description: `تم ترحيل ${migratedCount} سجل مخزون فني للنظام الديناميكي`,
-        severity: 'info',
-        success: true,
-      });
-
-      res.json({ 
-        success: true, 
-        message: `تم ترحيل ${migratedCount} سجل بنجاح`,
-        migratedCount 
-      });
-    } catch (error) {
-      console.error("Error migrating technician inventory:", error);
-      res.status(500).json({ message: "Failed to migrate inventory" });
-    }
-  });
-
-  // Create dynamic inventory request
-  app.post("/api/dynamic-inventory-requests", requireAuth, async (req, res) => {
-    try {
-      const user = (req as any).user;
-      const { items, notes } = req.body;
-
-      if (!items || !Array.isArray(items) || items.length === 0) {
-        return res.status(400).json({ message: "يجب تحديد صنف واحد على الأقل" });
-      }
-
-      // Create the main request
-      const [request] = await db.insert(dynamicInventoryRequests).values({
-        technicianId: user.id,
-        notes: notes || null,
-        status: 'pending',
-      }).returning();
-
-      // Create request items
-      for (const item of items) {
-        if (item.boxes > 0 || item.units > 0) {
-          await db.insert(dynamicRequestItems).values({
-            requestId: request.id,
-            productTypeId: item.productTypeId,
-            boxes: item.boxes || 0,
-            units: item.units || 0,
-          });
-        }
-      }
-
-      await storage.createSystemLog({
-        userId: user.id,
-        userName: user.username,
-        userRole: user.role,
-        regionId: user.regionId,
-        action: 'create',
-        entityType: 'dynamic_inventory_request',
-        entityId: request.id,
-        entityName: `طلب مخزون - ${user.fullName || user.username}`,
-        description: `تم إنشاء طلب مخزون جديد يحتوي على ${items.length} صنف`,
-        severity: 'info',
-        success: true,
-      });
-
-      res.status(201).json(request);
-    } catch (error) {
-      console.error("Error creating dynamic inventory request:", error);
-      res.status(500).json({ message: "Failed to create inventory request" });
-    }
-  });
-
-  // Get my dynamic inventory requests
-  app.get("/api/dynamic-inventory-requests/my", requireAuth, async (req, res) => {
-    try {
-      const user = (req as any).user;
-      const requests = await db.select()
-        .from(dynamicInventoryRequests)
-        .where(eq(dynamicInventoryRequests.technicianId, user.id))
-        .orderBy(desc(dynamicInventoryRequests.createdAt));
-      
-      res.json(requests);
-    } catch (error) {
-      console.error("Error fetching my dynamic requests:", error);
-      res.status(500).json({ message: "Failed to fetch requests" });
-    }
-  });
-
-  // Get all pending dynamic inventory requests (for admin/supervisor)
-  app.get("/api/dynamic-inventory-requests/pending", requireAuth, requireAdmin, async (req, res) => {
-    try {
-      const requests = await db.select({
-        request: dynamicInventoryRequests,
-        technician: {
-          id: users.id,
-          name: users.fullName,
-          username: users.username,
-          city: users.city,
-        },
-      })
-        .from(dynamicInventoryRequests)
-        .innerJoin(users, eq(dynamicInventoryRequests.technicianId, users.id))
-        .where(eq(dynamicInventoryRequests.status, 'pending'))
-        .orderBy(desc(dynamicInventoryRequests.createdAt));
-
-      // Get items for each request
-      const result = await Promise.all(requests.map(async ({ request, technician }) => {
-        const items = await db.select({
-          item: dynamicRequestItems,
-          productType: productTypes,
-        })
-          .from(dynamicRequestItems)
-          .innerJoin(productTypes, eq(dynamicRequestItems.productTypeId, productTypes.id))
-          .where(eq(dynamicRequestItems.requestId, request.id));
-        
-        return {
-          ...request,
-          technicianName: technician.name,
-          technicianUsername: technician.username,
-          technicianCity: technician.city,
-          items: items.map(i => ({
-            ...i.item,
-            productType: i.productType,
-          })),
-        };
-      }));
-
-      res.json(result);
-    } catch (error) {
-      console.error("Error fetching pending dynamic requests:", error);
-      res.status(500).json({ message: "Failed to fetch requests" });
     }
   });
 

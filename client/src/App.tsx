@@ -28,7 +28,6 @@ import ProfilePage from "@/pages/profile";
 import TechnicianDetailsPage from "@/pages/technician-details";
 import SystemLogsPage from "@/pages/system-logs";
 import BackupManagementPage from "@/pages/backup-management";
-import ProductTypesPage from "@/pages/product-types";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import { Loader2 } from "lucide-react";
@@ -78,7 +77,6 @@ function AuthenticatedRouter() {
           <Route path="/transfer-details/:id" component={TransferDetailsPage} />
           <Route path="/operations" component={OperationsPage} />
           <Route path="/operation-details/:groupId" component={OperationDetailsPage} />
-          <Route path="/product-types" component={ProductTypesPage} />
         </>
       )}
       {user?.role === "admin" && (
