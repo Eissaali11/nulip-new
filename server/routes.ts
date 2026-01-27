@@ -1879,6 +1879,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (itemType && packagingType && quantity) {
         // Single item transfer (from dynamic modal)
+        // We allow any itemType now since they are dynamic
         transfers.push({
           warehouseId,
           technicianId,
@@ -1913,6 +1914,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (transfers.length === 0) {
         return res.status(400).json({ message: "No items to transfer" });
+      }
+
+      // Supervisors: validate region access (Moved down to support dynamic items)
+      if (user.role === 'supervisor') {
+        if (!user.regionId) {
+          return res.status(400).json({ message: "المشرف يجب أن يكون مرتبط بمنطقة" });
+        }
+
+        const warehouse = await storage.getWarehouse(warehouseId);
+        if (!warehouse) {
+          return res.status(404).json({ message: "Warehouse not found" });
+        }
+        if (warehouse.regionId !== user.regionId) {
+          return res.status(403).json({ message: "لا يمكنك النقل من مستودعات خارج منطقتك" });
+        }
+
+        const technician = await storage.getUser(technicianId);
+        if (!technician) {
+          return res.status(404).json({ message: "Technician not found" });
+        }
+        if (technician.regionId !== user.regionId) {
+          return res.status(403).json({ message: "لا يمكنك النقل إلى فنيين خارج منطقتك" });
+        }
       }
 
       for (const transfer of transfers) {
