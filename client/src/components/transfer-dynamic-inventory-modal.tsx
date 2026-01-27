@@ -85,9 +85,10 @@ export default function TransferDynamicInventoryModal({
     enabled: open,
   });
 
-  const { data: technicians, isLoading: techniciansLoading } = useQuery<TechnicianInventory[]>({
-    queryKey: ["/api/technicians-inventory"],
+  const { data: technicians, isLoading: techniciansLoading } = useQuery<any[]>({
+    queryKey: ["/api/users"],
     enabled: open,
+    select: (users) => users.filter((u: any) => u.role === "technician"),
   });
 
   useEffect(() => {
@@ -124,7 +125,7 @@ export default function TransferDynamicInventoryModal({
           return apiRequest("POST", "/api/warehouse-transfers", {
             warehouseId,
             technicianId: data.technicianId,
-            technicianName: selectedTech.technicianName,
+            technicianName: selectedTech.fullName,
             itemType: productType.code,
             packagingType: item.packagingType,
             quantity: item.quantity,
@@ -250,7 +251,7 @@ export default function TransferDynamicInventoryModal({
               <SelectContent>
                 {technicians?.map((tech) => (
                   <SelectItem key={tech.id} value={tech.id}>
-                    {tech.technicianName} - {tech.city}
+                    {tech.fullName} {tech.city ? `- ${tech.city}` : ""}
                   </SelectItem>
                 ))}
               </SelectContent>
