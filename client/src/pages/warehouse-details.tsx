@@ -904,11 +904,11 @@ export default function WarehouseDetailsPage() {
         onOpenChange={setShowTransferModal}
         warehouseId={warehouseId}
         warehouseName={warehouse.name}
-        currentInventory={dynamicInventory?.map(inv => ({
-          productTypeId: inv.productTypeId,
-          boxes: inv.boxes,
-          units: inv.units,
-        })) || []}
+        currentInventory={inventoryItems.map(item => ({
+          productTypeId: item.id,
+          boxes: item.boxes,
+          units: item.units,
+        }))}
       />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

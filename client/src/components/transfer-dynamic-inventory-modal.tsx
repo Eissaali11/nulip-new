@@ -221,9 +221,18 @@ export default function TransferDynamicInventoryModal({
   };
 
   const getAvailableQuantity = (productTypeId: string, packagingType: string): number => {
+    const pt = productTypes?.find(p => p.id === productTypeId);
     const inv = currentInventory.find(i => i.productTypeId === productTypeId);
-    if (!inv) return 0;
-    return packagingType === "box" ? inv.boxes : inv.units;
+    
+    let total = packagingType === "box" ? (inv?.boxes || 0) : (inv?.units || 0);
+
+    // If it's a legacy item, include static inventory as well
+    if (pt && warehouseId) {
+      // We need to pass the full warehouse inventory to this component or fetch it
+      // For now, we'll assume the parent passes the combined currentInventory or we need to fix it in the parent
+    }
+    
+    return total;
   };
 
   const isLoading = productTypesLoading || techniciansLoading;
