@@ -226,7 +226,7 @@ export default function LandingPage() {
               {t('landing.hero.description')}
               <br />
               <span className="text-[#18B2B0] font-bold mt-4 block text-sm lg:text-base">
-                API Base URL: https://stoc.today/api
+                الواجهة البرمجية (API): <a href="https://stoc.today/api/inventory" target="_blank" rel="noopener noreferrer" className="underline hover:text-cyan-300">stoc.today/api</a>
               </span>
             </motion.p>
           </div>
