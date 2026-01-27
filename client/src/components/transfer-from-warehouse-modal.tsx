@@ -168,9 +168,21 @@ export default function TransferFromWarehouseModal({
       onOpenChange(false);
     },
     onError: (error: any) => {
+      let errorMessage = "حدث خطأ أثناء نقل الأصناف";
+      try {
+        if (typeof error.message === 'string' && error.message.startsWith('{')) {
+          const parsed = JSON.parse(error.message);
+          errorMessage = parsed.message || errorMessage;
+        } else {
+          errorMessage = error.message || errorMessage;
+        }
+      } catch (e) {
+        errorMessage = error.message || errorMessage;
+      }
+
       toast({
         title: "خطأ في النقل",
-        description: error.message || "حدث خطأ أثناء نقل الأصناف",
+        description: errorMessage,
         variant: "destructive",
       });
     },

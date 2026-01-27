@@ -79,9 +79,21 @@ export default function AddStockModal({
       onOpenChange(false);
     },
     onError: (error: any) => {
+      let errorMessage = "حدث خطأ أثناء الإضافة إلى المخزون";
+      try {
+        if (typeof error.message === 'string' && error.message.startsWith('{')) {
+          const parsed = JSON.parse(error.message);
+          errorMessage = parsed.message || errorMessage;
+        } else {
+          errorMessage = error.message || errorMessage;
+        }
+      } catch (e) {
+        errorMessage = error.message || errorMessage;
+      }
+
       toast({
         title: "خطأ في الإضافة",
-        description: error.message || "حدث خطأ أثناء الإضافة إلى المخزون",
+        description: errorMessage,
         variant: "destructive",
       });
     },
