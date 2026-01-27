@@ -123,9 +123,24 @@ export default function ProductTypesPage() {
       toast({ title: "تم حذف الصنف بنجاح" });
     },
     onError: (error: any) => {
+      let errorMessage = "حدث خطأ غير متوقع";
+      try {
+        if (typeof error.message === 'string') {
+          // Check if message is JSON string
+          if (error.message.startsWith('{')) {
+            const parsed = JSON.parse(error.message);
+            errorMessage = parsed.message || errorMessage;
+          } else {
+            errorMessage = error.message;
+          }
+        }
+      } catch (e) {
+        errorMessage = error.message;
+      }
+
       toast({ 
         title: "فشل في حذف الصنف", 
-        description: error.message || "لا يمكن حذف صنف مرتبط بمخزون",
+        description: errorMessage,
         variant: "destructive" 
       });
     },
