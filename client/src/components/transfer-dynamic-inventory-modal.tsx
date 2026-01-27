@@ -328,7 +328,6 @@ export default function TransferDynamicInventoryModal({
                           <Input
                             type="number"
                             min="0"
-                            max={getAvailableQuantity(productType.id, values.packagingType)}
                             value={values.packagingType === "box" ? values.boxes : values.units}
                             onChange={(e) => handleValueChange(
                               productType.id, 
