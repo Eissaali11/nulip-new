@@ -56,7 +56,13 @@ import {
   supervisorTechnicians,
   supervisorWarehouses,
   inventoryRequests,
-  systemLogs
+  systemLogs,
+  productTypes,
+  warehouseDynamicInventory,
+  technicianDynamicInventory,
+  dynamicInventoryRequests,
+  dynamicRequestItems,
+  dynamicWarehouseTransfers
 } from "@shared/schema";
 import { IStorage } from "./storage";
 import { db } from "./db";
@@ -2371,14 +2377,20 @@ export class DatabaseStorage implements IStorage {
     await db.delete(systemLogs);
     await db.delete(receivedDevices);
     await db.delete(stockMovements);
+    await db.delete(dynamicWarehouseTransfers);
     await db.delete(warehouseTransfers);
+    await db.delete(dynamicRequestItems);
+    await db.delete(dynamicInventoryRequests);
     await db.delete(inventoryRequests);
+    await db.delete(technicianDynamicInventory);
     await db.delete(technicianFixedInventories);
     await db.delete(techniciansInventory);
+    await db.delete(warehouseDynamicInventory);
     await db.delete(warehouseInventory);
     await db.delete(transactions);
     await db.delete(warehouses);
     await db.delete(inventoryItems);
+    await db.delete(productTypes);
     await db.delete(users);
     await db.delete(regions);
 
@@ -2388,6 +2400,9 @@ export class DatabaseStorage implements IStorage {
     }
     if (backup.data.users?.length > 0) {
       await db.insert(users).values(this.convertDates(backup.data.users));
+    }
+    if (backup.data.productTypes?.length > 0) {
+      await db.insert(productTypes).values(this.convertDates(backup.data.productTypes));
     }
     if (backup.data.inventoryItems?.length > 0) {
       await db.insert(inventoryItems).values(this.convertDates(backup.data.inventoryItems));
@@ -2401,17 +2416,32 @@ export class DatabaseStorage implements IStorage {
     if (backup.data.warehouseInventory?.length > 0) {
       await db.insert(warehouseInventory).values(this.convertDates(backup.data.warehouseInventory));
     }
+    if (backup.data.warehouseDynamicInventory?.length > 0) {
+      await db.insert(warehouseDynamicInventory).values(this.convertDates(backup.data.warehouseDynamicInventory));
+    }
     if (backup.data.techniciansInventory?.length > 0) {
       await db.insert(techniciansInventory).values(this.convertDates(backup.data.techniciansInventory));
     }
     if (backup.data.technicianFixedInventories?.length > 0) {
       await db.insert(technicianFixedInventories).values(this.convertDates(backup.data.technicianFixedInventories));
     }
+    if (backup.data.technicianDynamicInventory?.length > 0) {
+      await db.insert(technicianDynamicInventory).values(this.convertDates(backup.data.technicianDynamicInventory));
+    }
     if (backup.data.inventoryRequests?.length > 0) {
       await db.insert(inventoryRequests).values(this.convertDates(backup.data.inventoryRequests));
     }
+    if (backup.data.dynamicInventoryRequests?.length > 0) {
+      await db.insert(dynamicInventoryRequests).values(this.convertDates(backup.data.dynamicInventoryRequests));
+    }
+    if (backup.data.dynamicRequestItems?.length > 0) {
+      await db.insert(dynamicRequestItems).values(this.convertDates(backup.data.dynamicRequestItems));
+    }
     if (backup.data.warehouseTransfers?.length > 0) {
       await db.insert(warehouseTransfers).values(this.convertDates(backup.data.warehouseTransfers));
+    }
+    if (backup.data.dynamicWarehouseTransfers?.length > 0) {
+      await db.insert(dynamicWarehouseTransfers).values(this.convertDates(backup.data.dynamicWarehouseTransfers));
     }
     if (backup.data.stockMovements?.length > 0) {
       await db.insert(stockMovements).values(this.convertDates(backup.data.stockMovements));
