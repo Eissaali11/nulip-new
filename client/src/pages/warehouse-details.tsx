@@ -341,20 +341,38 @@ export default function WarehouseDetailsPage() {
       .filter(pt => pt.isActive)
       .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
       .map(pt => {
-        const inv = dynamicInventory?.find(d => d.productTypeId === pt.id);
+        // Try to find in dynamic inventory first
+        const dynInv = dynamicInventory?.find(d => d.productTypeId === pt.id);
+        
+        // Try to find in static inventory as fallback for legacy items
+        let boxes = dynInv?.boxes || 0;
+        let units = dynInv?.units || 0;
+        
+        if (warehouse?.inventory) {
+          const legacyBoxesKey = `${pt.code}Boxes` as keyof WarehouseInventory;
+          const legacyUnitsKey = `${pt.code}Units` as keyof WarehouseInventory;
+          
+          if (warehouse.inventory[legacyBoxesKey] !== undefined) {
+            boxes += (warehouse.inventory[legacyBoxesKey] as number) || 0;
+          }
+          if (warehouse.inventory[legacyUnitsKey] !== undefined) {
+            units += (warehouse.inventory[legacyUnitsKey] as number) || 0;
+          }
+        }
+
         return {
           id: pt.id,
           name: pt.code,
           nameAr: pt.name,
-          boxes: inv?.boxes || 0,
-          units: inv?.units || 0,
+          boxes,
+          units,
           icon: getCategoryIcon(pt.category),
           color: getCategoryColor(pt.category),
           gradient: getCategoryGradient(pt.category),
           packagingType: pt.packagingType,
         };
       });
-  }, [productTypes, dynamicInventory]);
+  }, [productTypes, dynamicInventory, warehouse?.inventory]);
 
   if (warehouseLoading) {
     return (
