@@ -127,8 +127,9 @@ export default function TransferDynamicInventoryModal({
             technicianId: data.technicianId,
             technicianName: selectedTech.fullName,
             notes: data.notes || undefined,
-            [item.packagingType === 'box' ? itemType : itemType]: item.quantity,
-            [`${itemType}PackagingType`]: item.packagingType,
+            itemType: productType.code,
+            packagingType: item.packagingType,
+            quantity: item.quantity,
           });
         });
       
