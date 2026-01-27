@@ -1912,37 +1912,79 @@ export class DatabaseStorage implements IStorage {
 
   async transferFromWarehouse(data: InsertWarehouseTransfer): Promise<WarehouseTransfer> {
     return await db.transaction(async (tx) => {
-      const [inventory] = await tx
+      // Check if it's a dynamic item first
+      const [dynamicProductType] = await tx
         .select()
-        .from(warehouseInventory)
-        .where(eq(warehouseInventory.warehouseId, data.warehouseId));
+        .from(productTypes)
+        .where(eq(productTypes.code, data.itemType));
 
-      if (!inventory) {
-        throw new Error(`Warehouse inventory not found`);
-      }
+      if (dynamicProductType) {
+        const [inv] = await tx
+          .select()
+          .from(warehouseDynamicInventory)
+          .where(
+            and(
+              eq(warehouseDynamicInventory.warehouseId, data.warehouseId),
+              eq(warehouseDynamicInventory.productTypeId, dynamicProductType.id)
+            )
+          );
 
-      const fieldMap: Record<string, { boxes: string; units: string }> = {
-        'n950': { boxes: 'n950Boxes', units: 'n950Units' },
-        'i9000s': { boxes: 'i9000sBoxes', units: 'i9000sUnits' },
-        'i9100': { boxes: 'i9100Boxes', units: 'i9100Units' },
-        'rollPaper': { boxes: 'rollPaperBoxes', units: 'rollPaperUnits' },
-        'stickers': { boxes: 'stickersBoxes', units: 'stickersUnits' },
-        'newBatteries': { boxes: 'newBatteriesBoxes', units: 'newBatteriesUnits' },
-        'mobilySim': { boxes: 'mobilySimBoxes', units: 'mobilySimUnits' },
-        'stcSim': { boxes: 'stcSimBoxes', units: 'stcSimUnits' },
-        'zainSim': { boxes: 'zainSimBoxes', units: 'zainSimUnits' },
-      };
+        if (!inv) throw new Error(`هذا الصنف (${dynamicProductType.name}) غير متوفر في المستودع`);
+        
+        const available = data.packagingType === 'box' ? inv.boxes : inv.units;
+        if (available < data.quantity) {
+          throw new Error(`الكمية المطلوبة من ${dynamicProductType.name} غير متوفرة. المتاح: ${available}`);
+        }
 
-      const fields = fieldMap[data.itemType];
-      if (!fields) {
-        throw new Error(`Invalid item type: ${data.itemType}`);
-      }
+        // Deduct from warehouse
+        await tx
+          .update(warehouseDynamicInventory)
+          .set({
+            boxes: data.packagingType === 'box' ? inv.boxes - data.quantity : inv.boxes,
+            units: data.packagingType === 'unit' ? inv.units - data.quantity : inv.units,
+            updatedAt: new Date(),
+          })
+          .where(eq(warehouseDynamicInventory.id, inv.id));
+      } else {
+        const [inventory] = await tx
+          .select()
+          .from(warehouseInventory)
+          .where(eq(warehouseInventory.warehouseId, data.warehouseId));
 
-      const fieldName = data.packagingType === 'box' ? fields.boxes : fields.units;
-      const currentStock = (inventory as any)[fieldName] || 0;
+        if (!inventory) {
+          throw new Error(`Warehouse inventory not found`);
+        }
 
-      if (currentStock < data.quantity) {
-        throw new Error(`Insufficient stock in warehouse. Available: ${currentStock}, Requested: ${data.quantity}`);
+        const fieldMap: Record<string, { boxes: string; units: string }> = {
+          'n950': { boxes: 'n950Boxes', units: 'n950Units' },
+          'i9000s': { boxes: 'i9000sBoxes', units: 'i9000sUnits' },
+          'i9100': { boxes: 'i9100Boxes', units: 'i9100Units' },
+          'rollPaper': { boxes: 'rollPaperBoxes', units: 'rollPaperUnits' },
+          'stickers': { boxes: 'stickersBoxes', units: 'stickersUnits' },
+          'newBatteries': { boxes: 'newBatteriesBoxes', units: 'newBatteriesUnits' },
+          'mobilySim': { boxes: 'mobilySimBoxes', units: 'mobilySimUnits' },
+          'stcSim': { boxes: 'stcSimBoxes', units: 'stcSimUnits' },
+          'zainSim': { boxes: 'zainSimBoxes', units: 'zainSimUnits' },
+        };
+
+        const fields = fieldMap[data.itemType];
+        if (!fields) {
+          throw new Error(`Invalid item type: ${data.itemType}`);
+        }
+
+        const fieldName = data.packagingType === 'box' ? fields.boxes : fields.units;
+        const currentStock = (inventory as any)[fieldName] || 0;
+
+        if (currentStock < data.quantity) {
+          throw new Error(`Insufficient stock in warehouse. Available: ${currentStock}, Requested: ${data.quantity}`);
+        }
+
+        await tx
+          .update(warehouseInventory)
+          .set({
+            [fieldName]: currentStock - data.quantity,
+          })
+          .where(eq(warehouseInventory.warehouseId, data.warehouseId));
       }
 
       const [transfer] = await tx
