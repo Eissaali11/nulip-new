@@ -1057,12 +1057,12 @@ export default function Notifications() {
 
                       {/* Rejection reason */}
                       {item.status === 'rejected' && (request?.adminNotes || groupedTransfer?.rejectionReason) && (
-                        <div className="mb-5 p-4 bg-gradient-to-br from-red-500/20 to-red-500/10 rounded-xl border border-red-500/30 hover:border-red-500/40 transition-all duration-300">
+                        <div className="mb-5 p-4 bg-red-950/20 rounded-xl border border-red-500/20 hover:border-red-500/30 transition-all duration-300">
                           <div className="flex items-start gap-2">
-                            <AlertCircle className="h-4 w-4 text-red-400 mt-0.5 flex-shrink-0" />
+                            <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
                             <div>
-                              <p className="text-xs font-semibold text-red-400 mb-1">سبب الرفض</p>
-                              <p className="text-sm text-red-300 leading-relaxed">
+                              <p className="text-xs font-semibold text-red-500 mb-1">سبب الرفض</p>
+                              <p className="text-sm text-red-200/90 leading-relaxed font-medium">
                                 {request?.adminNotes || groupedTransfer?.rejectionReason}
                               </p>
                             </div>
@@ -1086,7 +1086,7 @@ export default function Notifications() {
                             onClick={() => request ? handleRejectClick(request) : handleTechRejectBatchClick(groupedTransfer!)}
                             disabled={request ? rejectMutation.isPending : techRejectBatchMutation.isPending}
                             variant="outline"
-                            className="flex-1 bg-gradient-to-r from-red-500/10 to-red-600/10 border-red-500/30 text-red-400 hover:bg-red-500/20 hover:border-red-500/50 font-semibold shadow-lg shadow-red-500/10 hover:shadow-red-500/20 transition-all duration-300 h-11"
+                            className="flex-1 bg-red-500/10 border-red-500/40 text-red-500 hover:bg-red-500/20 hover:border-red-500/60 font-bold shadow-lg shadow-red-500/5 transition-all duration-300 h-11"
                             data-testid={`button-reject-${request ? request.id : groupedTransfer?.requestId}`}
                           >
                             <X className="h-4 w-4 ml-2" />
