@@ -116,6 +116,11 @@ export default function TechnicianDetailsPage() {
     enabled: !!technicianId,
   });
 
+  const { data: dynamicInventory } = useQuery<{ productTypeId: string; productTypeName: string; boxes: number; units: number }[]>({
+    queryKey: [`/api/technicians/${technicianId}/dynamic-inventory`],
+    enabled: !!technicianId,
+  });
+
   const isLoading = isLoadingFixed || isLoadingMoving;
 
   if (isLoading) {
@@ -277,6 +282,19 @@ export default function TechnicianDetailsPage() {
       icon: Package,
       color: "#f97316"
     },
+    ...(dynamicInventory || []).map(item => ({
+      nameAr: item.productTypeName,
+      nameEn: item.productTypeName,
+      fixedBoxes: 0, // Dynamic items are currently mostly in moving/warehouse
+      fixedUnits: 0,
+      fixedTotal: 0,
+      movingBoxes: item.boxes || 0,
+      movingUnits: item.units || 0,
+      movingTotal: (item.boxes || 0) + (item.units || 0),
+      grandTotal: (item.boxes || 0) + (item.units || 0),
+      icon: Package,
+      color: "#64748b"
+    }))
   ];
 
   const totalFixed = products.reduce((sum, p) => sum + p.fixedTotal, 0);
