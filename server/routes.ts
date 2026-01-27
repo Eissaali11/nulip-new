@@ -3300,9 +3300,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: technicianDynamicInventory.id,
         technicianId: technicianDynamicInventory.technicianId,
         productTypeId: technicianDynamicInventory.productTypeId,
+        productTypeName: productTypes.name,
         boxes: technicianDynamicInventory.boxes,
         units: technicianDynamicInventory.units,
-        productType: productTypes,
       })
       .from(technicianDynamicInventory)
       .innerJoin(productTypes, eq(technicianDynamicInventory.productTypeId, productTypes.id))
@@ -3323,9 +3323,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: technicianDynamicInventory.id,
         technicianId: technicianDynamicInventory.technicianId,
         productTypeId: technicianDynamicInventory.productTypeId,
+        productTypeName: productTypes.name,
         boxes: technicianDynamicInventory.boxes,
         units: technicianDynamicInventory.units,
-        productType: productTypes,
       })
       .from(technicianDynamicInventory)
       .innerJoin(productTypes, eq(technicianDynamicInventory.productTypeId, productTypes.id))

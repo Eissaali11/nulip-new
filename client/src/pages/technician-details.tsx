@@ -283,8 +283,8 @@ export default function TechnicianDetailsPage() {
       color: "#f97316"
     },
     ...(dynamicInventory || []).map(item => ({
-      nameAr: item.productTypeName,
-      nameEn: item.productTypeName,
+      nameAr: item.productTypeName || 'صنف غير معروف',
+      nameEn: item.productTypeName || 'Unknown Item',
       fixedBoxes: 0, // Dynamic items are currently mostly in moving/warehouse
       fixedUnits: 0,
       fixedTotal: 0,

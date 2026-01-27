@@ -280,7 +280,7 @@ export default function MyFixedInventory() {
       glowColor: 'shadow-violet-500/20',
     },
     ...(dynamicInventory || []).map(item => ({
-      name: item.productTypeName,
+      name: item.productTypeName || 'صنف غير معروف',
       icon: Package,
       boxes: item.boxes || 0,
       units: item.units || 0,

@@ -101,7 +101,7 @@ export default function MyMovingInventory() {
   });
 
   const { data: dynamicInventory } = useQuery<{ productTypeId: string; productTypeName: string; boxes: number; units: number }[]>({
-    queryKey: [`/api/technicians/${user?.id}/dynamic-inventory`],
+    queryKey: [`/api/my-dynamic-inventory`],
     enabled: !!user?.id,
   });
 
@@ -450,7 +450,7 @@ export default function MyMovingInventory() {
       ]
     },
     ...(dynamicInventory || []).map(item => ({
-      category: item.productTypeName,
+      category: item.productTypeName || 'صنف غير معروف',
       icon: "📦",
       color: "from-slate-500 to-slate-600",
       items: [
