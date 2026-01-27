@@ -11,12 +11,13 @@ import { Switch } from "@/components/ui/switch";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Package, Trash2, Edit, Power, PowerOff, Search, ArrowUpDown, Box, Hash } from "lucide-react";
+import { Plus, Package, Trash2, Edit, Power, PowerOff, Search, ArrowUpDown, Box, Hash, ArrowRight, LayoutDashboard } from "lucide-react";
 import type { ProductType } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
+import { Link } from "wouter";
 
 const productTypeFormSchema = z.object({
   name: z.string().min(1, "اسم الصنف مطلوب"),
@@ -173,6 +174,15 @@ export default function ProductTypesPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <div className="container mx-auto px-4 py-6 space-y-6">
+        <div className="flex justify-start">
+          <Link href="/">
+            <Button variant="ghost" className="gap-2 text-slate-600 hover:text-primary dark:text-slate-400">
+              <ArrowRight className="h-4 w-4" />
+              العودة للرئيسية
+            </Button>
+          </Link>
+        </div>
+
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
