@@ -103,9 +103,11 @@ export default function UpdateDynamicInventoryModal({
       return Promise.all(promises);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/warehouses", warehouseId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/warehouses", warehouseId, "dynamic-inventory"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/warehouses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/warehouses", warehouseId], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ["/api/warehouses", warehouseId, "dynamic-inventory"], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ["/api/warehouses"], refetchType: 'active' });
+      queryClient.refetchQueries({ queryKey: ["/api/warehouses", warehouseId] });
+      queryClient.refetchQueries({ queryKey: ["/api/warehouses", warehouseId, "dynamic-inventory"] });
       toast({
         title: "تم تحديث المخزون بنجاح",
         description: "تم تحديث كميات المخزون في المستودع",

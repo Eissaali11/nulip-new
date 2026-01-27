@@ -232,11 +232,13 @@ export default function WarehouseDetailsPage() {
   const { data: warehouse, isLoading: warehouseLoading } = useQuery<WarehouseData>({
     queryKey: ["/api/warehouses", warehouseId],
     enabled: !!warehouseId,
+    staleTime: 0,
   });
 
   const { data: dynamicInventory, isLoading: dynamicInventoryLoading } = useQuery<DynamicInventoryRecord[]>({
     queryKey: ["/api/warehouses", warehouseId, "dynamic-inventory"],
     enabled: !!warehouseId,
+    staleTime: 0,
   });
 
   const { data: productTypes } = useQuery<ProductType[]>({
