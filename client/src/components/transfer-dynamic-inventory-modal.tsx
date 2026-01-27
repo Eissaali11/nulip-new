@@ -126,10 +126,9 @@ export default function TransferDynamicInventoryModal({
             warehouseId,
             technicianId: data.technicianId,
             technicianName: selectedTech.fullName,
-            itemType: productType.code,
-            packagingType: item.packagingType,
-            quantity: item.quantity,
             notes: data.notes || undefined,
+            [item.packagingType === 'box' ? itemType : itemType]: item.quantity,
+            [`${itemType}PackagingType`]: item.packagingType,
           });
         });
       
