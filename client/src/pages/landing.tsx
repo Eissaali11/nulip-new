@@ -224,6 +224,10 @@ export default function LandingPage() {
               className="text-base lg:text-lg text-gray-400 leading-relaxed max-w-2xl mx-auto"
             >
               {t('landing.hero.description')}
+              <br />
+              <span className="text-[#18B2B0] font-bold mt-4 block text-sm lg:text-base">
+                API Base URL: https://stoc.today/api
+              </span>
             </motion.p>
           </div>
         </section>
