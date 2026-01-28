@@ -4,6 +4,7 @@ import { useRoute, Link } from "wouter";
 import { motion } from "framer-motion";
 import { exportSingleWarehouseToExcel } from "@/lib/exportToExcel";
 import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -276,235 +277,176 @@ export default function WarehouseDetailsPage() {
     },
   });
 
-  const exportTransferToPDF = (transfer: WarehouseTransfer) => {
-    const doc = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4'
-    });
-
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    
-    doc.setFillColor(255, 255, 255);
-    doc.rect(0, 0, pageWidth, pageHeight, 'F');
-    
-    doc.setFillColor(24, 178, 176);
-    doc.rect(0, 0, pageWidth, 45, 'F');
-    
-    doc.setFontSize(24);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(255, 255, 255);
-    doc.text('STOCKPRO', pageWidth / 2, 20, { align: 'center' });
-    
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Warehouse Transfer Receipt', pageWidth / 2, 32, { align: 'center' });
-    
-    let yPos = 60;
-    
-    doc.setDrawColor(24, 178, 176);
-    doc.setLineWidth(0.5);
-    doc.line(15, yPos - 5, pageWidth - 15, yPos - 5);
-    
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(24, 178, 176);
-    doc.text('TRANSFER DETAILS', 15, yPos);
-    
-    yPos += 10;
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(60, 60, 60);
-    
+  const exportTransferToPDF = async (transfer: WarehouseTransfer) => {
     const transferDate = new Date(transfer.createdAt);
-    doc.text('Date:', 15, yPos);
-    doc.setFont('helvetica', 'bold');
-    doc.text(transferDate.toLocaleDateString('en-GB') + ' ' + transferDate.toLocaleTimeString('en-GB'), 45, yPos);
+    const statusText = transfer.status === 'pending' ? 'معلقة' : transfer.status === 'accepted' ? 'مقبولة' : 'مرفوضة';
+    const statusColor = transfer.status === 'accepted' ? '#22c55e' : transfer.status === 'rejected' ? '#ef4444' : '#eab308';
     
-    yPos += 7;
-    doc.setFont('helvetica', 'normal');
-    doc.text('Status:', 15, yPos);
-    doc.setFont('helvetica', 'bold');
-    const statusText = transfer.status === 'pending' ? 'PENDING' : transfer.status === 'accepted' ? 'ACCEPTED' : 'REJECTED';
-    if (transfer.status === 'accepted') {
-      doc.setTextColor(34, 197, 94);
-    } else if (transfer.status === 'rejected') {
-      doc.setTextColor(239, 68, 68);
-    } else {
-      doc.setTextColor(234, 179, 8);
-    }
-    doc.text(statusText, 45, yPos);
+    const items: {name: string, nameAr: string, quantity: number, type: string}[] = [];
+    if (transfer.n950) items.push({name: 'N950', nameAr: 'N950', quantity: transfer.n950, type: transfer.n950PackagingType || 'box'});
+    if (transfer.i9000s) items.push({name: 'I9000s', nameAr: 'I9000s', quantity: transfer.i9000s, type: transfer.i9000sPackagingType || 'box'});
+    if (transfer.i9100) items.push({name: 'I9100', nameAr: 'I9100', quantity: transfer.i9100, type: transfer.i9100PackagingType || 'box'});
+    if (transfer.rollPaper) items.push({name: 'Roll Paper', nameAr: 'ورق رول', quantity: transfer.rollPaper, type: transfer.rollPaperPackagingType || 'box'});
+    if (transfer.stickers) items.push({name: 'Stickers', nameAr: 'ملصقات', quantity: transfer.stickers, type: transfer.stickersPackagingType || 'box'});
+    if (transfer.newBatteries) items.push({name: 'Batteries', nameAr: 'بطاريات', quantity: transfer.newBatteries, type: transfer.newBatteriesPackagingType || 'box'});
+    if (transfer.mobilySim) items.push({name: 'Mobily SIM', nameAr: 'شريحة موبايلي', quantity: transfer.mobilySim, type: transfer.mobilySimPackagingType || 'box'});
+    if (transfer.stcSim) items.push({name: 'STC SIM', nameAr: 'شريحة STC', quantity: transfer.stcSim, type: transfer.stcSimPackagingType || 'box'});
+    if (transfer.zainSim) items.push({name: 'Zain SIM', nameAr: 'شريحة زين', quantity: transfer.zainSim, type: transfer.zainSimPackagingType || 'box'});
+    if (transfer.lebaraSim || transfer.lebara) items.push({name: 'Lebara SIM', nameAr: 'شريحة ليبارا', quantity: transfer.lebaraSim || transfer.lebara || 0, type: transfer.lebaraSimPackagingType || transfer.lebaraPackagingType || 'box'});
     
-    yPos += 7;
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(60, 60, 60);
-    doc.text('Transfer ID:', 15, yPos);
-    doc.setFont('helvetica', 'bold');
-    doc.text(transfer.id.substring(0, 12) + '...', 45, yPos);
+    let totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
     
-    yPos += 15;
-    doc.setDrawColor(200, 200, 200);
-    doc.line(15, yPos - 5, pageWidth - 15, yPos - 5);
+    const container = document.createElement('div');
+    container.style.cssText = 'position: absolute; left: -9999px; top: 0; width: 794px; background: white; font-family: "Noto Sans Arabic", Arial, sans-serif; direction: rtl;';
     
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(24, 178, 176);
-    doc.text('WAREHOUSE INFORMATION', 15, yPos);
+    container.innerHTML = `
+      <div style="padding: 0;">
+        <div style="background: linear-gradient(135deg, #18B2B0, #0f8a88); padding: 30px; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 32px; font-weight: bold;">STOCKPRO</h1>
+          <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">إيصال نقل المستودع</p>
+        </div>
+        
+        <div style="padding: 30px;">
+          <div style="background: #f8f9fa; border-radius: 12px; padding: 20px; margin-bottom: 20px; border-right: 4px solid #18B2B0;">
+            <h3 style="color: #18B2B0; margin: 0 0 15px 0; font-size: 18px;">تفاصيل النقل</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 8px 0; color: #666; width: 120px;">التاريخ:</td>
+                <td style="padding: 8px 0; color: #333; font-weight: bold;">${transferDate.toLocaleDateString('ar-SA')} ${transferDate.toLocaleTimeString('ar-SA')}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #666;">الحالة:</td>
+                <td style="padding: 8px 0;"><span style="background: ${statusColor}20; color: ${statusColor}; padding: 4px 12px; border-radius: 20px; font-weight: bold;">${statusText}</span></td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #666;">رقم العملية:</td>
+                <td style="padding: 8px 0; color: #333; font-family: monospace; font-size: 12px;">${transfer.id}</td>
+              </tr>
+            </table>
+          </div>
+          
+          <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+            <div style="flex: 1; background: #f8f9fa; border-radius: 12px; padding: 20px; border-right: 4px solid #18B2B0;">
+              <h3 style="color: #18B2B0; margin: 0 0 15px 0; font-size: 18px;">معلومات المستودع</h3>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 8px 0; color: #666; width: 80px;">الاسم:</td>
+                  <td style="padding: 8px 0; color: #333; font-weight: bold;">${warehouse?.name || 'غير محدد'}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #666;">الموقع:</td>
+                  <td style="padding: 8px 0; color: #333;">${warehouse?.location || 'غير محدد'}</td>
+                </tr>
+              </table>
+            </div>
+            
+            <div style="flex: 1; background: #f8f9fa; border-radius: 12px; padding: 20px; border-right: 4px solid #18B2B0;">
+              <h3 style="color: #18B2B0; margin: 0 0 15px 0; font-size: 18px;">معلومات الفني</h3>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 8px 0; color: #666; width: 80px;">الاسم:</td>
+                  <td style="padding: 8px 0; color: #333; font-weight: bold;">${transfer.technicianName || 'غير محدد'}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #666;">المعرف:</td>
+                  <td style="padding: 8px 0; color: #333; font-family: monospace; font-size: 11px;">${transfer.technicianId?.substring(0, 12) || 'غير محدد'}...</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+          
+          <div style="background: #f8f9fa; border-radius: 12px; padding: 20px; margin-bottom: 20px; border-right: 4px solid #18B2B0;">
+            <h3 style="color: #18B2B0; margin: 0 0 15px 0; font-size: 18px;">الأصناف المنقولة</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="background: #18B2B0; color: white;">
+                  <th style="padding: 12px; text-align: right; border-radius: 0 8px 0 0;">الصنف</th>
+                  <th style="padding: 12px; text-align: center;">الكمية</th>
+                  <th style="padding: 12px; text-align: center; border-radius: 8px 0 0 0;">النوع</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${items.map((item, index) => `
+                  <tr style="background: ${index % 2 === 0 ? 'white' : '#f0f0f0'};">
+                    <td style="padding: 12px; border-bottom: 1px solid #eee;">${item.nameAr}</td>
+                    <td style="padding: 12px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">${item.quantity}</td>
+                    <td style="padding: 12px; text-align: center; border-bottom: 1px solid #eee;">${item.type === 'box' ? 'كرتون' : 'قطعة'}</td>
+                  </tr>
+                `).join('')}
+                <tr style="background: #18B2B0; color: white; font-weight: bold;">
+                  <td style="padding: 12px; border-radius: 0 0 8px 0;">الإجمالي</td>
+                  <td style="padding: 12px; text-align: center;">${totalItems}</td>
+                  <td style="padding: 12px; border-radius: 0 0 0 8px;"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          ${transfer.notes ? `
+          <div style="background: #fff3cd; border-radius: 12px; padding: 20px; margin-bottom: 20px; border-right: 4px solid #ffc107;">
+            <h3 style="color: #856404; margin: 0 0 10px 0; font-size: 16px;">ملاحظات</h3>
+            <p style="margin: 0; color: #856404;">${transfer.notes}</p>
+          </div>
+          ` : ''}
+        </div>
+        
+        <div style="background: #18B2B0; padding: 20px; text-align: center;">
+          <p style="color: white; margin: 0; font-size: 12px;">STOCKPRO - نظام إدارة مخزون راس السعودية</p>
+          <p style="color: rgba(255,255,255,0.8); margin: 5px 0 0 0; font-size: 11px;">تم الإنشاء: ${new Date().toLocaleString('ar-SA')}</p>
+        </div>
+      </div>
+    `;
     
-    yPos += 10;
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(60, 60, 60);
+    document.body.appendChild(container);
     
-    const getDisplayName = (name: string | undefined | null, fallbackId: string | undefined | null, type: string): string => {
-      if (!name) return fallbackId ? `${type} #${fallbackId.substring(0, 8)}` : 'N/A';
-      const englishName = name.replace(/[^\x00-\x7F]/g, '').trim();
-      if (englishName.length > 0) return englishName;
-      return fallbackId ? `${type} #${fallbackId.substring(0, 8)}` : type;
-    };
-    
-    const warehouseDisplayName = getDisplayName(warehouse?.name, warehouse?.id, 'Warehouse');
-    const warehouseDisplayLocation = getDisplayName(warehouse?.location, null, 'Saudi Arabia');
-    
-    doc.text('Warehouse Name:', 15, yPos);
-    doc.setFont('helvetica', 'bold');
-    doc.text(warehouseDisplayName, 55, yPos);
-    
-    yPos += 7;
-    doc.setFont('helvetica', 'normal');
-    doc.text('Location:', 15, yPos);
-    doc.setFont('helvetica', 'bold');
-    doc.text(warehouseDisplayLocation, 55, yPos);
-    
-    yPos += 7;
-    doc.setFont('helvetica', 'normal');
-    doc.text('Warehouse ID:', 15, yPos);
-    doc.setFont('helvetica', 'bold');
-    doc.text(warehouse?.id?.substring(0, 12) + '...' || 'N/A', 55, yPos);
-    
-    yPos += 15;
-    doc.setDrawColor(200, 200, 200);
-    doc.line(15, yPos - 5, pageWidth - 15, yPos - 5);
-    
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(24, 178, 176);
-    doc.text('TECHNICIAN INFORMATION', 15, yPos);
-    
-    yPos += 10;
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(60, 60, 60);
-    
-    const techDisplayName = getDisplayName(transfer.technicianName, transfer.technicianId, 'Technician');
-    
-    doc.text('Technician Name:', 15, yPos);
-    doc.setFont('helvetica', 'bold');
-    doc.text(techDisplayName, 55, yPos);
-    
-    yPos += 7;
-    doc.setFont('helvetica', 'normal');
-    doc.text('Technician ID:', 15, yPos);
-    doc.setFont('helvetica', 'bold');
-    doc.text(transfer.technicianId?.substring(0, 12) + '...' || 'N/A', 55, yPos);
-    
-    yPos += 15;
-    doc.setDrawColor(200, 200, 200);
-    doc.line(15, yPos - 5, pageWidth - 15, yPos - 5);
-    
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(24, 178, 176);
-    doc.text('ITEMS TRANSFERRED', 15, yPos);
-    
-    yPos += 10;
-    
-    const items: {name: string, quantity: number, type: string}[] = [];
-    if (transfer.n950) items.push({name: 'N950 Device', quantity: transfer.n950, type: transfer.n950PackagingType || 'box'});
-    if (transfer.i9000s) items.push({name: 'I9000s Device', quantity: transfer.i9000s, type: transfer.i9000sPackagingType || 'box'});
-    if (transfer.i9100) items.push({name: 'I9100 Device', quantity: transfer.i9100, type: transfer.i9100PackagingType || 'box'});
-    if (transfer.rollPaper) items.push({name: 'Roll Paper', quantity: transfer.rollPaper, type: transfer.rollPaperPackagingType || 'box'});
-    if (transfer.stickers) items.push({name: 'Stickers', quantity: transfer.stickers, type: transfer.stickersPackagingType || 'box'});
-    if (transfer.newBatteries) items.push({name: 'New Batteries', quantity: transfer.newBatteries, type: transfer.newBatteriesPackagingType || 'box'});
-    if (transfer.mobilySim) items.push({name: 'Mobily SIM Card', quantity: transfer.mobilySim, type: transfer.mobilySimPackagingType || 'box'});
-    if (transfer.stcSim) items.push({name: 'STC SIM Card', quantity: transfer.stcSim, type: transfer.stcSimPackagingType || 'box'});
-    if (transfer.zainSim) items.push({name: 'Zain SIM Card', quantity: transfer.zainSim, type: transfer.zainSimPackagingType || 'box'});
-    if (transfer.lebaraSim || transfer.lebara) items.push({name: 'Lebara SIM Card', quantity: transfer.lebaraSim || transfer.lebara || 0, type: transfer.lebaraSimPackagingType || transfer.lebaraPackagingType || 'box'});
-    
-    doc.setFillColor(240, 240, 240);
-    doc.rect(15, yPos - 3, pageWidth - 30, 8, 'F');
-    
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(60, 60, 60);
-    doc.text('Item Name', 20, yPos + 2);
-    doc.text('Quantity', 100, yPos + 2);
-    doc.text('Type', 140, yPos + 2);
-    doc.text('Total', 170, yPos + 2);
-    
-    yPos += 10;
-    doc.setFont('helvetica', 'normal');
-    
-    let totalItems = 0;
-    items.forEach((item, index) => {
-      if (index % 2 === 0) {
-        doc.setFillColor(250, 250, 250);
-        doc.rect(15, yPos - 4, pageWidth - 30, 7, 'F');
+    try {
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      if (imgHeight <= pageHeight) {
+        doc.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      } else {
+        let heightLeft = imgHeight;
+        let position = 0;
+        
+        doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+        
+        while (heightLeft > 0) {
+          position = -pageHeight + (imgHeight - heightLeft - pageHeight);
+          doc.addPage();
+          doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+        }
       }
       
-      doc.setTextColor(40, 40, 40);
-      doc.text(item.name, 20, yPos);
-      doc.text(item.quantity.toString(), 100, yPos);
-      doc.text(item.type === 'box' ? 'Box' : 'Unit', 140, yPos);
-      doc.text(item.quantity.toString(), 170, yPos);
-      totalItems += item.quantity;
-      yPos += 7;
-    });
-    
-    yPos += 3;
-    doc.setDrawColor(24, 178, 176);
-    doc.setLineWidth(0.8);
-    doc.line(15, yPos, pageWidth - 15, yPos);
-    
-    yPos += 7;
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(24, 178, 176);
-    doc.text('TOTAL ITEMS:', 100, yPos);
-    doc.text(totalItems.toString(), 170, yPos);
-    
-    if (transfer.notes) {
-      yPos += 15;
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(24, 178, 176);
-      doc.text('NOTES', 15, yPos);
+      const dateStr = transferDate.toISOString().split('T')[0];
+      const fileName = `transfer_${dateStr}_${transfer.id.substring(0, 8)}.pdf`;
+      doc.save(fileName);
       
-      yPos += 8;
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(60, 60, 60);
-      const cleanNotes = transfer.notes.replace(/[^\x00-\x7F]/g, '') || 'No notes';
-      doc.text(cleanNotes, 15, yPos);
+      toast({
+        title: "تم التحميل بنجاح",
+        description: "تم حفظ إيصال النقل",
+      });
+    } finally {
+      document.body.removeChild(container);
     }
-    
-    doc.setFillColor(24, 178, 176);
-    doc.rect(0, pageHeight - 20, pageWidth, 20, 'F');
-    
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(255, 255, 255);
-    doc.text('STOCKPRO - RAS Saudi Inventory Management System', pageWidth / 2, pageHeight - 12, { align: 'center' });
-    doc.text('Generated on: ' + new Date().toLocaleString('en-GB'), pageWidth / 2, pageHeight - 6, { align: 'center' });
-    
-    const dateStr = transferDate.toISOString().split('T')[0];
-    const fileName = `transfer_${dateStr}_${transfer.id.substring(0, 8)}.pdf`;
-    doc.save(fileName);
-    
-    toast({
-      title: "PDF Downloaded",
-      description: "Transfer receipt has been saved",
-    });
   };
 
   const inventoryItems = [
