@@ -1158,9 +1158,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = (req as any).user;
       const { 
         technicianId, 
-        n950, i9000s, i9100, rollPaper, stickers, newBatteries: newBatteriesAmount, mobilySim, stcSim, zainSim,
+        n950, i9000s, i9100, rollPaper, stickers, newBatteries: newBatteriesAmount, mobilySim, stcSim, zainSim, lebaraSim,
         n950PackagingType, i9000sPackagingType, i9100PackagingType, rollPaperPackagingType, stickersPackagingType,
-        newBatteriesPackagingType, mobilySimPackagingType, stcSimPackagingType, zainSimPackagingType
+        newBatteriesPackagingType, mobilySimPackagingType, stcSimPackagingType, zainSimPackagingType, lebaraSimPackagingType
       } = req.body;
       
       // Get current fixed inventory
@@ -1200,6 +1200,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             stcSimUnits: 0,
             zainSimBoxes: 0,
             zainSimUnits: 0,
+            lebaraBoxes: 0,
+            lebaraUnits: 0,
             createdBy: user.id,
           })
           .returning();
@@ -1262,6 +1264,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (zainSim > 0 && zainSimPackagingType === 'unit' && zainSim > fixedInventory.zainSimUnits) {
         return res.status(400).json({ message: "Insufficient Zain SIM units in fixed inventory" });
       }
+      if (lebaraSim > 0 && lebaraSimPackagingType === 'box' && lebaraSim > fixedInventory.lebaraBoxes) {
+        return res.status(400).json({ message: "Insufficient Lebara SIM boxes in fixed inventory" });
+      }
+      if (lebaraSim > 0 && lebaraSimPackagingType === 'unit' && lebaraSim > fixedInventory.lebaraUnits) {
+        return res.status(400).json({ message: "Insufficient Lebara SIM units in fixed inventory" });
+      }
 
       // Update fixed inventory - subtract from the specified packaging type only
       await storage.updateTechnicianFixedInventory(technicianId, {
@@ -1283,6 +1291,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         stcSimUnits: stcSimPackagingType === 'unit' ? fixedInventory.stcSimUnits - stcSim : fixedInventory.stcSimUnits,
         zainSimBoxes: zainSimPackagingType === 'box' ? fixedInventory.zainSimBoxes - zainSim : fixedInventory.zainSimBoxes,
         zainSimUnits: zainSimPackagingType === 'unit' ? fixedInventory.zainSimUnits - zainSim : fixedInventory.zainSimUnits,
+        lebaraBoxes: lebaraSimPackagingType === 'box' ? fixedInventory.lebaraBoxes - lebaraSim : fixedInventory.lebaraBoxes,
+        lebaraUnits: lebaraSimPackagingType === 'unit' ? fixedInventory.lebaraUnits - lebaraSim : fixedInventory.lebaraUnits,
       });
 
       // Update moving inventory - add to the same packaging type
@@ -1305,6 +1315,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         stcSimUnits: stcSimPackagingType === 'unit' ? movingInventory.stcSimUnits + stcSim : movingInventory.stcSimUnits,
         zainSimBoxes: zainSimPackagingType === 'box' ? movingInventory.zainSimBoxes + zainSim : movingInventory.zainSimBoxes,
         zainSimUnits: zainSimPackagingType === 'unit' ? movingInventory.zainSimUnits + zainSim : movingInventory.zainSimUnits,
+        lebaraBoxes: lebaraSimPackagingType === 'box' ? movingInventory.lebaraBoxes + lebaraSim : movingInventory.lebaraBoxes,
+        lebaraUnits: lebaraSimPackagingType === 'unit' ? movingInventory.lebaraUnits + lebaraSim : movingInventory.lebaraUnits,
       });
 
       // Record stock movements with actual packaging types
@@ -1419,6 +1431,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           itemType: 'zainSim',
           packagingType: zainSimPackagingType,
           quantity: zainSim,
+          fromInventory: 'fixed',
+          toInventory: 'moving',
+          performedBy: user.id,
+          reason: 'transfer',
+          notes: 'Transfer from fixed to moving inventory',
+        }));
+      }
+      if (lebaraSim > 0) {
+        movements.push(storage.createStockMovement({
+          technicianId,
+          itemType: 'lebaraSim',
+          packagingType: lebaraSimPackagingType,
+          quantity: lebaraSim,
           fromInventory: 'fixed',
           toInventory: 'moving',
           performedBy: user.id,

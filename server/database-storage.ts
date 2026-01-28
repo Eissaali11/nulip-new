@@ -1602,6 +1602,8 @@ export class DatabaseStorage implements IStorage {
       'mobilySim_unit': 'mobilySimUnits',
       'stcSim_box': 'stcSimBoxes',
       'stcSim_unit': 'stcSimUnits',
+      'lebaraSim_box': 'lebaraBoxes',
+      'lebaraSim_unit': 'lebaraUnits',
     };
 
     const fieldName = fieldMap[`${itemType}_${packagingType}`];
@@ -1925,6 +1927,7 @@ export class DatabaseStorage implements IStorage {
         'mobilySim': { boxes: 'mobilySimBoxes', units: 'mobilySimUnits' },
         'stcSim': { boxes: 'stcSimBoxes', units: 'stcSimUnits' },
         'zainSim': { boxes: 'zainSimBoxes', units: 'zainSimUnits' },
+        'lebaraSim': { boxes: 'lebaraBoxes', units: 'lebaraUnits' },
       };
 
       const fields = fieldMap[data.itemType];
@@ -2044,6 +2047,7 @@ export class DatabaseStorage implements IStorage {
         'mobilySim': { boxes: 'mobilySimBoxes', units: 'mobilySimUnits' },
         'stcSim': { boxes: 'stcSimBoxes', units: 'stcSimUnits' },
         'zainSim': { boxes: 'zainSimBoxes', units: 'zainSimUnits' },
+        'lebaraSim': { boxes: 'lebaraBoxes', units: 'lebaraUnits' },
       };
 
       const fields = fieldMap[transfer.itemType];
@@ -2127,6 +2131,8 @@ export class DatabaseStorage implements IStorage {
             stcSimUnits: transfer.itemType === 'stcSim' && transfer.packagingType === 'unit' ? transfer.quantity : 0,
             zainSimBoxes: transfer.itemType === 'zainSim' && transfer.packagingType === 'box' ? transfer.quantity : 0,
             zainSimUnits: transfer.itemType === 'zainSim' && transfer.packagingType === 'unit' ? transfer.quantity : 0,
+            lebaraBoxes: transfer.itemType === 'lebaraSim' && transfer.packagingType === 'box' ? transfer.quantity : 0,
+            lebaraUnits: transfer.itemType === 'lebaraSim' && transfer.packagingType === 'unit' ? transfer.quantity : 0,
           });
       }
 
