@@ -1928,6 +1928,7 @@ export class DatabaseStorage implements IStorage {
         'stcSim': { boxes: 'stcSimBoxes', units: 'stcSimUnits' },
         'zainSim': { boxes: 'zainSimBoxes', units: 'zainSimUnits' },
         'lebaraSim': { boxes: 'lebaraBoxes', units: 'lebaraUnits' },
+        'lebara': { boxes: 'lebaraBoxes', units: 'lebaraUnits' },
       };
 
       const fields = fieldMap[data.itemType];
@@ -2048,6 +2049,7 @@ export class DatabaseStorage implements IStorage {
         'stcSim': { boxes: 'stcSimBoxes', units: 'stcSimUnits' },
         'zainSim': { boxes: 'zainSimBoxes', units: 'zainSimUnits' },
         'lebaraSim': { boxes: 'lebaraBoxes', units: 'lebaraUnits' },
+        'lebara': { boxes: 'lebaraBoxes', units: 'lebaraUnits' },
       };
 
       const fields = fieldMap[transfer.itemType];
@@ -2131,8 +2133,8 @@ export class DatabaseStorage implements IStorage {
             stcSimUnits: transfer.itemType === 'stcSim' && transfer.packagingType === 'unit' ? transfer.quantity : 0,
             zainSimBoxes: transfer.itemType === 'zainSim' && transfer.packagingType === 'box' ? transfer.quantity : 0,
             zainSimUnits: transfer.itemType === 'zainSim' && transfer.packagingType === 'unit' ? transfer.quantity : 0,
-            lebaraBoxes: transfer.itemType === 'lebaraSim' && transfer.packagingType === 'box' ? transfer.quantity : 0,
-            lebaraUnits: transfer.itemType === 'lebaraSim' && transfer.packagingType === 'unit' ? transfer.quantity : 0,
+            lebaraBoxes: (transfer.itemType === 'lebaraSim' || transfer.itemType === 'lebara') && transfer.packagingType === 'box' ? transfer.quantity : 0,
+            lebaraUnits: (transfer.itemType === 'lebaraSim' || transfer.itemType === 'lebara') && transfer.packagingType === 'unit' ? transfer.quantity : 0,
           });
       }
 
