@@ -319,7 +319,14 @@ export default function Notifications() {
     const groupMap = new Map<string, GroupedTransfer>();
     
     transfers.forEach(transfer => {
-      const key = transfer.requestId || transfer.id;
+      let key: string;
+      if (transfer.requestId) {
+        key = transfer.requestId;
+      } else {
+        const timestamp = new Date(transfer.createdAt).getTime();
+        const timeWindow = Math.floor(timestamp / 10000);
+        key = `${transfer.technicianId}-${transfer.warehouseId}-${timeWindow}-${transfer.status}-${transfer.notes || ''}`;
+      }
       
       if (!groupMap.has(key)) {
         groupMap.set(key, {
