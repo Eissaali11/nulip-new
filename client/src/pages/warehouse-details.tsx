@@ -187,9 +187,9 @@ export default function WarehouseDetailsPage() {
     const filtered = rawTransfers.filter((t) => t.warehouseId === warehouseId);
     
     const grouped = filtered.reduce((acc, transfer) => {
-      const date = new Date(transfer.createdAt);
-      const dayKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-      const key = `${transfer.technicianId}-${dayKey}-${transfer.performedBy}-${transfer.status}-${transfer.notes || 'no-notes'}`;
+      const timestamp = new Date(transfer.createdAt).getTime();
+      const timeWindow = Math.floor(timestamp / 10000);
+      const key = `${transfer.technicianId}-${timeWindow}-${transfer.performedBy}-${transfer.status}-${transfer.notes || 'no-notes'}`;
       
       if (!acc[key]) {
         acc[key] = {
