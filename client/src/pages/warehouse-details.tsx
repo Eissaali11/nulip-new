@@ -147,6 +147,8 @@ interface WarehouseTransfer {
   zainSimPackagingType?: string;
   lebaraSim?: number;
   lebaraSimPackagingType?: string;
+  lebara?: number;
+  lebaraPackagingType?: string;
   notes?: string;
   status?: 'pending' | 'accepted' | 'rejected';
   rejectionReason?: string;
@@ -379,7 +381,7 @@ export default function WarehouseDetailsPage() {
       if (transfer.mobilySim) items.push(`موبايلي: ${transfer.mobilySim} ${transfer.mobilySimPackagingType === 'box' ? 'كرتون' : 'قطعة'}`);
       if (transfer.stcSim) items.push(`STC: ${transfer.stcSim} ${transfer.stcSimPackagingType === 'box' ? 'كرتون' : 'قطعة'}`);
       if (transfer.zainSim) items.push(`زين: ${transfer.zainSim} ${transfer.zainSimPackagingType === 'box' ? 'كرتون' : 'قطعة'}`);
-      if (transfer.lebaraSim) items.push(`ليبارا: ${transfer.lebaraSim} ${transfer.lebaraSimPackagingType === 'box' ? 'كرتون' : 'قطعة'}`);
+      if (transfer.lebaraSim || transfer.lebara) items.push(`ليبارا: ${transfer.lebaraSim || transfer.lebara} ${(transfer.lebaraSimPackagingType || transfer.lebaraPackagingType) === 'box' ? 'كرتون' : 'قطعة'}`);
 
       const statusText = transfer.status === 'pending' ? 'معلقة' : 
                         transfer.status === 'accepted' ? 'مقبولة' : 'مرفوضة';
@@ -846,7 +848,7 @@ export default function WarehouseDetailsPage() {
                       if (transfer.mobilySim) items.push({name: 'موبايلي', quantity: transfer.mobilySim, type: transfer.mobilySimPackagingType || 'box'});
                       if (transfer.stcSim) items.push({name: 'STC', quantity: transfer.stcSim, type: transfer.stcSimPackagingType || 'box'});
                       if (transfer.zainSim) items.push({name: 'زين', quantity: transfer.zainSim, type: transfer.zainSimPackagingType || 'box'});
-                      if (transfer.lebaraSim) items.push({name: 'ليبارا', quantity: transfer.lebaraSim, type: transfer.lebaraSimPackagingType || 'box'});
+                      if (transfer.lebaraSim || transfer.lebara) items.push({name: 'ليبارا', quantity: transfer.lebaraSim || transfer.lebara, type: transfer.lebaraSimPackagingType || transfer.lebaraPackagingType || 'box'});
 
                       return (
                         <TableRow key={transfer.id} className="border-white/10 hover:bg-white/5 transition-colors">

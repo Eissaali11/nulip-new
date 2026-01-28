@@ -1966,6 +1966,8 @@ export class DatabaseStorage implements IStorage {
       'mobilySim': 'شريحة موبايلي',
       'stcSim': 'شريحة STC',
       'zainSim': 'شريحة زين',
+      'lebara': 'شريحة ليبارا',
+      'lebaraSim': 'شريحة ليبارا',
     };
 
     let query = db
