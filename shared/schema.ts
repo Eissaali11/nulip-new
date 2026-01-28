@@ -85,6 +85,10 @@ export const techniciansInventory = pgTable("technicians_inventory", {
   zainSimBoxes: integer("zain_sim_boxes").notNull().default(0),
   zainSimUnits: integer("zain_sim_units").notNull().default(0),
   
+  // Lebara SIM
+  lebaraBoxes: integer("lebara_boxes").notNull().default(0),
+  lebaraUnits: integer("lebara_units").notNull().default(0),
+  
   notes: text("notes"),
   createdBy: varchar("created_by").references(() => users.id),
   regionId: varchar("region_id").references(() => regions.id),
@@ -185,6 +189,10 @@ export const technicianFixedInventories = pgTable("technician_fixed_inventories"
   zainSimBoxes: integer("zain_sim_boxes").notNull().default(0),
   zainSimUnits: integer("zain_sim_units").notNull().default(0),
   
+  // Lebara SIM
+  lebaraBoxes: integer("lebara_boxes").notNull().default(0),
+  lebaraUnits: integer("lebara_units").notNull().default(0),
+  
   // Alert thresholds (percentage)
   lowStockThreshold: integer("low_stock_threshold").notNull().default(30),
   criticalStockThreshold: integer("critical_stock_threshold").notNull().default(70),
@@ -282,6 +290,10 @@ export const warehouseInventory = pgTable("warehouse_inventory", {
   zainSimBoxes: integer("zain_sim_boxes").notNull().default(0),
   zainSimUnits: integer("zain_sim_units").notNull().default(0),
   
+  // Lebara SIM
+  lebaraBoxes: integer("lebara_boxes").notNull().default(0),
+  lebaraUnits: integer("lebara_units").notNull().default(0),
+  
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
@@ -327,6 +339,8 @@ export const inventoryRequests = pgTable("inventory_requests", {
   stcSimUnits: integer("stc_sim_units").default(0),
   zainSimBoxes: integer("zain_sim_boxes").default(0),
   zainSimUnits: integer("zain_sim_units").default(0),
+  lebaraBoxes: integer("lebara_boxes").default(0),
+  lebaraUnits: integer("lebara_units").default(0),
   
   notes: text("notes"),
   status: text("status").notNull().default("pending"), // "pending", "approved", "rejected"
