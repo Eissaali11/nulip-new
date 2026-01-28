@@ -1892,7 +1892,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const itemTypes = ['n950', 'i9000s', 'i9100', 'rollPaper', 'stickers', 'newBatteries', 'mobilySim', 'stcSim', 'zainSim'];
+      const itemTypes = ['n950', 'i9000s', 'i9100', 'rollPaper', 'stickers', 'newBatteries', 'mobilySim', 'stcSim', 'zainSim', 'lebaraSim'];
       const transfers: any[] = [];
 
       for (const itemType of itemTypes) {
