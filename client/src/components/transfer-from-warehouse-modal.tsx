@@ -74,6 +74,8 @@ interface TransferFromWarehouseModalProps {
     stcSimUnits: number;
     zainSimBoxes: number;
     zainSimUnits: number;
+    lebaraBoxes: number;
+    lebaraUnits: number;
   } | null;
 }
 
@@ -111,6 +113,7 @@ export default function TransferFromWarehouseModal({
     mobilySim: { selected: false, quantity: 0, packagingType: "unit" },
     stcSim: { selected: false, quantity: 0, packagingType: "unit" },
     zainSim: { selected: false, quantity: 0, packagingType: "unit" },
+    Lebara: { selected: false, quantity: 0, packagingType: "unit" },
   });
 
   const form = useForm<FormData>({
@@ -134,6 +137,7 @@ export default function TransferFromWarehouseModal({
         mobilySim: { selected: false, quantity: 0, packagingType: "unit" },
         stcSim: { selected: false, quantity: 0, packagingType: "unit" },
         zainSim: { selected: false, quantity: 0, packagingType: "unit" },
+        Lebara: { selected: false, quantity: 0, packagingType: "unit" },
       });
     }
   }, [open, form]);
@@ -212,6 +216,7 @@ export default function TransferFromWarehouseModal({
               mobilySim: "شرائح موبايلي",
               stcSim: "شرائح STC",
               zainSim: "شرائح زين",
+              Lebara: "شرائح ليبارا",
             };
             errors.push(`${itemNames[itemKey]}: الكمية المطلوبة (${transfer.quantity}) أكبر من المتاح (${available})`);
           }
@@ -302,6 +307,12 @@ export default function TransferFromWarehouseModal({
       name: "شرائح زين", 
       icon: Smartphone,
       gradient: "from-purple-600 to-violet-600"
+    },
+    { 
+      id: "Lebara",
+      name: "شرائح ليبارا", 
+      icon: Smartphone,
+      gradient: "from-pink-600 to-rose-600"
     },
   ];
 

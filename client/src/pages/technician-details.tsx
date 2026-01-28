@@ -61,6 +61,8 @@ interface TechnicianFixedInventory {
   stcSimUnits: number;
   zainSimBoxes: number;
   zainSimUnits: number;
+  lebaraBoxes: number;
+  lebaraUnits: number;
 }
 
 interface TechnicianMovingInventory {
@@ -85,6 +87,8 @@ interface TechnicianMovingInventory {
   stcSimUnits: number;
   zainSimBoxes: number;
   zainSimUnits: number;
+  lebaraBoxes: number;
+  lebaraUnits: number;
 }
 
 interface ProductInfo {
@@ -277,6 +281,19 @@ export default function TechnicianDetailsPage() {
       icon: Package,
       color: "#f97316"
     },
+    {
+      nameAr: "شرائح ليبارا",
+      nameEn: "Lebara SIM",
+      fixedBoxes: fixedInventory?.lebaraBoxes || 0,
+      fixedUnits: fixedInventory?.lebaraUnits || 0,
+      fixedTotal: (fixedInventory?.lebaraBoxes || 0) + (fixedInventory?.lebaraUnits || 0),
+      movingBoxes: movingInventory?.lebaraBoxes || 0,
+      movingUnits: movingInventory?.lebaraUnits || 0,
+      movingTotal: (movingInventory?.lebaraBoxes || 0) + (movingInventory?.lebaraUnits || 0),
+      grandTotal: (fixedInventory?.lebaraBoxes || 0) + (fixedInventory?.lebaraUnits || 0) + (movingInventory?.lebaraBoxes || 0) + (movingInventory?.lebaraUnits || 0),
+      icon: Package,
+      color: "#ec4899"
+    },
   ];
 
   const totalFixed = products.reduce((sum, p) => sum + p.fixedTotal, 0);
@@ -369,6 +386,8 @@ export default function TechnicianDetailsPage() {
                       stcSimUnits: fixedInventory.stcSimUnits,
                       zainSimBoxes: fixedInventory.zainSimBoxes,
                       zainSimUnits: fixedInventory.zainSimUnits,
+                      lebaraBoxes: fixedInventory.lebaraBoxes,
+                      lebaraUnits: fixedInventory.lebaraUnits,
                     },
                     movingInventory: {
                       n950Boxes: movingInventory.n950Boxes,
@@ -389,6 +408,8 @@ export default function TechnicianDetailsPage() {
                       stcSimUnits: movingInventory.stcSimUnits,
                       zainSimBoxes: movingInventory.zainSimBoxes,
                       zainSimUnits: movingInventory.zainSimUnits,
+                      lebaraBoxes: movingInventory.lebaraBoxes,
+                      lebaraUnits: movingInventory.lebaraUnits,
                     }
                   });
                   toast({

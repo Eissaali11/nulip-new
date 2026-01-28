@@ -29,6 +29,8 @@ interface WarehouseInventory {
   stcSimUnits: number;
   zainSimBoxes: number;
   zainSimUnits: number;
+  lebaraBoxes: number;
+  lebaraUnits: number;
 }
 
 interface WarehouseData {
@@ -248,6 +250,8 @@ export const exportWarehousesToExcel = async ({
     'STC (قطع)',
     'زين (صناديق)',
     'زين (قطع)',
+    'ليبارا (صناديق)',
+    'ليبارا (قطع)',
     'إجمالي الأصناف'
   ]);
   
@@ -281,7 +285,8 @@ export const exportWarehousesToExcel = async ({
     newBatteriesBoxes: 0, newBatteriesUnits: 0,
     mobilySimBoxes: 0, mobilySimUnits: 0,
     stcSimBoxes: 0, stcSimUnits: 0,
-    zainSimBoxes: 0, zainSimUnits: 0
+    zainSimBoxes: 0, zainSimUnits: 0,
+    lebaraBoxes: 0, lebaraUnits: 0
   };
 
   warehouses.forEach((warehouse, index) => {
@@ -302,7 +307,8 @@ export const exportWarehousesToExcel = async ({
       inv.newBatteriesBoxes + inv.newBatteriesUnits +
       inv.mobilySimBoxes + inv.mobilySimUnits +
       inv.stcSimBoxes + inv.stcSimUnits +
-      inv.zainSimBoxes + inv.zainSimUnits
+      inv.zainSimBoxes + inv.zainSimUnits +
+      inv.lebaraBoxes + inv.lebaraUnits
     ) : 0;
 
     grandTotalItems += totalItems;
@@ -326,6 +332,8 @@ export const exportWarehousesToExcel = async ({
       totals.stcSimUnits += inv.stcSimUnits || 0;
       totals.zainSimBoxes += inv.zainSimBoxes || 0;
       totals.zainSimUnits += inv.zainSimUnits || 0;
+      totals.lebaraBoxes += inv.lebaraBoxes || 0;
+      totals.lebaraUnits += inv.lebaraUnits || 0;
     }
 
     const dataRow = worksheet.addRow([
@@ -351,6 +359,8 @@ export const exportWarehousesToExcel = async ({
       inv?.stcSimUnits || 0,
       inv?.zainSimBoxes || 0,
       inv?.zainSimUnits || 0,
+      inv?.lebaraBoxes || 0,
+      inv?.lebaraUnits || 0,
       totalItems
     ]);
     
@@ -388,6 +398,8 @@ export const exportWarehousesToExcel = async ({
     totals.stcSimUnits,
     totals.zainSimBoxes,
     totals.zainSimUnits,
+    totals.lebaraBoxes,
+    totals.lebaraUnits,
     grandTotalItems
   ]);
 
@@ -430,6 +442,8 @@ export const exportWarehousesToExcel = async ({
     totals.stcSimBoxes,
     '',
     totals.zainSimBoxes,
+    '',
+    totals.lebaraBoxes,
     '',
     ''
   ]);
@@ -559,10 +573,20 @@ export const exportWarehousesToExcel = async ({
     totals.stcSimBoxes,
     'زين (صناديق)',
     totals.zainSimBoxes,
+    'ليبارا (صناديق)',
+    totals.lebaraBoxes,
     'المستودعات النشطة',
-    totalActive,
+    totalActive
+  ]);
+  const statsRow4 = worksheet.addRow([
     'المستودعات غير النشطة',
-    totalInactive
+    totalInactive,
+    '',
+    '',
+    '',
+    '',
+    '',
+    ''
   ]);
   statsRow3.alignment = { horizontal: 'center', vertical: 'middle' };
   statsRow3.eachCell((cell, colNumber) => {
@@ -641,7 +665,8 @@ export const exportWarehousesToExcel = async ({
     'بطاريات',
     'موبايلي',
     'STC',
-    'زين'
+    'زين',
+    'ليبارا'
   ]);
   
   unitsHeaderRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
@@ -676,7 +701,8 @@ export const exportWarehousesToExcel = async ({
       inv?.newBatteriesUnits || 0,
       inv?.mobilySimUnits || 0,
       inv?.stcSimUnits || 0,
-      inv?.zainSimUnits || 0
+      inv?.zainSimUnits || 0,
+      inv?.lebaraUnits || 0
     ]);
     
     unitsDataRow.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -702,7 +728,8 @@ export const exportWarehousesToExcel = async ({
     totals.newBatteriesUnits,
     totals.mobilySimUnits,
     totals.stcSimUnits,
-    totals.zainSimUnits
+    totals.zainSimUnits,
+    totals.lebaraUnits
   ]);
 
   unitsTotalRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
@@ -762,7 +789,7 @@ export const exportWarehousesToExcel = async ({
     'إجمالي الوحدات',
     totals.n950Units + totals.i9000sUnits + totals.i9100Units + 
     totals.rollPaperUnits + totals.stickersUnits + totals.newBatteriesUnits +
-    totals.mobilySimUnits + totals.stcSimUnits + totals.zainSimUnits,
+    totals.mobilySimUnits + totals.stcSimUnits + totals.zainSimUnits + totals.lebaraUnits,
     'N950 (وحدات)',
     totals.n950Units,
     'I9000s (وحدات)',
@@ -821,8 +848,8 @@ export const exportWarehousesToExcel = async ({
     totals.stcSimUnits,
     'زين (وحدات)',
     totals.zainSimUnits,
-    '',
-    '',
+    'ليبارا (وحدات)',
+    totals.lebaraUnits,
     '',
     ''
   ]);
@@ -872,6 +899,8 @@ interface TechnicianInventoryData {
     stcSimUnits: number;
     zainSimBoxes: number;
     zainSimUnits: number;
+    lebaraBoxes: number;
+    lebaraUnits: number;
   };
   movingInventory: {
     n950Boxes: number;
@@ -892,6 +921,8 @@ interface TechnicianInventoryData {
     stcSimUnits: number;
     zainSimBoxes: number;
     zainSimUnits: number;
+    lebaraBoxes: number;
+    lebaraUnits: number;
   };
 }
 
@@ -960,6 +991,7 @@ export const exportTechnicianToExcel = async (data: TechnicianInventoryData) => 
     'موبايلي',
     'STC',
     'زين',
+    'ليبارا',
     'الإجمالي'
   ]);
   
@@ -983,11 +1015,11 @@ export const exportTechnicianToExcel = async (data: TechnicianInventoryData) => 
   const fixed = data.fixedInventory;
   const boxesTotal = fixed.n950Boxes + fixed.i9000sBoxes + fixed.i9100Boxes + 
                      fixed.rollPaperBoxes + fixed.stickersBoxes + fixed.newBatteriesBoxes +
-                     fixed.mobilySimBoxes + fixed.stcSimBoxes + fixed.zainSimBoxes;
+                     fixed.mobilySimBoxes + fixed.stcSimBoxes + fixed.zainSimBoxes + fixed.lebaraBoxes;
   
   const unitsTotal = fixed.n950Units + fixed.i9000sUnits + fixed.i9100Units + 
                      fixed.rollPaperUnits + fixed.stickersUnits + fixed.newBatteriesUnits +
-                     fixed.mobilySimUnits + fixed.stcSimUnits + fixed.zainSimUnits;
+                     fixed.mobilySimUnits + fixed.stcSimUnits + fixed.zainSimUnits + fixed.lebaraUnits;
 
   const boxesRow = fixedSheet.addRow([
     'صناديق',
@@ -1000,6 +1032,7 @@ export const exportTechnicianToExcel = async (data: TechnicianInventoryData) => 
     fixed.mobilySimBoxes,
     fixed.stcSimBoxes,
     fixed.zainSimBoxes,
+    fixed.lebaraBoxes,
     boxesTotal
   ]);
   
@@ -1024,6 +1057,7 @@ export const exportTechnicianToExcel = async (data: TechnicianInventoryData) => 
     fixed.mobilySimUnits,
     fixed.stcSimUnits,
     fixed.zainSimUnits,
+    fixed.lebaraUnits,
     unitsTotal
   ]);
   
@@ -1043,6 +1077,7 @@ export const exportTechnicianToExcel = async (data: TechnicianInventoryData) => 
     { width: 12 },
     { width: 12 },
     { width: 15 },
+    { width: 12 },
     { width: 12 },
     { width: 12 },
     { width: 12 },
@@ -1103,6 +1138,7 @@ export const exportTechnicianToExcel = async (data: TechnicianInventoryData) => 
     'موبايلي',
     'STC',
     'زين',
+    'ليبارا',
     'الإجمالي'
   ]);
   
@@ -1126,11 +1162,11 @@ export const exportTechnicianToExcel = async (data: TechnicianInventoryData) => 
   const moving = data.movingInventory;
   const movingBoxesTotal = moving.n950Boxes + moving.i9000sBoxes + moving.i9100Boxes + 
                            moving.rollPaperBoxes + moving.stickersBoxes + moving.newBatteriesBoxes +
-                           moving.mobilySimBoxes + moving.stcSimBoxes + moving.zainSimBoxes;
+                           moving.mobilySimBoxes + moving.stcSimBoxes + moving.zainSimBoxes + moving.lebaraBoxes;
   
   const movingUnitsTotal = moving.n950Units + moving.i9000sUnits + moving.i9100Units + 
                            moving.rollPaperUnits + moving.stickersUnits + moving.newBatteriesUnits +
-                           moving.mobilySimUnits + moving.stcSimUnits + moving.zainSimUnits;
+                           moving.mobilySimUnits + moving.stcSimUnits + moving.zainSimUnits + moving.lebaraUnits;
 
   const movingBoxesRow = movingSheet.addRow([
     'صناديق',
@@ -1143,6 +1179,7 @@ export const exportTechnicianToExcel = async (data: TechnicianInventoryData) => 
     moving.mobilySimBoxes,
     moving.stcSimBoxes,
     moving.zainSimBoxes,
+    moving.lebaraBoxes,
     movingBoxesTotal
   ]);
   
@@ -1167,6 +1204,7 @@ export const exportTechnicianToExcel = async (data: TechnicianInventoryData) => 
     moving.mobilySimUnits,
     moving.stcSimUnits,
     moving.zainSimUnits,
+    moving.lebaraUnits,
     movingUnitsTotal
   ]);
   
@@ -1186,6 +1224,7 @@ export const exportTechnicianToExcel = async (data: TechnicianInventoryData) => 
     { width: 12 },
     { width: 12 },
     { width: 15 },
+    { width: 12 },
     { width: 12 },
     { width: 12 },
     { width: 12 },
@@ -1225,6 +1264,8 @@ interface SingleWarehouseExportData {
     stcSimUnits: number;
     zainSimBoxes: number;
     zainSimUnits: number;
+    lebaraBoxes: number;
+    lebaraUnits: number;
   } | null;
   transfers: Array<{
     technicianName: string;
@@ -1325,6 +1366,7 @@ export const exportSingleWarehouseToExcel = async (data: SingleWarehouseExportDa
     { name: 'موبايلي SIM', boxes: inv?.mobilySimBoxes || 0, units: inv?.mobilySimUnits || 0 },
     { name: 'STC SIM', boxes: inv?.stcSimBoxes || 0, units: inv?.stcSimUnits || 0 },
     { name: 'زين SIM', boxes: inv?.zainSimBoxes || 0, units: inv?.zainSimUnits || 0 },
+    { name: 'ليبارا SIM', boxes: inv?.lebaraBoxes || 0, units: inv?.lebaraUnits || 0 },
   ];
 
   let totalBoxes = 0;

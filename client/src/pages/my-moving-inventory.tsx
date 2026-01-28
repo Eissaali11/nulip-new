@@ -43,6 +43,8 @@ interface MovingInventory {
   stcSimUnits: number;
   zainSimBoxes: number;
   zainSimUnits: number;
+  lebaraBoxes: number;
+  lebaraUnits: number;
 }
 
 interface FixedInventory {
@@ -64,6 +66,8 @@ interface FixedInventory {
   stcSimUnits: number;
   zainSimBoxes: number;
   zainSimUnits: number;
+  lebaraBoxes: number;
+  lebaraUnits: number;
 }
 
 interface WarehouseTransfer {
@@ -185,7 +189,8 @@ export default function MyMovingInventory() {
       (inventory.newBatteriesBoxes || 0) + (inventory.newBatteriesUnits || 0) +
       (inventory.mobilySimBoxes || 0) + (inventory.mobilySimUnits || 0) +
       (inventory.stcSimBoxes || 0) + (inventory.stcSimUnits || 0) +
-      (inventory.zainSimBoxes || 0) + (inventory.zainSimUnits || 0)
+      (inventory.zainSimBoxes || 0) + (inventory.zainSimUnits || 0) +
+      (inventory.lebaraBoxes || 0) + (inventory.lebaraUnits || 0)
     );
   };
 
@@ -258,6 +263,8 @@ export default function MyMovingInventory() {
       ['شرائح STC - وحدات', inventory.stcSimUnits || 0, 'شريحة'],
       ['شرائح زين - كرتون', inventory.zainSimBoxes || 0, 'كرتون'],
       ['شرائح زين - وحدات', inventory.zainSimUnits || 0, 'شريحة'],
+      ['شرائح ليبارا - كرتون', inventory.lebaraBoxes || 0, 'كرتون'],
+      ['شرائح ليبارا - وحدات', inventory.lebaraUnits || 0, 'شريحة'],
     ];
 
     data.forEach(row => {
@@ -437,6 +444,15 @@ export default function MyMovingInventory() {
         { label: "وحدات", value: inventory.zainSimUnits || 0 }
       ]
     },
+    { 
+      category: "شرائح ليبارا",
+      icon: "📱",
+      color: "from-pink-500 to-pink-600",
+      items: [
+        { label: "كرتون", value: inventory.lebaraBoxes || 0 },
+        { label: "وحدات", value: inventory.lebaraUnits || 0 }
+      ]
+    },
   ];
 
   return (
@@ -606,7 +622,7 @@ export default function MyMovingInventory() {
                   <h3 className="text-sm font-medium text-gray-300">الشرائح</h3>
                 </div>
                 <p className="text-3xl font-bold text-white" data-testid="text-total-sims">
-                  {(inventory.mobilySimBoxes || 0) + (inventory.mobilySimUnits || 0) + (inventory.stcSimBoxes || 0) + (inventory.stcSimUnits || 0) + (inventory.zainSimBoxes || 0) + (inventory.zainSimUnits || 0)}
+                  {(inventory.mobilySimBoxes || 0) + (inventory.mobilySimUnits || 0) + (inventory.stcSimBoxes || 0) + (inventory.stcSimUnits || 0) + (inventory.zainSimBoxes || 0) + (inventory.zainSimUnits || 0) + (inventory.lebaraBoxes || 0) + (inventory.lebaraUnits || 0)}
                 </p>
               </div>
             </motion.div>

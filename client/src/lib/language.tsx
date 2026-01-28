@@ -180,6 +180,7 @@ const translations: Record<Language, Record<string, string>> = {
     'products.mobily_sim': 'شريحة موبايلي',
     'products.stc_sim': 'شريحة STC',
     'products.zain_sim': 'شريحة زين',
+    'products.lebara': 'شريحة ليبارا',
     
     // Units
     'units.box': 'كرتون',

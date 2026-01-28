@@ -70,3 +70,26 @@ Preferred communication style: Simple, everyday language.
 ### Data Fetching
 - **TanStack React Query**: Powerful data synchronization for React applications
 - **Native Fetch API**: Modern HTTP client for API communications
+
+## Recent Changes (January 28, 2026)
+
+### Added Lebara SIM Item Type
+- Added Lebara SIM as a new item type across the entire inventory management system
+- Updated all modals: edit-technician-fixed-inventory-modal, update-warehouse-inventory-modal, request-inventory-modal, transfer-from-warehouse-modal
+- Updated all pages: warehouse-details, technician-details, my-fixed-inventory, my-moving-inventory
+- Updated exportToExcel.ts to include Lebara in all Excel reports
+- Added Lebara to shared/itemTypes.ts configuration
+
+### Item Types Configuration
+The system uses a centralized item types configuration in `shared/itemTypes.ts`. When adding a new item type:
+1. Add the item definition to `ITEM_TYPES` array in itemTypes.ts
+2. Add database columns (`${itemId}Boxes` and `${itemId}Units`) to relevant tables in schema.ts
+3. Run `npm run db:push` to apply schema changes
+4. Update all modals and pages that display inventory items
+5. Update exportToExcel.ts for Excel report generation
+
+### Current Item Types
+- Devices: N950, I9000S, I9100
+- Papers: Roll Paper, Stickers
+- Accessories: New Batteries
+- SIM Cards: Mobily SIM, STC SIM, Zain SIM, Lebara SIM

@@ -39,6 +39,8 @@ interface FixedInventory {
   stcSimUnits: number;
   zainSimBoxes: number;
   zainSimUnits: number;
+  lebaraBoxes: number;
+  lebaraUnits: number;
 }
 
 export default function MyFixedInventory() {
@@ -132,6 +134,7 @@ export default function MyFixedInventory() {
       ['شرائح موبايلي', existingInventory.mobilySimBoxes, existingInventory.mobilySimUnits, getTotalForItem(existingInventory.mobilySimBoxes, existingInventory.mobilySimUnits)],
       ['شرائح STC', existingInventory.stcSimBoxes, existingInventory.stcSimUnits, getTotalForItem(existingInventory.stcSimBoxes, existingInventory.stcSimUnits)],
       ['شرائح زين', existingInventory.zainSimBoxes, existingInventory.zainSimUnits, getTotalForItem(existingInventory.zainSimBoxes, existingInventory.zainSimUnits)],
+      ['شرائح ليبارا', existingInventory.lebaraBoxes, existingInventory.lebaraUnits, getTotalForItem(existingInventory.lebaraBoxes, existingInventory.lebaraUnits)],
     ];
 
     data.forEach((rowData) => {
@@ -270,6 +273,16 @@ export default function MyFixedInventory() {
       bgGradient: 'from-violet-50/50 via-purple-50/30 to-fuchsia-50/50',
       borderColor: 'border-violet-300/50',
       glowColor: 'shadow-violet-500/20',
+    },
+    {
+      name: 'شرائح ليبارا',
+      icon: Smartphone,
+      boxes: existingInventory?.lebaraBoxes || 0,
+      units: existingInventory?.lebaraUnits || 0,
+      gradient: 'from-pink-500 via-rose-500 to-red-500',
+      bgGradient: 'from-pink-50/50 via-rose-50/30 to-red-50/50',
+      borderColor: 'border-pink-300/50',
+      glowColor: 'shadow-pink-500/20',
     },
   ];
 

@@ -44,6 +44,8 @@ const formSchema = z.object({
   stcSimUnits: z.number().min(0).default(0),
   zainSimBoxes: z.number().min(0).default(0),
   zainSimUnits: z.number().min(0).default(0),
+  lebaraBoxes: z.number().min(0).default(0),
+  lebaraUnits: z.number().min(0).default(0),
   notes: z.string().optional(),
 });
 
@@ -81,6 +83,8 @@ export default function RequestInventoryModal({
       stcSimUnits: 0,
       zainSimBoxes: 0,
       zainSimUnits: 0,
+      lebaraBoxes: 0,
+      lebaraUnits: 0,
       notes: "",
     },
   });
@@ -141,6 +145,7 @@ export default function RequestInventoryModal({
     { name: "موبايلي", boxField: "mobilySimBoxes" as const, unitField: "mobilySimUnits" as const },
     { name: "STC", boxField: "stcSimBoxes" as const, unitField: "stcSimUnits" as const },
     { name: "زين", boxField: "zainSimBoxes" as const, unitField: "zainSimUnits" as const },
+    { name: "ليبارا", boxField: "lebaraBoxes" as const, unitField: "lebaraUnits" as const },
   ];
 
   return (

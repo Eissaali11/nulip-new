@@ -44,6 +44,8 @@ const formSchema = z.object({
   stcSimUnits: z.number().min(0, "الكمية لا يمكن أن تكون سالبة"),
   zainSimBoxes: z.number().min(0, "الكمية لا يمكن أن تكون سالبة"),
   zainSimUnits: z.number().min(0, "الكمية لا يمكن أن تكون سالبة"),
+  lebaraBoxes: z.number().min(0, "الكمية لا يمكن أن تكون سالبة"),
+  lebaraUnits: z.number().min(0, "الكمية لا يمكن أن تكون سالبة"),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -84,6 +86,8 @@ export default function UpdateWarehouseInventoryModal({
       stcSimUnits: 0,
       zainSimBoxes: 0,
       zainSimUnits: 0,
+      lebaraBoxes: 0,
+      lebaraUnits: 0,
     },
   });
 
@@ -183,6 +187,13 @@ export default function UpdateWarehouseInventoryModal({
       unitsKey: "zainSimUnits",
       icon: Smartphone,
       gradient: "from-purple-600 to-violet-600"
+    },
+    { 
+      name: "شرائح ليبارا", 
+      boxesKey: "lebaraBoxes", 
+      unitsKey: "lebaraUnits",
+      icon: Smartphone,
+      gradient: "from-pink-600 to-rose-600"
     },
   ];
 

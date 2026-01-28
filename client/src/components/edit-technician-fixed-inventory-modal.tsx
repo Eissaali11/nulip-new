@@ -36,6 +36,8 @@ interface FixedInventory {
   stcSimUnits: number;
   zainSimBoxes: number;
   zainSimUnits: number;
+  lebaraBoxes: number;
+  lebaraUnits: number;
 }
 
 interface EditTechnicianFixedInventoryModalProps {
@@ -79,6 +81,8 @@ export function EditTechnicianFixedInventoryModal({
     stcSimUnits: 0,
     zainSimBoxes: 0,
     zainSimUnits: 0,
+    lebaraBoxes: 0,
+    lebaraUnits: 0,
   });
 
   useEffect(() => {
@@ -187,6 +191,13 @@ export function EditTechnicianFixedInventoryModal({
       boxesField: 'zainSimBoxes' as keyof FixedInventory,
       unitsField: 'zainSimUnits' as keyof FixedInventory,
       gradient: 'from-violet-500 to-purple-500',
+    },
+    {
+      name: 'شرائح ليبارا',
+      icon: Smartphone,
+      boxesField: 'lebaraBoxes' as keyof FixedInventory,
+      unitsField: 'lebaraUnits' as keyof FixedInventory,
+      gradient: 'from-pink-500 to-rose-500',
     },
   ];
 

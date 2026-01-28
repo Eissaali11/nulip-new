@@ -91,7 +91,7 @@ export const ITEM_TYPES: ItemType[] = [
     sortOrder: 9
   },
   {
-    id: 'Lebara',
+    id: 'lebaraSim',
     nameAr: 'شريحة ليبارا',
     nameEn: 'Lebara SIM',
     category: 'sim',

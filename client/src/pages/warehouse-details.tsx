@@ -91,6 +91,8 @@ interface WarehouseInventory {
   stcSimUnits: number;
   zainSimBoxes: number;
   zainSimUnits: number;
+  lebaraBoxes: number;
+  lebaraUnits: number;
 }
 
 interface WarehouseData {
@@ -143,6 +145,8 @@ interface WarehouseTransfer {
   stcSimPackagingType?: string;
   zainSim?: number;
   zainSimPackagingType?: string;
+  lebaraSim?: number;
+  lebaraSimPackagingType?: string;
   notes?: string;
   status?: 'pending' | 'accepted' | 'rejected';
   rejectionReason?: string;
@@ -350,6 +354,15 @@ export default function WarehouseDetailsPage() {
       color: "#f97316",
       gradient: "from-orange-500 to-red-600"
     },
+    { 
+      name: "Lebara SIM", 
+      nameAr: "ليبارا",
+      boxes: warehouse?.inventory?.lebaraBoxes || 0,
+      units: warehouse?.inventory?.lebaraUnits || 0,
+      icon: Smartphone,
+      color: "#ec4899",
+      gradient: "from-pink-500 to-rose-600"
+    },
   ];
 
   const handleExportToExcel = async () => {
@@ -366,6 +379,7 @@ export default function WarehouseDetailsPage() {
       if (transfer.mobilySim) items.push(`موبايلي: ${transfer.mobilySim} ${transfer.mobilySimPackagingType === 'box' ? 'كرتون' : 'قطعة'}`);
       if (transfer.stcSim) items.push(`STC: ${transfer.stcSim} ${transfer.stcSimPackagingType === 'box' ? 'كرتون' : 'قطعة'}`);
       if (transfer.zainSim) items.push(`زين: ${transfer.zainSim} ${transfer.zainSimPackagingType === 'box' ? 'كرتون' : 'قطعة'}`);
+      if (transfer.lebaraSim) items.push(`ليبارا: ${transfer.lebaraSim} ${transfer.lebaraSimPackagingType === 'box' ? 'كرتون' : 'قطعة'}`);
 
       const statusText = transfer.status === 'pending' ? 'معلقة' : 
                         transfer.status === 'accepted' ? 'مقبولة' : 'مرفوضة';
@@ -832,6 +846,7 @@ export default function WarehouseDetailsPage() {
                       if (transfer.mobilySim) items.push({name: 'موبايلي', quantity: transfer.mobilySim, type: transfer.mobilySimPackagingType || 'box'});
                       if (transfer.stcSim) items.push({name: 'STC', quantity: transfer.stcSim, type: transfer.stcSimPackagingType || 'box'});
                       if (transfer.zainSim) items.push({name: 'زين', quantity: transfer.zainSim, type: transfer.zainSimPackagingType || 'box'});
+                      if (transfer.lebaraSim) items.push({name: 'ليبارا', quantity: transfer.lebaraSim, type: transfer.lebaraSimPackagingType || 'box'});
 
                       return (
                         <TableRow key={transfer.id} className="border-white/10 hover:bg-white/5 transition-colors">
