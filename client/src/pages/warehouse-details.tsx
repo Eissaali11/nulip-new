@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { motion } from "framer-motion";
 import { exportSingleWarehouseToExcel } from "@/lib/exportToExcel";
+import jsPDF from "jspdf";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -46,7 +47,8 @@ import {
   XCircle,
   Search,
   AlertTriangle,
-  Download
+  Download,
+  FileDown
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -273,6 +275,155 @@ export default function WarehouseDetailsPage() {
       });
     },
   });
+
+  const exportTransferToPDF = (transfer: WarehouseTransfer) => {
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    
+    doc.setFillColor(15, 15, 21);
+    doc.rect(0, 0, pageWidth, pageHeight, 'F');
+    
+    doc.setFillColor(24, 178, 176);
+    doc.rect(0, 0, pageWidth, 50, 'F');
+    
+    doc.setFontSize(28);
+    doc.setTextColor(255, 255, 255);
+    doc.text('STOCKPRO', pageWidth / 2, 25, { align: 'center' });
+    
+    doc.setFontSize(12);
+    doc.setTextColor(200, 200, 200);
+    doc.text('Warehouse Transfer Receipt', pageWidth / 2, 35, { align: 'center' });
+    
+    let yPos = 70;
+    
+    doc.setFillColor(30, 30, 40);
+    doc.roundedRect(15, yPos - 10, pageWidth - 30, 35, 3, 3, 'F');
+    
+    doc.setFontSize(14);
+    doc.setTextColor(24, 178, 176);
+    doc.text('Transfer Details', pageWidth / 2, yPos, { align: 'center' });
+    
+    yPos += 10;
+    doc.setFontSize(10);
+    doc.setTextColor(200, 200, 200);
+    
+    const transferDate = new Date(transfer.createdAt);
+    doc.text(`Date: ${transferDate.toLocaleDateString('en-GB')} ${transferDate.toLocaleTimeString('en-GB')}`, 25, yPos);
+    yPos += 8;
+    
+    const statusText = transfer.status === 'pending' ? 'Pending' : transfer.status === 'accepted' ? 'Accepted' : 'Rejected';
+    doc.text(`Status: ${statusText}`, 25, yPos);
+    
+    yPos += 25;
+    
+    doc.setFillColor(30, 30, 40);
+    doc.roundedRect(15, yPos - 10, (pageWidth - 40) / 2, 40, 3, 3, 'F');
+    
+    doc.setFontSize(12);
+    doc.setTextColor(24, 178, 176);
+    doc.text('Warehouse Info', 25, yPos);
+    
+    yPos += 8;
+    doc.setFontSize(10);
+    doc.setTextColor(200, 200, 200);
+    doc.text(`Name: ${warehouse?.name || 'N/A'}`, 25, yPos);
+    yPos += 6;
+    doc.text(`Location: ${warehouse?.location || 'N/A'}`, 25, yPos);
+    
+    const techBoxX = 15 + (pageWidth - 40) / 2 + 10;
+    let techYPos = yPos - 14;
+    
+    doc.setFillColor(30, 30, 40);
+    doc.roundedRect(techBoxX, techYPos - 10, (pageWidth - 40) / 2, 40, 3, 3, 'F');
+    
+    doc.setFontSize(12);
+    doc.setTextColor(24, 178, 176);
+    doc.text('Technician Info', techBoxX + 10, techYPos);
+    
+    techYPos += 8;
+    doc.setFontSize(10);
+    doc.setTextColor(200, 200, 200);
+    doc.text(`Name: ${transfer.technicianName}`, techBoxX + 10, techYPos);
+    techYPos += 6;
+    doc.text(`ID: ${transfer.technicianId?.substring(0, 8) || 'N/A'}...`, techBoxX + 10, techYPos);
+    
+    yPos += 35;
+    
+    doc.setFillColor(30, 30, 40);
+    doc.roundedRect(15, yPos - 10, pageWidth - 30, 80, 3, 3, 'F');
+    
+    doc.setFontSize(12);
+    doc.setTextColor(24, 178, 176);
+    doc.text('Items Transferred', pageWidth / 2, yPos, { align: 'center' });
+    
+    yPos += 10;
+    
+    const items: {name: string, quantity: number, type: string}[] = [];
+    if (transfer.n950) items.push({name: 'N950', quantity: transfer.n950, type: transfer.n950PackagingType || 'box'});
+    if (transfer.i9000s) items.push({name: 'I9000s', quantity: transfer.i9000s, type: transfer.i9000sPackagingType || 'box'});
+    if (transfer.i9100) items.push({name: 'I9100', quantity: transfer.i9100, type: transfer.i9100PackagingType || 'box'});
+    if (transfer.rollPaper) items.push({name: 'Roll Paper', quantity: transfer.rollPaper, type: transfer.rollPaperPackagingType || 'box'});
+    if (transfer.stickers) items.push({name: 'Stickers', quantity: transfer.stickers, type: transfer.stickersPackagingType || 'box'});
+    if (transfer.newBatteries) items.push({name: 'Batteries', quantity: transfer.newBatteries, type: transfer.newBatteriesPackagingType || 'box'});
+    if (transfer.mobilySim) items.push({name: 'Mobily SIM', quantity: transfer.mobilySim, type: transfer.mobilySimPackagingType || 'box'});
+    if (transfer.stcSim) items.push({name: 'STC SIM', quantity: transfer.stcSim, type: transfer.stcSimPackagingType || 'box'});
+    if (transfer.zainSim) items.push({name: 'Zain SIM', quantity: transfer.zainSim, type: transfer.zainSimPackagingType || 'box'});
+    if (transfer.lebaraSim || transfer.lebara) items.push({name: 'Lebara SIM', quantity: transfer.lebaraSim || transfer.lebara || 0, type: transfer.lebaraSimPackagingType || transfer.lebaraPackagingType || 'box'});
+    
+    doc.setFontSize(10);
+    doc.setTextColor(180, 180, 180);
+    doc.text('Item', 25, yPos);
+    doc.text('Quantity', 90, yPos);
+    doc.text('Type', 140, yPos);
+    
+    yPos += 2;
+    doc.setDrawColor(24, 178, 176);
+    doc.line(25, yPos, pageWidth - 25, yPos);
+    
+    yPos += 8;
+    doc.setTextColor(255, 255, 255);
+    
+    items.forEach((item) => {
+      doc.text(item.name, 25, yPos);
+      doc.text(item.quantity.toString(), 90, yPos);
+      doc.text(item.type === 'box' ? 'Box' : 'Unit', 140, yPos);
+      yPos += 7;
+    });
+    
+    if (transfer.notes) {
+      yPos += 15;
+      doc.setFillColor(30, 30, 40);
+      doc.roundedRect(15, yPos - 10, pageWidth - 30, 25, 3, 3, 'F');
+      
+      doc.setFontSize(12);
+      doc.setTextColor(24, 178, 176);
+      doc.text('Notes', 25, yPos);
+      
+      yPos += 8;
+      doc.setFontSize(10);
+      doc.setTextColor(200, 200, 200);
+      doc.text(transfer.notes, 25, yPos);
+    }
+    
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Generated by STOCKPRO - RAS Saudi Inventory Management System', pageWidth / 2, pageHeight - 15, { align: 'center' });
+    doc.text(`Generated on: ${new Date().toLocaleString('en-GB')}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+    
+    const fileName = `transfer_${transfer.technicianName.replace(/\s+/g, '_')}_${transferDate.toISOString().split('T')[0]}.pdf`;
+    doc.save(fileName);
+    
+    toast({
+      title: "تم التصدير بنجاح",
+      description: "تم تحميل ملف PDF",
+    });
+  };
 
   const inventoryItems = [
     { 
@@ -834,6 +985,7 @@ export default function WarehouseDetailsPage() {
                       <TableHead className="text-right text-gray-400">الحالة</TableHead>
                       <TableHead className="text-right text-gray-400">التاريخ</TableHead>
                       <TableHead className="text-right text-gray-400">الملاحظات</TableHead>
+                      <TableHead className="text-right text-gray-400">تصدير</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -902,6 +1054,16 @@ export default function WarehouseDetailsPage() {
                           </TableCell>
                           <TableCell className="text-gray-400 text-sm max-w-xs truncate">
                             {transfer.notes || '-'}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => exportTransferToPDF(transfer)}
+                              className="text-[#18B2B0] hover:text-[#18B2B0]/80 hover:bg-[#18B2B0]/10"
+                            >
+                              <FileDown className="h-4 w-4" />
+                            </Button>
                           </TableCell>
                         </TableRow>
                       );
