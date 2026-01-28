@@ -113,7 +113,7 @@ export default function TransferFromWarehouseModal({
     mobilySim: { selected: false, quantity: 0, packagingType: "unit" },
     stcSim: { selected: false, quantity: 0, packagingType: "unit" },
     zainSim: { selected: false, quantity: 0, packagingType: "unit" },
-    Lebara: { selected: false, quantity: 0, packagingType: "unit" },
+    lebara: { selected: false, quantity: 0, packagingType: "unit" },
   });
 
   const form = useForm<FormData>({
@@ -137,7 +137,7 @@ export default function TransferFromWarehouseModal({
         mobilySim: { selected: false, quantity: 0, packagingType: "unit" },
         stcSim: { selected: false, quantity: 0, packagingType: "unit" },
         zainSim: { selected: false, quantity: 0, packagingType: "unit" },
-        Lebara: { selected: false, quantity: 0, packagingType: "unit" },
+        lebara: { selected: false, quantity: 0, packagingType: "unit" },
       });
     }
   }, [open, form]);
@@ -216,7 +216,7 @@ export default function TransferFromWarehouseModal({
               mobilySim: "شرائح موبايلي",
               stcSim: "شرائح STC",
               zainSim: "شرائح زين",
-              Lebara: "شرائح ليبارا",
+              lebara: "شرائح ليبارا",
             };
             errors.push(`${itemNames[itemKey]}: الكمية المطلوبة (${transfer.quantity}) أكبر من المتاح (${available})`);
           }
@@ -309,7 +309,7 @@ export default function TransferFromWarehouseModal({
       gradient: "from-purple-600 to-violet-600"
     },
     { 
-      id: "Lebara",
+      id: "lebara",
       name: "شرائح ليبارا", 
       icon: Smartphone,
       gradient: "from-pink-600 to-rose-600"
