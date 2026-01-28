@@ -357,18 +357,31 @@ export default function WarehouseDetailsPage() {
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(60, 60, 60);
     
-    const warehouseName = warehouse?.name || 'N/A';
-    const warehouseLocation = warehouse?.location || 'N/A';
+    const getDisplayName = (name: string | undefined | null, fallbackId: string | undefined | null, type: string): string => {
+      if (!name) return fallbackId ? `${type} #${fallbackId.substring(0, 8)}` : 'N/A';
+      const englishName = name.replace(/[^\x00-\x7F]/g, '').trim();
+      if (englishName.length > 0) return englishName;
+      return fallbackId ? `${type} #${fallbackId.substring(0, 8)}` : type;
+    };
+    
+    const warehouseDisplayName = getDisplayName(warehouse?.name, warehouse?.id, 'Warehouse');
+    const warehouseDisplayLocation = getDisplayName(warehouse?.location, null, 'Saudi Arabia');
     
     doc.text('Warehouse Name:', 15, yPos);
     doc.setFont('helvetica', 'bold');
-    doc.text(warehouseName.replace(/[^\x00-\x7F]/g, '') || 'Warehouse', 55, yPos);
+    doc.text(warehouseDisplayName, 55, yPos);
     
     yPos += 7;
     doc.setFont('helvetica', 'normal');
     doc.text('Location:', 15, yPos);
     doc.setFont('helvetica', 'bold');
-    doc.text(warehouseLocation.replace(/[^\x00-\x7F]/g, '') || 'Location', 55, yPos);
+    doc.text(warehouseDisplayLocation, 55, yPos);
+    
+    yPos += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.text('Warehouse ID:', 15, yPos);
+    doc.setFont('helvetica', 'bold');
+    doc.text(warehouse?.id?.substring(0, 12) + '...' || 'N/A', 55, yPos);
     
     yPos += 15;
     doc.setDrawColor(200, 200, 200);
@@ -384,11 +397,11 @@ export default function WarehouseDetailsPage() {
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(60, 60, 60);
     
-    const techName = transfer.technicianName || 'N/A';
+    const techDisplayName = getDisplayName(transfer.technicianName, transfer.technicianId, 'Technician');
     
     doc.text('Technician Name:', 15, yPos);
     doc.setFont('helvetica', 'bold');
-    doc.text(techName.replace(/[^\x00-\x7F]/g, '') || 'Technician', 55, yPos);
+    doc.text(techDisplayName, 55, yPos);
     
     yPos += 7;
     doc.setFont('helvetica', 'normal');
