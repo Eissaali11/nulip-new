@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { motion } from "framer-motion";
+import { exportSingleWarehouseToExcel } from "@/lib/exportToExcel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -44,7 +45,8 @@ import {
   CheckCircle,
   XCircle,
   Search,
-  AlertTriangle
+  AlertTriangle,
+  Download
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -350,6 +352,49 @@ export default function WarehouseDetailsPage() {
     },
   ];
 
+  const handleExportToExcel = async () => {
+    if (!warehouse) return;
+
+    const transfersData = allTransfers.map(transfer => {
+      const items: string[] = [];
+      if (transfer.n950) items.push(`N950: ${transfer.n950} ${transfer.n950PackagingType === 'box' ? 'كرتون' : 'قطعة'}`);
+      if (transfer.i9000s) items.push(`I9000s: ${transfer.i9000s} ${transfer.i9000sPackagingType === 'box' ? 'كرتون' : 'قطعة'}`);
+      if (transfer.i9100) items.push(`I9100: ${transfer.i9100} ${transfer.i9100PackagingType === 'box' ? 'كرتون' : 'قطعة'}`);
+      if (transfer.rollPaper) items.push(`ورق: ${transfer.rollPaper} ${transfer.rollPaperPackagingType === 'box' ? 'كرتون' : 'قطعة'}`);
+      if (transfer.stickers) items.push(`ملصقات: ${transfer.stickers} ${transfer.stickersPackagingType === 'box' ? 'كرتون' : 'قطعة'}`);
+      if (transfer.newBatteries) items.push(`بطاريات: ${transfer.newBatteries} ${transfer.newBatteriesPackagingType === 'box' ? 'كرتون' : 'قطعة'}`);
+      if (transfer.mobilySim) items.push(`موبايلي: ${transfer.mobilySim} ${transfer.mobilySimPackagingType === 'box' ? 'كرتون' : 'قطعة'}`);
+      if (transfer.stcSim) items.push(`STC: ${transfer.stcSim} ${transfer.stcSimPackagingType === 'box' ? 'كرتون' : 'قطعة'}`);
+      if (transfer.zainSim) items.push(`زين: ${transfer.zainSim} ${transfer.zainSimPackagingType === 'box' ? 'كرتون' : 'قطعة'}`);
+
+      const statusText = transfer.status === 'pending' ? 'معلقة' : 
+                        transfer.status === 'accepted' ? 'مقبولة' : 'مرفوضة';
+
+      return {
+        technicianName: transfer.technicianName,
+        items: items.join(' | '),
+        status: statusText,
+        createdAt: transfer.createdAt,
+        notes: transfer.notes
+      };
+    });
+
+    await exportSingleWarehouseToExcel({
+      warehouse: {
+        name: warehouse.name,
+        location: warehouse.location,
+        description: warehouse.description
+      },
+      inventory: warehouse.inventory,
+      transfers: transfersData
+    });
+
+    toast({
+      title: "تم التصدير بنجاح",
+      description: "تم تصدير بيانات المستودع إلى ملف Excel",
+    });
+  };
+
   if (warehouseLoading) {
     return (
       <div
@@ -584,6 +629,17 @@ export default function WarehouseDetailsPage() {
 
             {/* Action Buttons */}
             <div className="flex gap-3 justify-center flex-wrap mt-8">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  onClick={handleExportToExcel}
+                  disabled={!warehouse || warehouseLoading}
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50"
+                  data-testid="button-export-excel"
+                >
+                  <Download className="h-4 w-4 ml-2" />
+                  تصدير Excel
+                </Button>
+              </motion.div>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button
                   onClick={() => setShowUpdateInventoryModal(true)}

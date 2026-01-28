@@ -1199,3 +1199,259 @@ export const exportTechnicianToExcel = async (data: TechnicianInventoryData) => 
   const fileName = `تقرير_مخزون_الفني_${data.technicianName}_${new Date().toISOString().split('T')[0]}.xlsx`;
   saveAs(blob, fileName);
 };
+
+interface SingleWarehouseExportData {
+  warehouse: {
+    name: string;
+    location: string;
+    description: string | null;
+  };
+  inventory: {
+    n950Boxes: number;
+    n950Units: number;
+    i9000sBoxes: number;
+    i9000sUnits: number;
+    i9100Boxes: number;
+    i9100Units: number;
+    rollPaperBoxes: number;
+    rollPaperUnits: number;
+    stickersBoxes: number;
+    stickersUnits: number;
+    newBatteriesBoxes: number;
+    newBatteriesUnits: number;
+    mobilySimBoxes: number;
+    mobilySimUnits: number;
+    stcSimBoxes: number;
+    stcSimUnits: number;
+    zainSimBoxes: number;
+    zainSimUnits: number;
+  } | null;
+  transfers: Array<{
+    technicianName: string;
+    items: string;
+    status: string;
+    createdAt: string;
+    notes?: string;
+  }>;
+}
+
+export const exportSingleWarehouseToExcel = async (data: SingleWarehouseExportData) => {
+  const workbook = new ExcelJS.Workbook();
+  
+  const companyName = 'نظام إدارة المخزون - RAS Saudi';
+  const currentDate = new Date();
+  const arabicDate = currentDate.toLocaleDateString('ar-SA', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+  const time = currentDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+
+  const inventorySheet = workbook.addWorksheet('المخزون');
+  inventorySheet.views = [{ rightToLeft: true }];
+
+  inventorySheet.mergeCells('A1:E1');
+  const titleCell = inventorySheet.getCell('A1');
+  titleCell.value = companyName;
+  titleCell.font = { size: 20, bold: true, color: { argb: 'FFFFFFFF' } };
+  titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  titleCell.fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FF18B2B0' }
+  };
+  inventorySheet.getRow(1).height = 35;
+
+  inventorySheet.mergeCells('A2:E2');
+  const subtitleCell = inventorySheet.getCell('A2');
+  subtitleCell.value = `تقرير مخزون المستودع: ${data.warehouse.name}`;
+  subtitleCell.font = { size: 16, bold: true, color: { argb: 'FF18B2B0' } };
+  subtitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  subtitleCell.fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FFE0F7F6' }
+  };
+  inventorySheet.getRow(2).height = 28;
+
+  inventorySheet.mergeCells('A3:E3');
+  const locationCell = inventorySheet.getCell('A3');
+  locationCell.value = `الموقع: ${data.warehouse.location}`;
+  locationCell.font = { size: 12, bold: true };
+  locationCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  locationCell.fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FFF0F9FF' }
+  };
+  inventorySheet.getRow(3).height = 25;
+
+  inventorySheet.mergeCells('A4:E4');
+  const dateCell = inventorySheet.getCell('A4');
+  dateCell.value = `تاريخ التقرير: ${arabicDate} - ${time}`;
+  dateCell.font = { size: 11 };
+  dateCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  inventorySheet.getRow(4).height = 22;
+
+  inventorySheet.addRow([]);
+
+  const headerRow = inventorySheet.addRow(['#', 'الصنف', 'الكراتين', 'الوحدات', 'الإجمالي']);
+  headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
+  headerRow.height = 30;
+  headerRow.eachCell((cell) => {
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF4A5568' }
+    };
+    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    cell.border = {
+      top: { style: 'thin', color: { argb: 'FF000000' } },
+      left: { style: 'thin', color: { argb: 'FF000000' } },
+      bottom: { style: 'thin', color: { argb: 'FF000000' } },
+      right: { style: 'thin', color: { argb: 'FF000000' } }
+    };
+  });
+
+  const inv = data.inventory;
+  const items = [
+    { name: 'N950', boxes: inv?.n950Boxes || 0, units: inv?.n950Units || 0 },
+    { name: 'I9000S', boxes: inv?.i9000sBoxes || 0, units: inv?.i9000sUnits || 0 },
+    { name: 'I9100', boxes: inv?.i9100Boxes || 0, units: inv?.i9100Units || 0 },
+    { name: 'ورق الطباعة', boxes: inv?.rollPaperBoxes || 0, units: inv?.rollPaperUnits || 0 },
+    { name: 'الملصقات', boxes: inv?.stickersBoxes || 0, units: inv?.stickersUnits || 0 },
+    { name: 'البطاريات', boxes: inv?.newBatteriesBoxes || 0, units: inv?.newBatteriesUnits || 0 },
+    { name: 'موبايلي SIM', boxes: inv?.mobilySimBoxes || 0, units: inv?.mobilySimUnits || 0 },
+    { name: 'STC SIM', boxes: inv?.stcSimBoxes || 0, units: inv?.stcSimUnits || 0 },
+    { name: 'زين SIM', boxes: inv?.zainSimBoxes || 0, units: inv?.zainSimUnits || 0 },
+  ];
+
+  let totalBoxes = 0;
+  let totalUnits = 0;
+
+  items.forEach((item, index) => {
+    const row = inventorySheet.addRow([
+      index + 1,
+      item.name,
+      item.boxes,
+      item.units,
+      item.boxes + item.units
+    ]);
+    totalBoxes += item.boxes;
+    totalUnits += item.units;
+
+    row.alignment = { horizontal: 'center', vertical: 'middle' };
+    row.eachCell((cell) => {
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+  });
+
+  const totalRow = inventorySheet.addRow(['', 'الإجمالي', totalBoxes, totalUnits, totalBoxes + totalUnits]);
+  totalRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
+  totalRow.height = 28;
+  totalRow.eachCell((cell) => {
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF16A085' }
+    };
+    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    cell.border = {
+      top: { style: 'medium', color: { argb: 'FF000000' } },
+      left: { style: 'thin', color: { argb: 'FF000000' } },
+      bottom: { style: 'medium', color: { argb: 'FF000000' } },
+      right: { style: 'thin', color: { argb: 'FF000000' } }
+    };
+  });
+
+  inventorySheet.columns = [
+    { width: 8 },
+    { width: 20 },
+    { width: 15 },
+    { width: 15 },
+    { width: 15 }
+  ];
+
+  if (data.transfers.length > 0) {
+    const transfersSheet = workbook.addWorksheet('سجل النقل');
+    transfersSheet.views = [{ rightToLeft: true }];
+
+    transfersSheet.mergeCells('A1:E1');
+    const transferTitleCell = transfersSheet.getCell('A1');
+    transferTitleCell.value = `سجل عمليات النقل - ${data.warehouse.name}`;
+    transferTitleCell.font = { size: 18, bold: true, color: { argb: 'FFFFFFFF' } };
+    transferTitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    transferTitleCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF18B2B0' }
+    };
+    transfersSheet.getRow(1).height = 35;
+
+    transfersSheet.mergeCells('A2:E2');
+    const transferDateCell = transfersSheet.getCell('A2');
+    transferDateCell.value = `تاريخ التقرير: ${arabicDate} - ${time}`;
+    transferDateCell.font = { size: 11 };
+    transferDateCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    transfersSheet.getRow(2).height = 22;
+
+    transfersSheet.addRow([]);
+
+    const transferHeaderRow = transfersSheet.addRow(['الفني', 'الأصناف المنقولة', 'الحالة', 'التاريخ', 'الملاحظات']);
+    transferHeaderRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+    transferHeaderRow.height = 28;
+    transferHeaderRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF4A5568' }
+      };
+      cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+
+    data.transfers.forEach((transfer) => {
+      const row = transfersSheet.addRow([
+        transfer.technicianName,
+        transfer.items,
+        transfer.status,
+        new Date(transfer.createdAt).toLocaleDateString('ar-SA'),
+        transfer.notes || '-'
+      ]);
+
+      row.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+      row.eachCell((cell) => {
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FF000000' } },
+          left: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } },
+          right: { style: 'thin', color: { argb: 'FF000000' } }
+        };
+      });
+    });
+
+    transfersSheet.columns = [
+      { width: 20 },
+      { width: 45 },
+      { width: 12 },
+      { width: 15 },
+      { width: 25 }
+    ];
+  }
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const fileName = `تقرير_مخزون_${data.warehouse.name}_${new Date().toISOString().split('T')[0]}.xlsx`;
+  saveAs(blob, fileName);
+};
