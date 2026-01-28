@@ -49,6 +49,8 @@ export default function OperationDetailsPage() {
       mobilySim: "شرائح موبايلي",
       stcSim: "شرائح STC",
       zainSim: "شرائح زين",
+      lebara: "شرائح ليبارا",
+      lebaraSim: "شرائح ليبارا",
     };
     return itemNames[itemType] || itemType;
   };

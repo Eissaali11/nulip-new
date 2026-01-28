@@ -562,6 +562,8 @@ export default function Notifications() {
       'mobilySim': 'موبايلي SIM',
       'stcSim': 'STC SIM',
       'zainSim': 'زين SIM',
+      'lebara': 'ليبارا SIM',
+      'lebaraSim': 'ليبارا SIM',
     };
     
     const packaging = packagingType === 'box' ? 'كرتون' : 'قطعة';
