@@ -286,142 +286,211 @@ export default function WarehouseDetailsPage() {
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     
-    doc.setFillColor(15, 15, 21);
+    doc.setFillColor(255, 255, 255);
     doc.rect(0, 0, pageWidth, pageHeight, 'F');
     
     doc.setFillColor(24, 178, 176);
-    doc.rect(0, 0, pageWidth, 50, 'F');
+    doc.rect(0, 0, pageWidth, 45, 'F');
     
-    doc.setFontSize(28);
+    doc.setFontSize(24);
+    doc.setFont('helvetica', 'bold');
     doc.setTextColor(255, 255, 255);
-    doc.text('STOCKPRO', pageWidth / 2, 25, { align: 'center' });
+    doc.text('STOCKPRO', pageWidth / 2, 20, { align: 'center' });
     
-    doc.setFontSize(12);
-    doc.setTextColor(200, 200, 200);
-    doc.text('Warehouse Transfer Receipt', pageWidth / 2, 35, { align: 'center' });
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Warehouse Transfer Receipt', pageWidth / 2, 32, { align: 'center' });
     
-    let yPos = 70;
+    let yPos = 60;
     
-    doc.setFillColor(30, 30, 40);
-    doc.roundedRect(15, yPos - 10, pageWidth - 30, 35, 3, 3, 'F');
+    doc.setDrawColor(24, 178, 176);
+    doc.setLineWidth(0.5);
+    doc.line(15, yPos - 5, pageWidth - 15, yPos - 5);
     
     doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
     doc.setTextColor(24, 178, 176);
-    doc.text('Transfer Details', pageWidth / 2, yPos, { align: 'center' });
+    doc.text('TRANSFER DETAILS', 15, yPos);
     
     yPos += 10;
     doc.setFontSize(10);
-    doc.setTextColor(200, 200, 200);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(60, 60, 60);
     
     const transferDate = new Date(transfer.createdAt);
-    doc.text(`Date: ${transferDate.toLocaleDateString('en-GB')} ${transferDate.toLocaleTimeString('en-GB')}`, 25, yPos);
-    yPos += 8;
+    doc.text('Date:', 15, yPos);
+    doc.setFont('helvetica', 'bold');
+    doc.text(transferDate.toLocaleDateString('en-GB') + ' ' + transferDate.toLocaleTimeString('en-GB'), 45, yPos);
     
-    const statusText = transfer.status === 'pending' ? 'Pending' : transfer.status === 'accepted' ? 'Accepted' : 'Rejected';
-    doc.text(`Status: ${statusText}`, 25, yPos);
+    yPos += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.text('Status:', 15, yPos);
+    doc.setFont('helvetica', 'bold');
+    const statusText = transfer.status === 'pending' ? 'PENDING' : transfer.status === 'accepted' ? 'ACCEPTED' : 'REJECTED';
+    if (transfer.status === 'accepted') {
+      doc.setTextColor(34, 197, 94);
+    } else if (transfer.status === 'rejected') {
+      doc.setTextColor(239, 68, 68);
+    } else {
+      doc.setTextColor(234, 179, 8);
+    }
+    doc.text(statusText, 45, yPos);
     
-    yPos += 25;
+    yPos += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(60, 60, 60);
+    doc.text('Transfer ID:', 15, yPos);
+    doc.setFont('helvetica', 'bold');
+    doc.text(transfer.id.substring(0, 12) + '...', 45, yPos);
     
-    doc.setFillColor(30, 30, 40);
-    doc.roundedRect(15, yPos - 10, (pageWidth - 40) / 2, 40, 3, 3, 'F');
+    yPos += 15;
+    doc.setDrawColor(200, 200, 200);
+    doc.line(15, yPos - 5, pageWidth - 15, yPos - 5);
     
-    doc.setFontSize(12);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
     doc.setTextColor(24, 178, 176);
-    doc.text('Warehouse Info', 25, yPos);
+    doc.text('WAREHOUSE INFORMATION', 15, yPos);
     
-    yPos += 8;
+    yPos += 10;
     doc.setFontSize(10);
-    doc.setTextColor(200, 200, 200);
-    doc.text(`Name: ${warehouse?.name || 'N/A'}`, 25, yPos);
-    yPos += 6;
-    doc.text(`Location: ${warehouse?.location || 'N/A'}`, 25, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(60, 60, 60);
     
-    const techBoxX = 15 + (pageWidth - 40) / 2 + 10;
-    let techYPos = yPos - 14;
+    const warehouseName = warehouse?.name || 'N/A';
+    const warehouseLocation = warehouse?.location || 'N/A';
     
-    doc.setFillColor(30, 30, 40);
-    doc.roundedRect(techBoxX, techYPos - 10, (pageWidth - 40) / 2, 40, 3, 3, 'F');
+    doc.text('Warehouse Name:', 15, yPos);
+    doc.setFont('helvetica', 'bold');
+    doc.text(warehouseName.replace(/[^\x00-\x7F]/g, '') || 'Warehouse', 55, yPos);
     
-    doc.setFontSize(12);
+    yPos += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.text('Location:', 15, yPos);
+    doc.setFont('helvetica', 'bold');
+    doc.text(warehouseLocation.replace(/[^\x00-\x7F]/g, '') || 'Location', 55, yPos);
+    
+    yPos += 15;
+    doc.setDrawColor(200, 200, 200);
+    doc.line(15, yPos - 5, pageWidth - 15, yPos - 5);
+    
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
     doc.setTextColor(24, 178, 176);
-    doc.text('Technician Info', techBoxX + 10, techYPos);
+    doc.text('TECHNICIAN INFORMATION', 15, yPos);
     
-    techYPos += 8;
+    yPos += 10;
     doc.setFontSize(10);
-    doc.setTextColor(200, 200, 200);
-    doc.text(`Name: ${transfer.technicianName}`, techBoxX + 10, techYPos);
-    techYPos += 6;
-    doc.text(`ID: ${transfer.technicianId?.substring(0, 8) || 'N/A'}...`, techBoxX + 10, techYPos);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(60, 60, 60);
     
-    yPos += 35;
+    const techName = transfer.technicianName || 'N/A';
     
-    doc.setFillColor(30, 30, 40);
-    doc.roundedRect(15, yPos - 10, pageWidth - 30, 80, 3, 3, 'F');
+    doc.text('Technician Name:', 15, yPos);
+    doc.setFont('helvetica', 'bold');
+    doc.text(techName.replace(/[^\x00-\x7F]/g, '') || 'Technician', 55, yPos);
     
-    doc.setFontSize(12);
+    yPos += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.text('Technician ID:', 15, yPos);
+    doc.setFont('helvetica', 'bold');
+    doc.text(transfer.technicianId?.substring(0, 12) + '...' || 'N/A', 55, yPos);
+    
+    yPos += 15;
+    doc.setDrawColor(200, 200, 200);
+    doc.line(15, yPos - 5, pageWidth - 15, yPos - 5);
+    
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
     doc.setTextColor(24, 178, 176);
-    doc.text('Items Transferred', pageWidth / 2, yPos, { align: 'center' });
+    doc.text('ITEMS TRANSFERRED', 15, yPos);
     
     yPos += 10;
     
     const items: {name: string, quantity: number, type: string}[] = [];
-    if (transfer.n950) items.push({name: 'N950', quantity: transfer.n950, type: transfer.n950PackagingType || 'box'});
-    if (transfer.i9000s) items.push({name: 'I9000s', quantity: transfer.i9000s, type: transfer.i9000sPackagingType || 'box'});
-    if (transfer.i9100) items.push({name: 'I9100', quantity: transfer.i9100, type: transfer.i9100PackagingType || 'box'});
+    if (transfer.n950) items.push({name: 'N950 Device', quantity: transfer.n950, type: transfer.n950PackagingType || 'box'});
+    if (transfer.i9000s) items.push({name: 'I9000s Device', quantity: transfer.i9000s, type: transfer.i9000sPackagingType || 'box'});
+    if (transfer.i9100) items.push({name: 'I9100 Device', quantity: transfer.i9100, type: transfer.i9100PackagingType || 'box'});
     if (transfer.rollPaper) items.push({name: 'Roll Paper', quantity: transfer.rollPaper, type: transfer.rollPaperPackagingType || 'box'});
     if (transfer.stickers) items.push({name: 'Stickers', quantity: transfer.stickers, type: transfer.stickersPackagingType || 'box'});
-    if (transfer.newBatteries) items.push({name: 'Batteries', quantity: transfer.newBatteries, type: transfer.newBatteriesPackagingType || 'box'});
-    if (transfer.mobilySim) items.push({name: 'Mobily SIM', quantity: transfer.mobilySim, type: transfer.mobilySimPackagingType || 'box'});
-    if (transfer.stcSim) items.push({name: 'STC SIM', quantity: transfer.stcSim, type: transfer.stcSimPackagingType || 'box'});
-    if (transfer.zainSim) items.push({name: 'Zain SIM', quantity: transfer.zainSim, type: transfer.zainSimPackagingType || 'box'});
-    if (transfer.lebaraSim || transfer.lebara) items.push({name: 'Lebara SIM', quantity: transfer.lebaraSim || transfer.lebara || 0, type: transfer.lebaraSimPackagingType || transfer.lebaraPackagingType || 'box'});
+    if (transfer.newBatteries) items.push({name: 'New Batteries', quantity: transfer.newBatteries, type: transfer.newBatteriesPackagingType || 'box'});
+    if (transfer.mobilySim) items.push({name: 'Mobily SIM Card', quantity: transfer.mobilySim, type: transfer.mobilySimPackagingType || 'box'});
+    if (transfer.stcSim) items.push({name: 'STC SIM Card', quantity: transfer.stcSim, type: transfer.stcSimPackagingType || 'box'});
+    if (transfer.zainSim) items.push({name: 'Zain SIM Card', quantity: transfer.zainSim, type: transfer.zainSimPackagingType || 'box'});
+    if (transfer.lebaraSim || transfer.lebara) items.push({name: 'Lebara SIM Card', quantity: transfer.lebaraSim || transfer.lebara || 0, type: transfer.lebaraSimPackagingType || transfer.lebaraPackagingType || 'box'});
     
-    doc.setFontSize(10);
-    doc.setTextColor(180, 180, 180);
-    doc.text('Item', 25, yPos);
-    doc.text('Quantity', 90, yPos);
-    doc.text('Type', 140, yPos);
+    doc.setFillColor(240, 240, 240);
+    doc.rect(15, yPos - 3, pageWidth - 30, 8, 'F');
     
-    yPos += 2;
-    doc.setDrawColor(24, 178, 176);
-    doc.line(25, yPos, pageWidth - 25, yPos);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(60, 60, 60);
+    doc.text('Item Name', 20, yPos + 2);
+    doc.text('Quantity', 100, yPos + 2);
+    doc.text('Type', 140, yPos + 2);
+    doc.text('Total', 170, yPos + 2);
     
-    yPos += 8;
-    doc.setTextColor(255, 255, 255);
+    yPos += 10;
+    doc.setFont('helvetica', 'normal');
     
-    items.forEach((item) => {
-      doc.text(item.name, 25, yPos);
-      doc.text(item.quantity.toString(), 90, yPos);
+    let totalItems = 0;
+    items.forEach((item, index) => {
+      if (index % 2 === 0) {
+        doc.setFillColor(250, 250, 250);
+        doc.rect(15, yPos - 4, pageWidth - 30, 7, 'F');
+      }
+      
+      doc.setTextColor(40, 40, 40);
+      doc.text(item.name, 20, yPos);
+      doc.text(item.quantity.toString(), 100, yPos);
       doc.text(item.type === 'box' ? 'Box' : 'Unit', 140, yPos);
+      doc.text(item.quantity.toString(), 170, yPos);
+      totalItems += item.quantity;
       yPos += 7;
     });
     
+    yPos += 3;
+    doc.setDrawColor(24, 178, 176);
+    doc.setLineWidth(0.8);
+    doc.line(15, yPos, pageWidth - 15, yPos);
+    
+    yPos += 7;
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(24, 178, 176);
+    doc.text('TOTAL ITEMS:', 100, yPos);
+    doc.text(totalItems.toString(), 170, yPos);
+    
     if (transfer.notes) {
       yPos += 15;
-      doc.setFillColor(30, 30, 40);
-      doc.roundedRect(15, yPos - 10, pageWidth - 30, 25, 3, 3, 'F');
-      
-      doc.setFontSize(12);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
       doc.setTextColor(24, 178, 176);
-      doc.text('Notes', 25, yPos);
+      doc.text('NOTES', 15, yPos);
       
       yPos += 8;
       doc.setFontSize(10);
-      doc.setTextColor(200, 200, 200);
-      doc.text(transfer.notes, 25, yPos);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(60, 60, 60);
+      const cleanNotes = transfer.notes.replace(/[^\x00-\x7F]/g, '') || 'No notes';
+      doc.text(cleanNotes, 15, yPos);
     }
     
-    doc.setFontSize(8);
-    doc.setTextColor(100, 100, 100);
-    doc.text('Generated by STOCKPRO - RAS Saudi Inventory Management System', pageWidth / 2, pageHeight - 15, { align: 'center' });
-    doc.text(`Generated on: ${new Date().toLocaleString('en-GB')}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+    doc.setFillColor(24, 178, 176);
+    doc.rect(0, pageHeight - 20, pageWidth, 20, 'F');
     
-    const fileName = `transfer_${transfer.technicianName.replace(/\s+/g, '_')}_${transferDate.toISOString().split('T')[0]}.pdf`;
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(255, 255, 255);
+    doc.text('STOCKPRO - RAS Saudi Inventory Management System', pageWidth / 2, pageHeight - 12, { align: 'center' });
+    doc.text('Generated on: ' + new Date().toLocaleString('en-GB'), pageWidth / 2, pageHeight - 6, { align: 'center' });
+    
+    const dateStr = transferDate.toISOString().split('T')[0];
+    const fileName = `transfer_${dateStr}_${transfer.id.substring(0, 8)}.pdf`;
     doc.save(fileName);
     
     toast({
-      title: "تم التصدير بنجاح",
-      description: "تم تحميل ملف PDF",
+      title: "PDF Downloaded",
+      description: "Transfer receipt has been saved",
     });
   };
 
