@@ -218,8 +218,8 @@ export default function Notifications() {
 
   // Technician mutations - Batch operations
   const techApproveBatchMutation = useMutation({
-    mutationFn: async (requestId: string) => {
-      return await apiRequest("POST", `/api/warehouse-transfer-batches/${requestId}/accept`, {});
+    mutationFn: async (transferIds: string[]) => {
+      return await apiRequest("POST", `/api/warehouse-transfer-batches/by-ids/accept`, { transferIds });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/warehouse-transfers"] });
@@ -242,8 +242,8 @@ export default function Notifications() {
   });
 
   const techRejectBatchMutation = useMutation({
-    mutationFn: async ({ requestId, reason }: { requestId: string; reason: string }) => {
-      return await apiRequest("POST", `/api/warehouse-transfer-batches/${requestId}/reject`, { reason });
+    mutationFn: async ({ transferIds, reason }: { transferIds: string[]; reason: string }) => {
+      return await apiRequest("POST", `/api/warehouse-transfer-batches/by-ids/reject`, { transferIds, reason });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/warehouse-transfers"] });
@@ -462,7 +462,8 @@ export default function Notifications() {
 
   const handleTechConfirmApprove = () => {
     if (selectedBatch) {
-      techApproveBatchMutation.mutate(selectedBatch.requestId);
+      const transferIds = selectedBatch.transfers.map(t => t.id);
+      techApproveBatchMutation.mutate(transferIds);
     }
   };
 
@@ -482,7 +483,8 @@ export default function Notifications() {
     }
 
     if (selectedBatch) {
-      techRejectBatchMutation.mutate({ requestId: selectedBatch.requestId, reason: techRejectionReason });
+      const transferIds = selectedBatch.transfers.map(t => t.id);
+      techRejectBatchMutation.mutate({ transferIds, reason: techRejectionReason });
     }
   };
 

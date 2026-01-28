@@ -2056,6 +2056,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Accept transfers by IDs (for grouped transfers without requestId)
+  app.post("/api/warehouse-transfer-batches/by-ids/accept", requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { transferIds } = req.body;
+
+      if (!transferIds || !Array.isArray(transferIds) || transferIds.length === 0) {
+        return res.status(400).json({ message: "Transfer IDs array is required" });
+      }
+
+      const updatedTransfers = [];
+      for (const transferId of transferIds) {
+        const transfer = await db
+          .select()
+          .from(warehouseTransfers)
+          .where(eq(warehouseTransfers.id, transferId))
+          .limit(1);
+
+        if (transfer.length > 0 && transfer[0].technicianId === user.id && transfer[0].status === 'pending') {
+          const updated = await storage.acceptWarehouseTransfer(transferId);
+          updatedTransfers.push(updated);
+        }
+      }
+
+      res.json(updatedTransfers);
+    } catch (error) {
+      console.error("Error accepting transfers by IDs:", error);
+      if (error instanceof Error) {
+        return res.status(400).json({ message: error.message });
+      }
+      res.status(500).json({ message: "Failed to accept transfers" });
+    }
+  });
+
+  // Reject transfers by IDs (for grouped transfers without requestId)
+  app.post("/api/warehouse-transfer-batches/by-ids/reject", requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { transferIds, reason } = req.body;
+
+      if (!transferIds || !Array.isArray(transferIds) || transferIds.length === 0) {
+        return res.status(400).json({ message: "Transfer IDs array is required" });
+      }
+
+      if (!reason || !reason.trim()) {
+        return res.status(400).json({ message: "Rejection reason is required" });
+      }
+
+      const updatedTransfers = [];
+      for (const transferId of transferIds) {
+        const transfer = await db
+          .select()
+          .from(warehouseTransfers)
+          .where(eq(warehouseTransfers.id, transferId))
+          .limit(1);
+
+        if (transfer.length > 0 && transfer[0].technicianId === user.id && transfer[0].status === 'pending') {
+          const updated = await storage.rejectWarehouseTransfer(transferId, reason);
+          updatedTransfers.push(updated);
+        }
+      }
+
+      res.json(updatedTransfers);
+    } catch (error) {
+      console.error("Error rejecting transfers by IDs:", error);
+      if (error instanceof Error) {
+        return res.status(400).json({ message: error.message });
+      }
+      res.status(500).json({ message: "Failed to reject transfers" });
+    }
+  });
+
   // Bulk operations for multiple request IDs (MUST be before dynamic routes)
   app.post("/api/warehouse-transfer-batches/bulk/accept", requireAuth, async (req, res) => {
     try {
