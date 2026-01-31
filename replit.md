@@ -131,6 +131,13 @@ lebaraSim -> lebaraBoxes, lebaraUnits
 - **Accessories**: New Batteries
 - **SIM Cards**: Mobily SIM, STC SIM, Zain SIM, Lebara SIM
 
+#### Centralized Inventory Value Resolution
+The system uses a centralized `getInventoryValueForItemType()` function in `use-item-types.ts` that:
+1. First checks the new `entries` array from entry tables
+2. Falls back to legacy columns if no entry is found
+3. Returns 0 if neither exists
+
+This ensures new item types stored in entry tables are properly displayed, while maintaining backward compatibility with legacy data.
+
 #### Known Limitations (Future Work)
-1. **Excel Exports**: The exportToExcel functions still use hardcoded columns; new dynamic item types will not appear in exports until these are updated
-2. **Data Migration**: No automatic backfill from legacy columns to entry tables; entries are created on first update via modals
+1. **Data Migration**: No automatic backfill from legacy columns to entry tables; entries are created on first update via modals
