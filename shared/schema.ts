@@ -15,7 +15,7 @@ export const regions = pgTable("regions", {
 
 // Item Types table for managing inventory item categories
 export const itemTypes = pgTable("item_types", {
-  id: varchar("id").primaryKey(),
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   nameAr: text("name_ar").notNull(),
   nameEn: text("name_en").notNull(),
   category: text("category").notNull(), // 'devices', 'papers', 'sim', 'accessories'
