@@ -71,25 +71,66 @@ Preferred communication style: Simple, everyday language.
 - **TanStack React Query**: Powerful data synchronization for React applications
 - **Native Fetch API**: Modern HTTP client for API communications
 
-## Recent Changes (January 28, 2026)
+## Recent Changes (January 31, 2026)
 
-### Added Lebara SIM Item Type
-- Added Lebara SIM as a new item type across the entire inventory management system
-- Updated all modals: edit-technician-fixed-inventory-modal, update-warehouse-inventory-modal, request-inventory-modal, transfer-from-warehouse-modal
-- Updated all pages: warehouse-details, technician-details, my-fixed-inventory, my-moving-inventory
-- Updated exportToExcel.ts to include Lebara in all Excel reports
-- Added Lebara to shared/itemTypes.ts configuration
+### Dynamic Item Types Management System
 
-### Item Types Configuration
-The system uses a centralized item types configuration in `shared/itemTypes.ts`. When adding a new item type:
-1. Add the item definition to `ITEM_TYPES` array in itemTypes.ts
-2. Add database columns (`${itemId}Boxes` and `${itemId}Units`) to relevant tables in schema.ts
-3. Run `npm run db:push` to apply schema changes
-4. Update all modals and pages that display inventory items
-5. Update exportToExcel.ts for Excel report generation
+The inventory system now supports **dynamic item types** that can be added, edited, enabled/disabled, and shown/hidden through an admin interface. New item types automatically appear across all pages and modals.
 
-### Current Item Types
-- Devices: N950, I9000S, I9100
-- Papers: Roll Paper, Stickers
-- Accessories: New Batteries
-- SIM Cards: Mobily SIM, STC SIM, Zain SIM, Lebara SIM
+#### Architecture
+- **Database Schema**: Normalized design with `item_types` table containing all item type definitions
+- **Entry Tables**: Three normalized entry tables with foreign keys:
+  - `warehouse_inventory_entries` (warehouseId, itemTypeId, boxes, units)
+  - `technician_fixed_inventory_entries` (technicianId, itemTypeId, boxes, units)
+  - `technician_moving_inventory_entries` (technicianId, itemTypeId, boxes, units)
+- **Legacy Compatibility**: Dual-write pattern maintains legacy columns during transition
+
+#### Key Files
+- `shared/schema.ts`: Database schema with itemTypes and entry tables
+- `server/database-storage.ts`: Storage methods with upsert operations for entries
+- `server/routes.ts`: API endpoints for CRUD operations on item types and entries
+- `client/src/hooks/use-item-types.ts`: React hook with `useActiveItemTypes()` and `buildInventoryDisplayItems()` helper
+
+#### Pages Updated for Dynamic Item Types
+- `warehouse-details.tsx` - Uses dynamic item types with entries
+- `my-fixed-inventory.tsx` - Uses dynamic item types with entries
+- `my-moving-inventory.tsx` - Uses dynamic item types with entries
+- `technician-details.tsx` - Uses dynamic item types with entries
+
+#### Modals Updated for Dynamic Item Types
+- `update-warehouse-inventory-modal.tsx` - Dynamic with dual-write
+- `transfer-from-warehouse-modal.tsx` - Dynamic with dual-write
+- `edit-fixed-inventory-modal.tsx` - Dynamic with dual-write
+- `update-moving-inventory-modal.tsx` - Dynamic with dual-write
+- `transfer-to-moving-modal.tsx` - Dynamic with dual-write
+
+#### How to Add New Item Types (Admin)
+1. Use the admin interface to add a new item type via the item_types table
+2. The new item type will automatically appear on all display pages
+3. All modals will show the new item type for inventory updates
+4. No code changes required for new item types
+
+#### Legacy Field Mapping
+For backward compatibility, the system maps legacy columns to dynamic item types:
+```
+n950 -> n950Boxes, n950Units
+i9000s -> i9000sBoxes, i9000sUnits
+i9100 -> i9100Boxes, i9100Units
+rollPaper -> rollPaperBoxes, rollPaperUnits
+stickers -> stickersBoxes, stickersUnits
+newBatteries -> newBatteriesBoxes, newBatteriesUnits
+mobilySim -> mobilySimBoxes, mobilySimUnits
+stcSim -> stcSimBoxes, stcSimUnits
+zainSim -> zainSimBoxes, zainSimUnits
+lebaraSim -> lebaraBoxes, lebaraUnits
+```
+
+#### Current Item Types
+- **Devices**: N950, I9000S, I9100
+- **Papers**: Roll Paper, Stickers
+- **Accessories**: New Batteries
+- **SIM Cards**: Mobily SIM, STC SIM, Zain SIM, Lebara SIM
+
+#### Known Limitations (Future Work)
+1. **Excel Exports**: The exportToExcel functions still use hardcoded columns; new dynamic item types will not appear in exports until these are updated
+2. **Data Migration**: No automatic backfill from legacy columns to entry tables; entries are created on first update via modals

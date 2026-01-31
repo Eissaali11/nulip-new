@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect, useMemo } from "react";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -14,25 +14,20 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { ArrowRight, Package, Box, Smartphone, FileText, Sticker, Battery } from "lucide-react";
+import { ArrowRight, Package } from "lucide-react";
+import { useActiveItemTypes, getItemTypeVisuals } from "@/hooks/use-item-types";
 
 type PackagingType = 'box' | 'unit';
 
-interface ItemTransfer {
+interface TransferEntry {
   quantity: number;
   packagingType: PackagingType;
 }
 
-interface TransferData {
-  n950: ItemTransfer;
-  i9000s: ItemTransfer;
-  i9100: ItemTransfer;
-  rollPaper: ItemTransfer;
-  stickers: ItemTransfer;
-  newBatteries: ItemTransfer;
-  mobilySim: ItemTransfer;
-  stcSim: ItemTransfer;
-  zainSim: ItemTransfer;
+interface FixedEntry {
+  itemTypeId: string;
+  boxes: number;
+  units: number;
 }
 
 interface TransferToMovingModalProps {
@@ -61,6 +56,19 @@ interface TransferToMovingModalProps {
   };
 }
 
+const legacyFieldMapping: Record<string, { boxes: string; units: string }> = {
+  n950: { boxes: "n950Boxes", units: "n950Units" },
+  i9000s: { boxes: "i9000sBoxes", units: "i9000sUnits" },
+  i9100: { boxes: "i9100Boxes", units: "i9100Units" },
+  rollPaper: { boxes: "rollPaperBoxes", units: "rollPaperUnits" },
+  stickers: { boxes: "stickersBoxes", units: "stickersUnits" },
+  newBatteries: { boxes: "newBatteriesBoxes", units: "newBatteriesUnits" },
+  mobilySim: { boxes: "mobilySimBoxes", units: "mobilySimUnits" },
+  stcSim: { boxes: "stcSimBoxes", units: "stcSimUnits" },
+  zainSim: { boxes: "zainSimBoxes", units: "zainSimUnits" },
+  lebaraSim: { boxes: "lebaraBoxes", units: "lebaraUnits" },
+};
+
 export function TransferToMovingModal({
   open,
   onClose,
@@ -70,52 +78,103 @@ export function TransferToMovingModal({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const [transfer, setTransfer] = useState<TransferData>({
-    n950: { quantity: 0, packagingType: 'unit' },
-    i9000s: { quantity: 0, packagingType: 'unit' },
-    i9100: { quantity: 0, packagingType: 'unit' },
-    rollPaper: { quantity: 0, packagingType: 'unit' },
-    stickers: { quantity: 0, packagingType: 'unit' },
-    newBatteries: { quantity: 0, packagingType: 'unit' },
-    mobilySim: { quantity: 0, packagingType: 'unit' },
-    stcSim: { quantity: 0, packagingType: 'unit' },
-    zainSim: { quantity: 0, packagingType: 'unit' },
+  const { data: itemTypes } = useActiveItemTypes();
+  const { data: fixedEntries } = useQuery<FixedEntry[]>({
+    queryKey: ['/api/technician-fixed-entries', technicianId],
   });
+
+  const [transfers, setTransfers] = useState<Record<string, TransferEntry>>({});
+
+  useEffect(() => {
+    if (itemTypes && itemTypes.length > 0) {
+      const initialTransfers: Record<string, TransferEntry> = {};
+      itemTypes.forEach((itemType) => {
+        if (!transfers[itemType.id]) {
+          initialTransfers[itemType.id] = { quantity: 0, packagingType: 'unit' };
+        }
+      });
+      if (Object.keys(initialTransfers).length > 0) {
+        setTransfers((prev) => ({ ...initialTransfers, ...prev }));
+      }
+    }
+  }, [itemTypes]);
 
   const getAvailableForType = (boxes: number, units: number, type: PackagingType) => {
     return type === 'box' ? boxes : units;
   };
 
+  const getItemInventory = (itemTypeId: string): { boxes: number; units: number } => {
+    const entry = fixedEntries?.find((e) => e.itemTypeId === itemTypeId);
+    if (entry) {
+      return { boxes: entry.boxes, units: entry.units };
+    }
+    const legacy = legacyFieldMapping[itemTypeId];
+    if (legacy && fixedInventory) {
+      return {
+        boxes: (fixedInventory as any)[legacy.boxes] || 0,
+        units: (fixedInventory as any)[legacy.units] || 0,
+      };
+    }
+    return { boxes: 0, units: 0 };
+  };
+
+  const items = useMemo(() => {
+    if (!itemTypes) return [];
+
+    const categoryCounters: Record<string, number> = {};
+
+    return itemTypes
+      .filter((t) => t.isActive && t.isVisible)
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((itemType) => {
+        const categoryIndex = categoryCounters[itemType.category] || 0;
+        categoryCounters[itemType.category] = categoryIndex + 1;
+
+        const { boxes, units } = getItemInventory(itemType.id);
+        const visuals = getItemTypeVisuals(itemType, categoryIndex);
+
+        return {
+          id: itemType.id,
+          label: itemType.nameAr,
+          icon: visuals.icon,
+          boxes,
+          units,
+          transfer: transfers[itemType.id] || { quantity: 0, packagingType: 'unit' as PackagingType },
+          gradient: visuals.gradient,
+        };
+      });
+  }, [itemTypes, fixedEntries, fixedInventory, transfers]);
+
   const transferMutation = useMutation({
     mutationFn: async () => {
+      const entries = Object.entries(transfers)
+        .filter(([_, transfer]) => transfer.quantity > 0)
+        .map(([itemTypeId, transfer]) => ({
+          itemTypeId,
+          quantity: transfer.quantity,
+          packagingType: transfer.packagingType,
+        }));
+
+      const legacyPayload: Record<string, any> = { technicianId };
+      Object.entries(transfers).forEach(([itemTypeId, transfer]) => {
+        if (legacyFieldMapping[itemTypeId]) {
+          legacyPayload[itemTypeId] = transfer.quantity;
+          legacyPayload[`${itemTypeId}PackagingType`] = transfer.packagingType;
+        }
+      });
+
       return await apiRequest(
         "POST",
         `/api/stock-transfer`,
         {
-          technicianId,
-          n950: transfer.n950.quantity,
-          n950PackagingType: transfer.n950.packagingType,
-          i9000s: transfer.i9000s.quantity,
-          i9000sPackagingType: transfer.i9000s.packagingType,
-          i9100: transfer.i9100.quantity,
-          i9100PackagingType: transfer.i9100.packagingType,
-          rollPaper: transfer.rollPaper.quantity,
-          rollPaperPackagingType: transfer.rollPaper.packagingType,
-          stickers: transfer.stickers.quantity,
-          stickersPackagingType: transfer.stickers.packagingType,
-          newBatteries: transfer.newBatteries.quantity,
-          newBatteriesPackagingType: transfer.newBatteries.packagingType,
-          mobilySim: transfer.mobilySim.quantity,
-          mobilySimPackagingType: transfer.mobilySim.packagingType,
-          stcSim: transfer.stcSim.quantity,
-          stcSimPackagingType: transfer.stcSim.packagingType,
-          zainSim: transfer.zainSim.quantity,
-          zainSimPackagingType: transfer.zainSim.packagingType,
+          ...legacyPayload,
+          entries,
         }
       );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/technician-fixed-inventory/${technicianId}`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/technician-fixed-entries', technicianId] });
       queryClient.invalidateQueries({ queryKey: [`/api/technicians/${technicianId}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/fixed-inventory-dashboard'] });
@@ -125,17 +184,11 @@ export function TransferToMovingModal({
         title: "✓ تم النقل بنجاح",
         description: "تم نقل الكميات من المخزون الثابت إلى المتحرك",
       });
-      setTransfer({
-        n950: { quantity: 0, packagingType: 'unit' },
-        i9000s: { quantity: 0, packagingType: 'unit' },
-        i9100: { quantity: 0, packagingType: 'unit' },
-        rollPaper: { quantity: 0, packagingType: 'unit' },
-        stickers: { quantity: 0, packagingType: 'unit' },
-        newBatteries: { quantity: 0, packagingType: 'unit' },
-        mobilySim: { quantity: 0, packagingType: 'unit' },
-        stcSim: { quantity: 0, packagingType: 'unit' },
-        zainSim: { quantity: 0, packagingType: 'unit' },
+      const resetTransfers: Record<string, TransferEntry> = {};
+      Object.keys(transfers).forEach((key) => {
+        resetTransfers[key] = { quantity: 0, packagingType: 'unit' };
       });
+      setTransfers(resetTransfers);
       onClose();
     },
     onError: () => {
@@ -148,22 +201,24 @@ export function TransferToMovingModal({
   });
 
   const handleTransfer = () => {
-    // Validate quantities against the selected packaging type
-    const n950Available = getAvailableForType(fixedInventory.n950Boxes, fixedInventory.n950Units, transfer.n950.packagingType);
-    const i9000sAvailable = getAvailableForType(fixedInventory.i9000sBoxes, fixedInventory.i9000sUnits, transfer.i9000s.packagingType);
-    const i9100Available = getAvailableForType(fixedInventory.i9100Boxes, fixedInventory.i9100Units, transfer.i9100.packagingType);
-    const paperAvailable = getAvailableForType(fixedInventory.rollPaperBoxes, fixedInventory.rollPaperUnits, transfer.rollPaper.packagingType);
-    const stickersAvailable = getAvailableForType(fixedInventory.stickersBoxes, fixedInventory.stickersUnits, transfer.stickers.packagingType);
-    const batteriesAvailable = getAvailableForType(fixedInventory.newBatteriesBoxes, fixedInventory.newBatteriesUnits, transfer.newBatteries.packagingType);
-    const mobilyAvailable = getAvailableForType(fixedInventory.mobilySimBoxes, fixedInventory.mobilySimUnits, transfer.mobilySim.packagingType);
-    const stcAvailable = getAvailableForType(fixedInventory.stcSimBoxes, fixedInventory.stcSimUnits, transfer.stcSim.packagingType);
-    const zainAvailable = getAvailableForType(fixedInventory.zainSimBoxes, fixedInventory.zainSimUnits, transfer.zainSim.packagingType);
+    let hasExceededQuantity = false;
+    let hasAnyTransfer = false;
 
-    if (transfer.n950.quantity > n950Available || transfer.i9000s.quantity > i9000sAvailable || 
-        transfer.i9100.quantity > i9100Available || transfer.rollPaper.quantity > paperAvailable || 
-        transfer.stickers.quantity > stickersAvailable || transfer.newBatteries.quantity > batteriesAvailable ||
-        transfer.mobilySim.quantity > mobilyAvailable || transfer.stcSim.quantity > stcAvailable || 
-        transfer.zainSim.quantity > zainAvailable) {
+    for (const item of items) {
+      const transfer = transfers[item.id];
+      if (!transfer) continue;
+
+      if (transfer.quantity > 0) {
+        hasAnyTransfer = true;
+        const available = getAvailableForType(item.boxes, item.units, transfer.packagingType);
+        if (transfer.quantity > available) {
+          hasExceededQuantity = true;
+          break;
+        }
+      }
+    }
+
+    if (hasExceededQuantity) {
       toast({
         variant: "destructive",
         title: "خطأ في الكمية",
@@ -172,9 +227,7 @@ export function TransferToMovingModal({
       return;
     }
 
-    if (transfer.n950.quantity === 0 && transfer.i9000s.quantity === 0 && transfer.i9100.quantity === 0 && 
-        transfer.rollPaper.quantity === 0 && transfer.stickers.quantity === 0 && transfer.newBatteries.quantity === 0 && 
-        transfer.mobilySim.quantity === 0 && transfer.stcSim.quantity === 0 && transfer.zainSim.quantity === 0) {
+    if (!hasAnyTransfer) {
       toast({
         variant: "destructive",
         title: "لا توجد كميات",
@@ -186,99 +239,15 @@ export function TransferToMovingModal({
     transferMutation.mutate();
   };
 
-  const updateItemTransfer = (itemKey: keyof TransferData, field: 'quantity' | 'packagingType', value: number | PackagingType) => {
-    setTransfer(prev => ({
+  const updateItemTransfer = (itemId: string, field: 'quantity' | 'packagingType', value: number | PackagingType) => {
+    setTransfers(prev => ({
       ...prev,
-      [itemKey]: {
-        ...prev[itemKey],
+      [itemId]: {
+        ...(prev[itemId] || { quantity: 0, packagingType: 'unit' }),
         [field]: value,
       }
     }));
   };
-
-  const items = [
-    {
-      id: 'n950',
-      label: 'أجهزة N950',
-      icon: Box,
-      boxes: fixedInventory.n950Boxes,
-      units: fixedInventory.n950Units,
-      transfer: transfer.n950,
-      gradient: 'from-blue-500 to-cyan-500',
-    },
-    {
-      id: 'i9000s',
-      label: 'أجهزة I9000s',
-      icon: Box,
-      boxes: fixedInventory.i9000sBoxes,
-      units: fixedInventory.i9000sUnits,
-      transfer: transfer.i9000s,
-      gradient: 'from-purple-500 to-pink-500',
-    },
-    {
-      id: 'i9100',
-      label: 'أجهزة I9100',
-      icon: Box,
-      boxes: fixedInventory.i9100Boxes,
-      units: fixedInventory.i9100Units,
-      transfer: transfer.i9100,
-      gradient: 'from-indigo-500 to-blue-500',
-    },
-    {
-      id: 'rollPaper',
-      label: 'أوراق رول',
-      icon: FileText,
-      boxes: fixedInventory.rollPaperBoxes,
-      units: fixedInventory.rollPaperUnits,
-      transfer: transfer.rollPaper,
-      gradient: 'from-amber-500 to-orange-500',
-    },
-    {
-      id: 'stickers',
-      label: 'ملصقات مدى',
-      icon: Sticker,
-      boxes: fixedInventory.stickersBoxes,
-      units: fixedInventory.stickersUnits,
-      transfer: transfer.stickers,
-      gradient: 'from-rose-500 to-red-500',
-    },
-    {
-      id: 'newBatteries',
-      label: 'بطاريات جديدة',
-      icon: Battery,
-      boxes: fixedInventory.newBatteriesBoxes,
-      units: fixedInventory.newBatteriesUnits,
-      transfer: transfer.newBatteries,
-      gradient: 'from-emerald-500 to-teal-500',
-    },
-    {
-      id: 'mobilySim',
-      label: 'شرائح موبايلي',
-      icon: Smartphone,
-      boxes: fixedInventory.mobilySimBoxes,
-      units: fixedInventory.mobilySimUnits,
-      transfer: transfer.mobilySim,
-      gradient: 'from-green-500 to-lime-500',
-    },
-    {
-      id: 'stcSim',
-      label: 'شرائح STC',
-      icon: Smartphone,
-      boxes: fixedInventory.stcSimBoxes,
-      units: fixedInventory.stcSimUnits,
-      transfer: transfer.stcSim,
-      gradient: 'from-teal-500 to-cyan-500',
-    },
-    {
-      id: 'zainSim',
-      label: 'شرائح زين',
-      icon: Smartphone,
-      boxes: fixedInventory.zainSimBoxes,
-      units: fixedInventory.zainSimUnits,
-      transfer: transfer.zainSim,
-      gradient: 'from-violet-500 to-purple-500',
-    },
-  ];
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -326,12 +295,11 @@ export function TransferToMovingModal({
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Packaging Type Selection */}
                   <div className="space-y-2">
                     <Label className="text-sm text-muted-foreground">نوع التعبئة</Label>
                     <RadioGroup
                       value={item.transfer.packagingType}
-                      onValueChange={(value) => updateItemTransfer(item.id as keyof TransferData, 'packagingType', value as PackagingType)}
+                      onValueChange={(value) => updateItemTransfer(item.id, 'packagingType', value as PackagingType)}
                       className="flex gap-4"
                       dir="rtl"
                     >
@@ -364,7 +332,6 @@ export function TransferToMovingModal({
                     </RadioGroup>
                   </div>
 
-                  {/* Quantity Input */}
                   <div className="space-y-2">
                     <Label htmlFor={`${item.id}-quantity`} className="text-sm text-muted-foreground">
                       الكمية المراد نقلها
@@ -377,7 +344,7 @@ export function TransferToMovingModal({
                         max={available}
                         value={item.transfer.quantity}
                         onChange={(e) => updateItemTransfer(
-                          item.id as keyof TransferData, 
+                          item.id, 
                           'quantity', 
                           Math.max(0, Math.min(available, parseInt(e.target.value) || 0))
                         )}
