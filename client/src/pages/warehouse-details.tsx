@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { motion } from "framer-motion";
@@ -6,6 +6,7 @@ import { exportSingleWarehouseToExcel } from "@/lib/exportToExcel";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useActiveItemTypes, buildInventoryDisplayItems, type InventoryEntry } from "@/hooks/use-item-types";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -185,6 +186,13 @@ export default function WarehouseDetailsPage() {
 
   const { data: warehouse, isLoading: warehouseLoading } = useQuery<WarehouseData>({
     queryKey: ["/api/warehouses", warehouseId],
+    enabled: !!warehouseId,
+  });
+
+  const { data: itemTypesData, isLoading: itemTypesLoading } = useActiveItemTypes();
+
+  const { data: inventoryEntriesData } = useQuery<InventoryEntry[]>({
+    queryKey: ["/api/warehouses", warehouseId, "inventory-entries"],
     enabled: !!warehouseId,
   });
 
@@ -449,98 +457,14 @@ export default function WarehouseDetailsPage() {
     }
   };
 
-  const inventoryItems = [
-    { 
-      name: "N950", 
-      nameAr: "N950",
-      boxes: warehouse?.inventory?.n950Boxes || 0,
-      units: warehouse?.inventory?.n950Units || 0,
-      icon: Smartphone,
-      color: "#3b82f6",
-      gradient: "from-blue-500 to-blue-600"
-    },
-    { 
-      name: "I9000S", 
-      nameAr: "I9000S",
-      boxes: warehouse?.inventory?.i9000sBoxes || 0,
-      units: warehouse?.inventory?.i9000sUnits || 0,
-      icon: Smartphone,
-      color: "#8b5cf6",
-      gradient: "from-purple-500 to-violet-600"
-    },
-    { 
-      name: "I9100", 
-      nameAr: "I9100",
-      boxes: warehouse?.inventory?.i9100Boxes || 0,
-      units: warehouse?.inventory?.i9100Units || 0,
-      icon: Smartphone,
-      color: "#ec4899",
-      gradient: "from-pink-500 to-rose-600"
-    },
-    { 
-      name: "Roll Paper", 
-      nameAr: "ورق الطباعة",
-      boxes: warehouse?.inventory?.rollPaperBoxes || 0,
-      units: warehouse?.inventory?.rollPaperUnits || 0,
-      icon: FileText,
-      color: "#f59e0b",
-      gradient: "from-amber-500 to-orange-600"
-    },
-    { 
-      name: "Stickers", 
-      nameAr: "الملصقات",
-      boxes: warehouse?.inventory?.stickersBoxes || 0,
-      units: warehouse?.inventory?.stickersUnits || 0,
-      icon: Sticker,
-      color: "#14b8a6",
-      gradient: "from-teal-500 to-cyan-600"
-    },
-    { 
-      name: "Batteries", 
-      nameAr: "البطاريات",
-      boxes: warehouse?.inventory?.newBatteriesBoxes || 0,
-      units: warehouse?.inventory?.newBatteriesUnits || 0,
-      icon: Battery,
-      color: "#10b981",
-      gradient: "from-emerald-500 to-green-600"
-    },
-    { 
-      name: "Mobily SIM", 
-      nameAr: "موبايلي",
-      boxes: warehouse?.inventory?.mobilySimBoxes || 0,
-      units: warehouse?.inventory?.mobilySimUnits || 0,
-      icon: Smartphone,
-      color: "#06b6d4",
-      gradient: "from-cyan-500 to-sky-600"
-    },
-    { 
-      name: "STC SIM", 
-      nameAr: "STC",
-      boxes: warehouse?.inventory?.stcSimBoxes || 0,
-      units: warehouse?.inventory?.stcSimUnits || 0,
-      icon: Smartphone,
-      color: "#6366f1",
-      gradient: "from-indigo-500 to-blue-600"
-    },
-    { 
-      name: "Zain SIM", 
-      nameAr: "زين",
-      boxes: warehouse?.inventory?.zainSimBoxes || 0,
-      units: warehouse?.inventory?.zainSimUnits || 0,
-      icon: Smartphone,
-      color: "#f97316",
-      gradient: "from-orange-500 to-red-600"
-    },
-    { 
-      name: "Lebara SIM", 
-      nameAr: "ليبارا",
-      boxes: warehouse?.inventory?.lebaraBoxes || 0,
-      units: warehouse?.inventory?.lebaraUnits || 0,
-      icon: Smartphone,
-      color: "#ec4899",
-      gradient: "from-pink-500 to-rose-600"
-    },
-  ];
+  const inventoryItems = useMemo(() => {
+    if (!itemTypesData) return [];
+    return buildInventoryDisplayItems(
+      itemTypesData,
+      inventoryEntriesData || [],
+      warehouse?.inventory as any
+    );
+  }, [itemTypesData, inventoryEntriesData, warehouse?.inventory]);
 
   const handleExportToExcel = async () => {
     if (!warehouse) return;
