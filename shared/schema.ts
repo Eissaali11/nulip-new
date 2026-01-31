@@ -321,6 +321,36 @@ export const warehouseInventory = pgTable("warehouse_inventory", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Dynamic Warehouse Inventory Entries - مخزون المستودع الديناميكي
+export const warehouseInventoryEntries = pgTable("warehouse_inventory_entries", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  warehouseId: varchar("warehouse_id").notNull().references(() => warehouses.id, { onDelete: 'cascade' }),
+  itemTypeId: varchar("item_type_id").notNull().references(() => itemTypes.id, { onDelete: 'cascade' }),
+  boxes: integer("boxes").notNull().default(0),
+  units: integer("units").notNull().default(0),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Dynamic Technician Fixed Inventory Entries - المخزون الثابت الديناميكي للفني
+export const technicianFixedInventoryEntries = pgTable("technician_fixed_inventory_entries", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  technicianId: varchar("technician_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  itemTypeId: varchar("item_type_id").notNull().references(() => itemTypes.id, { onDelete: 'cascade' }),
+  boxes: integer("boxes").notNull().default(0),
+  units: integer("units").notNull().default(0),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Dynamic Technician Moving Inventory Entries - المخزون المتحرك الديناميكي للفني
+export const technicianMovingInventoryEntries = pgTable("technician_moving_inventory_entries", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  technicianId: varchar("technician_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  itemTypeId: varchar("item_type_id").notNull().references(() => itemTypes.id, { onDelete: 'cascade' }),
+  boxes: integer("boxes").notNull().default(0),
+  units: integer("units").notNull().default(0),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Warehouse Transfers - سجل نقل البضائع من المستودع إلى الفني
 export const warehouseTransfers = pgTable("warehouse_transfers", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -469,6 +499,22 @@ export const insertWarehouseInventorySchema = createInsertSchema(warehouseInvent
   warehouseId: true,
 });
 
+// Dynamic inventory entry schemas
+export const insertWarehouseInventoryEntrySchema = createInsertSchema(warehouseInventoryEntries).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export const insertTechnicianFixedInventoryEntrySchema = createInsertSchema(technicianFixedInventoryEntries).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export const insertTechnicianMovingInventoryEntrySchema = createInsertSchema(technicianMovingInventoryEntries).omit({
+  id: true,
+  updatedAt: true,
+});
+
 export const insertWarehouseTransferSchema = createInsertSchema(warehouseTransfers).omit({
   id: true,
   createdAt: true,
@@ -519,6 +565,12 @@ export type InsertWarehouse = z.infer<typeof insertWarehouseSchema>;
 export type Warehouse = typeof warehouses.$inferSelect;
 export type InsertWarehouseInventory = z.infer<typeof insertWarehouseInventorySchema>;
 export type WarehouseInventory = typeof warehouseInventory.$inferSelect;
+export type InsertWarehouseInventoryEntry = z.infer<typeof insertWarehouseInventoryEntrySchema>;
+export type WarehouseInventoryEntry = typeof warehouseInventoryEntries.$inferSelect;
+export type InsertTechnicianFixedInventoryEntry = z.infer<typeof insertTechnicianFixedInventoryEntrySchema>;
+export type TechnicianFixedInventoryEntry = typeof technicianFixedInventoryEntries.$inferSelect;
+export type InsertTechnicianMovingInventoryEntry = z.infer<typeof insertTechnicianMovingInventoryEntrySchema>;
+export type TechnicianMovingInventoryEntry = typeof technicianMovingInventoryEntries.$inferSelect;
 export type InsertWarehouseTransfer = z.infer<typeof insertWarehouseTransferSchema>;
 export type WarehouseTransfer = typeof warehouseTransfers.$inferSelect;
 export type InsertInventoryRequest = z.infer<typeof insertInventoryRequestSchema>;
