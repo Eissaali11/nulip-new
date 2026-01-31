@@ -18,6 +18,7 @@ import { Navbar } from "@/components/dashboard/Navbar";
 import { GridBackground } from "@/components/dashboard/GridBackground";
 import dashboardBg from "@assets/image_1762515061799.png";
 import { useAuth } from "@/lib/auth";
+import { useActiveItemTypes, getItemTypeVisuals, type ItemType } from "@/hooks/use-item-types";
 
 interface TechnicianInventoryData {
   technicianId: string;
@@ -72,16 +73,43 @@ interface TechnicianInventoryData {
   alertLevel: 'good' | 'warning' | 'critical';
 }
 
+const legacyFieldMapping: Record<string, { boxes: string; units: string }> = {
+  n950: { boxes: "n950Boxes", units: "n950Units" },
+  i9000s: { boxes: "i9000sBoxes", units: "i9000sUnits" },
+  i9100: { boxes: "i9100Boxes", units: "i9100Units" },
+  rollPaper: { boxes: "rollPaperBoxes", units: "rollPaperUnits" },
+  stickers: { boxes: "stickersBoxes", units: "stickersUnits" },
+  newBatteries: { boxes: "newBatteriesBoxes", units: "newBatteriesUnits" },
+  mobilySim: { boxes: "mobilySimBoxes", units: "mobilySimUnits" },
+  stcSim: { boxes: "stcSimBoxes", units: "stcSimUnits" },
+  zainSim: { boxes: "zainSimBoxes", units: "zainSimUnits" },
+  lebaraSim: { boxes: "lebaraBoxes", units: "lebaraUnits" },
+};
+
+function getInventoryValue(inventory: any, itemTypeId: string, metric: 'boxes' | 'units'): number {
+  if (!inventory) return 0;
+  const legacy = legacyFieldMapping[itemTypeId];
+  if (legacy) {
+    const fieldName = metric === 'boxes' ? legacy.boxes : legacy.units;
+    return (inventory as any)[fieldName] || 0;
+  }
+  return 0;
+}
+
 export default function AdminInventoryOverview() {
   const [, setLocation] = useLocation();
   const [searchName, setSearchName] = useState("");
   const [searchCity, setSearchCity] = useState("");
   const { user } = useAuth();
 
+  const { data: itemTypes } = useActiveItemTypes();
+
   const { data, isLoading } = useQuery<{ technicians: TechnicianInventoryData[] }>({
     queryKey: user?.role === 'admin' ? ['/api/admin/all-technicians-inventory'] : ['/api/supervisor/technicians-inventory'],
     enabled: !!user?.id && (user?.role === 'admin' || user?.role === 'supervisor'),
   });
+
+  const activeItemTypes = (itemTypes || []).filter(t => t.isActive && t.isVisible).sort((a, b) => a.sortOrder - b.sortOrder);
 
   const allTechnicians = data?.technicians || [];
   
@@ -122,32 +150,20 @@ export default function AdminInventoryOverview() {
 
   const calculateFixedTotal = (inv: TechnicianInventoryData['fixedInventory']) => {
     if (!inv) return 0;
-    return (
-      getTotalForItem(inv.n950Boxes, inv.n950Units) +
-      getTotalForItem(inv.i9000sBoxes, inv.i9000sUnits) +
-      getTotalForItem(inv.i9100Boxes, inv.i9100Units) +
-      getTotalForItem(inv.rollPaperBoxes, inv.rollPaperUnits) +
-      getTotalForItem(inv.stickersBoxes, inv.stickersUnits) +
-      getTotalForItem(inv.newBatteriesBoxes, inv.newBatteriesUnits) +
-      getTotalForItem(inv.mobilySimBoxes, inv.mobilySimUnits) +
-      getTotalForItem(inv.stcSimBoxes, inv.stcSimUnits) +
-      getTotalForItem(inv.zainSimBoxes, inv.zainSimUnits)
-    );
+    return activeItemTypes.reduce((total, itemType) => {
+      const boxes = getInventoryValue(inv, itemType.id, 'boxes');
+      const units = getInventoryValue(inv, itemType.id, 'units');
+      return total + getTotalForItem(boxes, units);
+    }, 0);
   };
 
   const calculateMovingTotal = (inv: TechnicianInventoryData['movingInventory']) => {
     if (!inv) return 0;
-    return (
-      getTotalForItem(inv.n950Boxes, inv.n950Units) +
-      getTotalForItem(inv.i9000sBoxes, inv.i9000sUnits) +
-      getTotalForItem(inv.i9100Boxes, inv.i9100Units) +
-      getTotalForItem(inv.rollPaperBoxes, inv.rollPaperUnits) +
-      getTotalForItem(inv.stickersBoxes, inv.stickersUnits) +
-      getTotalForItem(inv.newBatteriesBoxes, inv.newBatteriesUnits) +
-      getTotalForItem(inv.mobilySimBoxes, inv.mobilySimUnits) +
-      getTotalForItem(inv.stcSimBoxes, inv.stcSimUnits) +
-      getTotalForItem(inv.zainSimBoxes, inv.zainSimUnits)
-    );
+    return activeItemTypes.reduce((total, itemType) => {
+      const boxes = getInventoryValue(inv, itemType.id, 'boxes');
+      const units = getInventoryValue(inv, itemType.id, 'units');
+      return total + getTotalForItem(boxes, units);
+    }, 0);
   };
 
   const criticalTechs = technicians.filter(t => t.alertLevel === 'critical').length;
@@ -178,7 +194,7 @@ export default function AdminInventoryOverview() {
     });
     const time = currentDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
 
-    const numCols = 12;
+    const numCols = 3 + activeItemTypes.length;
     worksheet.mergeCells(1, 1, 1, numCols);
     const titleCell = worksheet.getCell(1, 1);
     titleCell.value = 'Technician Inventory Management System';
@@ -201,19 +217,12 @@ export default function AdminInventoryOverview() {
     worksheet.addRow([]);
 
     const metricLabel = metric === 'boxes' ? 'Box' : 'Unit';
+    const dynamicHeaders = activeItemTypes.map(t => `${t.nameEn} ${metricLabel}`);
     const headerRow = worksheet.addRow([
       '#',
       'Technician Name',
       'City',
-      `N950 ${metricLabel}`,
-      `I9000s ${metricLabel}`,
-      `I9100 ${metricLabel}`,
-      `Roll ${metricLabel}`,
-      `Sticker ${metricLabel}`,
-      `Battery ${metricLabel}`,
-      `Mobily ${metricLabel}`,
-      `STC ${metricLabel}`,
-      `Zain ${metricLabel}`
+      ...dynamicHeaders
     ]);
     
     headerRow.font = { bold: true, size: 10, color: { argb: 'FFFFFFFF' } };
@@ -233,45 +242,23 @@ export default function AdminInventoryOverview() {
       };
     });
 
-    let totals = {
-      n950: 0,
-      i9000s: 0,
-      i9100: 0,
-      roll: 0,
-      sticker: 0,
-      battery: 0,
-      mobily: 0,
-      stc: 0,
-      zain: 0
-    };
+    const totals: Record<string, number> = {};
+    activeItemTypes.forEach(t => { totals[t.id] = 0; });
 
     technicians.forEach((tech, index) => {
       const inv = inventoryType === 'fixed' ? tech.fixedInventory : tech.movingInventory;
       
+      const itemValues = activeItemTypes.map(t => getInventoryValue(inv, t.id, metric));
       const data = [
         index + 1,
         tech.technicianName,
         tech.city,
-        metric === 'boxes' ? (inv?.n950Boxes || 0) : (inv?.n950Units || 0),
-        metric === 'boxes' ? (inv?.i9000sBoxes || 0) : (inv?.i9000sUnits || 0),
-        metric === 'boxes' ? (inv?.i9100Boxes || 0) : (inv?.i9100Units || 0),
-        metric === 'boxes' ? (inv?.rollPaperBoxes || 0) : (inv?.rollPaperUnits || 0),
-        metric === 'boxes' ? (inv?.stickersBoxes || 0) : (inv?.stickersUnits || 0),
-        metric === 'boxes' ? (inv?.newBatteriesBoxes || 0) : (inv?.newBatteriesUnits || 0),
-        metric === 'boxes' ? (inv?.mobilySimBoxes || 0) : (inv?.mobilySimUnits || 0),
-        metric === 'boxes' ? (inv?.stcSimBoxes || 0) : (inv?.stcSimUnits || 0),
-        metric === 'boxes' ? (inv?.zainSimBoxes || 0) : (inv?.zainSimUnits || 0)
+        ...itemValues
       ];
 
-      totals.n950 += Number(data[3]);
-      totals.i9000s += Number(data[4]);
-      totals.i9100 += Number(data[5]);
-      totals.roll += Number(data[6]);
-      totals.sticker += Number(data[7]);
-      totals.battery += Number(data[8]);
-      totals.mobily += Number(data[9]);
-      totals.stc += Number(data[10]);
-      totals.zain += Number(data[11]);
+      activeItemTypes.forEach((t, i) => {
+        totals[t.id] += Number(itemValues[i]);
+      });
 
       const row = worksheet.addRow(data);
       row.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -288,19 +275,12 @@ export default function AdminInventoryOverview() {
       });
     });
 
+    const totalValues = activeItemTypes.map(t => totals[t.id]);
     const totalRow = worksheet.addRow([
       '',
       'Total',
       '',
-      totals.n950,
-      totals.i9000s,
-      totals.i9100,
-      totals.roll,
-      totals.sticker,
-      totals.battery,
-      totals.mobily,
-      totals.stc,
-      totals.zain
+      ...totalValues
     ]);
     totalRow.font = { bold: true, size: 11 };
     totalRow.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -319,20 +299,9 @@ export default function AdminInventoryOverview() {
       };
     });
 
-    worksheet.columns = [
-      { width: 5 },
-      { width: 25 },
-      { width: 15 },
-      { width: 15 },
-      { width: 15 },
-      { width: 15 },
-      { width: 15 },
-      { width: 15 },
-      { width: 15 },
-      { width: 15 },
-      { width: 15 },
-      { width: 15 }
-    ];
+    const columnWidths = [{ width: 5 }, { width: 25 }, { width: 15 }];
+    activeItemTypes.forEach(() => columnWidths.push({ width: 15 }));
+    worksheet.columns = columnWidths;
   };
 
   const createTotalWorksheet = (workbook: ExcelJS.Workbook, sheetName: string) => {
@@ -354,8 +323,9 @@ export default function AdminInventoryOverview() {
     });
     const time = currentDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
 
-    worksheet.mergeCells('A1:L1');
-    const titleCell = worksheet.getCell('A1');
+    const numCols = 3 + activeItemTypes.length;
+    worksheet.mergeCells(1, 1, 1, numCols);
+    const titleCell = worksheet.getCell(1, 1);
     titleCell.value = 'Technician Inventory Management System';
     titleCell.font = { size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
     titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -366,8 +336,8 @@ export default function AdminInventoryOverview() {
     };
     worksheet.getRow(1).height = 30;
 
-    worksheet.mergeCells('A2:L2');
-    const dateCell = worksheet.getCell('A2');
+    worksheet.mergeCells(2, 1, 2, numCols);
+    const dateCell = worksheet.getCell(2, 1);
     dateCell.value = `تاريخ التقرير: ${arabicDate} | Report Date: ${englishDate} | ${time}`;
     dateCell.alignment = { horizontal: 'center', vertical: 'middle' };
     dateCell.font = { bold: true, size: 10 };
@@ -375,19 +345,12 @@ export default function AdminInventoryOverview() {
 
     worksheet.addRow([]);
 
+    const dynamicHeaders = activeItemTypes.map(t => t.nameEn);
     const headerRow = worksheet.addRow([
       '#',
       'Technician Name',
       'City',
-      'N950 Devices',
-      'I9000s Devices',
-      'I9100 Devices',
-      'Roll Sheets',
-      'Madal Stickers',
-      'New Batteries',
-      'SIM Mobily',
-      'SIM STC',
-      'SIM Zain'
+      ...dynamicHeaders
     ]);
     
     headerRow.font = { bold: true, size: 10, color: { argb: 'FFFFFFFF' } };
@@ -407,70 +370,28 @@ export default function AdminInventoryOverview() {
       };
     });
 
-    let totals = {
-      n950: 0,
-      i9000s: 0,
-      i9100: 0,
-      rollPaper: 0,
-      stickers: 0,
-      newBatteries: 0,
-      mobilySim: 0,
-      stcSim: 0,
-      zainSim: 0
-    };
+    const totals: Record<string, number> = {};
+    activeItemTypes.forEach(t => { totals[t.id] = 0; });
 
     technicians.forEach((tech, index) => {
+      const itemValues = activeItemTypes.map(t => {
+        const fixedBoxes = getInventoryValue(tech.fixedInventory, t.id, 'boxes');
+        const fixedUnits = getInventoryValue(tech.fixedInventory, t.id, 'units');
+        const movingBoxes = getInventoryValue(tech.movingInventory, t.id, 'boxes');
+        const movingUnits = getInventoryValue(tech.movingInventory, t.id, 'units');
+        return getTotalForItem(fixedBoxes + movingBoxes, fixedUnits + movingUnits);
+      });
+
       const data = [
         index + 1,
         tech.technicianName,
         tech.city,
-        getTotalForItem(
-          (tech.fixedInventory?.n950Boxes || 0) + (tech.movingInventory?.n950Boxes || 0),
-          (tech.fixedInventory?.n950Units || 0) + (tech.movingInventory?.n950Units || 0)
-        ),
-        getTotalForItem(
-          (tech.fixedInventory?.i9000sBoxes || 0) + (tech.movingInventory?.i9000sBoxes || 0),
-          (tech.fixedInventory?.i9000sUnits || 0) + (tech.movingInventory?.i9000sUnits || 0)
-        ),
-        getTotalForItem(
-          (tech.fixedInventory?.i9100Boxes || 0) + (tech.movingInventory?.i9100Boxes || 0),
-          (tech.fixedInventory?.i9100Units || 0) + (tech.movingInventory?.i9100Units || 0)
-        ),
-        getTotalForItem(
-          (tech.fixedInventory?.rollPaperBoxes || 0) + (tech.movingInventory?.rollPaperBoxes || 0),
-          (tech.fixedInventory?.rollPaperUnits || 0) + (tech.movingInventory?.rollPaperUnits || 0)
-        ),
-        getTotalForItem(
-          (tech.fixedInventory?.stickersBoxes || 0) + (tech.movingInventory?.stickersBoxes || 0),
-          (tech.fixedInventory?.stickersUnits || 0) + (tech.movingInventory?.stickersUnits || 0)
-        ),
-        getTotalForItem(
-          (tech.fixedInventory?.newBatteriesBoxes || 0) + (tech.movingInventory?.newBatteriesBoxes || 0),
-          (tech.fixedInventory?.newBatteriesUnits || 0) + (tech.movingInventory?.newBatteriesUnits || 0)
-        ),
-        getTotalForItem(
-          (tech.fixedInventory?.mobilySimBoxes || 0) + (tech.movingInventory?.mobilySimBoxes || 0),
-          (tech.fixedInventory?.mobilySimUnits || 0) + (tech.movingInventory?.mobilySimUnits || 0)
-        ),
-        getTotalForItem(
-          (tech.fixedInventory?.stcSimBoxes || 0) + (tech.movingInventory?.stcSimBoxes || 0),
-          (tech.fixedInventory?.stcSimUnits || 0) + (tech.movingInventory?.stcSimUnits || 0)
-        ),
-        getTotalForItem(
-          (tech.fixedInventory?.zainSimBoxes || 0) + (tech.movingInventory?.zainSimBoxes || 0),
-          (tech.fixedInventory?.zainSimUnits || 0) + (tech.movingInventory?.zainSimUnits || 0)
-        )
+        ...itemValues
       ];
 
-      totals.n950 += Number(data[3]);
-      totals.i9000s += Number(data[4]);
-      totals.i9100 += Number(data[5]);
-      totals.rollPaper += Number(data[6]);
-      totals.stickers += Number(data[7]);
-      totals.newBatteries += Number(data[8]);
-      totals.mobilySim += Number(data[9]);
-      totals.stcSim += Number(data[10]);
-      totals.zainSim += Number(data[11]);
+      activeItemTypes.forEach((t, i) => {
+        totals[t.id] += Number(itemValues[i]);
+      });
 
       const row = worksheet.addRow(data);
       row.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -487,19 +408,12 @@ export default function AdminInventoryOverview() {
       });
     });
 
+    const totalValues = activeItemTypes.map(t => totals[t.id]);
     const totalRow = worksheet.addRow([
       '',
       'Total',
       '',
-      totals.n950.toFixed(1),
-      totals.i9000s.toFixed(1),
-      totals.i9100.toFixed(1),
-      totals.rollPaper,
-      totals.stickers,
-      totals.newBatteries,
-      totals.mobilySim,
-      totals.stcSim,
-      totals.zainSim
+      ...totalValues
     ]);
     totalRow.font = { bold: true, size: 11 };
     totalRow.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -522,7 +436,8 @@ export default function AdminInventoryOverview() {
     worksheet.addRow([]);
 
     const statsHeaderRow = worksheet.addRow(['Overall Statistics']);
-    worksheet.mergeCells(statsHeaderRow.number, 1, statsHeaderRow.number, 6);
+    const statsCols = Math.min(6, numCols);
+    worksheet.mergeCells(statsHeaderRow.number, 1, statsHeaderRow.number, statsCols);
     const statsHeaderCell = worksheet.getCell(statsHeaderRow.number, 1);
     statsHeaderCell.font = { bold: true, size: 12, color: { argb: 'FFFFFFFF' } };
     statsHeaderCell.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -533,17 +448,20 @@ export default function AdminInventoryOverview() {
     };
     statsHeaderRow.height = 25;
 
-    const statsData = [
-      ['Technicians Name', technicians.length, 'N950 Devices', totals.n950.toFixed(1)],
-      ['', '', 'I9000s Devices', totals.i9000s.toFixed(1)],
-      ['Roll Sheets', totals.rollPaper, 'I9100 Devices', totals.i9100.toFixed(1)],
-      ['', '', '', ''],
-      ['Madal Stickers', totals.stickers, 'SIM Mobily', totals.mobilySim],
-      ['', '', '', ''],
-      ['SIM STC', totals.stcSim, 'SIM Zain', totals.zainSim],
-      ['', '', '', ''],
-      ['', '', 'New Batteries', totals.newBatteries]
+    const statsData: (string | number)[][] = [
+      ['Technicians Count', technicians.length, '', ''],
     ];
+    
+    for (let i = 0; i < activeItemTypes.length; i += 2) {
+      const t1 = activeItemTypes[i];
+      const t2 = activeItemTypes[i + 1];
+      statsData.push([
+        t1?.nameEn || '',
+        t1 ? totals[t1.id] : '',
+        t2?.nameEn || '',
+        t2 ? totals[t2.id] : ''
+      ]);
+    }
 
     statsData.forEach(rowData => {
       const row = worksheet.addRow(rowData);
@@ -562,20 +480,9 @@ export default function AdminInventoryOverview() {
       });
     });
 
-    worksheet.columns = [
-      { width: 5 },
-      { width: 25 },
-      { width: 15 },
-      { width: 15 },
-      { width: 15 },
-      { width: 15 },
-      { width: 15 },
-      { width: 15 },
-      { width: 15 },
-      { width: 15 },
-      { width: 15 },
-      { width: 15 }
-    ];
+    const columnWidths = [{ width: 5 }, { width: 25 }, { width: 15 }];
+    activeItemTypes.forEach(() => columnWidths.push({ width: 15 }));
+    worksheet.columns = columnWidths;
   };
 
   const exportToExcel = async () => {
@@ -854,69 +761,16 @@ export default function AdminInventoryOverview() {
                       </h4>
                       {tech.fixedInventory ? (
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                          <InventoryItem 
-                            label="N950" 
-                            boxes={tech.fixedInventory.n950Boxes} 
-                            units={tech.fixedInventory.n950Units}
-                            testId={`fixed-n950-${index}`}
-                            color="blue"
-                          />
-                          <InventoryItem 
-                            label="I9000s" 
-                            boxes={tech.fixedInventory.i9000sBoxes} 
-                            units={tech.fixedInventory.i9000sUnits}
-                            testId={`fixed-i9000s-${index}`}
-                            color="blue"
-                          />
-                          <InventoryItem 
-                            label="I9100" 
-                            boxes={tech.fixedInventory.i9100Boxes} 
-                            units={tech.fixedInventory.i9100Units}
-                            testId={`fixed-i9100-${index}`}
-                            color="blue"
-                          />
-                          <InventoryItem 
-                            label="أوراق رول" 
-                            boxes={tech.fixedInventory.rollPaperBoxes} 
-                            units={tech.fixedInventory.rollPaperUnits}
-                            testId={`fixed-rollpaper-${index}`}
-                            color="blue"
-                          />
-                          <InventoryItem 
-                            label="ملصقات" 
-                            boxes={tech.fixedInventory.stickersBoxes} 
-                            units={tech.fixedInventory.stickersUnits}
-                            testId={`fixed-stickers-${index}`}
-                            color="blue"
-                          />
-                          <InventoryItem 
-                            label="بطاريات جديدة" 
-                            boxes={tech.fixedInventory.newBatteriesBoxes} 
-                            units={tech.fixedInventory.newBatteriesUnits}
-                            testId={`fixed-batteries-${index}`}
-                            color="blue"
-                          />
-                          <InventoryItem 
-                            label="موبايلي" 
-                            boxes={tech.fixedInventory.mobilySimBoxes} 
-                            units={tech.fixedInventory.mobilySimUnits}
-                            testId={`fixed-mobily-${index}`}
-                            color="blue"
-                          />
-                          <InventoryItem 
-                            label="STC" 
-                            boxes={tech.fixedInventory.stcSimBoxes} 
-                            units={tech.fixedInventory.stcSimUnits}
-                            testId={`fixed-stc-${index}`}
-                            color="blue"
-                          />
-                          <InventoryItem 
-                            label="زين" 
-                            boxes={tech.fixedInventory.zainSimBoxes} 
-                            units={tech.fixedInventory.zainSimUnits}
-                            testId={`fixed-zain-${index}`}
-                            color="blue"
-                          />
+                          {activeItemTypes.map((itemType) => (
+                            <InventoryItem 
+                              key={itemType.id}
+                              label={itemType.nameAr || itemType.nameEn} 
+                              boxes={getInventoryValue(tech.fixedInventory, itemType.id, 'boxes')} 
+                              units={getInventoryValue(tech.fixedInventory, itemType.id, 'units')}
+                              testId={`fixed-${itemType.id}-${index}`}
+                              color="blue"
+                            />
+                          ))}
                         </div>
                       ) : (
                         <p className="text-sm text-gray-300">لا توجد بيانات</p>
@@ -931,69 +785,16 @@ export default function AdminInventoryOverview() {
                       </h4>
                       {tech.movingInventory ? (
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                          <InventoryItem 
-                            label="N950" 
-                            boxes={tech.movingInventory.n950Boxes}
-                            units={tech.movingInventory.n950Units}
-                            testId={`moving-n950-${index}`}
-                            color="green"
-                          />
-                          <InventoryItem 
-                            label="I9000s" 
-                            boxes={tech.movingInventory.i9000sBoxes}
-                            units={tech.movingInventory.i9000sUnits}
-                            testId={`moving-i9000s-${index}`}
-                            color="green"
-                          />
-                          <InventoryItem 
-                            label="I9100" 
-                            boxes={tech.movingInventory.i9100Boxes}
-                            units={tech.movingInventory.i9100Units}
-                            testId={`moving-i9100-${index}`}
-                            color="green"
-                          />
-                          <InventoryItem 
-                            label="أوراق رول" 
-                            boxes={tech.movingInventory.rollPaperBoxes}
-                            units={tech.movingInventory.rollPaperUnits}
-                            testId={`moving-rollpaper-${index}`}
-                            color="green"
-                          />
-                          <InventoryItem 
-                            label="ملصقات" 
-                            boxes={tech.movingInventory.stickersBoxes}
-                            units={tech.movingInventory.stickersUnits}
-                            testId={`moving-stickers-${index}`}
-                            color="green"
-                          />
-                          <InventoryItem 
-                            label="بطاريات جديدة" 
-                            boxes={tech.movingInventory.newBatteriesBoxes}
-                            units={tech.movingInventory.newBatteriesUnits}
-                            testId={`moving-batteries-${index}`}
-                            color="green"
-                          />
-                          <InventoryItem 
-                            label="موبايلي" 
-                            boxes={tech.movingInventory.mobilySimBoxes}
-                            units={tech.movingInventory.mobilySimUnits}
-                            testId={`moving-mobily-${index}`}
-                            color="green"
-                          />
-                          <InventoryItem 
-                            label="STC" 
-                            boxes={tech.movingInventory.stcSimBoxes}
-                            units={tech.movingInventory.stcSimUnits}
-                            testId={`moving-stc-${index}`}
-                            color="green"
-                          />
-                          <InventoryItem 
-                            label="زين" 
-                            boxes={tech.movingInventory.zainSimBoxes}
-                            units={tech.movingInventory.zainSimUnits}
-                            testId={`moving-zain-${index}`}
-                            color="green"
-                          />
+                          {activeItemTypes.map((itemType) => (
+                            <InventoryItem 
+                              key={itemType.id}
+                              label={itemType.nameAr || itemType.nameEn}
+                              boxes={getInventoryValue(tech.movingInventory, itemType.id, 'boxes')}
+                              units={getInventoryValue(tech.movingInventory, itemType.id, 'units')}
+                              testId={`moving-${itemType.id}-${index}`}
+                              color="green"
+                            />
+                          ))}
                         </div>
                       ) : (
                         <p className="text-sm text-gray-300">لا توجد بيانات</p>

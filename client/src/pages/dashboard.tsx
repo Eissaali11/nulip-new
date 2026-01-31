@@ -54,6 +54,7 @@ import { GlobalInventoryChart } from "@/components/dashboard/GlobalInventoryChar
 import RequestInventoryModal from "@/components/request-inventory-modal";
 import { CreditCard, FileText, Sticker } from "lucide-react";
 import { getRoleLabel } from "@shared/roles";
+import { useActiveItemTypes, getItemTypeVisuals } from "@/hooks/use-item-types";
 
 interface WarehouseTransfer {
   id: string;
@@ -69,6 +70,30 @@ export default function Dashboard() {
   const [showRequestInventoryModal, setShowRequestInventoryModal] = useState(false);
   const [warehouseSearchQuery, setWarehouseSearchQuery] = useState("");
   const [technicianSearchQuery, setTechnicianSearchQuery] = useState("");
+
+  const { data: itemTypes } = useActiveItemTypes();
+
+  const legacyFieldMapping: Record<string, { boxes: string; units: string }> = {
+    n950: { boxes: "n950Boxes", units: "n950Units" },
+    i9000s: { boxes: "i9000sBoxes", units: "i9000sUnits" },
+    i9100: { boxes: "i9100Boxes", units: "i9100Units" },
+    rollPaper: { boxes: "rollPaperBoxes", units: "rollPaperUnits" },
+    stickers: { boxes: "stickersBoxes", units: "stickersUnits" },
+    newBatteries: { boxes: "newBatteriesBoxes", units: "newBatteriesUnits" },
+    mobilySim: { boxes: "mobilySimBoxes", units: "mobilySimUnits" },
+    stcSim: { boxes: "stcSimBoxes", units: "stcSimUnits" },
+    zainSim: { boxes: "zainSimBoxes", units: "zainSimUnits" },
+    lebaraSim: { boxes: "lebaraBoxes", units: "lebaraUnits" },
+  };
+
+  const getInventoryValue = (inv: any, itemTypeId: string, field: 'boxes' | 'units'): number => {
+    if (!inv) return 0;
+    const legacy = legacyFieldMapping[itemTypeId];
+    if (legacy) {
+      return (inv as any)[legacy[field]] || 0;
+    }
+    return 0;
+  };
 
   const { data: pendingTransfers = [] } = useQuery<WarehouseTransfer[]>({
     queryKey: ["/api/warehouse-transfers"],
@@ -108,139 +133,91 @@ export default function Dashboard() {
 
   // حساب إجمالي المخزون الثابت
   const getFixedInventoryTotal = () => {
+    const activeTypes = itemTypes?.filter(t => t.isActive && t.isVisible) || [];
+    
     // إذا كان المستخدم Admin أو Supervisor، احسب إجمالي المخزون الثابت لجميع الفنيين
     if ((user?.role === 'admin' || user?.role === 'supervisor') && techniciansData?.technicians) {
       return techniciansData.technicians.reduce((total, tech) => {
         if (!tech.fixedInventory) return total;
-        const inv = tech.fixedInventory;
-        return total + (
-          (inv.n950Boxes || 0) + (inv.n950Units || 0) +
-          (inv.i9000sBoxes || 0) + (inv.i9000sUnits || 0) +
-          (inv.i9100Boxes || 0) + (inv.i9100Units || 0) +
-          (inv.rollPaperBoxes || 0) + (inv.rollPaperUnits || 0) +
-          (inv.stickersBoxes || 0) + (inv.stickersUnits || 0) +
-          (inv.newBatteriesBoxes || 0) + (inv.newBatteriesUnits || 0) +
-          (inv.mobilySimBoxes || 0) + (inv.mobilySimUnits || 0) +
-          (inv.stcSimBoxes || 0) + (inv.stcSimUnits || 0) +
-          (inv.zainSimBoxes || 0) + (inv.zainSimUnits || 0)
-        );
+        return total + activeTypes.reduce((sum, itemType) => {
+          return sum + getInventoryValue(tech.fixedInventory, itemType.id, 'boxes') + 
+                       getInventoryValue(tech.fixedInventory, itemType.id, 'units');
+        }, 0);
       }, 0);
     }
     
     // للفنيين، احسب المخزون الشخصي
     if (!myFixedInventory) return 0;
-    const inv = myFixedInventory;
-    return (
-      (inv.n950Boxes || 0) + (inv.n950Units || 0) +
-      (inv.i9000sBoxes || 0) + (inv.i9000sUnits || 0) +
-      (inv.i9100Boxes || 0) + (inv.i9100Units || 0) +
-      (inv.rollPaperBoxes || 0) + (inv.rollPaperUnits || 0) +
-      (inv.stickersBoxes || 0) + (inv.stickersUnits || 0) +
-      (inv.newBatteriesBoxes || 0) + (inv.newBatteriesUnits || 0) +
-      (inv.mobilySimBoxes || 0) + (inv.mobilySimUnits || 0) +
-      (inv.stcSimBoxes || 0) + (inv.stcSimUnits || 0) +
-      (inv.zainSimBoxes || 0) + (inv.zainSimUnits || 0)
-    );
+    return activeTypes.reduce((sum, itemType) => {
+      return sum + getInventoryValue(myFixedInventory, itemType.id, 'boxes') + 
+                   getInventoryValue(myFixedInventory, itemType.id, 'units');
+    }, 0);
   };
 
   // حساب إجمالي المخزون المتحرك
   const getMovingInventoryTotal = () => {
+    const activeTypes = itemTypes?.filter(t => t.isActive && t.isVisible) || [];
+    
     // إذا كان المستخدم Admin أو Supervisor، احسب إجمالي المخزون المتحرك لجميع الفنيين
     if ((user?.role === 'admin' || user?.role === 'supervisor') && techniciansData?.technicians) {
       return techniciansData.technicians.reduce((total, tech) => {
         if (!tech.movingInventory) return total;
-        const inv = tech.movingInventory;
-        return total + (
-          (inv.n950Boxes || 0) + (inv.n950Units || 0) +
-          (inv.i9000sBoxes || 0) + (inv.i9000sUnits || 0) +
-          (inv.i9100Boxes || 0) + (inv.i9100Units || 0) +
-          (inv.rollPaperBoxes || 0) + (inv.rollPaperUnits || 0) +
-          (inv.stickersBoxes || 0) + (inv.stickersUnits || 0) +
-          (inv.newBatteriesBoxes || 0) + (inv.newBatteriesUnits || 0) +
-          (inv.mobilySimBoxes || 0) + (inv.mobilySimUnits || 0) +
-          (inv.stcSimBoxes || 0) + (inv.stcSimUnits || 0) +
-          (inv.zainSimBoxes || 0) + (inv.zainSimUnits || 0)
-        );
+        return total + activeTypes.reduce((sum, itemType) => {
+          return sum + getInventoryValue(tech.movingInventory, itemType.id, 'boxes') + 
+                       getInventoryValue(tech.movingInventory, itemType.id, 'units');
+        }, 0);
       }, 0);
     }
     
     // للفنيين، احسب المخزون الشخصي
     if (!myMovingInventory) return 0;
-    const inv = myMovingInventory;
-    return (
-      (inv.n950Boxes || 0) + (inv.n950Units || 0) +
-      (inv.i9000sBoxes || 0) + (inv.i9000sUnits || 0) +
-      (inv.i9100Boxes || 0) + (inv.i9100Units || 0) +
-      (inv.rollPaperBoxes || 0) + (inv.rollPaperUnits || 0) +
-      (inv.stickersBoxes || 0) + (inv.stickersUnits || 0) +
-      (inv.newBatteriesBoxes || 0) + (inv.newBatteriesUnits || 0) +
-      (inv.mobilySimBoxes || 0) + (inv.mobilySimUnits || 0) +
-      (inv.stcSimBoxes || 0) + (inv.stcSimUnits || 0) +
-      (inv.zainSimBoxes || 0) + (inv.zainSimUnits || 0)
-    );
+    return activeTypes.reduce((sum, itemType) => {
+      return sum + getInventoryValue(myMovingInventory, itemType.id, 'boxes') + 
+                   getInventoryValue(myMovingInventory, itemType.id, 'units');
+    }, 0);
   };
 
   // إنشاء object مجمّع لجميع المخزون الثابت (للأدمن والمشرف) - مع memoization
   const aggregatedFixedInventory = useMemo(() => {
+    const activeTypes = itemTypes?.filter(t => t.isActive && t.isVisible) || [];
+    
     if ((user?.role === 'admin' || user?.role === 'supervisor') && techniciansData?.technicians) {
-      return techniciansData.technicians.reduce((agg, tech) => {
-        if (!tech.fixedInventory) return agg;
-        const inv = tech.fixedInventory;
-        return {
-          n950Boxes: (agg.n950Boxes || 0) + (inv.n950Boxes || 0),
-          n950Units: (agg.n950Units || 0) + (inv.n950Units || 0),
-          i9000sBoxes: (agg.i9000sBoxes || 0) + (inv.i9000sBoxes || 0),
-          i9000sUnits: (agg.i9000sUnits || 0) + (inv.i9000sUnits || 0),
-          i9100Boxes: (agg.i9100Boxes || 0) + (inv.i9100Boxes || 0),
-          i9100Units: (agg.i9100Units || 0) + (inv.i9100Units || 0),
-          rollPaperBoxes: (agg.rollPaperBoxes || 0) + (inv.rollPaperBoxes || 0),
-          rollPaperUnits: (agg.rollPaperUnits || 0) + (inv.rollPaperUnits || 0),
-          stickersBoxes: (agg.stickersBoxes || 0) + (inv.stickersBoxes || 0),
-          stickersUnits: (agg.stickersUnits || 0) + (inv.stickersUnits || 0),
-          newBatteriesBoxes: (agg.newBatteriesBoxes || 0) + (inv.newBatteriesBoxes || 0),
-          newBatteriesUnits: (agg.newBatteriesUnits || 0) + (inv.newBatteriesUnits || 0),
-          mobilySimBoxes: (agg.mobilySimBoxes || 0) + (inv.mobilySimBoxes || 0),
-          mobilySimUnits: (agg.mobilySimUnits || 0) + (inv.mobilySimUnits || 0),
-          stcSimBoxes: (agg.stcSimBoxes || 0) + (inv.stcSimBoxes || 0),
-          stcSimUnits: (agg.stcSimUnits || 0) + (inv.stcSimUnits || 0),
-          zainSimBoxes: (agg.zainSimBoxes || 0) + (inv.zainSimBoxes || 0),
-          zainSimUnits: (agg.zainSimUnits || 0) + (inv.zainSimUnits || 0),
-        } as Partial<TechnicianFixedInventory>;
-      }, {} as Partial<TechnicianFixedInventory>);
+      const agg: Record<string, number> = {};
+      techniciansData.technicians.forEach(tech => {
+        if (!tech.fixedInventory) return;
+        activeTypes.forEach(itemType => {
+          const legacy = legacyFieldMapping[itemType.id];
+          if (legacy) {
+            agg[legacy.boxes] = (agg[legacy.boxes] || 0) + getInventoryValue(tech.fixedInventory, itemType.id, 'boxes');
+            agg[legacy.units] = (agg[legacy.units] || 0) + getInventoryValue(tech.fixedInventory, itemType.id, 'units');
+          }
+        });
+      });
+      return agg as Partial<TechnicianFixedInventory>;
     }
     return myFixedInventory;
-  }, [user?.role, techniciansData?.technicians, myFixedInventory]);
+  }, [user?.role, techniciansData?.technicians, myFixedInventory, itemTypes]);
 
   // إنشاء object مجمّع لجميع المخزون المتحرك (للأدمن والمشرف) - مع memoization
   const aggregatedMovingInventory = useMemo(() => {
+    const activeTypes = itemTypes?.filter(t => t.isActive && t.isVisible) || [];
+    
     if ((user?.role === 'admin' || user?.role === 'supervisor') && techniciansData?.technicians) {
-      return techniciansData.technicians.reduce((agg, tech) => {
-        if (!tech.movingInventory) return agg;
-        const inv = tech.movingInventory;
-        return {
-          n950Boxes: (agg.n950Boxes || 0) + (inv.n950Boxes || 0),
-          n950Units: (agg.n950Units || 0) + (inv.n950Units || 0),
-          i9000sBoxes: (agg.i9000sBoxes || 0) + (inv.i9000sBoxes || 0),
-          i9000sUnits: (agg.i9000sUnits || 0) + (inv.i9000sUnits || 0),
-          i9100Boxes: (agg.i9100Boxes || 0) + (inv.i9100Boxes || 0),
-          i9100Units: (agg.i9100Units || 0) + (inv.i9100Units || 0),
-          rollPaperBoxes: (agg.rollPaperBoxes || 0) + (inv.rollPaperBoxes || 0),
-          rollPaperUnits: (agg.rollPaperUnits || 0) + (inv.rollPaperUnits || 0),
-          stickersBoxes: (agg.stickersBoxes || 0) + (inv.stickersBoxes || 0),
-          stickersUnits: (agg.stickersUnits || 0) + (inv.stickersUnits || 0),
-          newBatteriesBoxes: (agg.newBatteriesBoxes || 0) + (inv.newBatteriesBoxes || 0),
-          newBatteriesUnits: (agg.newBatteriesUnits || 0) + (inv.newBatteriesUnits || 0),
-          mobilySimBoxes: (agg.mobilySimBoxes || 0) + (inv.mobilySimBoxes || 0),
-          mobilySimUnits: (agg.mobilySimUnits || 0) + (inv.mobilySimUnits || 0),
-          stcSimBoxes: (agg.stcSimBoxes || 0) + (inv.stcSimBoxes || 0),
-          stcSimUnits: (agg.stcSimUnits || 0) + (inv.stcSimUnits || 0),
-          zainSimBoxes: (agg.zainSimBoxes || 0) + (inv.zainSimBoxes || 0),
-          zainSimUnits: (agg.zainSimUnits || 0) + (inv.zainSimUnits || 0),
-        } as Partial<TechnicianInventory>;
-      }, {} as Partial<TechnicianInventory>);
+      const agg: Record<string, number> = {};
+      techniciansData.technicians.forEach(tech => {
+        if (!tech.movingInventory) return;
+        activeTypes.forEach(itemType => {
+          const legacy = legacyFieldMapping[itemType.id];
+          if (legacy) {
+            agg[legacy.boxes] = (agg[legacy.boxes] || 0) + getInventoryValue(tech.movingInventory, itemType.id, 'boxes');
+            agg[legacy.units] = (agg[legacy.units] || 0) + getInventoryValue(tech.movingInventory, itemType.id, 'units');
+          }
+        });
+      });
+      return agg as Partial<TechnicianInventory>;
     }
     return myMovingInventory;
-  }, [user?.role, techniciansData?.technicians, myMovingInventory]);
+  }, [user?.role, techniciansData?.technicians, myMovingInventory, itemTypes]);
 
   // فلترة المستودعات بناءً على البحث
   const filteredWarehouses = useMemo(() => {
@@ -1014,87 +991,22 @@ export default function Dashboard() {
                 </div>
               ) : myMovingInventory && getMovingInventoryTotal() > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                  <ProductCard
-                    icon={<Smartphone className="h-6 w-6" />}
-                    title="جهاز N950"
-                    boxes={myMovingInventory.n950Boxes || 0}
-                    units={myMovingInventory.n950Units || 0}
-                    color="#14b8a6"
-                    gradient="from-teal-500/20 via-teal-600/10 to-transparent"
-                    index={0}
-                  />
-                  <ProductCard
-                    icon={<Smartphone className="h-6 w-6" />}
-                    title="جهاز i9000S"
-                    boxes={myMovingInventory.i9000sBoxes || 0}
-                    units={myMovingInventory.i9000sUnits || 0}
-                    color="#06b6d4"
-                    gradient="from-cyan-500/20 via-cyan-600/10 to-transparent"
-                    index={1}
-                  />
-                  <ProductCard
-                    icon={<Smartphone className="h-6 w-6" />}
-                    title="جهاز i9100"
-                    boxes={myMovingInventory.i9100Boxes || 0}
-                    units={myMovingInventory.i9100Units || 0}
-                    color="#0ea5e9"
-                    gradient="from-sky-500/20 via-sky-600/10 to-transparent"
-                    index={2}
-                  />
-                  <ProductCard
-                    icon={<FileText className="h-6 w-6" />}
-                    title="ورق حراري"
-                    boxes={myMovingInventory.rollPaperBoxes || 0}
-                    units={myMovingInventory.rollPaperUnits || 0}
-                    color="#84cc16"
-                    gradient="from-lime-500/20 via-lime-600/10 to-transparent"
-                    index={3}
-                  />
-                  <ProductCard
-                    icon={<Sticker className="h-6 w-6" />}
-                    title="ملصقات"
-                    boxes={myMovingInventory.stickersBoxes || 0}
-                    units={myMovingInventory.stickersUnits || 0}
-                    color="#fb923c"
-                    gradient="from-orange-400/20 via-orange-500/10 to-transparent"
-                    index={4}
-                  />
-                  <ProductCard
-                    icon={<Battery className="h-6 w-6" />}
-                    title="بطاريات جديدة"
-                    boxes={myMovingInventory.newBatteriesBoxes || 0}
-                    units={myMovingInventory.newBatteriesUnits || 0}
-                    color="#facc15"
-                    gradient="from-yellow-400/20 via-yellow-500/10 to-transparent"
-                    index={5}
-                  />
-                  <ProductCard
-                    icon={<CreditCard className="h-6 w-6" />}
-                    title="شريحة موبايلي"
-                    boxes={myMovingInventory.mobilySimBoxes || 0}
-                    units={myMovingInventory.mobilySimUnits || 0}
-                    color="#4ade80"
-                    gradient="from-green-400/20 via-green-500/10 to-transparent"
-                    index={6}
-                  />
-                  <ProductCard
-                    icon={<CreditCard className="h-6 w-6" />}
-                    title="شريحة STC"
-                    boxes={myMovingInventory.stcSimBoxes || 0}
-                    units={myMovingInventory.stcSimUnits || 0}
-                    color="#c084fc"
-                    gradient="from-purple-400/20 via-purple-500/10 to-transparent"
-                    index={7}
-                  />
-                  <ProductCard
-                    icon={<CreditCard className="h-6 w-6" />}
-                    title="شريحة زين"
-                    boxes={myMovingInventory.zainSimBoxes || 0}
-                    units={myMovingInventory.zainSimUnits || 0}
-                    color="#f472b6"
-                    gradient="from-pink-400/20 via-pink-500/10 to-transparent"
-                    index={8}
-                  />
+                  {itemTypes?.filter(t => t.isActive && t.isVisible).sort((a, b) => a.sortOrder - b.sortOrder).map((itemType, index) => {
+                    const visuals = getItemTypeVisuals(itemType, index);
+                    const IconComponent = visuals.icon;
+                    return (
+                      <ProductCard
+                        key={itemType.id}
+                        icon={<IconComponent className="h-6 w-6" />}
+                        title={itemType.nameAr}
+                        boxes={getInventoryValue(myMovingInventory, itemType.id, 'boxes')}
+                        units={getInventoryValue(myMovingInventory, itemType.id, 'units')}
+                        color={visuals.color}
+                        gradient={`${visuals.gradient.replace('to-', 'to-transparent via-').split(' ')[0]}/20 via-${visuals.gradient.split(' ')[0].replace('from-', '').replace('-500', '-600')}/10 to-transparent`}
+                        index={index}
+                      />
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="text-center py-12 md:py-16 bg-white/5 backdrop-blur-sm rounded-2xl md:rounded-3xl border border-white/10">

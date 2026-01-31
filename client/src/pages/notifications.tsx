@@ -47,6 +47,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { hasRoleOrAbove, ROLES } from "@shared/roles";
+import { useActiveItemTypes } from "@/hooks/use-item-types";
 
 interface InventoryRequest {
   id: string;
@@ -117,10 +118,24 @@ interface PendingCountResponse {
   count: number;
 }
 
+const legacyFieldMapping: Record<string, { boxes: string; units: string }> = {
+  n950: { boxes: "n950Boxes", units: "n950Units" },
+  i9000s: { boxes: "i9000sBoxes", units: "i9000sUnits" },
+  i9100: { boxes: "i9100Boxes", units: "i9100Units" },
+  rollPaper: { boxes: "rollPaperBoxes", units: "rollPaperUnits" },
+  stickers: { boxes: "stickersBoxes", units: "stickersUnits" },
+  newBatteries: { boxes: "newBatteriesBoxes", units: "newBatteriesUnits" },
+  mobilySim: { boxes: "mobilySimBoxes", units: "mobilySimUnits" },
+  stcSim: { boxes: "stcSimBoxes", units: "stcSimUnits" },
+  zainSim: { boxes: "zainSimBoxes", units: "zainSimUnits" },
+  lebaraSim: { boxes: "lebaraBoxes", units: "lebaraUnits" },
+};
+
 export default function Notifications() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
+  const { data: itemTypes } = useActiveItemTypes();
   
   // Admin state
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
@@ -357,32 +372,51 @@ export default function Notifications() {
     if ('transfers' in item) {
       const items: string[] = [];
       item.transfers.forEach(transfer => {
-        items.push(`${transfer.itemNameAr || transfer.itemType}: ${transfer.quantity} ${transfer.packagingType === 'box' ? 'كرتون' : 'قطعة'}`);
+        const itemType = itemTypes?.find(t => t.id === transfer.itemType);
+        const displayName = transfer.itemNameAr || itemType?.nameAr || transfer.itemType;
+        items.push(`${displayName}: ${transfer.quantity} ${transfer.packagingType === 'box' ? 'كرتون' : 'قطعة'}`);
       });
       return items;
     }
     
     const items: string[] = [];
-    const fields = [
-      { name: "N950", boxes: item.n950Boxes, units: item.n950Units },
-      { name: "I9000S", boxes: item.i9000sBoxes, units: item.i9000sUnits },
-      { name: "I9100", boxes: item.i9100Boxes, units: item.i9100Units },
-      { name: "ورق الطباعة", boxes: item.rollPaperBoxes, units: item.rollPaperUnits },
-      { name: "الملصقات", boxes: item.stickersBoxes, units: item.stickersUnits },
-      { name: "البطاريات", boxes: item.newBatteriesBoxes, units: item.newBatteriesUnits },
-      { name: "موبايلي", boxes: item.mobilySimBoxes, units: item.mobilySimUnits },
-      { name: "STC", boxes: item.stcSimBoxes, units: item.stcSimUnits },
-      { name: "زين", boxes: item.zainSimBoxes, units: item.zainSimUnits },
-    ];
+    
+    if (itemTypes && itemTypes.length > 0) {
+      itemTypes.forEach(itemType => {
+        const legacy = legacyFieldMapping[itemType.id];
+        if (legacy) {
+          const boxes = (item as any)[legacy.boxes] || 0;
+          const units = (item as any)[legacy.units] || 0;
+          if (boxes > 0 || units > 0) {
+            const parts: string[] = [];
+            if (boxes > 0) parts.push(`${boxes} كرتون`);
+            if (units > 0) parts.push(`${units} قطعة`);
+            items.push(`${itemType.nameAr}: ${parts.join(' + ')}`);
+          }
+        }
+      });
+    } else {
+      const fields = [
+        { name: "N950", boxes: item.n950Boxes, units: item.n950Units },
+        { name: "I9000S", boxes: item.i9000sBoxes, units: item.i9000sUnits },
+        { name: "I9100", boxes: item.i9100Boxes, units: item.i9100Units },
+        { name: "ورق الطباعة", boxes: item.rollPaperBoxes, units: item.rollPaperUnits },
+        { name: "الملصقات", boxes: item.stickersBoxes, units: item.stickersUnits },
+        { name: "البطاريات", boxes: item.newBatteriesBoxes, units: item.newBatteriesUnits },
+        { name: "موبايلي", boxes: item.mobilySimBoxes, units: item.mobilySimUnits },
+        { name: "STC", boxes: item.stcSimBoxes, units: item.stcSimUnits },
+        { name: "زين", boxes: item.zainSimBoxes, units: item.zainSimUnits },
+      ];
 
-    fields.forEach(field => {
-      if (field.boxes > 0 || field.units > 0) {
-        const parts: string[] = [];
-        if (field.boxes > 0) parts.push(`${field.boxes} كرتون`);
-        if (field.units > 0) parts.push(`${field.units} قطعة`);
-        items.push(`${field.name}: ${parts.join(' + ')}`);
-      }
-    });
+      fields.forEach(field => {
+        if (field.boxes > 0 || field.units > 0) {
+          const parts: string[] = [];
+          if (field.boxes > 0) parts.push(`${field.boxes} كرتون`);
+          if (field.units > 0) parts.push(`${field.units} قطعة`);
+          items.push(`${field.name}: ${parts.join(' + ')}`);
+        }
+      });
+    }
 
     return items;
   };
@@ -551,8 +585,9 @@ export default function Notifications() {
     return totals;
   };
 
-  const getItemDisplayName = (itemType: string, packagingType: string, quantity: number) => {
-    const names: Record<string, string> = {
+  const getItemDisplayName = (itemTypeId: string, packagingType: string, quantity: number) => {
+    const itemType = itemTypes?.find(t => t.id === itemTypeId);
+    const fallbackNames: Record<string, string> = {
       'n950': 'نوفا 950',
       'i9000s': 'i9000s',
       'i9100': 'i9100',
@@ -566,8 +601,9 @@ export default function Notifications() {
       'lebaraSim': 'ليبارا SIM',
     };
     
+    const displayName = itemType?.nameAr || fallbackNames[itemTypeId] || itemTypeId;
     const packaging = packagingType === 'box' ? 'كرتون' : 'قطعة';
-    return `${names[itemType] || itemType} (${packaging}): ${quantity}`;
+    return `${displayName} (${packaging}): ${quantity}`;
   };
 
   const allCount = isAdminOrSupervisor ? requests.length : transfers.length;

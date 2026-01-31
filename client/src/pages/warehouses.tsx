@@ -28,6 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/dashboard/Navbar";
 import { GridBackground } from "@/components/dashboard/GridBackground";
 import { useAuth } from "@/lib/auth";
+import { useActiveItemTypes } from "@/hooks/use-item-types";
 
 interface WarehouseInventory {
   id: string;
@@ -50,6 +51,8 @@ interface WarehouseInventory {
   stcSimUnits: number;
   zainSimBoxes: number;
   zainSimUnits: number;
+  lebaraBoxes: number;
+  lebaraUnits: number;
 }
 
 interface WarehouseData {
@@ -62,6 +65,19 @@ interface WarehouseData {
   inventory: WarehouseInventory | null;
 }
 
+const legacyFieldMapping: Record<string, { boxes: string; units: string }> = {
+  n950: { boxes: "n950Boxes", units: "n950Units" },
+  i9000s: { boxes: "i9000sBoxes", units: "i9000sUnits" },
+  i9100: { boxes: "i9100Boxes", units: "i9100Units" },
+  rollPaper: { boxes: "rollPaperBoxes", units: "rollPaperUnits" },
+  stickers: { boxes: "stickersBoxes", units: "stickersUnits" },
+  newBatteries: { boxes: "newBatteriesBoxes", units: "newBatteriesUnits" },
+  mobilySim: { boxes: "mobilySimBoxes", units: "mobilySimUnits" },
+  stcSim: { boxes: "stcSimBoxes", units: "stcSimUnits" },
+  zainSim: { boxes: "zainSimBoxes", units: "zainSimUnits" },
+  lebaraSim: { boxes: "lebaraBoxes", units: "lebaraUnits" },
+};
+
 export default function WarehousesPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -69,6 +85,7 @@ export default function WarehousesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
   const { user } = useAuth();
+  const { data: itemTypes } = useActiveItemTypes();
 
   const { data: allWarehouses = [], isLoading } = useQuery<WarehouseData[]>({
     queryKey: user?.role === 'admin' ? ["/api/warehouses"] : ["/api/supervisor/warehouses"],
@@ -105,6 +122,20 @@ export default function WarehousesPage() {
 
   const calculateTotalItems = (inventory: WarehouseInventory | null) => {
     if (!inventory) return 0;
+    
+    if (itemTypes && itemTypes.length > 0) {
+      let total = 0;
+      for (const itemType of itemTypes.filter(t => t.isActive)) {
+        const legacy = legacyFieldMapping[itemType.id];
+        if (legacy) {
+          const boxes = (inventory as any)[legacy.boxes] || 0;
+          const units = (inventory as any)[legacy.units] || 0;
+          total += boxes + units;
+        }
+      }
+      return total;
+    }
+    
     return (
       inventory.n950Boxes + inventory.n950Units +
       inventory.i9000sBoxes + inventory.i9000sUnits +
@@ -121,8 +152,21 @@ export default function WarehousesPage() {
   const calculateLowStockCount = (inventory: WarehouseInventory | null) => {
     if (!inventory) return 0;
     const threshold = 5;
-    let count = 0;
     
+    if (itemTypes && itemTypes.length > 0) {
+      let count = 0;
+      for (const itemType of itemTypes.filter(t => t.isActive)) {
+        const legacy = legacyFieldMapping[itemType.id];
+        if (legacy) {
+          const boxes = (inventory as any)[legacy.boxes] || 0;
+          const units = (inventory as any)[legacy.units] || 0;
+          if ((boxes + units) < threshold) count++;
+        }
+      }
+      return count;
+    }
+    
+    let count = 0;
     if ((inventory.n950Boxes + inventory.n950Units) < threshold) count++;
     if ((inventory.i9000sBoxes + inventory.i9000sUnits) < threshold) count++;
     if ((inventory.i9100Boxes + inventory.i9100Units) < threshold) count++;
