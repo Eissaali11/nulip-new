@@ -1040,6 +1040,43 @@ export class MemStorage implements IStorage {
   async getSupervisorWarehouses(supervisorId: string): Promise<string[]> {
     return [];
   }
+
+  // Item Types Management
+  async getItemTypes(): Promise<ItemType[]> {
+    throw new Error("MemStorage does not support item type operations. Use DatabaseStorage instead.");
+  }
+
+  async getActiveItemTypes(): Promise<ItemType[]> {
+    throw new Error("MemStorage does not support item type operations. Use DatabaseStorage instead.");
+  }
+
+  async getItemTypeById(id: string): Promise<ItemType | undefined> {
+    throw new Error("MemStorage does not support item type operations. Use DatabaseStorage instead.");
+  }
+
+  async createItemType(data: InsertItemType): Promise<ItemType> {
+    throw new Error("MemStorage does not support item type operations. Use DatabaseStorage instead.");
+  }
+
+  async updateItemType(id: string, data: Partial<InsertItemType>): Promise<ItemType | undefined> {
+    throw new Error("MemStorage does not support item type operations. Use DatabaseStorage instead.");
+  }
+
+  async deleteItemType(id: string): Promise<boolean> {
+    throw new Error("MemStorage does not support item type operations. Use DatabaseStorage instead.");
+  }
+
+  async toggleItemTypeActive(id: string, isActive: boolean): Promise<ItemType | undefined> {
+    throw new Error("MemStorage does not support item type operations. Use DatabaseStorage instead.");
+  }
+
+  async toggleItemTypeVisibility(id: string, isVisible: boolean): Promise<ItemType | undefined> {
+    throw new Error("MemStorage does not support item type operations. Use DatabaseStorage instead.");
+  }
+
+  async seedDefaultItemTypes(): Promise<void> {
+    throw new Error("MemStorage does not support item type operations. Use DatabaseStorage instead.");
+  }
 }
 
 import { DatabaseStorage } from "./database-storage";
