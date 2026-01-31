@@ -43,6 +43,9 @@ import {
   type InsertSystemLog,
   type ItemType,
   type InsertItemType,
+  type WarehouseInventoryEntry,
+  type TechnicianFixedInventoryEntry,
+  type TechnicianMovingInventoryEntry,
   regions,
   users,
   inventoryItems,
@@ -59,7 +62,10 @@ import {
   supervisorWarehouses,
   inventoryRequests,
   systemLogs,
-  itemTypes
+  itemTypes,
+  warehouseInventoryEntries,
+  technicianFixedInventoryEntries,
+  technicianMovingInventoryEntries
 } from "@shared/schema";
 import { IStorage } from "./storage";
 import { db } from "./db";
@@ -2505,5 +2511,152 @@ export class DatabaseStorage implements IStorage {
     ];
 
     await db.insert(itemTypes).values(defaultTypes);
+  }
+
+  // Dynamic Inventory Entries
+  async getWarehouseInventoryEntries(warehouseId: string): Promise<WarehouseInventoryEntry[]> {
+    return await db.select()
+      .from(warehouseInventoryEntries)
+      .where(eq(warehouseInventoryEntries.warehouseId, warehouseId));
+  }
+
+  async upsertWarehouseInventoryEntry(warehouseId: string, itemTypeId: string, boxes: number, units: number): Promise<WarehouseInventoryEntry> {
+    const existing = await db.select()
+      .from(warehouseInventoryEntries)
+      .where(and(
+        eq(warehouseInventoryEntries.warehouseId, warehouseId),
+        eq(warehouseInventoryEntries.itemTypeId, itemTypeId)
+      ));
+
+    if (existing.length > 0) {
+      const result = await db.update(warehouseInventoryEntries)
+        .set({ boxes, units, updatedAt: new Date() })
+        .where(and(
+          eq(warehouseInventoryEntries.warehouseId, warehouseId),
+          eq(warehouseInventoryEntries.itemTypeId, itemTypeId)
+        ))
+        .returning();
+      return result[0];
+    } else {
+      const result = await db.insert(warehouseInventoryEntries)
+        .values({ warehouseId, itemTypeId, boxes, units })
+        .returning();
+      return result[0];
+    }
+  }
+
+  async getTechnicianFixedInventoryEntries(technicianId: string): Promise<TechnicianFixedInventoryEntry[]> {
+    return await db.select()
+      .from(technicianFixedInventoryEntries)
+      .where(eq(technicianFixedInventoryEntries.technicianId, technicianId));
+  }
+
+  async upsertTechnicianFixedInventoryEntry(technicianId: string, itemTypeId: string, boxes: number, units: number): Promise<TechnicianFixedInventoryEntry> {
+    const existing = await db.select()
+      .from(technicianFixedInventoryEntries)
+      .where(and(
+        eq(technicianFixedInventoryEntries.technicianId, technicianId),
+        eq(technicianFixedInventoryEntries.itemTypeId, itemTypeId)
+      ));
+
+    if (existing.length > 0) {
+      const result = await db.update(technicianFixedInventoryEntries)
+        .set({ boxes, units, updatedAt: new Date() })
+        .where(and(
+          eq(technicianFixedInventoryEntries.technicianId, technicianId),
+          eq(technicianFixedInventoryEntries.itemTypeId, itemTypeId)
+        ))
+        .returning();
+      return result[0];
+    } else {
+      const result = await db.insert(technicianFixedInventoryEntries)
+        .values({ technicianId, itemTypeId, boxes, units })
+        .returning();
+      return result[0];
+    }
+  }
+
+  async getTechnicianMovingInventoryEntries(technicianId: string): Promise<TechnicianMovingInventoryEntry[]> {
+    return await db.select()
+      .from(technicianMovingInventoryEntries)
+      .where(eq(technicianMovingInventoryEntries.technicianId, technicianId));
+  }
+
+  async upsertTechnicianMovingInventoryEntry(technicianId: string, itemTypeId: string, boxes: number, units: number): Promise<TechnicianMovingInventoryEntry> {
+    const existing = await db.select()
+      .from(technicianMovingInventoryEntries)
+      .where(and(
+        eq(technicianMovingInventoryEntries.technicianId, technicianId),
+        eq(technicianMovingInventoryEntries.itemTypeId, itemTypeId)
+      ));
+
+    if (existing.length > 0) {
+      const result = await db.update(technicianMovingInventoryEntries)
+        .set({ boxes, units, updatedAt: new Date() })
+        .where(and(
+          eq(technicianMovingInventoryEntries.technicianId, technicianId),
+          eq(technicianMovingInventoryEntries.itemTypeId, itemTypeId)
+        ))
+        .returning();
+      return result[0];
+    } else {
+      const result = await db.insert(technicianMovingInventoryEntries)
+        .values({ technicianId, itemTypeId, boxes, units })
+        .returning();
+      return result[0];
+    }
+  }
+
+  async migrateToInventoryEntries(): Promise<void> {
+    const allItemTypes = await db.select().from(itemTypes);
+    const itemTypeMap = new Map(allItemTypes.map(t => [t.id, t]));
+
+    const allWarehouses = await db.select().from(warehouses);
+    for (const warehouse of allWarehouses) {
+      const inv = await db.select().from(warehouseInventory).where(eq(warehouseInventory.warehouseId, warehouse.id));
+      if (inv.length > 0) {
+        const i = inv[0];
+        const legacyFields: Record<string, { boxes: number; units: number }> = {
+          'n950': { boxes: i.n950Boxes, units: i.n950Units },
+          'i9000s': { boxes: i.i9000sBoxes, units: i.i9000sUnits },
+          'i9100': { boxes: i.i9100Boxes, units: i.i9100Units },
+          'rollPaper': { boxes: i.rollPaperBoxes, units: i.rollPaperUnits },
+          'stickers': { boxes: i.stickersBoxes, units: i.stickersUnits },
+          'newBatteries': { boxes: i.newBatteriesBoxes, units: i.newBatteriesUnits },
+          'mobilySim': { boxes: i.mobilySimBoxes, units: i.mobilySimUnits },
+          'stcSim': { boxes: i.stcSimBoxes, units: i.stcSimUnits },
+          'zainSim': { boxes: i.zainSimBoxes, units: i.zainSimUnits },
+          'lebaraSim': { boxes: i.lebaraBoxes || 0, units: i.lebaraUnits || 0 },
+        };
+        for (const [itemTypeId, vals] of Object.entries(legacyFields)) {
+          if (itemTypeMap.has(itemTypeId) && (vals.boxes > 0 || vals.units > 0)) {
+            await this.upsertWarehouseInventoryEntry(warehouse.id, itemTypeId, vals.boxes, vals.units);
+          }
+        }
+      }
+    }
+
+    const allFixedInventories = await db.select().from(technicianFixedInventories);
+    for (const inv of allFixedInventories) {
+      const legacyFields: Record<string, { boxes: number; units: number }> = {
+        'n950': { boxes: inv.n950Boxes, units: inv.n950Units },
+        'i9000s': { boxes: inv.i9000sBoxes, units: inv.i9000sUnits },
+        'i9100': { boxes: inv.i9100Boxes, units: inv.i9100Units },
+        'rollPaper': { boxes: inv.rollPaperBoxes, units: inv.rollPaperUnits },
+        'stickers': { boxes: inv.stickersBoxes, units: inv.stickersUnits },
+        'newBatteries': { boxes: inv.newBatteriesBoxes, units: inv.newBatteriesUnits },
+        'mobilySim': { boxes: inv.mobilySimBoxes, units: inv.mobilySimUnits },
+        'stcSim': { boxes: inv.stcSimBoxes, units: inv.stcSimUnits },
+        'zainSim': { boxes: inv.zainSimBoxes, units: inv.zainSimUnits },
+        'lebaraSim': { boxes: (inv as any).lebaraBoxes || 0, units: (inv as any).lebaraUnits || 0 },
+      };
+      for (const [itemTypeId, vals] of Object.entries(legacyFields)) {
+        if (itemTypeMap.has(itemTypeId) && (vals.boxes > 0 || vals.units > 0)) {
+          await this.upsertTechnicianFixedInventoryEntry(inv.technicianId, itemTypeId, vals.boxes, vals.units);
+        }
+      }
+    }
+
+    console.log('Migration to dynamic inventory entries completed successfully.');
   }
 }

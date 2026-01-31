@@ -1,4 +1,4 @@
-import { type InventoryItem, type InsertInventoryItem, type Transaction, type InsertTransaction, type InventoryItemWithStatus, type DashboardStats, type Region, type InsertRegion, type User, type InsertUser, type UserSafe, type RegionWithStats, type AdminStats, type TransactionWithDetails, type WithdrawnDevice, type InsertWithdrawnDevice, type ReceivedDevice, type InsertReceivedDevice, type TechnicianFixedInventory, type InsertTechnicianFixedInventory, type StockMovement, type InsertStockMovement, type TechnicianWithFixedInventory, type FixedInventorySummary, type StockMovementWithDetails, type Warehouse, type WarehouseInventory, type WarehouseTransfer, type InsertWarehouse, type InsertWarehouseInventory, type InsertWarehouseTransfer, type WarehouseWithStats, type WarehouseWithInventory, type WarehouseTransferWithDetails, type SupervisorTechnician, type SupervisorWarehouse, type SystemLog, type InsertSystemLog, type ItemType, type InsertItemType } from "@shared/schema";
+import { type InventoryItem, type InsertInventoryItem, type Transaction, type InsertTransaction, type InventoryItemWithStatus, type DashboardStats, type Region, type InsertRegion, type User, type InsertUser, type UserSafe, type RegionWithStats, type AdminStats, type TransactionWithDetails, type WithdrawnDevice, type InsertWithdrawnDevice, type ReceivedDevice, type InsertReceivedDevice, type TechnicianFixedInventory, type InsertTechnicianFixedInventory, type StockMovement, type InsertStockMovement, type TechnicianWithFixedInventory, type FixedInventorySummary, type StockMovementWithDetails, type Warehouse, type WarehouseInventory, type WarehouseTransfer, type InsertWarehouse, type InsertWarehouseInventory, type InsertWarehouseTransfer, type WarehouseWithStats, type WarehouseWithInventory, type WarehouseTransferWithDetails, type SupervisorTechnician, type SupervisorWarehouse, type SystemLog, type InsertSystemLog, type ItemType, type InsertItemType, type WarehouseInventoryEntry, type InsertWarehouseInventoryEntry, type TechnicianFixedInventoryEntry, type InsertTechnicianFixedInventoryEntry, type TechnicianMovingInventoryEntry, type InsertTechnicianMovingInventoryEntry } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -140,6 +140,15 @@ export interface IStorage {
   toggleItemTypeActive(id: string, isActive: boolean): Promise<ItemType | undefined>;
   toggleItemTypeVisibility(id: string, isVisible: boolean): Promise<ItemType | undefined>;
   seedDefaultItemTypes(): Promise<void>;
+  
+  // Dynamic Inventory Entries
+  getWarehouseInventoryEntries(warehouseId: string): Promise<WarehouseInventoryEntry[]>;
+  upsertWarehouseInventoryEntry(warehouseId: string, itemTypeId: string, boxes: number, units: number): Promise<WarehouseInventoryEntry>;
+  getTechnicianFixedInventoryEntries(technicianId: string): Promise<TechnicianFixedInventoryEntry[]>;
+  upsertTechnicianFixedInventoryEntry(technicianId: string, itemTypeId: string, boxes: number, units: number): Promise<TechnicianFixedInventoryEntry>;
+  getTechnicianMovingInventoryEntries(technicianId: string): Promise<TechnicianMovingInventoryEntry[]>;
+  upsertTechnicianMovingInventoryEntry(technicianId: string, itemTypeId: string, boxes: number, units: number): Promise<TechnicianMovingInventoryEntry>;
+  migrateToInventoryEntries(): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -1076,6 +1085,35 @@ export class MemStorage implements IStorage {
 
   async seedDefaultItemTypes(): Promise<void> {
     throw new Error("MemStorage does not support item type operations. Use DatabaseStorage instead.");
+  }
+
+  // Dynamic Inventory Entries
+  async getWarehouseInventoryEntries(warehouseId: string): Promise<WarehouseInventoryEntry[]> {
+    throw new Error("MemStorage does not support dynamic inventory entries. Use DatabaseStorage instead.");
+  }
+
+  async upsertWarehouseInventoryEntry(warehouseId: string, itemTypeId: string, boxes: number, units: number): Promise<WarehouseInventoryEntry> {
+    throw new Error("MemStorage does not support dynamic inventory entries. Use DatabaseStorage instead.");
+  }
+
+  async getTechnicianFixedInventoryEntries(technicianId: string): Promise<TechnicianFixedInventoryEntry[]> {
+    throw new Error("MemStorage does not support dynamic inventory entries. Use DatabaseStorage instead.");
+  }
+
+  async upsertTechnicianFixedInventoryEntry(technicianId: string, itemTypeId: string, boxes: number, units: number): Promise<TechnicianFixedInventoryEntry> {
+    throw new Error("MemStorage does not support dynamic inventory entries. Use DatabaseStorage instead.");
+  }
+
+  async getTechnicianMovingInventoryEntries(technicianId: string): Promise<TechnicianMovingInventoryEntry[]> {
+    throw new Error("MemStorage does not support dynamic inventory entries. Use DatabaseStorage instead.");
+  }
+
+  async upsertTechnicianMovingInventoryEntry(technicianId: string, itemTypeId: string, boxes: number, units: number): Promise<TechnicianMovingInventoryEntry> {
+    throw new Error("MemStorage does not support dynamic inventory entries. Use DatabaseStorage instead.");
+  }
+
+  async migrateToInventoryEntries(): Promise<void> {
+    throw new Error("MemStorage does not support migration. Use DatabaseStorage instead.");
   }
 }
 
