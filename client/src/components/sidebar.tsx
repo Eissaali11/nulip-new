@@ -254,6 +254,19 @@ ${inventory.map(item =>
             </Button>
           </Link>
           
+          {user?.role === 'admin' && (
+            <Link href="/item-types">
+              <Button
+                variant="outline"
+                className="w-full flex items-center justify-center space-x-2 space-x-reverse bg-gradient-to-r from-[#18B2B0]/20 to-[#1a1a2e] border-[#18B2B0]/50"
+                data-testid="button-item-types-main"
+              >
+                <Package className="h-4 w-4 text-[#18B2B0]" />
+                <span className="text-[#18B2B0]">إدارة الأصناف</span>
+              </Button>
+            </Link>
+          )}
+          
           <Link href="/withdrawn-devices">
             <Button
               variant="outline"
