@@ -1030,6 +1030,7 @@ export default function WarehouseDetailsPage() {
         onOpenChange={setShowUpdateInventoryModal}
         warehouseId={warehouseId}
         currentInventory={warehouse.inventory}
+        currentEntries={inventoryEntriesData || []}
       />
 
       <TransferFromWarehouseModal
@@ -1038,6 +1039,7 @@ export default function WarehouseDetailsPage() {
         warehouseId={warehouseId}
         warehouseName={warehouse.name}
         currentInventory={warehouse.inventory}
+        currentEntries={inventoryEntriesData || []}
       />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
