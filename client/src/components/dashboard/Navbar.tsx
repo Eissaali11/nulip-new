@@ -157,6 +157,13 @@ export const Navbar = () => {
       gradient: "from-gray-500 to-slate-600",
       adminOnly: true,
     },
+    {
+      title: "إدارة الأصناف",
+      href: "/item-types",
+      icon: Package,
+      gradient: "from-teal-500 to-cyan-600",
+      adminOnly: true,
+    },
   ];
 
   const filteredNavItems = navItems.filter(item => {
