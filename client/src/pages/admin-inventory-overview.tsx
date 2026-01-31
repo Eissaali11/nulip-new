@@ -18,7 +18,7 @@ import { Navbar } from "@/components/dashboard/Navbar";
 import { GridBackground } from "@/components/dashboard/GridBackground";
 import dashboardBg from "@assets/image_1762515061799.png";
 import { useAuth } from "@/lib/auth";
-import { useActiveItemTypes, getItemTypeVisuals, type ItemType } from "@/hooks/use-item-types";
+import { useActiveItemTypes, getItemTypeVisuals, getInventoryValueForItemType, legacyFieldMapping, type ItemType, type InventoryEntry } from "@/hooks/use-item-types";
 
 interface TechnicianInventoryData {
   technicianId: string;
@@ -48,6 +48,7 @@ interface TechnicianInventoryData {
     zainSimUnits: number;
     lowStockThreshold: number;
     criticalStockThreshold: number;
+    entries?: InventoryEntry[];
   } | null;
   movingInventory: {
     id: string;
@@ -69,31 +70,13 @@ interface TechnicianInventoryData {
     stcSimUnits: number;
     zainSimBoxes: number;
     zainSimUnits: number;
+    entries?: InventoryEntry[];
   } | null;
   alertLevel: 'good' | 'warning' | 'critical';
 }
 
-const legacyFieldMapping: Record<string, { boxes: string; units: string }> = {
-  n950: { boxes: "n950Boxes", units: "n950Units" },
-  i9000s: { boxes: "i9000sBoxes", units: "i9000sUnits" },
-  i9100: { boxes: "i9100Boxes", units: "i9100Units" },
-  rollPaper: { boxes: "rollPaperBoxes", units: "rollPaperUnits" },
-  stickers: { boxes: "stickersBoxes", units: "stickersUnits" },
-  newBatteries: { boxes: "newBatteriesBoxes", units: "newBatteriesUnits" },
-  mobilySim: { boxes: "mobilySimBoxes", units: "mobilySimUnits" },
-  stcSim: { boxes: "stcSimBoxes", units: "stcSimUnits" },
-  zainSim: { boxes: "zainSimBoxes", units: "zainSimUnits" },
-  lebaraSim: { boxes: "lebaraBoxes", units: "lebaraUnits" },
-};
-
-function getInventoryValue(inventory: any, itemTypeId: string, metric: 'boxes' | 'units'): number {
-  if (!inventory) return 0;
-  const legacy = legacyFieldMapping[itemTypeId];
-  if (legacy) {
-    const fieldName = metric === 'boxes' ? legacy.boxes : legacy.units;
-    return (inventory as any)[fieldName] || 0;
-  }
-  return 0;
+function getInventoryValue(inventory: any, entries: InventoryEntry[] | undefined, itemTypeId: string, metric: 'boxes' | 'units'): number {
+  return getInventoryValueForItemType(itemTypeId, entries, inventory, metric);
 }
 
 export default function AdminInventoryOverview() {
@@ -151,8 +134,8 @@ export default function AdminInventoryOverview() {
   const calculateFixedTotal = (inv: TechnicianInventoryData['fixedInventory']) => {
     if (!inv) return 0;
     return activeItemTypes.reduce((total, itemType) => {
-      const boxes = getInventoryValue(inv, itemType.id, 'boxes');
-      const units = getInventoryValue(inv, itemType.id, 'units');
+      const boxes = getInventoryValue(inv, inv.entries, itemType.id, 'boxes');
+      const units = getInventoryValue(inv, inv.entries, itemType.id, 'units');
       return total + getTotalForItem(boxes, units);
     }, 0);
   };
@@ -160,8 +143,8 @@ export default function AdminInventoryOverview() {
   const calculateMovingTotal = (inv: TechnicianInventoryData['movingInventory']) => {
     if (!inv) return 0;
     return activeItemTypes.reduce((total, itemType) => {
-      const boxes = getInventoryValue(inv, itemType.id, 'boxes');
-      const units = getInventoryValue(inv, itemType.id, 'units');
+      const boxes = getInventoryValue(inv, inv.entries, itemType.id, 'boxes');
+      const units = getInventoryValue(inv, inv.entries, itemType.id, 'units');
       return total + getTotalForItem(boxes, units);
     }, 0);
   };
@@ -247,8 +230,9 @@ export default function AdminInventoryOverview() {
 
     technicians.forEach((tech, index) => {
       const inv = inventoryType === 'fixed' ? tech.fixedInventory : tech.movingInventory;
+      const entries = inv?.entries;
       
-      const itemValues = activeItemTypes.map(t => getInventoryValue(inv, t.id, metric));
+      const itemValues = activeItemTypes.map(t => getInventoryValue(inv, entries, t.id, metric));
       const data = [
         index + 1,
         tech.technicianName,
@@ -374,11 +358,13 @@ export default function AdminInventoryOverview() {
     activeItemTypes.forEach(t => { totals[t.id] = 0; });
 
     technicians.forEach((tech, index) => {
+      const fixedEntries = tech.fixedInventory?.entries;
+      const movingEntries = tech.movingInventory?.entries;
       const itemValues = activeItemTypes.map(t => {
-        const fixedBoxes = getInventoryValue(tech.fixedInventory, t.id, 'boxes');
-        const fixedUnits = getInventoryValue(tech.fixedInventory, t.id, 'units');
-        const movingBoxes = getInventoryValue(tech.movingInventory, t.id, 'boxes');
-        const movingUnits = getInventoryValue(tech.movingInventory, t.id, 'units');
+        const fixedBoxes = getInventoryValue(tech.fixedInventory, fixedEntries, t.id, 'boxes');
+        const fixedUnits = getInventoryValue(tech.fixedInventory, fixedEntries, t.id, 'units');
+        const movingBoxes = getInventoryValue(tech.movingInventory, movingEntries, t.id, 'boxes');
+        const movingUnits = getInventoryValue(tech.movingInventory, movingEntries, t.id, 'units');
         return getTotalForItem(fixedBoxes + movingBoxes, fixedUnits + movingUnits);
       });
 

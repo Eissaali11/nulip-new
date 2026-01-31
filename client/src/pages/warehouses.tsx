@@ -28,7 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/dashboard/Navbar";
 import { GridBackground } from "@/components/dashboard/GridBackground";
 import { useAuth } from "@/lib/auth";
-import { useActiveItemTypes } from "@/hooks/use-item-types";
+import { useActiveItemTypes, getInventoryValueForItemType, legacyFieldMapping, InventoryEntry } from "@/hooks/use-item-types";
 
 interface WarehouseInventory {
   id: string;
@@ -53,6 +53,7 @@ interface WarehouseInventory {
   zainSimUnits: number;
   lebaraBoxes: number;
   lebaraUnits: number;
+  entries?: InventoryEntry[];
 }
 
 interface WarehouseData {
@@ -65,18 +66,6 @@ interface WarehouseData {
   inventory: WarehouseInventory | null;
 }
 
-const legacyFieldMapping: Record<string, { boxes: string; units: string }> = {
-  n950: { boxes: "n950Boxes", units: "n950Units" },
-  i9000s: { boxes: "i9000sBoxes", units: "i9000sUnits" },
-  i9100: { boxes: "i9100Boxes", units: "i9100Units" },
-  rollPaper: { boxes: "rollPaperBoxes", units: "rollPaperUnits" },
-  stickers: { boxes: "stickersBoxes", units: "stickersUnits" },
-  newBatteries: { boxes: "newBatteriesBoxes", units: "newBatteriesUnits" },
-  mobilySim: { boxes: "mobilySimBoxes", units: "mobilySimUnits" },
-  stcSim: { boxes: "stcSimBoxes", units: "stcSimUnits" },
-  zainSim: { boxes: "zainSimBoxes", units: "zainSimUnits" },
-  lebaraSim: { boxes: "lebaraBoxes", units: "lebaraUnits" },
-};
 
 export default function WarehousesPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -126,12 +115,9 @@ export default function WarehousesPage() {
     if (itemTypes && itemTypes.length > 0) {
       let total = 0;
       for (const itemType of itemTypes.filter(t => t.isActive)) {
-        const legacy = legacyFieldMapping[itemType.id];
-        if (legacy) {
-          const boxes = (inventory as any)[legacy.boxes] || 0;
-          const units = (inventory as any)[legacy.units] || 0;
-          total += boxes + units;
-        }
+        const boxes = getInventoryValueForItemType(itemType.id, inventory.entries, inventory, 'boxes');
+        const units = getInventoryValueForItemType(itemType.id, inventory.entries, inventory, 'units');
+        total += boxes + units;
       }
       return total;
     }
@@ -145,7 +131,8 @@ export default function WarehousesPage() {
       inventory.newBatteriesBoxes + inventory.newBatteriesUnits +
       inventory.mobilySimBoxes + inventory.mobilySimUnits +
       inventory.stcSimBoxes + inventory.stcSimUnits +
-      inventory.zainSimBoxes + inventory.zainSimUnits
+      inventory.zainSimBoxes + inventory.zainSimUnits +
+      inventory.lebaraBoxes + inventory.lebaraUnits
     );
   };
 
@@ -156,12 +143,9 @@ export default function WarehousesPage() {
     if (itemTypes && itemTypes.length > 0) {
       let count = 0;
       for (const itemType of itemTypes.filter(t => t.isActive)) {
-        const legacy = legacyFieldMapping[itemType.id];
-        if (legacy) {
-          const boxes = (inventory as any)[legacy.boxes] || 0;
-          const units = (inventory as any)[legacy.units] || 0;
-          if ((boxes + units) < threshold) count++;
-        }
+        const boxes = getInventoryValueForItemType(itemType.id, inventory.entries, inventory, 'boxes');
+        const units = getInventoryValueForItemType(itemType.id, inventory.entries, inventory, 'units');
+        if ((boxes + units) < threshold) count++;
       }
       return count;
     }
@@ -176,6 +160,7 @@ export default function WarehousesPage() {
     if ((inventory.mobilySimBoxes + inventory.mobilySimUnits) < threshold) count++;
     if ((inventory.stcSimBoxes + inventory.stcSimUnits) < threshold) count++;
     if ((inventory.zainSimBoxes + inventory.zainSimUnits) < threshold) count++;
+    if ((inventory.lebaraBoxes + inventory.lebaraUnits) < threshold) count++;
     
     return count;
   };

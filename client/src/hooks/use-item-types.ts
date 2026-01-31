@@ -86,25 +86,51 @@ export function getItemTypeVisuals(itemType: ItemType, index: number = 0) {
   };
 }
 
+export const legacyFieldMapping: Record<string, { boxes: string; units: string }> = {
+  n950: { boxes: "n950Boxes", units: "n950Units" },
+  i9000s: { boxes: "i9000sBoxes", units: "i9000sUnits" },
+  i9100: { boxes: "i9100Boxes", units: "i9100Units" },
+  rollPaper: { boxes: "rollPaperBoxes", units: "rollPaperUnits" },
+  stickers: { boxes: "stickersBoxes", units: "stickersUnits" },
+  newBatteries: { boxes: "newBatteriesBoxes", units: "newBatteriesUnits" },
+  mobilySim: { boxes: "mobilySimBoxes", units: "mobilySimUnits" },
+  stcSim: { boxes: "stcSimBoxes", units: "stcSimUnits" },
+  zainSim: { boxes: "zainSimBoxes", units: "zainSimUnits" },
+  lebaraSim: { boxes: "lebaraBoxes", units: "lebaraUnits" },
+};
+
+export function getInventoryValueForItemType(
+  itemTypeId: string,
+  entries: InventoryEntry[] | undefined,
+  legacyInventory: Record<string, any> | null | undefined,
+  valueType: 'boxes' | 'units'
+): number {
+  // First check entry tables
+  if (entries) {
+    const entry = entries.find(e => e.itemTypeId === itemTypeId);
+    if (entry) {
+      return valueType === 'boxes' ? entry.boxes : entry.units;
+    }
+  }
+  
+  // Fall back to legacy columns
+  if (legacyInventory) {
+    const legacy = legacyFieldMapping[itemTypeId];
+    if (legacy) {
+      const fieldName = valueType === 'boxes' ? legacy.boxes : legacy.units;
+      return (legacyInventory as any)[fieldName] || 0;
+    }
+  }
+  
+  return 0;
+}
+
 export function buildInventoryDisplayItems(
   itemTypes: ItemType[],
   entries: InventoryEntry[],
   legacyInventory?: Record<string, number>
 ) {
   const entryMap = new Map(entries.map((e) => [e.itemTypeId, e]));
-
-  const legacyFieldMapping: Record<string, { boxes: string; units: string }> = {
-    n950: { boxes: "n950Boxes", units: "n950Units" },
-    i9000s: { boxes: "i9000sBoxes", units: "i9000sUnits" },
-    i9100: { boxes: "i9100Boxes", units: "i9100Units" },
-    rollPaper: { boxes: "rollPaperBoxes", units: "rollPaperUnits" },
-    stickers: { boxes: "stickersBoxes", units: "stickersUnits" },
-    newBatteries: { boxes: "newBatteriesBoxes", units: "newBatteriesUnits" },
-    mobilySim: { boxes: "mobilySimBoxes", units: "mobilySimUnits" },
-    stcSim: { boxes: "stcSimBoxes", units: "stcSimUnits" },
-    zainSim: { boxes: "zainSimBoxes", units: "zainSimUnits" },
-    lebaraSim: { boxes: "lebaraBoxes", units: "lebaraUnits" },
-  };
 
   const visibleItems = itemTypes
     .filter((t) => t.isActive && t.isVisible)

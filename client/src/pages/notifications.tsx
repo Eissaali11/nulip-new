@@ -47,7 +47,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { hasRoleOrAbove, ROLES } from "@shared/roles";
-import { useActiveItemTypes } from "@/hooks/use-item-types";
+import { useActiveItemTypes, getInventoryValueForItemType, legacyFieldMapping, InventoryEntry } from "@/hooks/use-item-types";
 
 interface InventoryRequest {
   id: string;
@@ -59,6 +59,7 @@ interface InventoryRequest {
   createdAt: string;
   notes?: string;
   adminNotes?: string;
+  entries?: InventoryEntry[];
   n950Boxes: number;
   n950Units: number;
   i9000sBoxes: number;
@@ -117,19 +118,6 @@ interface WarehouseInfo {
 interface PendingCountResponse {
   count: number;
 }
-
-const legacyFieldMapping: Record<string, { boxes: string; units: string }> = {
-  n950: { boxes: "n950Boxes", units: "n950Units" },
-  i9000s: { boxes: "i9000sBoxes", units: "i9000sUnits" },
-  i9100: { boxes: "i9100Boxes", units: "i9100Units" },
-  rollPaper: { boxes: "rollPaperBoxes", units: "rollPaperUnits" },
-  stickers: { boxes: "stickersBoxes", units: "stickersUnits" },
-  newBatteries: { boxes: "newBatteriesBoxes", units: "newBatteriesUnits" },
-  mobilySim: { boxes: "mobilySimBoxes", units: "mobilySimUnits" },
-  stcSim: { boxes: "stcSimBoxes", units: "stcSimUnits" },
-  zainSim: { boxes: "zainSimBoxes", units: "zainSimUnits" },
-  lebaraSim: { boxes: "lebaraBoxes", units: "lebaraUnits" },
-};
 
 export default function Notifications() {
   const { user } = useAuth();
@@ -380,32 +368,30 @@ export default function Notifications() {
     }
     
     const items: string[] = [];
+    const request = item as InventoryRequest;
     
     if (itemTypes && itemTypes.length > 0) {
       itemTypes.forEach(itemType => {
-        const legacy = legacyFieldMapping[itemType.id];
-        if (legacy) {
-          const boxes = (item as any)[legacy.boxes] || 0;
-          const units = (item as any)[legacy.units] || 0;
-          if (boxes > 0 || units > 0) {
-            const parts: string[] = [];
-            if (boxes > 0) parts.push(`${boxes} كرتون`);
-            if (units > 0) parts.push(`${units} قطعة`);
-            items.push(`${itemType.nameAr}: ${parts.join(' + ')}`);
-          }
+        const boxes = getInventoryValueForItemType(itemType.id, request.entries, request, 'boxes');
+        const units = getInventoryValueForItemType(itemType.id, request.entries, request, 'units');
+        if (boxes > 0 || units > 0) {
+          const parts: string[] = [];
+          if (boxes > 0) parts.push(`${boxes} كرتون`);
+          if (units > 0) parts.push(`${units} قطعة`);
+          items.push(`${itemType.nameAr}: ${parts.join(' + ')}`);
         }
       });
     } else {
       const fields = [
-        { name: "N950", boxes: item.n950Boxes, units: item.n950Units },
-        { name: "I9000S", boxes: item.i9000sBoxes, units: item.i9000sUnits },
-        { name: "I9100", boxes: item.i9100Boxes, units: item.i9100Units },
-        { name: "ورق الطباعة", boxes: item.rollPaperBoxes, units: item.rollPaperUnits },
-        { name: "الملصقات", boxes: item.stickersBoxes, units: item.stickersUnits },
-        { name: "البطاريات", boxes: item.newBatteriesBoxes, units: item.newBatteriesUnits },
-        { name: "موبايلي", boxes: item.mobilySimBoxes, units: item.mobilySimUnits },
-        { name: "STC", boxes: item.stcSimBoxes, units: item.stcSimUnits },
-        { name: "زين", boxes: item.zainSimBoxes, units: item.zainSimUnits },
+        { name: "N950", boxes: request.n950Boxes, units: request.n950Units },
+        { name: "I9000S", boxes: request.i9000sBoxes, units: request.i9000sUnits },
+        { name: "I9100", boxes: request.i9100Boxes, units: request.i9100Units },
+        { name: "ورق الطباعة", boxes: request.rollPaperBoxes, units: request.rollPaperUnits },
+        { name: "الملصقات", boxes: request.stickersBoxes, units: request.stickersUnits },
+        { name: "البطاريات", boxes: request.newBatteriesBoxes, units: request.newBatteriesUnits },
+        { name: "موبايلي", boxes: request.mobilySimBoxes, units: request.mobilySimUnits },
+        { name: "STC", boxes: request.stcSimBoxes, units: request.stcSimUnits },
+        { name: "زين", boxes: request.zainSimBoxes, units: request.zainSimUnits },
       ];
 
       fields.forEach(field => {
