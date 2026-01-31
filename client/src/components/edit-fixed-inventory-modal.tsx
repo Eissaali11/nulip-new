@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect, useMemo } from "react";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -11,90 +11,102 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
-import { Save, Box, Smartphone, FileText, Sticker, Battery } from "lucide-react";
+import { Save, Loader2 } from "lucide-react";
+import { useActiveItemTypes, getItemTypeVisuals, type InventoryEntry } from "@/hooks/use-item-types";
 
-interface FixedInventory {
-  id?: string;
-  technicianId: string;
-  n950Boxes: number;
-  n950Units: number;
-  i9000sBoxes: number;
-  i9000sUnits: number;
-  i9100Boxes: number;
-  i9100Units: number;
-  rollPaperBoxes: number;
-  rollPaperUnits: number;
-  stickersBoxes: number;
-  stickersUnits: number;
-  newBatteriesBoxes: number;
-  newBatteriesUnits: number;
-  mobilySimBoxes: number;
-  mobilySimUnits: number;
-  stcSimBoxes: number;
-  stcSimUnits: number;
-  zainSimBoxes: number;
-  zainSimUnits: number;
+interface InventoryFormData {
+  [key: string]: { boxes: number; units: number };
 }
+
+const legacyFieldMapping: Record<string, { boxes: string; units: string }> = {
+  n950: { boxes: "n950Boxes", units: "n950Units" },
+  i9000s: { boxes: "i9000sBoxes", units: "i9000sUnits" },
+  i9100: { boxes: "i9100Boxes", units: "i9100Units" },
+  rollPaper: { boxes: "rollPaperBoxes", units: "rollPaperUnits" },
+  stickers: { boxes: "stickersBoxes", units: "stickersUnits" },
+  newBatteries: { boxes: "newBatteriesBoxes", units: "newBatteriesUnits" },
+  mobilySim: { boxes: "mobilySimBoxes", units: "mobilySimUnits" },
+  stcSim: { boxes: "stcSimBoxes", units: "stcSimUnits" },
+  zainSim: { boxes: "zainSimBoxes", units: "zainSimUnits" },
+  lebaraSim: { boxes: "lebaraBoxes", units: "lebaraUnits" },
+};
 
 interface EditFixedInventoryModalProps {
   open: boolean;
   onClose: () => void;
-  inventory?: FixedInventory;
+  inventory?: any;
+  inventoryEntries?: InventoryEntry[];
 }
 
 export function EditFixedInventoryModal({
   open,
   onClose,
   inventory,
+  inventoryEntries = [],
 }: EditFixedInventoryModalProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { data: itemTypes, isLoading: itemTypesLoading } = useActiveItemTypes();
+  const [formData, setFormData] = useState<InventoryFormData>({});
 
-  const [formData, setFormData] = useState<FixedInventory>({
-    technicianId: user?.id || '',
-    n950Boxes: 0,
-    n950Units: 0,
-    i9000sBoxes: 0,
-    i9000sUnits: 0,
-    i9100Boxes: 0,
-    i9100Units: 0,
-    rollPaperBoxes: 0,
-    rollPaperUnits: 0,
-    stickersBoxes: 0,
-    stickersUnits: 0,
-    newBatteriesBoxes: 0,
-    newBatteriesUnits: 0,
-    mobilySimBoxes: 0,
-    mobilySimUnits: 0,
-    stcSimBoxes: 0,
-    stcSimUnits: 0,
-    zainSimBoxes: 0,
-    zainSimUnits: 0,
-  });
+  const entryMap = useMemo(() => {
+    return new Map(inventoryEntries.map((e) => [e.itemTypeId, e]));
+  }, [inventoryEntries]);
 
   useEffect(() => {
-    if (inventory) {
-      setFormData(inventory);
+    if (itemTypes && open) {
+      const initial: InventoryFormData = {};
+      itemTypes.forEach((itemType) => {
+        const entry = entryMap.get(itemType.id);
+        let boxes = entry?.boxes || 0;
+        let units = entry?.units || 0;
+
+        if (!entry && inventory) {
+          const legacy = legacyFieldMapping[itemType.id];
+          if (legacy) {
+            boxes = inventory[legacy.boxes] || 0;
+            units = inventory[legacy.units] || 0;
+          }
+        }
+
+        initial[itemType.id] = { boxes, units };
+      });
+      setFormData(initial);
     }
-  }, [inventory]);
+  }, [itemTypes, inventory, entryMap, open]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest(
-        "PUT",
-        `/api/technician-fixed-inventory/${user?.id}`,
-        formData
+      const promises = Object.entries(formData).map(([itemTypeId, values]) =>
+        apiRequest("POST", `/api/technicians/${user?.id}/fixed-inventory-entries`, {
+          itemTypeId,
+          boxes: values.boxes,
+          units: values.units,
+        })
       );
+      await Promise.all(promises);
+
+      const legacyData: any = { technicianId: user?.id };
+      Object.entries(formData).forEach(([itemTypeId, values]) => {
+        const legacy = legacyFieldMapping[itemTypeId];
+        if (legacy) {
+          legacyData[legacy.boxes] = values.boxes;
+          legacyData[legacy.units] = values.units;
+        }
+      });
+      await apiRequest("PUT", `/api/technician-fixed-inventory/${user?.id}`, legacyData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/technician-fixed-inventory/${user?.id}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/technicians", user?.id, "fixed-inventory-entries"] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/fixed-inventory-dashboard'] });
       toast({
-        title: "✓ تم الحفظ بنجاح",
+        title: "تم الحفظ بنجاح",
         description: "تم حفظ المخزون الثابت",
       });
       onClose();
@@ -102,16 +114,19 @@ export function EditFixedInventoryModal({
     onError: () => {
       toast({
         variant: "destructive",
-        title: "✗ فشل الحفظ",
+        title: "فشل الحفظ",
         description: "حدث خطأ أثناء حفظ البيانات",
       });
     },
   });
 
-  const handleUpdate = (field: keyof FixedInventory, value: number) => {
-    setFormData(prev => ({
+  const handleValueChange = (itemTypeId: string, field: 'boxes' | 'units', value: number) => {
+    setFormData((prev) => ({
       ...prev,
-      [field]: Math.max(0, value),
+      [itemTypeId]: {
+        ...prev[itemTypeId],
+        [field]: Math.max(0, value),
+      },
     }));
   };
 
@@ -119,165 +134,87 @@ export function EditFixedInventoryModal({
     saveMutation.mutate();
   };
 
-  const items = [
-    {
-      name: 'أجهزة N950',
-      icon: Box,
-      boxesField: 'n950Boxes' as keyof FixedInventory,
-      unitsField: 'n950Units' as keyof FixedInventory,
-      gradient: 'from-blue-500 to-cyan-500',
-    },
-    {
-      name: 'أجهزة I9000s',
-      icon: Box,
-      boxesField: 'i9000sBoxes' as keyof FixedInventory,
-      unitsField: 'i9000sUnits' as keyof FixedInventory,
-      gradient: 'from-purple-500 to-pink-500',
-    },
-    {
-      name: 'أجهزة I9100',
-      icon: Box,
-      boxesField: 'i9100Boxes' as keyof FixedInventory,
-      unitsField: 'i9100Units' as keyof FixedInventory,
-      gradient: 'from-indigo-500 to-blue-500',
-    },
-    {
-      name: 'أوراق رول',
-      icon: FileText,
-      boxesField: 'rollPaperBoxes' as keyof FixedInventory,
-      unitsField: 'rollPaperUnits' as keyof FixedInventory,
-      gradient: 'from-amber-500 to-orange-500',
-    },
-    {
-      name: 'ملصقات مدى',
-      icon: Sticker,
-      boxesField: 'stickersBoxes' as keyof FixedInventory,
-      unitsField: 'stickersUnits' as keyof FixedInventory,
-      gradient: 'from-rose-500 to-red-500',
-    },
-    {
-      name: 'بطاريات جديدة',
-      icon: Battery,
-      boxesField: 'newBatteriesBoxes' as keyof FixedInventory,
-      unitsField: 'newBatteriesUnits' as keyof FixedInventory,
-      gradient: 'from-emerald-500 to-teal-500',
-    },
-    {
-      name: 'شرائح موبايلي',
-      icon: Smartphone,
-      boxesField: 'mobilySimBoxes' as keyof FixedInventory,
-      unitsField: 'mobilySimUnits' as keyof FixedInventory,
-      gradient: 'from-green-500 to-lime-500',
-    },
-    {
-      name: 'شرائح STC',
-      icon: Smartphone,
-      boxesField: 'stcSimBoxes' as keyof FixedInventory,
-      unitsField: 'stcSimUnits' as keyof FixedInventory,
-      gradient: 'from-teal-500 to-cyan-500',
-    },
-    {
-      name: 'شرائح زين',
-      icon: Smartphone,
-      boxesField: 'zainSimBoxes' as keyof FixedInventory,
-      unitsField: 'zainSimUnits' as keyof FixedInventory,
-      gradient: 'from-violet-500 to-purple-500',
-    },
-  ];
+  const visibleItems = useMemo(() => {
+    if (!itemTypes) return [];
+    const categoryCounters: Record<string, number> = {};
+    return itemTypes
+      .filter((t) => t.isActive && t.isVisible)
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((itemType) => {
+        const categoryIndex = categoryCounters[itemType.category] || 0;
+        categoryCounters[itemType.category] = categoryIndex + 1;
+        const visuals = getItemTypeVisuals(itemType, categoryIndex);
+        return { ...itemType, ...visuals };
+      });
+  }, [itemTypes]);
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950" dir="rtl">
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-3 text-2xl font-bold">
-            <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl">
-              <Save className="h-6 w-6 text-white" />
-            </div>
-            {inventory ? 'تعديل المخزون الثابت' : 'إضافة مخزون ثابت'}
-          </DialogTitle>
-          <DialogDescription className="text-base">
-            أدخل الكميات المتوفرة في المخزون الثابت
+          <DialogTitle>تعديل المخزون الثابت</DialogTitle>
+          <DialogDescription>
+            قم بتعديل كميات المخزون الثابت الخاص بك
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 py-4">
-          {items.map((item) => {
-            const Icon = item.icon;
-            const boxes = formData[item.boxesField] as number;
-            const units = formData[item.unitsField] as number;
-            const total = boxes + units;
+        {itemTypesLoading ? (
+          <div className="flex items-center justify-center py-10">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <>
+            <ScrollArea className="h-[400px] pr-4">
+              <div className="space-y-4">
+                {visibleItems.map((item) => {
+                  const Icon = item.icon;
+                  const values = formData[item.id] || { boxes: 0, units: 0 };
 
-            return (
-              <div 
-                key={item.name}
-                className="space-y-3 p-4 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:shadow-lg transition-all duration-300"
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <div className={`p-2 bg-gradient-to-r ${item.gradient} rounded-lg`}>
-                    <Icon className="h-5 w-5 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-base">{item.name}</h4>
-                    <p className={`text-2xl font-bold bg-gradient-to-r ${item.gradient} bg-clip-text text-transparent`}>
-                      {total.toLocaleString('ar-SA')}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor={`${item.name}-boxes`} className="text-sm font-medium">
-                    كراتين
-                  </Label>
-                  <Input
-                    id={`${item.name}-boxes`}
-                    type="number"
-                    value={boxes}
-                    onChange={(e) => handleUpdate(item.boxesField, parseInt(e.target.value) || 0)}
-                    min="0"
-                    className="h-11 text-lg font-semibold border-2 focus:ring-2"
-                    data-testid={`input-${item.name.toLowerCase().replace(/\s+/g, '-')}-boxes`}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor={`${item.name}-units`} className="text-sm font-medium">
-                    وحدات
-                  </Label>
-                  <Input
-                    id={`${item.name}-units`}
-                    type="number"
-                    value={units}
-                    onChange={(e) => handleUpdate(item.unitsField, parseInt(e.target.value) || 0)}
-                    min="0"
-                    className="h-11 text-lg font-semibold border-2 focus:ring-2"
-                    data-testid={`input-${item.name.toLowerCase().replace(/\s+/g, '-')}-units`}
-                  />
-                </div>
+                  return (
+                    <div key={item.id} className="p-4 rounded-lg bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className={`p-2 rounded-lg bg-gradient-to-r ${item.gradient} text-white`}>
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <h4 className="font-semibold">{item.nameAr}</h4>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>الكراتين</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            value={values.boxes}
+                            onChange={(e) => handleValueChange(item.id, 'boxes', parseInt(e.target.value) || 0)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>الوحدات</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            value={values.units}
+                            onChange={(e) => handleValueChange(item.id, 'units', parseInt(e.target.value) || 0)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
-        </div>
+            </ScrollArea>
 
-        <DialogFooter className="flex-col sm:flex-row gap-2 pt-4 border-t" dir="rtl">
-          <Button
-            variant="outline"
-            onClick={onClose}
-            disabled={saveMutation.isPending}
-            className="flex-1 sm:flex-initial h-11"
-            data-testid="button-cancel"
-          >
-            إلغاء
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={saveMutation.isPending}
-            className="flex-1 sm:flex-initial bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white h-11 font-semibold"
-            data-testid="button-save"
-          >
-            <Save className="w-4 h-4 ml-2" />
-            {saveMutation.isPending ? "جاري الحفظ..." : "حفظ المخزون"}
-          </Button>
-        </DialogFooter>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={onClose}>
+                إلغاء
+              </Button>
+              <Button onClick={handleSubmit} disabled={saveMutation.isPending}>
+                <Save className="h-4 w-4 ml-2" />
+                {saveMutation.isPending ? "جاري الحفظ..." : "حفظ التغييرات"}
+              </Button>
+            </DialogFooter>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );

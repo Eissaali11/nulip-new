@@ -2,7 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TruckIcon, MinusCircle, ArrowRight, ArrowLeftRight, FileDown, Home, Package, RefreshCw, Bell } from "lucide-react";
 import { useAuth } from "@/lib/auth";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { UpdateMovingInventoryModal } from "@/components/update-moving-inventory-modal";
 import { TransferToMovingModal } from "@/components/transfer-to-moving-modal";
 import { useLocation } from "wouter";
@@ -20,6 +20,8 @@ import { motion } from "framer-motion";
 import { Navbar } from "@/components/dashboard/Navbar";
 import { GridBackground } from "@/components/dashboard/GridBackground";
 import dashboardBg from "@assets/image_1762515061799.png";
+import { useActiveItemTypes, buildInventoryDisplayItems } from "@/hooks/use-item-types";
+import type { TechnicianMovingInventoryEntry } from "@shared/schema";
 
 interface MovingInventory {
   id: string;
@@ -115,6 +117,45 @@ export default function MyMovingInventory() {
     select: (data) => data.filter(t => t.status === 'pending' && t.technicianId === user?.id),
   });
 
+  const { data: itemTypes } = useActiveItemTypes();
+
+  const { data: dynamicMovingEntries } = useQuery<TechnicianMovingInventoryEntry[]>({
+    queryKey: [`/api/technicians/${user?.id}/moving-inventory-entries`],
+    enabled: !!user?.id,
+  });
+
+  const displayItems = useMemo(() => {
+    if (!itemTypes || itemTypes.length === 0) return [];
+    const entries = (dynamicMovingEntries || []).map(e => ({
+      itemTypeId: e.itemTypeId,
+      boxes: e.boxes,
+      units: e.units
+    }));
+    const legacyInventory = inventory ? {
+      n950Boxes: inventory.n950Boxes || 0,
+      n950Units: inventory.n950Units || 0,
+      i9000sBoxes: inventory.i9000sBoxes || 0,
+      i9000sUnits: inventory.i9000sUnits || 0,
+      i9100Boxes: inventory.i9100Boxes || 0,
+      i9100Units: inventory.i9100Units || 0,
+      rollPaperBoxes: inventory.rollPaperBoxes || 0,
+      rollPaperUnits: inventory.rollPaperUnits || 0,
+      stickersBoxes: inventory.stickersBoxes || 0,
+      stickersUnits: inventory.stickersUnits || 0,
+      newBatteriesBoxes: inventory.newBatteriesBoxes || 0,
+      newBatteriesUnits: inventory.newBatteriesUnits || 0,
+      mobilySimBoxes: inventory.mobilySimBoxes || 0,
+      mobilySimUnits: inventory.mobilySimUnits || 0,
+      stcSimBoxes: inventory.stcSimBoxes || 0,
+      stcSimUnits: inventory.stcSimUnits || 0,
+      zainSimBoxes: inventory.zainSimBoxes || 0,
+      zainSimUnits: inventory.zainSimUnits || 0,
+      lebaraBoxes: inventory.lebaraBoxes || 0,
+      lebaraUnits: inventory.lebaraUnits || 0,
+    } : undefined;
+    return buildInventoryDisplayItems(itemTypes, entries, legacyInventory);
+  }, [itemTypes, inventory, dynamicMovingEntries]);
+
   const acceptMutation = useMutation({
     mutationFn: async (transferId: string) => {
       return apiRequest("POST", `/api/warehouse-transfers/${transferId}/accept`);
@@ -179,19 +220,7 @@ export default function MyMovingInventory() {
   };
 
   const getTotalItems = () => {
-    if (!inventory) return 0;
-    return (
-      (inventory.n950Boxes || 0) + (inventory.n950Units || 0) +
-      (inventory.i9000sBoxes || 0) + (inventory.i9000sUnits || 0) +
-      (inventory.i9100Boxes || 0) + (inventory.i9100Units || 0) +
-      (inventory.rollPaperBoxes || 0) + (inventory.rollPaperUnits || 0) +
-      (inventory.stickersBoxes || 0) + (inventory.stickersUnits || 0) +
-      (inventory.newBatteriesBoxes || 0) + (inventory.newBatteriesUnits || 0) +
-      (inventory.mobilySimBoxes || 0) + (inventory.mobilySimUnits || 0) +
-      (inventory.stcSimBoxes || 0) + (inventory.stcSimUnits || 0) +
-      (inventory.zainSimBoxes || 0) + (inventory.zainSimUnits || 0) +
-      (inventory.lebaraBoxes || 0) + (inventory.lebaraUnits || 0)
-    );
+    return displayItems.reduce((sum, item) => sum + item.boxes + item.units, 0);
   };
 
   const exportToExcel = async () => {
@@ -362,98 +391,34 @@ export default function MyMovingInventory() {
     );
   }
 
-  const inventoryItems = [
-    { 
-      category: "أجهزة N950",
-      icon: "📱",
-      color: "from-blue-500 to-blue-600",
+  const categoryColorMap: Record<string, string> = {
+    devices: "from-blue-500 to-blue-600",
+    papers: "from-amber-500 to-amber-600",
+    accessories: "from-green-500 to-green-600",
+    sim: "from-teal-500 to-teal-600",
+  };
+
+  const categoryIconMap: Record<string, string> = {
+    devices: "📱",
+    papers: "📜",
+    accessories: "🔋",
+    sim: "📱",
+  };
+
+  const inventoryItems = displayItems.map((item, index) => {
+    const colors = ["from-blue-500 to-blue-600", "from-purple-500 to-purple-600", "from-indigo-500 to-indigo-600", 
+                    "from-amber-500 to-amber-600", "from-pink-500 to-pink-600", "from-green-500 to-green-600",
+                    "from-teal-500 to-teal-600", "from-cyan-500 to-cyan-600", "from-violet-500 to-violet-600"];
+    return {
+      category: item.nameAr,
+      icon: categoryIconMap[item.category] || "📦",
+      color: categoryColorMap[item.category] || colors[index % colors.length],
       items: [
-        { label: "كرتون", value: inventory.n950Boxes || 0 },
-        { label: "وحدات", value: inventory.n950Units || 0 }
+        { label: "كرتون", value: item.boxes },
+        { label: "وحدات", value: item.units }
       ]
-    },
-    { 
-      category: "أجهزة I9000s",
-      icon: "📲",
-      color: "from-purple-500 to-purple-600",
-      items: [
-        { label: "كرتون", value: inventory.i9000sBoxes || 0 },
-        { label: "وحدات", value: inventory.i9000sUnits || 0 }
-      ]
-    },
-    { 
-      category: "أجهزة I9100",
-      icon: "💳",
-      color: "from-indigo-500 to-indigo-600",
-      items: [
-        { label: "كرتون", value: inventory.i9100Boxes || 0 },
-        { label: "وحدات", value: inventory.i9100Units || 0 }
-      ]
-    },
-    { 
-      category: "أوراق رول",
-      icon: "📜",
-      color: "from-amber-500 to-amber-600",
-      items: [
-        { label: "كرتون", value: inventory.rollPaperBoxes || 0 },
-        { label: "وحدات", value: inventory.rollPaperUnits || 0 }
-      ]
-    },
-    { 
-      category: "ملصقات مدى",
-      icon: "🏷️",
-      color: "from-pink-500 to-pink-600",
-      items: [
-        { label: "كرتون", value: inventory.stickersBoxes || 0 },
-        { label: "وحدات", value: inventory.stickersUnits || 0 }
-      ]
-    },
-    { 
-      category: "بطاريات جديدة",
-      icon: "🔋",
-      color: "from-green-500 to-green-600",
-      items: [
-        { label: "كرتون", value: inventory.newBatteriesBoxes || 0 },
-        { label: "وحدات", value: inventory.newBatteriesUnits || 0 }
-      ]
-    },
-    { 
-      category: "شرائح موبايلي",
-      icon: "📱",
-      color: "from-teal-500 to-teal-600",
-      items: [
-        { label: "كرتون", value: inventory.mobilySimBoxes || 0 },
-        { label: "وحدات", value: inventory.mobilySimUnits || 0 }
-      ]
-    },
-    { 
-      category: "شرائح STC",
-      icon: "📱",
-      color: "from-cyan-500 to-cyan-600",
-      items: [
-        { label: "كرتون", value: inventory.stcSimBoxes || 0 },
-        { label: "وحدات", value: inventory.stcSimUnits || 0 }
-      ]
-    },
-    { 
-      category: "شرائح زين",
-      icon: "📱",
-      color: "from-violet-500 to-violet-600",
-      items: [
-        { label: "كرتون", value: inventory.zainSimBoxes || 0 },
-        { label: "وحدات", value: inventory.zainSimUnits || 0 }
-      ]
-    },
-    { 
-      category: "شرائح ليبارا",
-      icon: "📱",
-      color: "from-pink-500 to-pink-600",
-      items: [
-        { label: "كرتون", value: inventory.lebaraBoxes || 0 },
-        { label: "وحدات", value: inventory.lebaraUnits || 0 }
-      ]
-    },
-  ];
+    };
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden" dir="rtl">

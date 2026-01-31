@@ -5,7 +5,7 @@ import { Package, Edit, Trash2, Plus, FileDown, Box, Smartphone, FileText, Stick
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { TransferToMovingModal } from "@/components/transfer-to-moving-modal";
 import { EditFixedInventoryModal } from "@/components/edit-fixed-inventory-modal";
 import { useLocation } from "wouter";
@@ -17,6 +17,7 @@ import neoleapLogo from "@assets/image_1762442479737.png";
 import madaDevice from "@assets/image_1762442486277.png";
 import { StatsKpiCard } from "@/components/dashboard/stats-kpi-card";
 import { StockCompositionPie } from "@/components/dashboard/stock-composition-pie";
+import { useActiveItemTypes, buildInventoryDisplayItems, type InventoryEntry } from "@/hooks/use-item-types";
 
 interface FixedInventory {
   id?: string;
@@ -54,6 +55,13 @@ export default function MyFixedInventory() {
 
   const { data: existingInventory, isLoading } = useQuery<FixedInventory>({
     queryKey: [`/api/technician-fixed-inventory/${user?.id}`],
+    enabled: !!user?.id,
+  });
+
+  const { data: itemTypesData } = useActiveItemTypes();
+
+  const { data: inventoryEntriesData } = useQuery<InventoryEntry[]>({
+    queryKey: ["/api/technicians", user?.id, "fixed-inventory-entries"],
     enabled: !!user?.id,
   });
 
@@ -183,108 +191,20 @@ export default function MyFixedInventory() {
     });
   };
 
-  const itemsConfig = [
-    {
-      name: 'أجهزة N950',
-      icon: Box,
-      boxes: existingInventory?.n950Boxes || 0,
-      units: existingInventory?.n950Units || 0,
-      gradient: 'from-blue-500 via-blue-600 to-cyan-500',
-      bgGradient: 'from-blue-50/50 via-cyan-50/30 to-blue-50/50',
-      borderColor: 'border-blue-300/50',
-      glowColor: 'shadow-blue-500/20',
-    },
-    {
-      name: 'أجهزة I9000s',
-      icon: Smartphone,
-      boxes: existingInventory?.i9000sBoxes || 0,
-      units: existingInventory?.i9000sUnits || 0,
-      gradient: 'from-purple-500 via-purple-600 to-pink-500',
-      bgGradient: 'from-purple-50/50 via-pink-50/30 to-purple-50/50',
-      borderColor: 'border-purple-300/50',
-      glowColor: 'shadow-purple-500/20',
-    },
-    {
-      name: 'أجهزة I9100',
-      icon: Smartphone,
-      boxes: existingInventory?.i9100Boxes || 0,
-      units: existingInventory?.i9100Units || 0,
-      gradient: 'from-indigo-500 via-indigo-600 to-violet-500',
-      bgGradient: 'from-indigo-50/50 via-violet-50/30 to-indigo-50/50',
-      borderColor: 'border-indigo-300/50',
-      glowColor: 'shadow-indigo-500/20',
-    },
-    {
-      name: 'أوراق رول',
-      icon: FileText,
-      boxes: existingInventory?.rollPaperBoxes || 0,
-      units: existingInventory?.rollPaperUnits || 0,
-      gradient: 'from-amber-500 via-amber-600 to-orange-500',
-      bgGradient: 'from-amber-50/50 via-orange-50/30 to-amber-50/50',
-      borderColor: 'border-amber-300/50',
-      glowColor: 'shadow-amber-500/20',
-    },
-    {
-      name: 'ملصقات مدى',
-      icon: Sticker,
-      boxes: existingInventory?.stickersBoxes || 0,
-      units: existingInventory?.stickersUnits || 0,
-      gradient: 'from-pink-500 via-pink-600 to-rose-500',
-      bgGradient: 'from-pink-50/50 via-rose-50/30 to-pink-50/50',
-      borderColor: 'border-pink-300/50',
-      glowColor: 'shadow-pink-500/20',
-    },
-    {
-      name: 'بطاريات جديدة',
-      icon: Battery,
-      boxes: existingInventory?.newBatteriesBoxes || 0,
-      units: existingInventory?.newBatteriesUnits || 0,
-      gradient: 'from-green-500 via-green-600 to-emerald-500',
-      bgGradient: 'from-green-50/50 via-emerald-50/30 to-green-50/50',
-      borderColor: 'border-green-300/50',
-      glowColor: 'shadow-green-500/20',
-    },
-    {
-      name: 'شرائح موبايلي',
-      icon: Smartphone,
-      boxes: existingInventory?.mobilySimBoxes || 0,
-      units: existingInventory?.mobilySimUnits || 0,
-      gradient: 'from-emerald-500 via-teal-600 to-cyan-500',
-      bgGradient: 'from-emerald-50/50 via-teal-50/30 to-cyan-50/50',
-      borderColor: 'border-emerald-300/50',
-      glowColor: 'shadow-emerald-500/20',
-    },
-    {
-      name: 'شرائح STC',
-      icon: Smartphone,
-      boxes: existingInventory?.stcSimBoxes || 0,
-      units: existingInventory?.stcSimUnits || 0,
-      gradient: 'from-cyan-500 via-sky-600 to-blue-500',
-      bgGradient: 'from-cyan-50/50 via-sky-50/30 to-blue-50/50',
-      borderColor: 'border-cyan-300/50',
-      glowColor: 'shadow-cyan-500/20',
-    },
-    {
-      name: 'شرائح زين',
-      icon: Smartphone,
-      boxes: existingInventory?.zainSimBoxes || 0,
-      units: existingInventory?.zainSimUnits || 0,
-      gradient: 'from-violet-500 via-purple-600 to-fuchsia-500',
-      bgGradient: 'from-violet-50/50 via-purple-50/30 to-fuchsia-50/50',
-      borderColor: 'border-violet-300/50',
-      glowColor: 'shadow-violet-500/20',
-    },
-    {
-      name: 'شرائح ليبارا',
-      icon: Smartphone,
-      boxes: existingInventory?.lebaraBoxes || 0,
-      units: existingInventory?.lebaraUnits || 0,
-      gradient: 'from-pink-500 via-rose-500 to-red-500',
-      bgGradient: 'from-pink-50/50 via-rose-50/30 to-red-50/50',
-      borderColor: 'border-pink-300/50',
-      glowColor: 'shadow-pink-500/20',
-    },
-  ];
+  const itemsConfig = useMemo(() => {
+    if (!itemTypesData) return [];
+    const baseItems = buildInventoryDisplayItems(
+      itemTypesData,
+      inventoryEntriesData || [],
+      existingInventory as any
+    );
+    return baseItems.map((item, index) => ({
+      ...item,
+      bgGradient: `from-${item.color?.slice(1) || 'blue'}-50/50 via-slate-50/30 to-${item.color?.slice(1) || 'blue'}-50/50`,
+      borderColor: `border-slate-300/50`,
+      glowColor: `shadow-slate-500/20`,
+    }));
+  }, [itemTypesData, inventoryEntriesData, existingInventory]);
 
   const grandTotal = itemsConfig.reduce((sum, item) => sum + getTotalForItem(item.boxes, item.units), 0);
 

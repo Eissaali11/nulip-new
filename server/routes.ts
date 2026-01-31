@@ -130,6 +130,10 @@ async function initializeDefaults() {
       console.log("   - Supervisor: supervisor1/super123");
       console.log("   - Technician: tech1/tech123");
     }
+    
+    // Always ensure item types are seeded
+    await storage.seedDefaultItemTypes();
+    console.log("✅ Item types initialized");
   } catch (error) {
     console.error("❌ Error initializing defaults:", error);
   }

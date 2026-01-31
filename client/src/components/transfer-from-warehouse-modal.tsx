@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,7 +35,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { UserSafe } from "@shared/schema";
-import { Box, FileText, Sticker, Battery, Smartphone, Package } from "lucide-react";
+import { useActiveItemTypes, getItemTypeVisuals, type ItemType, type InventoryEntry } from "@/hooks/use-item-types";
+import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   technicianId: z.string().min(1, "يجب اختيار فني"),
@@ -50,33 +51,27 @@ interface ItemTransfer {
   packagingType: "box" | "unit";
 }
 
+const legacyFieldMapping: Record<string, { boxes: string; units: string }> = {
+  n950: { boxes: "n950Boxes", units: "n950Units" },
+  i9000s: { boxes: "i9000sBoxes", units: "i9000sUnits" },
+  i9100: { boxes: "i9100Boxes", units: "i9100Units" },
+  rollPaper: { boxes: "rollPaperBoxes", units: "rollPaperUnits" },
+  stickers: { boxes: "stickersBoxes", units: "stickersUnits" },
+  newBatteries: { boxes: "newBatteriesBoxes", units: "newBatteriesUnits" },
+  mobilySim: { boxes: "mobilySimBoxes", units: "mobilySimUnits" },
+  stcSim: { boxes: "stcSimBoxes", units: "stcSimUnits" },
+  zainSim: { boxes: "zainSimBoxes", units: "zainSimUnits" },
+  lebaraSim: { boxes: "lebaraBoxes", units: "lebaraUnits" },
+  lebara: { boxes: "lebaraBoxes", units: "lebaraUnits" },
+};
+
 interface TransferFromWarehouseModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   warehouseId: string;
   warehouseName: string;
-  currentInventory: {
-    n950Boxes: number;
-    n950Units: number;
-    i9000sBoxes: number;
-    i9000sUnits: number;
-    i9100Boxes: number;
-    i9100Units: number;
-    rollPaperBoxes: number;
-    rollPaperUnits: number;
-    stickersBoxes: number;
-    stickersUnits: number;
-    newBatteriesBoxes: number;
-    newBatteriesUnits: number;
-    mobilySimBoxes: number;
-    mobilySimUnits: number;
-    stcSimBoxes: number;
-    stcSimUnits: number;
-    zainSimBoxes: number;
-    zainSimUnits: number;
-    lebaraBoxes: number;
-    lebaraUnits: number;
-  } | null;
+  currentInventory: any | null;
+  currentEntries?: InventoryEntry[];
 }
 
 export default function TransferFromWarehouseModal({ 
@@ -85,8 +80,10 @@ export default function TransferFromWarehouseModal({
   warehouseId,
   warehouseName,
   currentInventory,
+  currentEntries = [],
 }: TransferFromWarehouseModalProps) {
   const { toast } = useToast();
+  const { data: itemTypes, isLoading: itemTypesLoading } = useActiveItemTypes();
 
   const { data: authData } = useQuery<{ user: UserSafe }>({
     queryKey: ["/api/auth/me"],
@@ -103,18 +100,21 @@ export default function TransferFromWarehouseModal({
     ? users.filter(user => user.role === "technician")
     : users;
 
-  const [itemTransfers, setItemTransfers] = useState<{[key: string]: ItemTransfer}>({
-    n950: { selected: false, quantity: 0, packagingType: "unit" },
-    i9000s: { selected: false, quantity: 0, packagingType: "unit" },
-    i9100: { selected: false, quantity: 0, packagingType: "unit" },
-    rollPaper: { selected: false, quantity: 0, packagingType: "unit" },
-    stickers: { selected: false, quantity: 0, packagingType: "unit" },
-    newBatteries: { selected: false, quantity: 0, packagingType: "unit" },
-    mobilySim: { selected: false, quantity: 0, packagingType: "unit" },
-    stcSim: { selected: false, quantity: 0, packagingType: "unit" },
-    zainSim: { selected: false, quantity: 0, packagingType: "unit" },
-    lebara: { selected: false, quantity: 0, packagingType: "unit" },
-  });
+  const [itemTransfers, setItemTransfers] = useState<{[key: string]: ItemTransfer}>({});
+
+  const entryMap = useMemo(() => {
+    return new Map(currentEntries.map((e) => [e.itemTypeId, e]));
+  }, [currentEntries]);
+
+  useEffect(() => {
+    if (itemTypes && open) {
+      const initial: {[key: string]: ItemTransfer} = {};
+      itemTypes.forEach((itemType) => {
+        initial[itemType.id] = { selected: false, quantity: 0, packagingType: "unit" };
+      });
+      setItemTransfers(initial);
+    }
+  }, [itemTypes, open]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -127,20 +127,25 @@ export default function TransferFromWarehouseModal({
   useEffect(() => {
     if (!open) {
       form.reset();
-      setItemTransfers({
-        n950: { selected: false, quantity: 0, packagingType: "unit" },
-        i9000s: { selected: false, quantity: 0, packagingType: "unit" },
-        i9100: { selected: false, quantity: 0, packagingType: "unit" },
-        rollPaper: { selected: false, quantity: 0, packagingType: "unit" },
-        stickers: { selected: false, quantity: 0, packagingType: "unit" },
-        newBatteries: { selected: false, quantity: 0, packagingType: "unit" },
-        mobilySim: { selected: false, quantity: 0, packagingType: "unit" },
-        stcSim: { selected: false, quantity: 0, packagingType: "unit" },
-        zainSim: { selected: false, quantity: 0, packagingType: "unit" },
-        lebara: { selected: false, quantity: 0, packagingType: "unit" },
-      });
     }
   }, [open, form]);
+
+  const getAvailableStock = (itemTypeId: string, packagingType: "box" | "unit") => {
+    const entry = entryMap.get(itemTypeId);
+    if (entry) {
+      return packagingType === "box" ? entry.boxes : entry.units;
+    }
+
+    if (currentInventory) {
+      const legacy = legacyFieldMapping[itemTypeId];
+      if (legacy) {
+        return packagingType === "box" 
+          ? (currentInventory[legacy.boxes] || 0)
+          : (currentInventory[legacy.units] || 0);
+      }
+    }
+    return 0;
+  };
 
   const transferMutation = useMutation({
     mutationFn: async (data: FormData) => {
@@ -150,7 +155,6 @@ export default function TransferFromWarehouseModal({
         notes: data.notes,
       };
 
-      // Add selected items with their quantities and packaging types
       Object.entries(itemTransfers).forEach(([itemKey, transfer]) => {
         if (transfer.selected && transfer.quantity > 0) {
           transferData[itemKey] = transfer.quantity;
@@ -162,6 +166,7 @@ export default function TransferFromWarehouseModal({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/warehouses", warehouseId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/warehouses", warehouseId, "inventory-entries"] });
       queryClient.invalidateQueries({ queryKey: ["/api/warehouse-inventory", warehouseId] });
       queryClient.invalidateQueries({ queryKey: ["/api/warehouses"] });
       queryClient.invalidateQueries({ queryKey: ["/api/warehouse-transfers"] });
@@ -181,7 +186,6 @@ export default function TransferFromWarehouseModal({
   });
 
   const onSubmit = (data: FormData) => {
-    // Validate that at least one item is selected
     const hasSelectedItems = Object.values(itemTransfers).some(transfer => transfer.selected && transfer.quantity > 0);
     
     if (!hasSelectedItems) {
@@ -193,44 +197,25 @@ export default function TransferFromWarehouseModal({
       return;
     }
 
-    // Validate quantities against available stock
-    if (currentInventory) {
-      const errors: string[] = [];
-      
-      Object.entries(itemTransfers).forEach(([itemKey, transfer]) => {
-        if (transfer.selected) {
-          const boxesKey = `${itemKey}Boxes` as keyof typeof currentInventory;
-          const unitsKey = `${itemKey}Units` as keyof typeof currentInventory;
-          const available = transfer.packagingType === "box" 
-            ? currentInventory[boxesKey] 
-            : currentInventory[unitsKey];
-          
-          if (transfer.quantity > (available || 0)) {
-            const itemNames: {[key: string]: string} = {
-              n950: "أجهزة N950",
-              i9000s: "أجهزة I9000s",
-              i9100: "أجهزة I9100",
-              rollPaper: "ورق الطباعة",
-              stickers: "الملصقات",
-              newBatteries: "البطاريات الجديدة",
-              mobilySim: "شرائح موبايلي",
-              stcSim: "شرائح STC",
-              zainSim: "شرائح زين",
-              lebara: "شرائح ليبارا",
-            };
-            errors.push(`${itemNames[itemKey]}: الكمية المطلوبة (${transfer.quantity}) أكبر من المتاح (${available})`);
-          }
+    const errors: string[] = [];
+    Object.entries(itemTransfers).forEach(([itemKey, transfer]) => {
+      if (transfer.selected) {
+        const available = getAvailableStock(itemKey, transfer.packagingType);
+        if (transfer.quantity > available) {
+          const itemType = itemTypes?.find(t => t.id === itemKey);
+          const itemName = itemType?.nameAr || itemKey;
+          errors.push(`${itemName}: الكمية المطلوبة (${transfer.quantity}) أكبر من المتاح (${available})`);
         }
-      });
-
-      if (errors.length > 0) {
-        toast({
-          title: "خطأ في الكميات",
-          description: errors.join("\n"),
-          variant: "destructive",
-        });
-        return;
       }
+    });
+
+    if (errors.length > 0) {
+      toast({
+        title: "خطأ في الكميات",
+        description: errors.join("\n"),
+        variant: "destructive",
+      });
+      return;
     }
 
     transferMutation.mutate(data);
@@ -246,75 +231,19 @@ export default function TransferFromWarehouseModal({
     }));
   };
 
-  const getAvailableStock = (itemKey: string, packagingType: "box" | "unit") => {
-    if (!currentInventory) return 0;
-    const boxesKey = `${itemKey}Boxes` as keyof typeof currentInventory;
-    const unitsKey = `${itemKey}Units` as keyof typeof currentInventory;
-    return packagingType === "box" ? currentInventory[boxesKey] : currentInventory[unitsKey];
-  };
-
-  const inventoryItems = [
-    { 
-      id: "n950",
-      name: "أجهزة N950", 
-      icon: Box,
-      gradient: "from-blue-500 to-cyan-500"
-    },
-    { 
-      id: "i9000s",
-      name: "أجهزة I9000s", 
-      icon: Box,
-      gradient: "from-purple-500 to-pink-500"
-    },
-    { 
-      id: "i9100",
-      name: "أجهزة I9100", 
-      icon: Box,
-      gradient: "from-indigo-500 to-blue-500"
-    },
-    { 
-      id: "rollPaper",
-      name: "ورق الطباعة", 
-      icon: FileText,
-      gradient: "from-amber-500 to-orange-500"
-    },
-    { 
-      id: "stickers",
-      name: "الملصقات", 
-      icon: Sticker,
-      gradient: "from-pink-500 to-rose-500"
-    },
-    { 
-      id: "newBatteries",
-      name: "البطاريات الجديدة", 
-      icon: Battery,
-      gradient: "from-green-500 to-emerald-500"
-    },
-    { 
-      id: "mobilySim",
-      name: "شرائح موبايلي", 
-      icon: Smartphone,
-      gradient: "from-teal-500 to-cyan-500"
-    },
-    { 
-      id: "stcSim",
-      name: "شرائح STC", 
-      icon: Smartphone,
-      gradient: "from-blue-600 to-indigo-600"
-    },
-    { 
-      id: "zainSim",
-      name: "شرائح زين", 
-      icon: Smartphone,
-      gradient: "from-purple-600 to-violet-600"
-    },
-    { 
-      id: "lebara",
-      name: "شرائح ليبارا", 
-      icon: Smartphone,
-      gradient: "from-pink-600 to-rose-600"
-    },
-  ];
+  const visibleItems = useMemo(() => {
+    if (!itemTypes) return [];
+    const categoryCounters: Record<string, number> = {};
+    return itemTypes
+      .filter((t) => t.isActive && t.isVisible)
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((itemType) => {
+        const categoryIndex = categoryCounters[itemType.category] || 0;
+        categoryCounters[itemType.category] = categoryIndex + 1;
+        const visuals = getItemTypeVisuals(itemType, categoryIndex);
+        return { ...itemType, ...visuals };
+      });
+  }, [itemTypes]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -326,139 +255,140 @@ export default function TransferFromWarehouseModal({
           </DialogDescription>
         </DialogHeader>
         
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="technicianId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>اختر الفني</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger data-testid="select-technician">
-                        <SelectValue placeholder="اختر الفني" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {employees.map((employee) => (
-                        <SelectItem key={employee.id} value={employee.id}>
-                          {employee.fullName} - {employee.city}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        {itemTypesLoading ? (
+          <div className="flex items-center justify-center py-10">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="technicianId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>اختر الفني</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر الفني" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {employees.map((employee) => (
+                          <SelectItem key={employee.id} value={employee.id}>
+                            {employee.fullName} - {employee.city}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <div className="space-y-2">
-              <Label>اختر الأصناف للنقل</Label>
               <ScrollArea className="h-[400px] pr-4">
                 <div className="space-y-4">
-                  {inventoryItems.map((item) => (
-                    <div key={item.id} className="p-4 rounded-lg border bg-card">
-                      <div className="flex items-start gap-3">
-                        <Checkbox
-                          checked={itemTransfers[item.id].selected}
-                          onCheckedChange={(checked) => updateItemTransfer(item.id, "selected", checked)}
-                          data-testid={`checkbox-${item.id}`}
-                        />
-                        <div className="flex-1 space-y-3">
-                          <div className="flex items-center gap-2">
-                            <div className={`p-2 rounded-lg bg-gradient-to-r ${item.gradient} text-white`}>
-                              <item.icon className="h-4 w-4" />
-                            </div>
-                            <span className="font-semibold">{item.name}</span>
+                  {visibleItems.map((item) => {
+                    const Icon = item.icon;
+                    const transfer = itemTransfers[item.id] || { selected: false, quantity: 0, packagingType: "unit" };
+                    const availableBoxes = getAvailableStock(item.id, "box");
+                    const availableUnits = getAvailableStock(item.id, "unit");
+
+                    return (
+                      <div key={item.id} className="p-4 rounded-lg bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border">
+                        <div className="flex items-center gap-3 mb-3">
+                          <Checkbox
+                            checked={transfer.selected}
+                            onCheckedChange={(checked) => updateItemTransfer(item.id, "selected", checked)}
+                          />
+                          <div className={`p-2 rounded-lg bg-gradient-to-r ${item.gradient} text-white`}>
+                            <Icon className="h-5 w-5" />
                           </div>
-                          
-                          {itemTransfers[item.id].selected && (
-                            <div className="space-y-3 pr-6">
-                              <div>
-                                <Label className="text-sm">نوع التغليف</Label>
-                                <RadioGroup
-                                  value={itemTransfers[item.id].packagingType}
-                                  onValueChange={(value) => updateItemTransfer(item.id, "packagingType", value)}
-                                  className="flex gap-4 mt-2"
-                                >
-                                  <div className="flex items-center space-x-2 space-x-reverse">
-                                    <RadioGroupItem value="box" id={`${item.id}-box`} data-testid={`radio-${item.id}-box`} />
-                                    <Label htmlFor={`${item.id}-box`} className="cursor-pointer">
-                                      كرتون (متاح: {getAvailableStock(item.id, "box")})
-                                    </Label>
-                                  </div>
-                                  <div className="flex items-center space-x-2 space-x-reverse">
-                                    <RadioGroupItem value="unit" id={`${item.id}-unit`} data-testid={`radio-${item.id}-unit`} />
-                                    <Label htmlFor={`${item.id}-unit`} className="cursor-pointer">
-                                      وحدة (متاح: {getAvailableStock(item.id, "unit")})
-                                    </Label>
-                                  </div>
-                                </RadioGroup>
-                              </div>
-                              
-                              <div>
-                                <Label className="text-sm">الكمية</Label>
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  max={getAvailableStock(item.id, itemTransfers[item.id].packagingType)}
-                                  value={itemTransfers[item.id].quantity}
-                                  onChange={(e) => updateItemTransfer(item.id, "quantity", parseInt(e.target.value) || 0)}
-                                  className="mt-2"
-                                  data-testid={`input-${item.id}-quantity`}
-                                />
-                              </div>
-                            </div>
-                          )}
+                          <div className="flex-1">
+                            <h4 className="font-semibold">{item.nameAr}</h4>
+                            <p className="text-xs text-muted-foreground">
+                              متاح: {availableBoxes} كرتون، {availableUnits} وحدة
+                            </p>
+                          </div>
                         </div>
+
+                        {transfer.selected && (
+                          <div className="space-y-3 mr-8">
+                            <div className="flex items-center gap-4">
+                              <Label>نوع التغليف:</Label>
+                              <RadioGroup
+                                value={transfer.packagingType}
+                                onValueChange={(value) => updateItemTransfer(item.id, "packagingType", value)}
+                                className="flex gap-4"
+                              >
+                                <div className="flex items-center space-x-2 space-x-reverse">
+                                  <RadioGroupItem value="box" id={`${item.id}-box`} />
+                                  <Label htmlFor={`${item.id}-box`}>كرتون ({availableBoxes})</Label>
+                                </div>
+                                <div className="flex items-center space-x-2 space-x-reverse">
+                                  <RadioGroupItem value="unit" id={`${item.id}-unit`} />
+                                  <Label htmlFor={`${item.id}-unit`}>وحدة ({availableUnits})</Label>
+                                </div>
+                              </RadioGroup>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <Label>الكمية:</Label>
+                              <Input
+                                type="number"
+                                min="0"
+                                max={getAvailableStock(item.id, transfer.packagingType)}
+                                value={transfer.quantity}
+                                onChange={(e) => updateItemTransfer(item.id, "quantity", parseInt(e.target.value) || 0)}
+                                className="w-32"
+                              />
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </ScrollArea>
-            </div>
 
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>ملاحظات (اختياري)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="أدخل أي ملاحظات..."
-                      className="resize-none"
-                      {...field}
-                      data-testid="textarea-transfer-notes"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ملاحظات (اختياري)</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="أضف ملاحظات حول عملية النقل..."
+                        className="resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <div className="flex items-center space-x-3 space-x-reverse pt-4">
-              <Button
-                type="submit"
-                disabled={transferMutation.isPending}
-                className="flex-1"
-                data-testid="button-submit-transfer"
-              >
-                {transferMutation.isPending ? "جاري النقل..." : "تأكيد النقل"}
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => onOpenChange(false)}
-                className="flex-1"
-                data-testid="button-cancel-transfer"
-              >
-                إلغاء
-              </Button>
-            </div>
-          </form>
-        </Form>
+              <div className="flex items-center space-x-3 space-x-reverse pt-4">
+                <Button
+                  type="submit"
+                  disabled={transferMutation.isPending}
+                  className="flex-1"
+                >
+                  {transferMutation.isPending ? "جاري النقل..." : "تأكيد النقل"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => onOpenChange(false)}
+                  className="flex-1"
+                >
+                  إلغاء
+                </Button>
+              </div>
+            </form>
+          </Form>
+        )}
       </DialogContent>
     </Dialog>
   );

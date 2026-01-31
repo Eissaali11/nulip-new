@@ -1,8 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import {
   Dialog,
   DialogContent,
@@ -10,99 +7,103 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Label } from "@/components/ui/label";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Box, FileText, Sticker, Battery, Smartphone } from "lucide-react";
+import { useActiveItemTypes, getItemTypeVisuals, type ItemType, type InventoryEntry } from "@/hooks/use-item-types";
+import { Loader2 } from "lucide-react";
 
-const formSchema = z.object({
-  n950Boxes: z.number().min(0, "الكمية لا يمكن أن تكون سالبة"),
-  n950Units: z.number().min(0, "الكمية لا يمكن أن تكون سالبة"),
-  i9000sBoxes: z.number().min(0, "الكمية لا يمكن أن تكون سالبة"),
-  i9000sUnits: z.number().min(0, "الكمية لا يمكن أن تكون سالبة"),
-  i9100Boxes: z.number().min(0, "الكمية لا يمكن أن تكون سالبة"),
-  i9100Units: z.number().min(0, "الكمية لا يمكن أن تكون سالبة"),
-  rollPaperBoxes: z.number().min(0, "الكمية لا يمكن أن تكون سالبة"),
-  rollPaperUnits: z.number().min(0, "الكمية لا يمكن أن تكون سالبة"),
-  stickersBoxes: z.number().min(0, "الكمية لا يمكن أن تكون سالبة"),
-  stickersUnits: z.number().min(0, "الكمية لا يمكن أن تكون سالبة"),
-  newBatteriesBoxes: z.number().min(0, "الكمية لا يمكن أن تكون سالبة"),
-  newBatteriesUnits: z.number().min(0, "الكمية لا يمكن أن تكون سالبة"),
-  mobilySimBoxes: z.number().min(0, "الكمية لا يمكن أن تكون سالبة"),
-  mobilySimUnits: z.number().min(0, "الكمية لا يمكن أن تكون سالبة"),
-  stcSimBoxes: z.number().min(0, "الكمية لا يمكن أن تكون سالبة"),
-  stcSimUnits: z.number().min(0, "الكمية لا يمكن أن تكون سالبة"),
-  zainSimBoxes: z.number().min(0, "الكمية لا يمكن أن تكون سالبة"),
-  zainSimUnits: z.number().min(0, "الكمية لا يمكن أن تكون سالبة"),
-  lebaraBoxes: z.number().min(0, "الكمية لا يمكن أن تكون سالبة"),
-  lebaraUnits: z.number().min(0, "الكمية لا يمكن أن تكون سالبة"),
-});
-
-type FormData = z.infer<typeof formSchema>;
+interface InventoryFormData {
+  [key: string]: { boxes: number; units: number };
+}
 
 interface UpdateWarehouseInventoryModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   warehouseId: string;
-  currentInventory: FormData | null;
+  currentInventory: any | null;
+  currentEntries?: InventoryEntry[];
 }
+
+const legacyFieldMapping: Record<string, { boxes: string; units: string }> = {
+  n950: { boxes: "n950Boxes", units: "n950Units" },
+  i9000s: { boxes: "i9000sBoxes", units: "i9000sUnits" },
+  i9100: { boxes: "i9100Boxes", units: "i9100Units" },
+  rollPaper: { boxes: "rollPaperBoxes", units: "rollPaperUnits" },
+  stickers: { boxes: "stickersBoxes", units: "stickersUnits" },
+  newBatteries: { boxes: "newBatteriesBoxes", units: "newBatteriesUnits" },
+  mobilySim: { boxes: "mobilySimBoxes", units: "mobilySimUnits" },
+  stcSim: { boxes: "stcSimBoxes", units: "stcSimUnits" },
+  zainSim: { boxes: "zainSimBoxes", units: "zainSimUnits" },
+  lebaraSim: { boxes: "lebaraBoxes", units: "lebaraUnits" },
+};
 
 export default function UpdateWarehouseInventoryModal({ 
   open, 
   onOpenChange,
   warehouseId,
   currentInventory,
+  currentEntries = [],
 }: UpdateWarehouseInventoryModalProps) {
   const { toast } = useToast();
+  const { data: itemTypes, isLoading: itemTypesLoading } = useActiveItemTypes();
+  const [formData, setFormData] = useState<InventoryFormData>({});
 
-  const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
-    defaultValues: currentInventory || {
-      n950Boxes: 0,
-      n950Units: 0,
-      i9000sBoxes: 0,
-      i9000sUnits: 0,
-      i9100Boxes: 0,
-      i9100Units: 0,
-      rollPaperBoxes: 0,
-      rollPaperUnits: 0,
-      stickersBoxes: 0,
-      stickersUnits: 0,
-      newBatteriesBoxes: 0,
-      newBatteriesUnits: 0,
-      mobilySimBoxes: 0,
-      mobilySimUnits: 0,
-      stcSimBoxes: 0,
-      stcSimUnits: 0,
-      zainSimBoxes: 0,
-      zainSimUnits: 0,
-      lebaraBoxes: 0,
-      lebaraUnits: 0,
-    },
-  });
+  const entryMap = useMemo(() => {
+    return new Map(currentEntries.map((e) => [e.itemTypeId, e]));
+  }, [currentEntries]);
 
   useEffect(() => {
-    if (currentInventory) {
-      form.reset(currentInventory);
+    if (itemTypes && open) {
+      const initial: InventoryFormData = {};
+      itemTypes.forEach((itemType) => {
+        const entry = entryMap.get(itemType.id);
+        let boxes = entry?.boxes || 0;
+        let units = entry?.units || 0;
+
+        if (!entry && currentInventory) {
+          const legacy = legacyFieldMapping[itemType.id];
+          if (legacy) {
+            boxes = currentInventory[legacy.boxes] || 0;
+            units = currentInventory[legacy.units] || 0;
+          }
+        }
+
+        initial[itemType.id] = { boxes, units };
+      });
+      setFormData(initial);
     }
-  }, [currentInventory, form]);
+  }, [itemTypes, currentInventory, entryMap, open]);
 
   const updateInventoryMutation = useMutation({
-    mutationFn: async (data: FormData) => {
-      return await apiRequest("PUT", `/api/warehouse-inventory/${warehouseId}`, data);
+    mutationFn: async (data: InventoryFormData) => {
+      const promises = Object.entries(data).map(([itemTypeId, values]) => 
+        apiRequest("POST", `/api/warehouses/${warehouseId}/inventory-entries`, {
+          itemTypeId,
+          boxes: values.boxes,
+          units: values.units,
+        })
+      );
+      await Promise.all(promises);
+
+      const legacyData: any = {};
+      Object.entries(data).forEach(([itemTypeId, values]) => {
+        const legacy = legacyFieldMapping[itemTypeId];
+        if (legacy) {
+          legacyData[legacy.boxes] = values.boxes;
+          legacyData[legacy.units] = values.units;
+        }
+      });
+      if (Object.keys(legacyData).length > 0) {
+        await apiRequest("PUT", `/api/warehouse-inventory/${warehouseId}`, legacyData);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/warehouses", warehouseId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/warehouses", warehouseId, "inventory-entries"] });
       queryClient.invalidateQueries({ queryKey: ["/api/warehouse-inventory", warehouseId] });
       queryClient.invalidateQueries({ queryKey: ["/api/warehouses"] });
       toast({
@@ -120,82 +121,34 @@ export default function UpdateWarehouseInventoryModal({
     },
   });
 
-  const onSubmit = (data: FormData) => {
-    updateInventoryMutation.mutate(data);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateInventoryMutation.mutate(formData);
   };
 
-  const inventoryItems = [
-    { 
-      name: "أجهزة N950", 
-      boxesKey: "n950Boxes", 
-      unitsKey: "n950Units",
-      icon: Box,
-      gradient: "from-blue-500 to-cyan-500"
-    },
-    { 
-      name: "أجهزة I9000s", 
-      boxesKey: "i9000sBoxes", 
-      unitsKey: "i9000sUnits",
-      icon: Box,
-      gradient: "from-purple-500 to-pink-500"
-    },
-    { 
-      name: "أجهزة I9100", 
-      boxesKey: "i9100Boxes", 
-      unitsKey: "i9100Units",
-      icon: Box,
-      gradient: "from-indigo-500 to-blue-500"
-    },
-    { 
-      name: "ورق الطباعة", 
-      boxesKey: "rollPaperBoxes", 
-      unitsKey: "rollPaperUnits",
-      icon: FileText,
-      gradient: "from-amber-500 to-orange-500"
-    },
-    { 
-      name: "الملصقات", 
-      boxesKey: "stickersBoxes", 
-      unitsKey: "stickersUnits",
-      icon: Sticker,
-      gradient: "from-pink-500 to-rose-500"
-    },
-    { 
-      name: "البطاريات الجديدة", 
-      boxesKey: "newBatteriesBoxes", 
-      unitsKey: "newBatteriesUnits",
-      icon: Battery,
-      gradient: "from-green-500 to-emerald-500"
-    },
-    { 
-      name: "شرائح موبايلي", 
-      boxesKey: "mobilySimBoxes", 
-      unitsKey: "mobilySimUnits",
-      icon: Smartphone,
-      gradient: "from-teal-500 to-cyan-500"
-    },
-    { 
-      name: "شرائح STC", 
-      boxesKey: "stcSimBoxes", 
-      unitsKey: "stcSimUnits",
-      icon: Smartphone,
-      gradient: "from-blue-600 to-indigo-600"
-    },
-    { 
-      name: "شرائح زين", 
-      boxesKey: "zainSimBoxes", 
-      unitsKey: "zainSimUnits",
-      icon: Smartphone,
-      gradient: "from-purple-600 to-violet-600"
-    },
-    { 
-      name: "شرائح ليبارا", 
-      boxesKey: "lebaraBoxes", 
-      unitsKey: "lebaraUnits",
-      icon: Smartphone,
-      gradient: "from-pink-600 to-rose-600"
-    },
-  ];
+  const handleValueChange = (itemTypeId: string, field: 'boxes' | 'units', value: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      [itemTypeId]: {
+        ...prev[itemTypeId],
+        [field]: Math.max(0, value),
+      },
+    }));
+  };
+
+  const visibleItems = useMemo(() => {
+    if (!itemTypes) return [];
+    const categoryCounters: Record<string, number> = {};
+    return itemTypes
+      .filter((t) => t.isActive && t.isVisible)
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((itemType) => {
+        const categoryIndex = categoryCounters[itemType.category] || 0;
+        categoryCounters[itemType.category] = categoryIndex + 1;
+        const visuals = getItemTypeVisuals(itemType, categoryIndex);
+        return { ...itemType, ...visuals };
+      });
+  }, [itemTypes]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -207,60 +160,48 @@ export default function UpdateWarehouseInventoryModal({
           </DialogDescription>
         </DialogHeader>
         
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {itemTypesLoading ? (
+          <div className="flex items-center justify-center py-10">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
             <ScrollArea className="h-[500px] pr-4">
               <div className="space-y-6">
-                {inventoryItems.map((item, index) => (
-                  <div key={index} className="p-4 rounded-lg bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className={`p-2 rounded-lg bg-gradient-to-r ${item.gradient} text-white`}>
-                        <item.icon className="h-5 w-5" />
+                {visibleItems.map((item) => {
+                  const Icon = item.icon;
+                  const values = formData[item.id] || { boxes: 0, units: 0 };
+                  return (
+                    <div key={item.id} className="p-4 rounded-lg bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className={`p-2 rounded-lg bg-gradient-to-r ${item.gradient} text-white`}>
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <h4 className="font-semibold text-lg">{item.nameAr}</h4>
                       </div>
-                      <h4 className="font-semibold text-lg">{item.name}</h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>الكراتين</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            value={values.boxes}
+                            onChange={(e) => handleValueChange(item.id, 'boxes', parseInt(e.target.value) || 0)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>الوحدات</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            value={values.units}
+                            onChange={(e) => handleValueChange(item.id, 'units', parseInt(e.target.value) || 0)}
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name={item.boxesKey as any}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>الكراتين</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                min="0"
-                                {...field}
-                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                                data-testid={`input-${item.boxesKey}`}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={item.unitsKey as any}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>الوحدات</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                min="0"
-                                {...field}
-                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                                data-testid={`input-${item.unitsKey}`}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </ScrollArea>
 
@@ -269,7 +210,6 @@ export default function UpdateWarehouseInventoryModal({
                 type="submit"
                 disabled={updateInventoryMutation.isPending}
                 className="flex-1"
-                data-testid="button-submit-update-inventory"
               >
                 {updateInventoryMutation.isPending ? "جاري التحديث..." : "تحديث المخزون"}
               </Button>
@@ -278,13 +218,12 @@ export default function UpdateWarehouseInventoryModal({
                 variant="secondary"
                 onClick={() => onOpenChange(false)}
                 className="flex-1"
-                data-testid="button-cancel-update-inventory"
               >
                 إلغاء
               </Button>
             </div>
           </form>
-        </Form>
+        )}
       </DialogContent>
     </Dialog>
   );

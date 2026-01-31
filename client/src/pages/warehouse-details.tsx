@@ -948,7 +948,7 @@ export default function WarehouseDetailsPage() {
                       if (transfer.mobilySim) items.push({name: 'موبايلي', quantity: transfer.mobilySim, type: transfer.mobilySimPackagingType || 'box'});
                       if (transfer.stcSim) items.push({name: 'STC', quantity: transfer.stcSim, type: transfer.stcSimPackagingType || 'box'});
                       if (transfer.zainSim) items.push({name: 'زين', quantity: transfer.zainSim, type: transfer.zainSimPackagingType || 'box'});
-                      if (transfer.lebaraSim || transfer.lebara) items.push({name: 'ليبارا', quantity: transfer.lebaraSim || transfer.lebara, type: transfer.lebaraSimPackagingType || transfer.lebaraPackagingType || 'box'});
+                      if (transfer.lebaraSim || transfer.lebara) items.push({name: 'ليبارا', quantity: transfer.lebaraSim || transfer.lebara || 0, type: transfer.lebaraSimPackagingType || transfer.lebaraPackagingType || 'box'});
 
                       return (
                         <TableRow key={transfer.id} className="border-white/10 hover:bg-white/5 transition-colors">

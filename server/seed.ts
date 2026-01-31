@@ -1,5 +1,6 @@
 import { db } from "./db";
-import { regions, users, inventoryItems } from "@shared/schema";
+import { regions, users, inventoryItems, itemTypes } from "@shared/schema";
+import type { InsertItemType } from "@shared/schema";
 
 async function seedDatabase() {
   try {
@@ -113,6 +114,25 @@ async function seedDatabase() {
       .returning();
 
     console.log(`✅ Created ${createdItems.length} sample inventory items`);
+
+    // Seed default item types
+    const existingItemTypes = await db.select().from(itemTypes);
+    if (existingItemTypes.length === 0) {
+      const defaultItemTypes: InsertItemType[] = [
+        { id: 'n950', nameAr: 'N950', nameEn: 'N950', category: 'devices', unitsPerBox: 10, isActive: true, isVisible: true, sortOrder: 1 },
+        { id: 'i9000s', nameAr: 'I9000S', nameEn: 'I9000S', category: 'devices', unitsPerBox: 10, isActive: true, isVisible: true, sortOrder: 2 },
+        { id: 'i9100', nameAr: 'I9100', nameEn: 'I9100', category: 'devices', unitsPerBox: 10, isActive: true, isVisible: true, sortOrder: 3 },
+        { id: 'rollPaper', nameAr: 'ورق الطباعة', nameEn: 'Roll Paper', category: 'papers', unitsPerBox: 50, isActive: true, isVisible: true, sortOrder: 4 },
+        { id: 'stickers', nameAr: 'الملصقات', nameEn: 'Stickers', category: 'papers', unitsPerBox: 100, isActive: true, isVisible: true, sortOrder: 5 },
+        { id: 'newBatteries', nameAr: 'البطاريات الجديدة', nameEn: 'New Batteries', category: 'accessories', unitsPerBox: 20, isActive: true, isVisible: true, sortOrder: 6 },
+        { id: 'mobilySim', nameAr: 'شريحة موبايلي', nameEn: 'Mobily SIM', category: 'sim', unitsPerBox: 50, isActive: true, isVisible: true, sortOrder: 7 },
+        { id: 'stcSim', nameAr: 'شريحة STC', nameEn: 'STC SIM', category: 'sim', unitsPerBox: 50, isActive: true, isVisible: true, sortOrder: 8 },
+        { id: 'zainSim', nameAr: 'شريحة زين', nameEn: 'Zain SIM', category: 'sim', unitsPerBox: 50, isActive: true, isVisible: true, sortOrder: 9 },
+        { id: 'lebaraSim', nameAr: 'شريحة ليبارا', nameEn: 'Lebara SIM', category: 'sim', unitsPerBox: 50, isActive: true, isVisible: true, sortOrder: 10 }
+      ];
+      await db.insert(itemTypes).values(defaultItemTypes);
+      console.log("✅ Created default item types");
+    }
 
     console.log("🎉 Database seeded successfully!");
   } catch (error) {
