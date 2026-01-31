@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { motion } from "framer-motion";
+import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -37,6 +38,8 @@ import {
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
 import { exportTechnicianToExcel } from "@/lib/exportToExcel";
 import { useToast } from "@/hooks/use-toast";
+import { useActiveItemTypes, getItemTypeVisuals, buildInventoryDisplayItems, type InventoryEntry } from "@/hooks/use-item-types";
+import type { TechnicianFixedInventoryEntry, TechnicianMovingInventoryEntry } from "@shared/schema";
 
 interface TechnicianFixedInventory {
   id: string;
@@ -120,6 +123,18 @@ export default function TechnicianDetailsPage() {
     enabled: !!technicianId,
   });
 
+  const { data: itemTypes } = useActiveItemTypes();
+
+  const { data: fixedEntries } = useQuery<TechnicianFixedInventoryEntry[]>({
+    queryKey: [`/api/technicians/${technicianId}/fixed-inventory-entries`],
+    enabled: !!technicianId,
+  });
+
+  const { data: movingEntries } = useQuery<TechnicianMovingInventoryEntry[]>({
+    queryKey: [`/api/technicians/${technicianId}/moving-inventory-entries`],
+    enabled: !!technicianId,
+  });
+
   const isLoading = isLoadingFixed || isLoadingMoving;
 
   if (isLoading) {
@@ -163,138 +178,82 @@ export default function TechnicianDetailsPage() {
   const technicianName = fixedInventory?.technicianName || movingInventory?.technicianName || "غير معروف";
   const city = fixedInventory?.city || movingInventory?.city || "غير محدد";
 
-  const products: ProductInfo[] = [
-    {
-      nameAr: "N950",
-      nameEn: "N950 Devices",
-      fixedBoxes: fixedInventory?.n950Boxes || 0,
-      fixedUnits: fixedInventory?.n950Units || 0,
-      fixedTotal: (fixedInventory?.n950Boxes || 0) + (fixedInventory?.n950Units || 0),
-      movingBoxes: movingInventory?.n950Boxes || 0,
-      movingUnits: movingInventory?.n950Units || 0,
-      movingTotal: (movingInventory?.n950Boxes || 0) + (movingInventory?.n950Units || 0),
-      grandTotal: (fixedInventory?.n950Boxes || 0) + (fixedInventory?.n950Units || 0) + (movingInventory?.n950Boxes || 0) + (movingInventory?.n950Units || 0),
-      icon: Smartphone,
-      color: "#3b82f6"
-    },
-    {
-      nameAr: "I9000S",
-      nameEn: "I9000S Devices",
-      fixedBoxes: fixedInventory?.i9000sBoxes || 0,
-      fixedUnits: fixedInventory?.i9000sUnits || 0,
-      fixedTotal: (fixedInventory?.i9000sBoxes || 0) + (fixedInventory?.i9000sUnits || 0),
-      movingBoxes: movingInventory?.i9000sBoxes || 0,
-      movingUnits: movingInventory?.i9000sUnits || 0,
-      movingTotal: (movingInventory?.i9000sBoxes || 0) + (movingInventory?.i9000sUnits || 0),
-      grandTotal: (fixedInventory?.i9000sBoxes || 0) + (fixedInventory?.i9000sUnits || 0) + (movingInventory?.i9000sBoxes || 0) + (movingInventory?.i9000sUnits || 0),
-      icon: Smartphone,
-      color: "#8b5cf6"
-    },
-    {
-      nameAr: "I9100",
-      nameEn: "I9100 Devices",
-      fixedBoxes: fixedInventory?.i9100Boxes || 0,
-      fixedUnits: fixedInventory?.i9100Units || 0,
-      fixedTotal: (fixedInventory?.i9100Boxes || 0) + (fixedInventory?.i9100Units || 0),
-      movingBoxes: movingInventory?.i9100Boxes || 0,
-      movingUnits: movingInventory?.i9100Units || 0,
-      movingTotal: (movingInventory?.i9100Boxes || 0) + (movingInventory?.i9100Units || 0),
-      grandTotal: (fixedInventory?.i9100Boxes || 0) + (fixedInventory?.i9100Units || 0) + (movingInventory?.i9100Boxes || 0) + (movingInventory?.i9100Units || 0),
-      icon: Smartphone,
-      color: "#ec4899"
-    },
-    {
-      nameAr: "أوراق رول",
-      nameEn: "Roll Paper",
-      fixedBoxes: fixedInventory?.rollPaperBoxes || 0,
-      fixedUnits: fixedInventory?.rollPaperUnits || 0,
-      fixedTotal: (fixedInventory?.rollPaperBoxes || 0) + (fixedInventory?.rollPaperUnits || 0),
-      movingBoxes: movingInventory?.rollPaperBoxes || 0,
-      movingUnits: movingInventory?.rollPaperUnits || 0,
-      movingTotal: (movingInventory?.rollPaperBoxes || 0) + (movingInventory?.rollPaperUnits || 0),
-      grandTotal: (fixedInventory?.rollPaperBoxes || 0) + (fixedInventory?.rollPaperUnits || 0) + (movingInventory?.rollPaperBoxes || 0) + (movingInventory?.rollPaperUnits || 0),
-      icon: FileText,
-      color: "#f59e0b"
-    },
-    {
-      nameAr: "ملصقات",
-      nameEn: "Stickers",
-      fixedBoxes: fixedInventory?.stickersBoxes || 0,
-      fixedUnits: fixedInventory?.stickersUnits || 0,
-      fixedTotal: (fixedInventory?.stickersBoxes || 0) + (fixedInventory?.stickersUnits || 0),
-      movingBoxes: movingInventory?.stickersBoxes || 0,
-      movingUnits: movingInventory?.stickersUnits || 0,
-      movingTotal: (movingInventory?.stickersBoxes || 0) + (movingInventory?.stickersUnits || 0),
-      grandTotal: (fixedInventory?.stickersBoxes || 0) + (fixedInventory?.stickersUnits || 0) + (movingInventory?.stickersBoxes || 0) + (movingInventory?.stickersUnits || 0),
-      icon: Sticker,
-      color: "#14b8a6"
-    },
-    {
-      nameAr: "بطاريات",
-      nameEn: "New Batteries",
-      fixedBoxes: fixedInventory?.newBatteriesBoxes || 0,
-      fixedUnits: fixedInventory?.newBatteriesUnits || 0,
-      fixedTotal: (fixedInventory?.newBatteriesBoxes || 0) + (fixedInventory?.newBatteriesUnits || 0),
-      movingBoxes: movingInventory?.newBatteriesBoxes || 0,
-      movingUnits: movingInventory?.newBatteriesUnits || 0,
-      movingTotal: (movingInventory?.newBatteriesBoxes || 0) + (movingInventory?.newBatteriesUnits || 0),
-      grandTotal: (fixedInventory?.newBatteriesBoxes || 0) + (fixedInventory?.newBatteriesUnits || 0) + (movingInventory?.newBatteriesBoxes || 0) + (movingInventory?.newBatteriesUnits || 0),
-      icon: Battery,
-      color: "#06b6d4"
-    },
-    {
-      nameAr: "شرائح موبايلي",
-      nameEn: "Mobily SIM",
-      fixedBoxes: fixedInventory?.mobilySimBoxes || 0,
-      fixedUnits: fixedInventory?.mobilySimUnits || 0,
-      fixedTotal: (fixedInventory?.mobilySimBoxes || 0) + (fixedInventory?.mobilySimUnits || 0),
-      movingBoxes: movingInventory?.mobilySimBoxes || 0,
-      movingUnits: movingInventory?.mobilySimUnits || 0,
-      movingTotal: (movingInventory?.mobilySimBoxes || 0) + (movingInventory?.mobilySimUnits || 0),
-      grandTotal: (fixedInventory?.mobilySimBoxes || 0) + (fixedInventory?.mobilySimUnits || 0) + (movingInventory?.mobilySimBoxes || 0) + (movingInventory?.mobilySimUnits || 0),
-      icon: Package,
-      color: "#10b981"
-    },
-    {
-      nameAr: "شرائح STC",
-      nameEn: "STC SIM",
-      fixedBoxes: fixedInventory?.stcSimBoxes || 0,
-      fixedUnits: fixedInventory?.stcSimUnits || 0,
-      fixedTotal: (fixedInventory?.stcSimBoxes || 0) + (fixedInventory?.stcSimUnits || 0),
-      movingBoxes: movingInventory?.stcSimBoxes || 0,
-      movingUnits: movingInventory?.stcSimUnits || 0,
-      movingTotal: (movingInventory?.stcSimBoxes || 0) + (movingInventory?.stcSimUnits || 0),
-      grandTotal: (fixedInventory?.stcSimBoxes || 0) + (fixedInventory?.stcSimUnits || 0) + (movingInventory?.stcSimBoxes || 0) + (movingInventory?.stcSimUnits || 0),
-      icon: Package,
-      color: "#8b5cf6"
-    },
-    {
-      nameAr: "شرائح زين",
-      nameEn: "Zain SIM",
-      fixedBoxes: fixedInventory?.zainSimBoxes || 0,
-      fixedUnits: fixedInventory?.zainSimUnits || 0,
-      fixedTotal: (fixedInventory?.zainSimBoxes || 0) + (fixedInventory?.zainSimUnits || 0),
-      movingBoxes: movingInventory?.zainSimBoxes || 0,
-      movingUnits: movingInventory?.zainSimUnits || 0,
-      movingTotal: (movingInventory?.zainSimBoxes || 0) + (movingInventory?.zainSimUnits || 0),
-      grandTotal: (fixedInventory?.zainSimBoxes || 0) + (fixedInventory?.zainSimUnits || 0) + (movingInventory?.zainSimBoxes || 0) + (movingInventory?.zainSimUnits || 0),
-      icon: Package,
-      color: "#f97316"
-    },
-    {
-      nameAr: "شرائح ليبارا",
-      nameEn: "Lebara SIM",
-      fixedBoxes: fixedInventory?.lebaraBoxes || 0,
-      fixedUnits: fixedInventory?.lebaraUnits || 0,
-      fixedTotal: (fixedInventory?.lebaraBoxes || 0) + (fixedInventory?.lebaraUnits || 0),
-      movingBoxes: movingInventory?.lebaraBoxes || 0,
-      movingUnits: movingInventory?.lebaraUnits || 0,
-      movingTotal: (movingInventory?.lebaraBoxes || 0) + (movingInventory?.lebaraUnits || 0),
-      grandTotal: (fixedInventory?.lebaraBoxes || 0) + (fixedInventory?.lebaraUnits || 0) + (movingInventory?.lebaraBoxes || 0) + (movingInventory?.lebaraUnits || 0),
-      icon: Package,
-      color: "#ec4899"
-    },
-  ];
+  const legacyFieldMapping: Record<string, { boxes: string; units: string }> = {
+    n950: { boxes: "n950Boxes", units: "n950Units" },
+    i9000s: { boxes: "i9000sBoxes", units: "i9000sUnits" },
+    i9100: { boxes: "i9100Boxes", units: "i9100Units" },
+    rollPaper: { boxes: "rollPaperBoxes", units: "rollPaperUnits" },
+    stickers: { boxes: "stickersBoxes", units: "stickersUnits" },
+    newBatteries: { boxes: "newBatteriesBoxes", units: "newBatteriesUnits" },
+    mobilySim: { boxes: "mobilySimBoxes", units: "mobilySimUnits" },
+    stcSim: { boxes: "stcSimBoxes", units: "stcSimUnits" },
+    zainSim: { boxes: "zainSimBoxes", units: "zainSimUnits" },
+    lebaraSim: { boxes: "lebaraBoxes", units: "lebaraUnits" },
+  };
+
+  const categoryIconMap: Record<string, any> = {
+    devices: Smartphone,
+    papers: FileText,
+    accessories: Battery,
+    sim: Package,
+    other: Box,
+  };
+
+  const categoryColorMap: Record<string, string[]> = {
+    devices: ["#3b82f6", "#8b5cf6", "#ec4899", "#6366f1"],
+    papers: ["#f59e0b", "#14b8a6"],
+    accessories: ["#10b981", "#84cc16"],
+    sim: ["#06b6d4", "#6366f1", "#f97316", "#ec4899", "#8b5cf6"],
+    other: ["#6b7280"],
+  };
+
+  const products: ProductInfo[] = useMemo(() => {
+    if (!itemTypes || itemTypes.length === 0) {
+      return [];
+    }
+
+    const fixedEntryMap = new Map((fixedEntries || []).map(e => [e.itemTypeId, e]));
+    const movingEntryMap = new Map((movingEntries || []).map(e => [e.itemTypeId, e]));
+
+    return itemTypes
+      .filter(it => it.isActive && it.isVisible)
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((itemType, index) => {
+        const fixedEntry = fixedEntryMap.get(itemType.id);
+        const movingEntry = movingEntryMap.get(itemType.id);
+        const legacy = legacyFieldMapping[itemType.id];
+        
+        let fixedBoxes = fixedEntry?.boxes || 0;
+        let fixedUnits = fixedEntry?.units || 0;
+        let movingBoxes = movingEntry?.boxes || 0;
+        let movingUnits = movingEntry?.units || 0;
+
+        if (!fixedEntry && legacy && fixedInventory) {
+          fixedBoxes = (fixedInventory as any)[legacy.boxes] || 0;
+          fixedUnits = (fixedInventory as any)[legacy.units] || 0;
+        }
+        if (!movingEntry && legacy && movingInventory) {
+          movingBoxes = (movingInventory as any)[legacy.boxes] || 0;
+          movingUnits = (movingInventory as any)[legacy.units] || 0;
+        }
+
+        const colors = categoryColorMap[itemType.category] || categoryColorMap.other;
+
+        return {
+          nameAr: itemType.nameAr,
+          nameEn: itemType.nameEn,
+          fixedBoxes,
+          fixedUnits,
+          fixedTotal: fixedBoxes + fixedUnits,
+          movingBoxes,
+          movingUnits,
+          movingTotal: movingBoxes + movingUnits,
+          grandTotal: fixedBoxes + fixedUnits + movingBoxes + movingUnits,
+          icon: categoryIconMap[itemType.category] || categoryIconMap.other,
+          color: colors[index % colors.length],
+        };
+      });
+  }, [itemTypes, fixedInventory, movingInventory, fixedEntries, movingEntries]);
 
   const totalFixed = products.reduce((sum, p) => sum + p.fixedTotal, 0);
   const totalMoving = products.reduce((sum, p) => sum + p.movingTotal, 0);
