@@ -84,11 +84,18 @@ export default function ItemTypesManagement() {
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      return await apiRequest('POST', '/api/item-types', {
-        ...data,
+      const payload: Record<string, any> = {
+        nameAr: data.nameAr,
+        nameEn: data.nameEn,
+        category: data.category,
+        unitsPerBox: data.unitsPerBox,
         isActive: true,
         isVisible: true,
-      });
+      };
+      if (data.id && data.id.trim()) {
+        payload.id = data.id.trim();
+      }
+      return await apiRequest('POST', '/api/item-types', payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/item-types'] });
@@ -422,15 +429,15 @@ export default function ItemTypesManagement() {
           <div className="space-y-4 py-4">
             {!editingItem && (
               <div className="space-y-2">
-                <Label className="text-gray-300">المعرف (ID)</Label>
+                <Label className="text-gray-300">المعرف (ID) - اختياري</Label>
                 <Input
                   value={formData.id}
                   onChange={(e) => setFormData({ ...formData, id: e.target.value })}
-                  placeholder="مثال: newDevice"
+                  placeholder="اتركه فارغاً للإنشاء التلقائي"
                   className="bg-white/5 border-white/10 text-white"
                   dir="ltr"
                 />
-                <p className="text-xs text-gray-500">يجب أن يبدأ بحرف ويحتوي على أحرف وأرقام فقط</p>
+                <p className="text-xs text-gray-500">اتركه فارغاً وسيتم إنشاء معرف تلقائي</p>
               </div>
             )}
 

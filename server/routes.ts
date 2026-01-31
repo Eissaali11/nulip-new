@@ -3033,7 +3033,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/item-types", requireAuth, requireAdmin, async (req, res) => {
     try {
       const schema = z.object({
-        id: z.string().min(1).regex(/^[a-zA-Z][a-zA-Z0-9]*$/, "ID must start with letter and contain only letters/numbers"),
+        id: z.string().optional(),
         nameAr: z.string().min(1),
         nameEn: z.string().min(1),
         category: z.enum(['devices', 'papers', 'sim', 'accessories']),
@@ -3047,10 +3047,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const data = schema.parse(req.body);
       
-      // Check if ID already exists
-      const existing = await storage.getItemTypeById(data.id);
-      if (existing) {
-        return res.status(400).json({ message: "Item type ID already exists" });
+      // Check if ID already exists (only if ID was provided)
+      if (data.id) {
+        const existing = await storage.getItemTypeById(data.id);
+        if (existing) {
+          return res.status(400).json({ message: "Item type ID already exists" });
+        }
       }
 
       const type = await storage.createItemType(data);
