@@ -13,6 +13,30 @@ export const regions = pgTable("regions", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Item Types table for managing inventory item categories
+export const itemTypes = pgTable("item_types", {
+  id: varchar("id").primaryKey(),
+  nameAr: text("name_ar").notNull(),
+  nameEn: text("name_en").notNull(),
+  category: text("category").notNull(), // 'devices', 'papers', 'sim', 'accessories'
+  unitsPerBox: integer("units_per_box").notNull().default(10),
+  isActive: boolean("is_active").notNull().default(true),
+  isVisible: boolean("is_visible").notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0),
+  icon: text("icon"),
+  color: text("color"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertItemTypeSchema = createInsertSchema(itemTypes).omit({
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertItemType = z.infer<typeof insertItemTypeSchema>;
+export type ItemType = typeof itemTypes.$inferSelect;
+
 // Users table for all user accounts
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

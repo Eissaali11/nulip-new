@@ -1,4 +1,4 @@
-import { type InventoryItem, type InsertInventoryItem, type Transaction, type InsertTransaction, type InventoryItemWithStatus, type DashboardStats, type Region, type InsertRegion, type User, type InsertUser, type UserSafe, type RegionWithStats, type AdminStats, type TransactionWithDetails, type WithdrawnDevice, type InsertWithdrawnDevice, type ReceivedDevice, type InsertReceivedDevice, type TechnicianFixedInventory, type InsertTechnicianFixedInventory, type StockMovement, type InsertStockMovement, type TechnicianWithFixedInventory, type FixedInventorySummary, type StockMovementWithDetails, type Warehouse, type WarehouseInventory, type WarehouseTransfer, type InsertWarehouse, type InsertWarehouseInventory, type InsertWarehouseTransfer, type WarehouseWithStats, type WarehouseWithInventory, type WarehouseTransferWithDetails, type SupervisorTechnician, type SupervisorWarehouse, type SystemLog, type InsertSystemLog } from "@shared/schema";
+import { type InventoryItem, type InsertInventoryItem, type Transaction, type InsertTransaction, type InventoryItemWithStatus, type DashboardStats, type Region, type InsertRegion, type User, type InsertUser, type UserSafe, type RegionWithStats, type AdminStats, type TransactionWithDetails, type WithdrawnDevice, type InsertWithdrawnDevice, type ReceivedDevice, type InsertReceivedDevice, type TechnicianFixedInventory, type InsertTechnicianFixedInventory, type StockMovement, type InsertStockMovement, type TechnicianWithFixedInventory, type FixedInventorySummary, type StockMovementWithDetails, type Warehouse, type WarehouseInventory, type WarehouseTransfer, type InsertWarehouse, type InsertWarehouseInventory, type InsertWarehouseTransfer, type WarehouseWithStats, type WarehouseWithInventory, type WarehouseTransferWithDetails, type SupervisorTechnician, type SupervisorWarehouse, type SystemLog, type InsertSystemLog, type ItemType, type InsertItemType } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -129,6 +129,17 @@ export interface IStorage {
     severity?: string;
   }): Promise<SystemLog[]>;
   createSystemLog(log: InsertSystemLog): Promise<SystemLog>;
+  
+  // Item Types Management
+  getItemTypes(): Promise<ItemType[]>;
+  getActiveItemTypes(): Promise<ItemType[]>;
+  getItemTypeById(id: string): Promise<ItemType | undefined>;
+  createItemType(data: InsertItemType): Promise<ItemType>;
+  updateItemType(id: string, data: Partial<InsertItemType>): Promise<ItemType | undefined>;
+  deleteItemType(id: string): Promise<boolean>;
+  toggleItemTypeActive(id: string, isActive: boolean): Promise<ItemType | undefined>;
+  toggleItemTypeVisibility(id: string, isVisible: boolean): Promise<ItemType | undefined>;
+  seedDefaultItemTypes(): Promise<void>;
 }
 
 export class MemStorage implements IStorage {

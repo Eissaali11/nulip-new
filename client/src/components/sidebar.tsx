@@ -325,6 +325,17 @@ ${inventory.map(item =>
                   <span>النسخ الاحتياطية</span>
                 </Button>
               </Link>
+              
+              <Link href="/item-types">
+                <Button
+                  variant="outline"
+                  className="w-full flex items-center justify-center space-x-2 space-x-reverse"
+                  data-testid="button-item-types"
+                >
+                  <Package className="h-4 w-4" />
+                  <span>إدارة الأصناف</span>
+                </Button>
+              </Link>
             </>
           )}
         </CardContent>

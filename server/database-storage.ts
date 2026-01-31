@@ -41,6 +41,8 @@ import {
   type InsertSupervisorWarehouse,
   type SystemLog,
   type InsertSystemLog,
+  type ItemType,
+  type InsertItemType,
   regions,
   users,
   inventoryItems,
@@ -56,7 +58,8 @@ import {
   supervisorTechnicians,
   supervisorWarehouses,
   inventoryRequests,
-  systemLogs
+  systemLogs,
+  itemTypes
 } from "@shared/schema";
 import { IStorage } from "./storage";
 import { db } from "./db";
@@ -2432,5 +2435,75 @@ export class DatabaseStorage implements IStorage {
     if (backup.data.systemLogs?.length > 0) {
       await db.insert(systemLogs).values(this.convertDates(backup.data.systemLogs));
     }
+  }
+
+  // Item Types Management
+  async getItemTypes(): Promise<ItemType[]> {
+    return await db.select().from(itemTypes).orderBy(itemTypes.sortOrder);
+  }
+
+  async getActiveItemTypes(): Promise<ItemType[]> {
+    return await db.select().from(itemTypes)
+      .where(and(eq(itemTypes.isActive, true), eq(itemTypes.isVisible, true)))
+      .orderBy(itemTypes.sortOrder);
+  }
+
+  async getItemTypeById(id: string): Promise<ItemType | undefined> {
+    const result = await db.select().from(itemTypes).where(eq(itemTypes.id, id));
+    return result[0];
+  }
+
+  async createItemType(data: InsertItemType): Promise<ItemType> {
+    const result = await db.insert(itemTypes).values(data).returning();
+    return result[0];
+  }
+
+  async updateItemType(id: string, data: Partial<InsertItemType>): Promise<ItemType | undefined> {
+    const result = await db.update(itemTypes)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(itemTypes.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteItemType(id: string): Promise<boolean> {
+    const result = await db.delete(itemTypes).where(eq(itemTypes.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async toggleItemTypeActive(id: string, isActive: boolean): Promise<ItemType | undefined> {
+    const result = await db.update(itemTypes)
+      .set({ isActive, updatedAt: new Date() })
+      .where(eq(itemTypes.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async toggleItemTypeVisibility(id: string, isVisible: boolean): Promise<ItemType | undefined> {
+    const result = await db.update(itemTypes)
+      .set({ isVisible, updatedAt: new Date() })
+      .where(eq(itemTypes.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async seedDefaultItemTypes(): Promise<void> {
+    const existingTypes = await db.select().from(itemTypes);
+    if (existingTypes.length > 0) return;
+
+    const defaultTypes: InsertItemType[] = [
+      { id: 'n950', nameAr: 'N950', nameEn: 'N950', category: 'devices', unitsPerBox: 10, isActive: true, isVisible: true, sortOrder: 1 },
+      { id: 'i9000s', nameAr: 'I9000S', nameEn: 'I9000S', category: 'devices', unitsPerBox: 10, isActive: true, isVisible: true, sortOrder: 2 },
+      { id: 'i9100', nameAr: 'I9100', nameEn: 'I9100', category: 'devices', unitsPerBox: 10, isActive: true, isVisible: true, sortOrder: 3 },
+      { id: 'rollPaper', nameAr: 'ورق الطباعة', nameEn: 'Roll Paper', category: 'papers', unitsPerBox: 50, isActive: true, isVisible: true, sortOrder: 4 },
+      { id: 'stickers', nameAr: 'الملصقات', nameEn: 'Stickers', category: 'papers', unitsPerBox: 100, isActive: true, isVisible: true, sortOrder: 5 },
+      { id: 'newBatteries', nameAr: 'البطاريات الجديدة', nameEn: 'New Batteries', category: 'accessories', unitsPerBox: 20, isActive: true, isVisible: true, sortOrder: 6 },
+      { id: 'mobilySim', nameAr: 'شريحة موبايلي', nameEn: 'Mobily SIM', category: 'sim', unitsPerBox: 50, isActive: true, isVisible: true, sortOrder: 7 },
+      { id: 'stcSim', nameAr: 'شريحة STC', nameEn: 'STC SIM', category: 'sim', unitsPerBox: 50, isActive: true, isVisible: true, sortOrder: 8 },
+      { id: 'zainSim', nameAr: 'شريحة زين', nameEn: 'Zain SIM', category: 'sim', unitsPerBox: 50, isActive: true, isVisible: true, sortOrder: 9 },
+      { id: 'lebaraSim', nameAr: 'شريحة ليبارا', nameEn: 'Lebara SIM', category: 'sim', unitsPerBox: 50, isActive: true, isVisible: true, sortOrder: 10 }
+    ];
+
+    await db.insert(itemTypes).values(defaultTypes);
   }
 }

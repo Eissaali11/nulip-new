@@ -28,6 +28,7 @@ import ProfilePage from "@/pages/profile";
 import TechnicianDetailsPage from "@/pages/technician-details";
 import SystemLogsPage from "@/pages/system-logs";
 import BackupManagementPage from "@/pages/backup-management";
+import ItemTypesManagement from "@/pages/item-types-management";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import { Loader2 } from "lucide-react";
@@ -85,6 +86,7 @@ function AuthenticatedRouter() {
           <Route path="/users" component={UsersPage} />
           <Route path="/fixed-inventory" component={FixedInventoryDashboard} />
           <Route path="/backup" component={BackupManagementPage} />
+          <Route path="/item-types" component={ItemTypesManagement} />
         </>
       )}
       <Route component={NotFound} />

@@ -2991,6 +2991,173 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===================== Item Types Management =====================
+  
+  // Get all item types (admin view - shows all including inactive)
+  app.get("/api/item-types", requireAuth, async (req, res) => {
+    try {
+      const types = await storage.getItemTypes();
+      res.json(types);
+    } catch (error) {
+      console.error("Error fetching item types:", error);
+      res.status(500).json({ message: "Failed to fetch item types" });
+    }
+  });
+
+  // Get active item types only (for forms and displays)
+  app.get("/api/item-types/active", async (req, res) => {
+    try {
+      const types = await storage.getActiveItemTypes();
+      res.json(types);
+    } catch (error) {
+      console.error("Error fetching active item types:", error);
+      res.status(500).json({ message: "Failed to fetch active item types" });
+    }
+  });
+
+  // Get single item type
+  app.get("/api/item-types/:id", requireAuth, async (req, res) => {
+    try {
+      const type = await storage.getItemTypeById(req.params.id);
+      if (!type) {
+        return res.status(404).json({ message: "Item type not found" });
+      }
+      res.json(type);
+    } catch (error) {
+      console.error("Error fetching item type:", error);
+      res.status(500).json({ message: "Failed to fetch item type" });
+    }
+  });
+
+  // Create new item type (admin only)
+  app.post("/api/item-types", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const schema = z.object({
+        id: z.string().min(1).regex(/^[a-zA-Z][a-zA-Z0-9]*$/, "ID must start with letter and contain only letters/numbers"),
+        nameAr: z.string().min(1),
+        nameEn: z.string().min(1),
+        category: z.enum(['devices', 'papers', 'sim', 'accessories']),
+        unitsPerBox: z.number().int().positive(),
+        isActive: z.boolean().optional().default(true),
+        isVisible: z.boolean().optional().default(true),
+        sortOrder: z.number().int().optional().default(0),
+        icon: z.string().optional(),
+        color: z.string().optional()
+      });
+
+      const data = schema.parse(req.body);
+      
+      // Check if ID already exists
+      const existing = await storage.getItemTypeById(data.id);
+      if (existing) {
+        return res.status(400).json({ message: "Item type ID already exists" });
+      }
+
+      const type = await storage.createItemType(data);
+      res.status(201).json(type);
+    } catch (error) {
+      console.error("Error creating item type:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create item type" });
+    }
+  });
+
+  // Update item type (admin only)
+  app.patch("/api/item-types/:id", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const schema = z.object({
+        nameAr: z.string().min(1).optional(),
+        nameEn: z.string().min(1).optional(),
+        category: z.enum(['devices', 'papers', 'sim', 'accessories']).optional(),
+        unitsPerBox: z.number().int().positive().optional(),
+        isActive: z.boolean().optional(),
+        isVisible: z.boolean().optional(),
+        sortOrder: z.number().int().optional(),
+        icon: z.string().optional(),
+        color: z.string().optional()
+      });
+
+      const data = schema.parse(req.body);
+      const type = await storage.updateItemType(req.params.id, data);
+      
+      if (!type) {
+        return res.status(404).json({ message: "Item type not found" });
+      }
+      
+      res.json(type);
+    } catch (error) {
+      console.error("Error updating item type:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update item type" });
+    }
+  });
+
+  // Toggle item type active status (admin only)
+  app.patch("/api/item-types/:id/toggle-active", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const { isActive } = z.object({ isActive: z.boolean() }).parse(req.body);
+      const type = await storage.toggleItemTypeActive(req.params.id, isActive);
+      
+      if (!type) {
+        return res.status(404).json({ message: "Item type not found" });
+      }
+      
+      res.json(type);
+    } catch (error) {
+      console.error("Error toggling item type active:", error);
+      res.status(500).json({ message: "Failed to toggle item type" });
+    }
+  });
+
+  // Toggle item type visibility (admin only)
+  app.patch("/api/item-types/:id/toggle-visibility", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const { isVisible } = z.object({ isVisible: z.boolean() }).parse(req.body);
+      const type = await storage.toggleItemTypeVisibility(req.params.id, isVisible);
+      
+      if (!type) {
+        return res.status(404).json({ message: "Item type not found" });
+      }
+      
+      res.json(type);
+    } catch (error) {
+      console.error("Error toggling item type visibility:", error);
+      res.status(500).json({ message: "Failed to toggle item type visibility" });
+    }
+  });
+
+  // Delete item type (admin only - soft delete by setting isActive to false)
+  app.delete("/api/item-types/:id", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      // Instead of hard delete, we'll soft delete by setting isActive to false
+      const type = await storage.toggleItemTypeActive(req.params.id, false);
+      
+      if (!type) {
+        return res.status(404).json({ message: "Item type not found" });
+      }
+      
+      res.json({ success: true, message: "Item type disabled successfully" });
+    } catch (error) {
+      console.error("Error deleting item type:", error);
+      res.status(500).json({ message: "Failed to delete item type" });
+    }
+  });
+
+  // Seed default item types (admin only)
+  app.post("/api/item-types/seed", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      await storage.seedDefaultItemTypes();
+      res.json({ success: true, message: "Default item types seeded successfully" });
+    } catch (error) {
+      console.error("Error seeding item types:", error);
+      res.status(500).json({ message: "Failed to seed item types" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
