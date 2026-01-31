@@ -3160,6 +3160,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Dynamic Inventory Entries API
+  app.get("/api/warehouses/:warehouseId/inventory-entries", requireAuth, async (req, res) => {
+    try {
+      const entries = await storage.getWarehouseInventoryEntries(req.params.warehouseId);
+      res.json(entries);
+    } catch (error) {
+      console.error("Error fetching warehouse inventory entries:", error);
+      res.status(500).json({ message: "Failed to fetch inventory entries" });
+    }
+  });
+
+  app.post("/api/warehouses/:warehouseId/inventory-entries", requireAuth, async (req, res) => {
+    try {
+      const schema = z.object({
+        itemTypeId: z.string(),
+        boxes: z.number().min(0),
+        units: z.number().min(0)
+      });
+      const data = schema.parse(req.body);
+      const entry = await storage.upsertWarehouseInventoryEntry(
+        req.params.warehouseId,
+        data.itemTypeId,
+        data.boxes,
+        data.units
+      );
+      res.json(entry);
+    } catch (error) {
+      console.error("Error upserting warehouse inventory entry:", error);
+      res.status(500).json({ message: "Failed to update inventory entry" });
+    }
+  });
+
+  app.get("/api/technicians/:technicianId/fixed-inventory-entries", requireAuth, async (req, res) => {
+    try {
+      const entries = await storage.getTechnicianFixedInventoryEntries(req.params.technicianId);
+      res.json(entries);
+    } catch (error) {
+      console.error("Error fetching technician fixed inventory entries:", error);
+      res.status(500).json({ message: "Failed to fetch inventory entries" });
+    }
+  });
+
+  app.post("/api/technicians/:technicianId/fixed-inventory-entries", requireAuth, async (req, res) => {
+    try {
+      const schema = z.object({
+        itemTypeId: z.string(),
+        boxes: z.number().min(0),
+        units: z.number().min(0)
+      });
+      const data = schema.parse(req.body);
+      const entry = await storage.upsertTechnicianFixedInventoryEntry(
+        req.params.technicianId,
+        data.itemTypeId,
+        data.boxes,
+        data.units
+      );
+      res.json(entry);
+    } catch (error) {
+      console.error("Error upserting technician fixed inventory entry:", error);
+      res.status(500).json({ message: "Failed to update inventory entry" });
+    }
+  });
+
+  app.get("/api/technicians/:technicianId/moving-inventory-entries", requireAuth, async (req, res) => {
+    try {
+      const entries = await storage.getTechnicianMovingInventoryEntries(req.params.technicianId);
+      res.json(entries);
+    } catch (error) {
+      console.error("Error fetching technician moving inventory entries:", error);
+      res.status(500).json({ message: "Failed to fetch inventory entries" });
+    }
+  });
+
+  app.post("/api/technicians/:technicianId/moving-inventory-entries", requireAuth, async (req, res) => {
+    try {
+      const schema = z.object({
+        itemTypeId: z.string(),
+        boxes: z.number().min(0),
+        units: z.number().min(0)
+      });
+      const data = schema.parse(req.body);
+      const entry = await storage.upsertTechnicianMovingInventoryEntry(
+        req.params.technicianId,
+        data.itemTypeId,
+        data.boxes,
+        data.units
+      );
+      res.json(entry);
+    } catch (error) {
+      console.error("Error upserting technician moving inventory entry:", error);
+      res.status(500).json({ message: "Failed to update inventory entry" });
+    }
+  });
+
+  app.post("/api/migrate-inventory-entries", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      await storage.migrateToInventoryEntries();
+      res.json({ success: true, message: "Migration completed successfully" });
+    } catch (error) {
+      console.error("Error migrating inventory entries:", error);
+      res.status(500).json({ message: "Migration failed" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
