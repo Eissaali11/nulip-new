@@ -1,90 +1,97 @@
-# 🔧 إصلاح خطأ تسجيل الدخول بعد الرفع
+# 🔧 إصلاح خطأ تسجيل الدخول "Failed to fetch"
 
-## ✅ التغييرات المطبقة:
+## المشكلة
+بعد رفع التطبيق على السيرفر، يظهر خطأ "Failed to fetch" عند محاولة تسجيل الدخول.
 
-### 1. إضافة TRUST_PROXY support
-- تم إضافة `app.set('trust proxy', true)` عندما يكون `TRUST_PROXY=true` في `.env`
-- هذا ضروري عندما يكون التطبيق خلف Nginx reverse proxy
+## الحل
 
-### 2. إضافة CORS headers
-- تم إضافة CORS headers يدوياً لدعم الطلبات من نفس النطاق
-- يدعم `credentials: 'include'` للـ cookies والـ sessions
-
----
-
-## 📋 خطوات التطبيق على السيرفر:
-
-### 1. التأكد من ملف `.env` يحتوي على:
-```bash
-TRUST_PROXY=true
-NODE_ENV=production
-PORT=5000
-```
-
-### 2. رفع التحديثات:
+### الخطوة 1: تحديث الكود من GitHub
 ```bash
 cd /home/stoc/htdocs/stoc.fun
 git pull origin main
-npm ci
-npm run build
-pm2 restart nulip-inventory
 ```
 
-### 3. التحقق من السجلات:
+### الخطوة 2: التحقق من متغيرات البيئة
+```bash
+# فتح ملف .env
+nano .env
+
+# التأكد من وجود هذه المتغيرات:
+TRUST_PROXY=true
+NODE_ENV=production
+HTTPS=true
+PORT=5000
+DATABASE_URL=postgresql://...
+SESSION_SECRET=...
+```
+
+### الخطوة 3: إعادة بناء التطبيق
+```bash
+npm ci
+npm run build
+```
+
+### الخطوة 4: إعادة تشغيل PM2
+```bash
+pm2 restart nulip-inventory
+pm2 save
+```
+
+### الخطوة 5: فحص السجلات
 ```bash
 pm2 logs nulip-inventory --lines 50
 ```
 
-### 4. اختبار تسجيل الدخول:
-- افتح: `https://stoc.fun`
-- جرب تسجيل الدخول
-
----
-
-## 🔍 إذا استمرت المشكلة:
-
-### تحقق من Nginx configuration:
+### الخطوة 6: التحقق من إعدادات Nginx
 ```bash
-# في Cloud Panel → Sites → stoc.fun → Vhost
-# تأكد من وجود:
-location /api {
-    proxy_pass http://127.0.0.1:5000;
+# فتح ملف إعدادات Nginx
+sudo nano /etc/nginx/sites-available/stoc.fun
+
+# التأكد من وجود هذه الإعدادات في location /:
+location / {
+    proxy_pass http://localhost:5000;
     proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection 'upgrade';
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_cache_bypass $http_upgrade;
 }
+
+# إعادة تحميل Nginx
+sudo systemctl reload nginx
 ```
 
-### تحقق من SSL:
+## التحقق من الحل
+
+1. افتح المتصفح: `https://stoc.fun`
+2. جرب تسجيل الدخول
+3. افتح Developer Tools (F12) → Network tab
+4. تحقق من أن الطلبات تذهب إلى `/api/auth/login` بنجاح
+
+## إذا استمرت المشكلة
+
+### فحص الاتصال المحلي
 ```bash
-# في Cloud Panel → Sites → stoc.fun → SSL/TLS
-# تأكد من تفعيل SSL certificate
+curl http://localhost:5000/api/auth/login -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin123"}'
 ```
 
-### تحقق من Session cookie:
-- في `server/config/session.ts`:
-  - `secure: true` في الإنتاج (HTTPS)
-  - `httpOnly: true`
-  - `sameSite: 'lax'` أو `'none'` (إذا كان هناك cross-domain)
+### فحص المنفذ
+```bash
+netstat -tlnp | grep 5000
+```
+
+### إعادة تشغيل كامل
+```bash
+pm2 delete nulip-inventory
+pm2 start ecosystem.config.cjs
+pm2 save
+```
 
 ---
 
-## 🐛 Debug Commands:
-
-```bash
-# اختبار API محلياً
-curl http://localhost:5000/api/auth/me
-
-# اختبار من السيرفر
-curl https://stoc.fun/api/auth/me
-
-# فحص PM2
-pm2 status
-pm2 logs nulip-inventory
-
-# فحص Nginx
-sudo nginx -t
-sudo systemctl status nginx
-```
+*آخر تحديث: 2026-02-03*

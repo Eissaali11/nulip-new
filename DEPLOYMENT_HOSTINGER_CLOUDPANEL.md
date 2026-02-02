@@ -396,6 +396,36 @@ pm2 status
 sudo systemctl restart nginx
 ```
 
+### مشكلة: خطأ "Failed to fetch" عند تسجيل الدخول
+```bash
+# 1. التحقق من متغيرات البيئة
+cd /home/stoc/htdocs/stoc.fun
+cat .env | grep -E "TRUST_PROXY|NODE_ENV|HTTPS"
+
+# يجب أن يحتوي .env على:
+# TRUST_PROXY=true
+# NODE_ENV=production
+# HTTPS=true (إذا كان الموقع على HTTPS)
+
+# 2. إعادة بناء التطبيق بعد التحديثات
+git pull origin main
+npm ci
+npm run build
+
+# 3. إعادة تشغيل PM2
+pm2 restart nulip-inventory
+
+# 4. فحص السجلات
+pm2 logs nulip-inventory --lines 50
+
+# 5. التحقق من إعدادات Nginx
+# يجب أن يكون proxy_pass يشير إلى http://localhost:5000
+# ويجب أن يحتوي على:
+# proxy_set_header X-Real-IP $remote_addr;
+# proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+# proxy_set_header X-Forwarded-Proto $scheme;
+```
+
 ---
 
 ## 📊 المراقبة والصيانة

@@ -24,13 +24,17 @@ declare module "express-session" {
 const PgSession = connectPgSimple(session);
 
 export function setupSession(app: Express): void {
+  const isProduction = process.env.NODE_ENV === "production";
+  const isHttps = process.env.HTTPS === "true" || (isProduction && process.env.TRUST_PROXY === "true");
+  
   const sessionConfig: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "your-secret-key-change-in-production",
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === "production",
+      secure: isHttps, // Only secure on HTTPS
       httpOnly: true,
+      sameSite: isHttps ? "none" : "lax", // Support cross-origin on HTTPS
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days (increased from 24 hours)
     },
     name: "sessionId",
