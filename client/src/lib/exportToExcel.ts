@@ -1,6 +1,7 @@
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { InventoryItemWithStatus } from '@shared/schema';
+import { legacyFieldMapping } from '@/hooks/use-item-types';
 
 interface ExportData {
   inventory: InventoryItemWithStatus[];
@@ -45,6 +46,7 @@ interface WarehouseData {
 
 interface WarehouseExportData {
   warehouses: WarehouseData[];
+  itemTypes?: ItemType[];
   companyName?: string;
   reportTitle?: string;
 }
@@ -877,10 +879,25 @@ export const exportWarehousesToExcel = async ({
   saveAs(blob, fileName);
 };
 
+interface TechnicianInventoryEntry {
+  itemTypeId: string;
+  boxes: number;
+  units: number;
+}
+
+interface ItemTypeInfo {
+  id: string;
+  nameAr: string;
+  nameEn: string;
+}
+
 interface TechnicianInventoryData {
   technicianName: string;
   city: string;
-  fixedInventory: {
+  itemTypes?: ItemTypeInfo[];
+  fixedEntries?: TechnicianInventoryEntry[];
+  movingEntries?: TechnicianInventoryEntry[];
+  fixedInventory?: {
     n950Boxes: number;
     n950Units: number;
     i9000sBoxes: number;
@@ -902,7 +919,7 @@ interface TechnicianInventoryData {
     lebaraBoxes: number;
     lebaraUnits: number;
   };
-  movingInventory: {
+  movingInventory?: {
     n950Boxes: number;
     n950Units: number;
     i9000sBoxes: number;
@@ -939,305 +956,250 @@ export const exportTechnicianToExcel = async (data: TechnicianInventoryData) => 
   });
   const time = currentDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
 
-  const fixedSheet = workbook.addWorksheet('المخزون الثابت - Fixed');
-  fixedSheet.views = [{ rightToLeft: true }];
-
-  fixedSheet.mergeCells('A1:K1');
-  const fixedTitleCell = fixedSheet.getCell('A1');
-  fixedTitleCell.value = companyName;
-  fixedTitleCell.font = { size: 20, bold: true, color: { argb: 'FFFFFFFF' } };
-  fixedTitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-  fixedTitleCell.fill = {
-    type: 'pattern',
-    pattern: 'solid',
-    fgColor: { argb: 'FF18B2B0' }
+  // Helper function to get value from entries or legacy
+  const getInventoryValue = (
+    entries: TechnicianInventoryEntry[] | undefined,
+    legacyInventory: TechnicianInventoryData['fixedInventory'] | undefined,
+    itemTypeId: string,
+    valueType: 'boxes' | 'units',
+    legacyKey?: string
+  ): number => {
+    // First check dynamic entries
+    if (entries && Array.isArray(entries)) {
+      const entry = entries.find(e => e.itemTypeId === itemTypeId);
+      if (entry) {
+        return valueType === 'boxes' ? entry.boxes : entry.units;
+      }
+    }
+    // Fall back to legacy
+    if (legacyInventory && legacyKey) {
+      const key = legacyKey + (valueType === 'boxes' ? 'Boxes' : 'Units');
+      return (legacyInventory as Record<string, number>)[key] || 0;
+    }
+    return 0;
   };
-  fixedSheet.getRow(1).height = 35;
 
-  fixedSheet.mergeCells('A2:K2');
-  const fixedSubtitleCell = fixedSheet.getCell('A2');
-  fixedSubtitleCell.value = `تقرير مخزون الفني: ${data.technicianName}`;
-  fixedSubtitleCell.font = { size: 16, bold: true, color: { argb: 'FF18B2B0' } };
-  fixedSubtitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-  fixedSubtitleCell.fill = {
-    type: 'pattern',
-    pattern: 'solid',
-    fgColor: { argb: 'FFE0F7F6' }
-  };
-  fixedSheet.getRow(2).height = 28;
-
-  fixedSheet.mergeCells('A3:K3');
-  const fixedInfoCell = fixedSheet.getCell('A3');
-  fixedInfoCell.value = `المدينة: ${data.city} | التاريخ: ${arabicDate} - ${time}`;
-  fixedInfoCell.font = { size: 12, bold: true };
-  fixedInfoCell.alignment = { horizontal: 'center', vertical: 'middle' };
-  fixedInfoCell.fill = {
-    type: 'pattern',
-    pattern: 'solid',
-    fgColor: { argb: 'FFF0F9FF' }
-  };
-  fixedSheet.getRow(3).height = 25;
-
-  fixedSheet.addRow([]);
-
-  const fixedHeaderRow = fixedSheet.addRow([
-    'الصنف',
-    'N950',
-    'I9000s',
-    'I9100',
-    'ورق حراري',
-    'ملصقات',
-    'بطاريات',
-    'موبايلي',
-    'STC',
-    'زين',
-    'ليبارا',
-    'الإجمالي'
-  ]);
+  // Determine if using dynamic item types
+  const useDynamicTypes = data.itemTypes && data.itemTypes.length > 0;
   
-  fixedHeaderRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
-  fixedHeaderRow.height = 30;
-  fixedHeaderRow.eachCell((cell) => {
-    cell.fill = {
+  // Legacy mapping for backward compatibility
+  const legacyFieldMap: Record<string, string> = {
+    'n950': 'n950',
+    'i9000s': 'i9000s',
+    'i9100': 'i9100',
+    'rollPaper': 'rollPaper',
+    'stickers': 'stickers',
+    'newBatteries': 'newBatteries',
+    'mobilySim': 'mobilySim',
+    'stcSim': 'stcSim',
+    'zainSim': 'zainSim',
+    'lebara': 'lebara'
+  };
+
+  // Create sheet helper function
+  const createInventorySheet = (
+    sheetName: string,
+    sheetTitle: string,
+    entries: TechnicianInventoryEntry[] | undefined,
+    legacyInventory: TechnicianInventoryData['fixedInventory'] | undefined
+  ) => {
+    const sheet = workbook.addWorksheet(sheetName);
+    sheet.views = [{ rightToLeft: true }];
+
+    // Dynamic column count based on item types
+    const itemTypeCount = useDynamicTypes ? data.itemTypes!.length : 10;
+    const totalColumns = itemTypeCount + 2; // +2 for 'الصنف' and 'الإجمالي'
+    const lastCol = String.fromCharCode(65 + totalColumns - 1); // e.g., 'L' for 12 columns
+
+    // Title row
+    sheet.mergeCells(`A1:${lastCol}1`);
+    const titleCell = sheet.getCell('A1');
+    titleCell.value = companyName;
+    titleCell.font = { size: 20, bold: true, color: { argb: 'FFFFFFFF' } };
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    titleCell.fill = {
       type: 'pattern',
       pattern: 'solid',
-      fgColor: { argb: 'FF4A5568' }
+      fgColor: { argb: 'FF18B2B0' }
     };
-    cell.alignment = { horizontal: 'center', vertical: 'middle' };
-    cell.border = {
-      top: { style: 'thin', color: { argb: 'FF000000' } },
-      left: { style: 'thin', color: { argb: 'FF000000' } },
-      bottom: { style: 'thin', color: { argb: 'FF000000' } },
-      right: { style: 'thin', color: { argb: 'FF000000' } }
-    };
-  });
+    sheet.getRow(1).height = 35;
 
-  const fixed = data.fixedInventory;
-  const boxesTotal = fixed.n950Boxes + fixed.i9000sBoxes + fixed.i9100Boxes + 
-                     fixed.rollPaperBoxes + fixed.stickersBoxes + fixed.newBatteriesBoxes +
-                     fixed.mobilySimBoxes + fixed.stcSimBoxes + fixed.zainSimBoxes + fixed.lebaraBoxes;
-  
-  const unitsTotal = fixed.n950Units + fixed.i9000sUnits + fixed.i9100Units + 
-                     fixed.rollPaperUnits + fixed.stickersUnits + fixed.newBatteriesUnits +
-                     fixed.mobilySimUnits + fixed.stcSimUnits + fixed.zainSimUnits + fixed.lebaraUnits;
-
-  const boxesRow = fixedSheet.addRow([
-    'صناديق',
-    fixed.n950Boxes,
-    fixed.i9000sBoxes,
-    fixed.i9100Boxes,
-    fixed.rollPaperBoxes,
-    fixed.stickersBoxes,
-    fixed.newBatteriesBoxes,
-    fixed.mobilySimBoxes,
-    fixed.stcSimBoxes,
-    fixed.zainSimBoxes,
-    fixed.lebaraBoxes,
-    boxesTotal
-  ]);
-  
-  boxesRow.alignment = { horizontal: 'center', vertical: 'middle' };
-  boxesRow.eachCell((cell) => {
-    cell.border = {
-      top: { style: 'thin', color: { argb: 'FF000000' } },
-      left: { style: 'thin', color: { argb: 'FF000000' } },
-      bottom: { style: 'thin', color: { argb: 'FF000000' } },
-      right: { style: 'thin', color: { argb: 'FF000000' } }
-    };
-  });
-
-  const unitsRow = fixedSheet.addRow([
-    'قطع',
-    fixed.n950Units,
-    fixed.i9000sUnits,
-    fixed.i9100Units,
-    fixed.rollPaperUnits,
-    fixed.stickersUnits,
-    fixed.newBatteriesUnits,
-    fixed.mobilySimUnits,
-    fixed.stcSimUnits,
-    fixed.zainSimUnits,
-    fixed.lebaraUnits,
-    unitsTotal
-  ]);
-  
-  unitsRow.alignment = { horizontal: 'center', vertical: 'middle' };
-  unitsRow.eachCell((cell) => {
-    cell.border = {
-      top: { style: 'thin', color: { argb: 'FF000000' } },
-      left: { style: 'thin', color: { argb: 'FF000000' } },
-      bottom: { style: 'thin', color: { argb: 'FF000000' } },
-      right: { style: 'thin', color: { argb: 'FF000000' } }
-    };
-  });
-
-  fixedSheet.columns = [
-    { width: 15 },
-    { width: 12 },
-    { width: 12 },
-    { width: 12 },
-    { width: 15 },
-    { width: 12 },
-    { width: 12 },
-    { width: 12 },
-    { width: 12 },
-    { width: 12 },
-    { width: 12 },
-    { width: 15 }
-  ];
-
-  const movingSheet = workbook.addWorksheet('المخزون المتحرك - Moving');
-  movingSheet.views = [{ rightToLeft: true }];
-
-  movingSheet.mergeCells('A1:K1');
-  const movingTitleCell = movingSheet.getCell('A1');
-  movingTitleCell.value = companyName;
-  movingTitleCell.font = { size: 20, bold: true, color: { argb: 'FFFFFFFF' } };
-  movingTitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-  movingTitleCell.fill = {
-    type: 'pattern',
-    pattern: 'solid',
-    fgColor: { argb: 'FF18B2B0' }
-  };
-  movingSheet.getRow(1).height = 35;
-
-  movingSheet.mergeCells('A2:K2');
-  const movingSubtitleCell = movingSheet.getCell('A2');
-  movingSubtitleCell.value = `تقرير المخزون المتحرك: ${data.technicianName}`;
-  movingSubtitleCell.font = { size: 16, bold: true, color: { argb: 'FF18B2B0' } };
-  movingSubtitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-  movingSubtitleCell.fill = {
-    type: 'pattern',
-    pattern: 'solid',
-    fgColor: { argb: 'FFE0F7F6' }
-  };
-  movingSheet.getRow(2).height = 28;
-
-  movingSheet.mergeCells('A3:K3');
-  const movingInfoCell = movingSheet.getCell('A3');
-  movingInfoCell.value = `المدينة: ${data.city} | التاريخ: ${arabicDate} - ${time}`;
-  movingInfoCell.font = { size: 12, bold: true };
-  movingInfoCell.alignment = { horizontal: 'center', vertical: 'middle' };
-  movingInfoCell.fill = {
-    type: 'pattern',
-    pattern: 'solid',
-    fgColor: { argb: 'FFF0F9FF' }
-  };
-  movingSheet.getRow(3).height = 25;
-
-  movingSheet.addRow([]);
-
-  const movingHeaderRow = movingSheet.addRow([
-    'الصنف',
-    'N950',
-    'I9000s',
-    'I9100',
-    'ورق حراري',
-    'ملصقات',
-    'بطاريات',
-    'موبايلي',
-    'STC',
-    'زين',
-    'ليبارا',
-    'الإجمالي'
-  ]);
-  
-  movingHeaderRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
-  movingHeaderRow.height = 30;
-  movingHeaderRow.eachCell((cell) => {
-    cell.fill = {
+    // Subtitle row
+    sheet.mergeCells(`A2:${lastCol}2`);
+    const subtitleCell = sheet.getCell('A2');
+    subtitleCell.value = `${sheetTitle}: ${data.technicianName}`;
+    subtitleCell.font = { size: 16, bold: true, color: { argb: 'FF18B2B0' } };
+    subtitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    subtitleCell.fill = {
       type: 'pattern',
       pattern: 'solid',
-      fgColor: { argb: 'FF4A5568' }
+      fgColor: { argb: 'FFE0F7F6' }
     };
-    cell.alignment = { horizontal: 'center', vertical: 'middle' };
-    cell.border = {
-      top: { style: 'thin', color: { argb: 'FF000000' } },
-      left: { style: 'thin', color: { argb: 'FF000000' } },
-      bottom: { style: 'thin', color: { argb: 'FF000000' } },
-      right: { style: 'thin', color: { argb: 'FF000000' } }
+    sheet.getRow(2).height = 28;
+
+    // Info row
+    sheet.mergeCells(`A3:${lastCol}3`);
+    const infoCell = sheet.getCell('A3');
+    infoCell.value = `المدينة: ${data.city} | التاريخ: ${arabicDate} - ${time}`;
+    infoCell.font = { size: 12, bold: true };
+    infoCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    infoCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFF0F9FF' }
     };
-  });
+    sheet.getRow(3).height = 25;
 
-  const moving = data.movingInventory;
-  const movingBoxesTotal = moving.n950Boxes + moving.i9000sBoxes + moving.i9100Boxes + 
-                           moving.rollPaperBoxes + moving.stickersBoxes + moving.newBatteriesBoxes +
-                           moving.mobilySimBoxes + moving.stcSimBoxes + moving.zainSimBoxes + moving.lebaraBoxes;
-  
-  const movingUnitsTotal = moving.n950Units + moving.i9000sUnits + moving.i9100Units + 
-                           moving.rollPaperUnits + moving.stickersUnits + moving.newBatteriesUnits +
-                           moving.mobilySimUnits + moving.stcSimUnits + moving.zainSimUnits + moving.lebaraUnits;
+    sheet.addRow([]);
 
-  const movingBoxesRow = movingSheet.addRow([
-    'صناديق',
-    moving.n950Boxes,
-    moving.i9000sBoxes,
-    moving.i9100Boxes,
-    moving.rollPaperBoxes,
-    moving.stickersBoxes,
-    moving.newBatteriesBoxes,
-    moving.mobilySimBoxes,
-    moving.stcSimBoxes,
-    moving.zainSimBoxes,
-    moving.lebaraBoxes,
-    movingBoxesTotal
-  ]);
-  
-  movingBoxesRow.alignment = { horizontal: 'center', vertical: 'middle' };
-  movingBoxesRow.eachCell((cell) => {
-    cell.border = {
-      top: { style: 'thin', color: { argb: 'FF000000' } },
-      left: { style: 'thin', color: { argb: 'FF000000' } },
-      bottom: { style: 'thin', color: { argb: 'FF000000' } },
-      right: { style: 'thin', color: { argb: 'FF000000' } }
-    };
-  });
+    // Build header based on dynamic or legacy types
+    let headerValues: string[];
+    if (useDynamicTypes) {
+      headerValues = ['الصنف', ...data.itemTypes!.map(it => it.nameAr), 'الإجمالي'];
+    } else {
+      headerValues = [
+        'الصنف', 'N950', 'I9000s', 'I9100', 'ورق حراري', 'ملصقات',
+        'بطاريات', 'موبايلي', 'STC', 'زين', 'ليبارا', 'الإجمالي'
+      ];
+    }
 
-  const movingUnitsRow = movingSheet.addRow([
-    'قطع',
-    moving.n950Units,
-    moving.i9000sUnits,
-    moving.i9100Units,
-    moving.rollPaperUnits,
-    moving.stickersUnits,
-    moving.newBatteriesUnits,
-    moving.mobilySimUnits,
-    moving.stcSimUnits,
-    moving.zainSimUnits,
-    moving.lebaraUnits,
-    movingUnitsTotal
-  ]);
-  
-  movingUnitsRow.alignment = { horizontal: 'center', vertical: 'middle' };
-  movingUnitsRow.eachCell((cell) => {
-    cell.border = {
-      top: { style: 'thin', color: { argb: 'FF000000' } },
-      left: { style: 'thin', color: { argb: 'FF000000' } },
-      bottom: { style: 'thin', color: { argb: 'FF000000' } },
-      right: { style: 'thin', color: { argb: 'FF000000' } }
-    };
-  });
+    const headerRow = sheet.addRow(headerValues);
+    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
+    headerRow.height = 30;
+    headerRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF4A5568' }
+      };
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
 
-  movingSheet.columns = [
-    { width: 15 },
-    { width: 12 },
-    { width: 12 },
-    { width: 12 },
-    { width: 15 },
-    { width: 12 },
-    { width: 12 },
-    { width: 12 },
-    { width: 12 },
-    { width: 12 },
-    { width: 12 },
-    { width: 15 }
-  ];
+    // Calculate boxes row
+    let boxesValues: (string | number)[];
+    let boxesTotal = 0;
+    
+    if (useDynamicTypes) {
+      boxesValues = ['صناديق'];
+      for (const itemType of data.itemTypes!) {
+        const legacyKey = legacyFieldMap[itemType.nameEn] || undefined;
+        const value = getInventoryValue(entries, legacyInventory, itemType.id, 'boxes', legacyKey);
+        boxesValues.push(value);
+        boxesTotal += value;
+      }
+      boxesValues.push(boxesTotal);
+    } else {
+      const inv = legacyInventory!;
+      boxesTotal = (inv.n950Boxes || 0) + (inv.i9000sBoxes || 0) + (inv.i9100Boxes || 0) +
+                   (inv.rollPaperBoxes || 0) + (inv.stickersBoxes || 0) + (inv.newBatteriesBoxes || 0) +
+                   (inv.mobilySimBoxes || 0) + (inv.stcSimBoxes || 0) + (inv.zainSimBoxes || 0) + (inv.lebaraBoxes || 0);
+      boxesValues = [
+        'صناديق',
+        inv.n950Boxes || 0, inv.i9000sBoxes || 0, inv.i9100Boxes || 0,
+        inv.rollPaperBoxes || 0, inv.stickersBoxes || 0, inv.newBatteriesBoxes || 0,
+        inv.mobilySimBoxes || 0, inv.stcSimBoxes || 0, inv.zainSimBoxes || 0, inv.lebaraBoxes || 0,
+        boxesTotal
+      ];
+    }
+
+    const boxesRow = sheet.addRow(boxesValues);
+    boxesRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    boxesRow.eachCell((cell) => {
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+
+    // Calculate units row
+    let unitsValues: (string | number)[];
+    let unitsTotal = 0;
+    
+    if (useDynamicTypes) {
+      unitsValues = ['قطع'];
+      for (const itemType of data.itemTypes!) {
+        const legacyKey = legacyFieldMap[itemType.nameEn] || undefined;
+        const value = getInventoryValue(entries, legacyInventory, itemType.id, 'units', legacyKey);
+        unitsValues.push(value);
+        unitsTotal += value;
+      }
+      unitsValues.push(unitsTotal);
+    } else {
+      const inv = legacyInventory!;
+      unitsTotal = (inv.n950Units || 0) + (inv.i9000sUnits || 0) + (inv.i9100Units || 0) +
+                   (inv.rollPaperUnits || 0) + (inv.stickersUnits || 0) + (inv.newBatteriesUnits || 0) +
+                   (inv.mobilySimUnits || 0) + (inv.stcSimUnits || 0) + (inv.zainSimUnits || 0) + (inv.lebaraUnits || 0);
+      unitsValues = [
+        'قطع',
+        inv.n950Units || 0, inv.i9000sUnits || 0, inv.i9100Units || 0,
+        inv.rollPaperUnits || 0, inv.stickersUnits || 0, inv.newBatteriesUnits || 0,
+        inv.mobilySimUnits || 0, inv.stcSimUnits || 0, inv.zainSimUnits || 0, inv.lebaraUnits || 0,
+        unitsTotal
+      ];
+    }
+
+    const unitsRow = sheet.addRow(unitsValues);
+    unitsRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    unitsRow.eachCell((cell) => {
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+
+    // Set column widths
+    const columns = [{ width: 15 }];
+    for (let i = 0; i < itemTypeCount; i++) {
+      columns.push({ width: 12 });
+    }
+    columns.push({ width: 15 });
+    sheet.columns = columns;
+  };
+
+  // Create Fixed Inventory Sheet
+  createInventorySheet(
+    'المخزون الثابت - Fixed',
+    'تقرير مخزون الفني',
+    data.fixedEntries,
+    data.fixedInventory
+  );
+
+  // Create Moving Inventory Sheet
+  createInventorySheet(
+    'المخزون المتحرك - Moving',
+    'تقرير المخزون المتحرك',
+    data.movingEntries,
+    data.movingInventory
+  );
 
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   const fileName = `تقرير_مخزون_الفني_${data.technicianName}_${new Date().toISOString().split('T')[0]}.xlsx`;
   saveAs(blob, fileName);
 };
+
+interface ItemType {
+  id: string;
+  nameAr: string;
+  nameEn: string;
+  sortOrder: number;
+}
+
+interface InventoryEntry {
+  itemTypeId: string;
+  boxes: number;
+  units: number;
+}
 
 interface SingleWarehouseExportData {
   warehouse: {
@@ -1267,6 +1229,8 @@ interface SingleWarehouseExportData {
     lebaraBoxes: number;
     lebaraUnits: number;
   } | null;
+  itemTypes?: ItemType[];
+  entries?: InventoryEntry[];
   transfers: Array<{
     technicianName: string;
     items: string;
@@ -1356,18 +1320,57 @@ export const exportSingleWarehouseToExcel = async (data: SingleWarehouseExportDa
   });
 
   const inv = data.inventory;
-  const items = [
-    { name: 'N950', boxes: inv?.n950Boxes || 0, units: inv?.n950Units || 0 },
-    { name: 'I9000S', boxes: inv?.i9000sBoxes || 0, units: inv?.i9000sUnits || 0 },
-    { name: 'I9100', boxes: inv?.i9100Boxes || 0, units: inv?.i9100Units || 0 },
-    { name: 'ورق الطباعة', boxes: inv?.rollPaperBoxes || 0, units: inv?.rollPaperUnits || 0 },
-    { name: 'الملصقات', boxes: inv?.stickersBoxes || 0, units: inv?.stickersUnits || 0 },
-    { name: 'البطاريات', boxes: inv?.newBatteriesBoxes || 0, units: inv?.newBatteriesUnits || 0 },
-    { name: 'موبايلي SIM', boxes: inv?.mobilySimBoxes || 0, units: inv?.mobilySimUnits || 0 },
-    { name: 'STC SIM', boxes: inv?.stcSimBoxes || 0, units: inv?.stcSimUnits || 0 },
-    { name: 'زين SIM', boxes: inv?.zainSimBoxes || 0, units: inv?.zainSimUnits || 0 },
-    { name: 'ليبارا SIM', boxes: inv?.lebaraBoxes || 0, units: inv?.lebaraUnits || 0 },
-  ];
+  
+  // Helper function to get inventory value from entries or legacy fields
+  const getInventoryValue = (itemTypeId: string, valueType: 'boxes' | 'units'): number => {
+    // First check entry tables
+    if (data.entries) {
+      const entry = data.entries.find(e => e.itemTypeId === itemTypeId);
+      if (entry) {
+        return valueType === 'boxes' ? entry.boxes : entry.units;
+      }
+    }
+    
+    // Fall back to legacy columns
+    if (inv) {
+      const legacy = legacyFieldMapping[itemTypeId];
+      if (legacy) {
+        const fieldName = valueType === 'boxes' ? legacy.boxes : legacy.units;
+        return (inv as any)[fieldName] || 0;
+      }
+    }
+    
+    return 0;
+  };
+  
+  // Build items list dynamically from itemTypes if available
+  let items: Array<{ name: string; boxes: number; units: number }> = [];
+  
+  if (data.itemTypes) {
+    // Use new dynamic system with itemTypes
+    const sortedItemTypes = [...data.itemTypes].sort((a, b) => a.sortOrder - b.sortOrder);
+    items = sortedItemTypes.map(itemType => {
+      return {
+        name: itemType.nameAr,
+        boxes: getInventoryValue(itemType.id, 'boxes'),
+        units: getInventoryValue(itemType.id, 'units')
+      };
+    });
+  } else {
+    // Fallback to legacy hardcoded items
+    items = [
+      { name: 'N950', boxes: inv?.n950Boxes || 0, units: inv?.n950Units || 0 },
+      { name: 'I9000S', boxes: inv?.i9000sBoxes || 0, units: inv?.i9000sUnits || 0 },
+      { name: 'I9100', boxes: inv?.i9100Boxes || 0, units: inv?.i9100Units || 0 },
+      { name: 'ورق الطباعة', boxes: inv?.rollPaperBoxes || 0, units: inv?.rollPaperUnits || 0 },
+      { name: 'الملصقات', boxes: inv?.stickersBoxes || 0, units: inv?.stickersUnits || 0 },
+      { name: 'البطاريات', boxes: inv?.newBatteriesBoxes || 0, units: inv?.newBatteriesUnits || 0 },
+      { name: 'موبايلي SIM', boxes: inv?.mobilySimBoxes || 0, units: inv?.mobilySimUnits || 0 },
+      { name: 'STC SIM', boxes: inv?.stcSimBoxes || 0, units: inv?.stcSimUnits || 0 },
+      { name: 'زين SIM', boxes: inv?.zainSimBoxes || 0, units: inv?.zainSimUnits || 0 },
+      { name: 'ليبارا SIM', boxes: inv?.lebaraBoxes || 0, units: inv?.lebaraUnits || 0 },
+    ];
+  }
 
   let totalBoxes = 0;
   let totalUnits = 0;

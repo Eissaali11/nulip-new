@@ -1083,6 +1083,15 @@ export class DatabaseStorage implements IStorage {
     return devices;
   }
 
+  async getWithdrawnDevicesByRegion(regionId: string): Promise<WithdrawnDevice[]> {
+    const devices = await db
+      .select()
+      .from(withdrawnDevices)
+      .where(eq(withdrawnDevices.regionId, regionId))
+      .orderBy(desc(withdrawnDevices.createdAt));
+    return devices;
+  }
+
   async getWithdrawnDevice(id: string): Promise<WithdrawnDevice | undefined> {
     const [device] = await db
       .select()
@@ -1381,25 +1390,40 @@ export class DatabaseStorage implements IStorage {
 
     const result = await Promise.all(
       technicians.map(async (tech) => {
+        // Get moving inventory (legacy)
         const movingInventory = await db
           .select()
           .from(techniciansInventory)
           .where(eq(techniciansInventory.createdBy, tech.id))
           .limit(1);
 
+        // Get fixed inventory entries (dynamic items)
+        const fixedEntries = await db
+          .select()
+          .from(technicianFixedInventoryEntries)
+          .where(eq(technicianFixedInventoryEntries.technicianId, tech.id));
+
+        // Get moving inventory entries (dynamic items)
+        const movingEntries = await db
+          .select()
+          .from(technicianMovingInventoryEntries)
+          .where(eq(technicianMovingInventoryEntries.technicianId, tech.id));
+
         let alertLevel: 'good' | 'warning' | 'critical' = 'good';
         
+        // Calculate total from legacy fields
+        let totalItems = 0;
         if (tech.fixedInventory) {
-          const totalItems = 
-            tech.fixedInventory.n950Boxes + tech.fixedInventory.n950Units +
-            tech.fixedInventory.i9000sBoxes + tech.fixedInventory.i9000sUnits +
-            tech.fixedInventory.i9100Boxes + tech.fixedInventory.i9100Units +
-            tech.fixedInventory.newBatteriesBoxes + tech.fixedInventory.newBatteriesUnits +
-            tech.fixedInventory.rollPaperBoxes + tech.fixedInventory.rollPaperUnits +
-            tech.fixedInventory.stickersBoxes + tech.fixedInventory.stickersUnits +
-            tech.fixedInventory.mobilySimBoxes + tech.fixedInventory.mobilySimUnits +
-            tech.fixedInventory.stcSimBoxes + tech.fixedInventory.stcSimUnits +
-            tech.fixedInventory.zainSimBoxes + tech.fixedInventory.zainSimUnits;
+          totalItems = 
+            (tech.fixedInventory.n950Boxes || 0) + (tech.fixedInventory.n950Units || 0) +
+            (tech.fixedInventory.i9000sBoxes || 0) + (tech.fixedInventory.i9000sUnits || 0) +
+            (tech.fixedInventory.i9100Boxes || 0) + (tech.fixedInventory.i9100Units || 0) +
+            (tech.fixedInventory.newBatteriesBoxes || 0) + (tech.fixedInventory.newBatteriesUnits || 0) +
+            (tech.fixedInventory.rollPaperBoxes || 0) + (tech.fixedInventory.rollPaperUnits || 0) +
+            (tech.fixedInventory.stickersBoxes || 0) + (tech.fixedInventory.stickersUnits || 0) +
+            (tech.fixedInventory.mobilySimBoxes || 0) + (tech.fixedInventory.mobilySimUnits || 0) +
+            (tech.fixedInventory.stcSimBoxes || 0) + (tech.fixedInventory.stcSimUnits || 0) +
+            (tech.fixedInventory.zainSimBoxes || 0) + (tech.fixedInventory.zainSimUnits || 0);
           
           const threshold = tech.fixedInventory.criticalStockThreshold || 70;
           const lowThreshold = tech.fixedInventory.lowStockThreshold || 30;
@@ -1412,14 +1436,25 @@ export class DatabaseStorage implements IStorage {
             alertLevel = 'warning';
           }
         }
+        
+        // Add entries totals
+        fixedEntries.forEach(e => {
+          totalItems += (e.boxes || 0) + (e.units || 0);
+        });
 
         return {
           technicianId: tech.id,
           technicianName: tech.fullName,
           city: tech.city || '',
           regionId: tech.regionId,
-          fixedInventory: tech.fixedInventory || null,
-          movingInventory: movingInventory[0] || null,
+          fixedInventory: tech.fixedInventory ? {
+            ...tech.fixedInventory,
+            entries: fixedEntries
+          } : null,
+          movingInventory: movingInventory[0] ? {
+            ...movingInventory[0],
+            entries: movingEntries
+          } : null,
           alertLevel,
         };
       })
@@ -1443,25 +1478,39 @@ export class DatabaseStorage implements IStorage {
 
     const result = await Promise.all(
       technicians.map(async (tech) => {
+        // Get moving inventory (legacy)
         const movingInventory = await db
           .select()
           .from(techniciansInventory)
           .where(eq(techniciansInventory.createdBy, tech.id))
           .limit(1);
 
+        // Get fixed inventory entries (dynamic items)
+        const fixedEntries = await db
+          .select()
+          .from(technicianFixedInventoryEntries)
+          .where(eq(technicianFixedInventoryEntries.technicianId, tech.id));
+
+        // Get moving inventory entries (dynamic items)
+        const movingEntries = await db
+          .select()
+          .from(technicianMovingInventoryEntries)
+          .where(eq(technicianMovingInventoryEntries.technicianId, tech.id));
+
         let alertLevel: 'good' | 'warning' | 'critical' = 'good';
         
+        let totalItems = 0;
         if (tech.fixedInventory) {
-          const totalItems = 
-            tech.fixedInventory.n950Boxes + tech.fixedInventory.n950Units +
-            tech.fixedInventory.i9000sBoxes + tech.fixedInventory.i9000sUnits +
-            tech.fixedInventory.i9100Boxes + tech.fixedInventory.i9100Units +
-            tech.fixedInventory.newBatteriesBoxes + tech.fixedInventory.newBatteriesUnits +
-            tech.fixedInventory.rollPaperBoxes + tech.fixedInventory.rollPaperUnits +
-            tech.fixedInventory.stickersBoxes + tech.fixedInventory.stickersUnits +
-            tech.fixedInventory.mobilySimBoxes + tech.fixedInventory.mobilySimUnits +
-            tech.fixedInventory.stcSimBoxes + tech.fixedInventory.stcSimUnits +
-            tech.fixedInventory.zainSimBoxes + tech.fixedInventory.zainSimUnits;
+          totalItems = 
+            (tech.fixedInventory.n950Boxes || 0) + (tech.fixedInventory.n950Units || 0) +
+            (tech.fixedInventory.i9000sBoxes || 0) + (tech.fixedInventory.i9000sUnits || 0) +
+            (tech.fixedInventory.i9100Boxes || 0) + (tech.fixedInventory.i9100Units || 0) +
+            (tech.fixedInventory.newBatteriesBoxes || 0) + (tech.fixedInventory.newBatteriesUnits || 0) +
+            (tech.fixedInventory.rollPaperBoxes || 0) + (tech.fixedInventory.rollPaperUnits || 0) +
+            (tech.fixedInventory.stickersBoxes || 0) + (tech.fixedInventory.stickersUnits || 0) +
+            (tech.fixedInventory.mobilySimBoxes || 0) + (tech.fixedInventory.mobilySimUnits || 0) +
+            (tech.fixedInventory.stcSimBoxes || 0) + (tech.fixedInventory.stcSimUnits || 0) +
+            (tech.fixedInventory.zainSimBoxes || 0) + (tech.fixedInventory.zainSimUnits || 0);
           
           const threshold = tech.fixedInventory.criticalStockThreshold || 70;
           const lowThreshold = tech.fixedInventory.lowStockThreshold || 30;
@@ -1474,14 +1523,25 @@ export class DatabaseStorage implements IStorage {
             alertLevel = 'warning';
           }
         }
+        
+        // Add entries totals
+        fixedEntries.forEach(e => {
+          totalItems += (e.boxes || 0) + (e.units || 0);
+        });
 
         return {
           technicianId: tech.id,
           technicianName: tech.fullName,
           city: tech.city || '',
           regionId: tech.regionId,
-          fixedInventory: tech.fixedInventory || null,
-          movingInventory: movingInventory[0] || null,
+          fixedInventory: tech.fixedInventory ? {
+            ...tech.fixedInventory,
+            entries: fixedEntries
+          } : null,
+          movingInventory: movingInventory[0] ? {
+            ...movingInventory[0],
+            entries: movingEntries
+          } : null,
           alertLevel,
         };
       })
@@ -1781,6 +1841,21 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
+  async getWarehousesBySupervisor(supervisorId: string): Promise<WarehouseWithStats[]> {
+    // Get supervisor's region
+    const [supervisor] = await db
+      .select({ regionId: users.regionId })
+      .from(users)
+      .where(eq(users.id, supervisorId));
+    
+    if (!supervisor?.regionId) {
+      return [];
+    }
+    
+    // Return warehouses from supervisor's region
+    return this.getWarehousesByRegion(supervisor.regionId);
+  }
+
   async getWarehouse(id: string): Promise<WarehouseWithInventory | undefined> {
     const [warehouse] = await db
       .select({
@@ -1917,41 +1992,76 @@ export class DatabaseStorage implements IStorage {
 
   async transferFromWarehouse(data: InsertWarehouseTransfer): Promise<WarehouseTransfer> {
     return await db.transaction(async (tx) => {
-      const [inventory] = await tx
+      // First, ALWAYS check warehouse_inventory_entries table (new system)
+      // This is where the UI updates stock, so it should be the source of truth
+      
+      // Determine the itemTypeId to look up in entries table
+      let itemTypeIdForEntries = data.itemType;
+      
+      // If it's not a UUID (like 'n950'), it could still have an entry in the entries table
+      // Check the entries table first
+      const [entry] = await tx
         .select()
-        .from(warehouseInventory)
-        .where(eq(warehouseInventory.warehouseId, data.warehouseId));
+        .from(warehouseInventoryEntries)
+        .where(
+          and(
+            eq(warehouseInventoryEntries.warehouseId, data.warehouseId),
+            eq(warehouseInventoryEntries.itemTypeId, itemTypeIdForEntries)
+          )
+        );
+      
+      if (entry) {
+        // Found in entries table - use this as source of truth
+        const currentStock = data.packagingType === 'box' ? entry.boxes : entry.units;
+        console.log(`[Transfer] Found in entries table: ${itemTypeIdForEntries}, stock: ${currentStock}`);
+        
+        if (currentStock < data.quantity) {
+          throw new Error(`Insufficient stock in warehouse. Available: ${currentStock}, Requested: ${data.quantity}`);
+        }
+      } else {
+        // Not in entries table - fall back to legacy warehouse_inventory table
+        // Legacy field mapping for old item types
+        const fieldMap: Record<string, { boxes: string; units: string }> = {
+          'n950': { boxes: 'n950Boxes', units: 'n950Units' },
+          'i9000s': { boxes: 'i9000sBoxes', units: 'i9000sUnits' },
+          'i9100': { boxes: 'i9100Boxes', units: 'i9100Units' },
+          'rollPaper': { boxes: 'rollPaperBoxes', units: 'rollPaperUnits' },
+          'stickers': { boxes: 'stickersBoxes', units: 'stickersUnits' },
+          'newBatteries': { boxes: 'newBatteriesBoxes', units: 'newBatteriesUnits' },
+          'mobilySim': { boxes: 'mobilySimBoxes', units: 'mobilySimUnits' },
+          'stcSim': { boxes: 'stcSimBoxes', units: 'stcSimUnits' },
+          'zainSim': { boxes: 'zainSimBoxes', units: 'zainSimUnits' },
+          'lebaraSim': { boxes: 'lebaraBoxes', units: 'lebaraUnits' },
+          'lebara': { boxes: 'lebaraBoxes', units: 'lebaraUnits' },
+        };
 
-      if (!inventory) {
-        throw new Error(`Warehouse inventory not found`);
+        const fields = fieldMap[data.itemType];
+        
+        if (fields) {
+          // Legacy system: use warehouse_inventory table columns
+          const [inventory] = await tx
+            .select()
+            .from(warehouseInventory)
+            .where(eq(warehouseInventory.warehouseId, data.warehouseId));
+
+          if (!inventory) {
+            throw new Error(`Warehouse inventory not found`);
+          }
+
+          const fieldName = data.packagingType === 'box' ? fields.boxes : fields.units;
+          const currentStock = (inventory as any)[fieldName] || 0;
+          console.log(`[Transfer] Using legacy table for ${data.itemType}, stock: ${currentStock}`);
+
+          if (currentStock < data.quantity) {
+            throw new Error(`Insufficient stock in warehouse. Available: ${currentStock}, Requested: ${data.quantity}`);
+          }
+        } else {
+          // Unknown item type - not found in entries table and not a legacy item
+          throw new Error(`Unknown item type: ${data.itemType}`);
+        }
       }
 
-      const fieldMap: Record<string, { boxes: string; units: string }> = {
-        'n950': { boxes: 'n950Boxes', units: 'n950Units' },
-        'i9000s': { boxes: 'i9000sBoxes', units: 'i9000sUnits' },
-        'i9100': { boxes: 'i9100Boxes', units: 'i9100Units' },
-        'rollPaper': { boxes: 'rollPaperBoxes', units: 'rollPaperUnits' },
-        'stickers': { boxes: 'stickersBoxes', units: 'stickersUnits' },
-        'newBatteries': { boxes: 'newBatteriesBoxes', units: 'newBatteriesUnits' },
-        'mobilySim': { boxes: 'mobilySimBoxes', units: 'mobilySimUnits' },
-        'stcSim': { boxes: 'stcSimBoxes', units: 'stcSimUnits' },
-        'zainSim': { boxes: 'zainSimBoxes', units: 'zainSimUnits' },
-        'lebaraSim': { boxes: 'lebaraBoxes', units: 'lebaraUnits' },
-        'lebara': { boxes: 'lebaraBoxes', units: 'lebaraUnits' },
-      };
-
-      const fields = fieldMap[data.itemType];
-      if (!fields) {
-        throw new Error(`Invalid item type: ${data.itemType}`);
-      }
-
-      const fieldName = data.packagingType === 'box' ? fields.boxes : fields.units;
-      const currentStock = (inventory as any)[fieldName] || 0;
-
-      if (currentStock < data.quantity) {
-        throw new Error(`Insufficient stock in warehouse. Available: ${currentStock}, Requested: ${data.quantity}`);
-      }
-
+      // Create the transfer record (same for both systems)
       const [transfer] = await tx
         .insert(warehouseTransfers)
         .values({
@@ -2049,106 +2159,170 @@ export class DatabaseStorage implements IStorage {
         throw new Error(`Transfer already ${transfer.status}`);
       }
 
-      const fieldMap: Record<string, { boxes: string; units: string }> = {
-        'n950': { boxes: 'n950Boxes', units: 'n950Units' },
-        'i9000s': { boxes: 'i9000sBoxes', units: 'i9000sUnits' },
-        'i9100': { boxes: 'i9100Boxes', units: 'i9100Units' },
-        'rollPaper': { boxes: 'rollPaperBoxes', units: 'rollPaperUnits' },
-        'stickers': { boxes: 'stickersBoxes', units: 'stickersUnits' },
-        'newBatteries': { boxes: 'newBatteriesBoxes', units: 'newBatteriesUnits' },
-        'mobilySim': { boxes: 'mobilySimBoxes', units: 'mobilySimUnits' },
-        'stcSim': { boxes: 'stcSimBoxes', units: 'stcSimUnits' },
-        'zainSim': { boxes: 'zainSimBoxes', units: 'zainSimUnits' },
-        'lebaraSim': { boxes: 'lebaraBoxes', units: 'lebaraUnits' },
-        'lebara': { boxes: 'lebaraBoxes', units: 'lebaraUnits' },
-      };
-
-      const fields = fieldMap[transfer.itemType];
-      if (!fields) {
-        throw new Error(`Unknown item type: ${transfer.itemType}`);
-      }
+      // ALWAYS check warehouse_inventory_entries FIRST (this is where UI updates stock)
+      const itemTypeId = transfer.itemType;
       
-      const fieldName = transfer.packagingType === 'box' ? fields.boxes : fields.units;
-
-      // Deduct from warehouse inventory
-      const [warehouseInv] = await tx
+      const [warehouseEntry] = await tx
         .select()
-        .from(warehouseInventory)
-        .where(eq(warehouseInventory.warehouseId, transfer.warehouseId));
+        .from(warehouseInventoryEntries)
+        .where(
+          and(
+            eq(warehouseInventoryEntries.warehouseId, transfer.warehouseId),
+            eq(warehouseInventoryEntries.itemTypeId, itemTypeId)
+          )
+        );
 
-      if (!warehouseInv) {
-        throw new Error('Warehouse inventory not found');
-      }
+      if (warehouseEntry) {
+        // ===== NEW SYSTEM: Found in warehouse_inventory_entries =====
+        const currentStock = transfer.packagingType === 'box' 
+          ? warehouseEntry.boxes 
+          : warehouseEntry.units;
 
-      const warehouseCurrentStock = (warehouseInv as any)[fieldName] || 0;
-      if (warehouseCurrentStock < transfer.quantity) {
-        throw new Error(`Insufficient stock in warehouse. Available: ${warehouseCurrentStock}, Requested: ${transfer.quantity}`);
-      }
+        if (currentStock < transfer.quantity) {
+          throw new Error(`Insufficient stock in warehouse. Available: ${currentStock}, Requested: ${transfer.quantity}`);
+        }
 
-      await tx
-        .update(warehouseInventory)
-        .set({
-          [fieldName]: warehouseCurrentStock - transfer.quantity,
-          updatedAt: new Date(),
-        })
-        .where(eq(warehouseInventory.warehouseId, transfer.warehouseId));
-
-      // Add to technician inventory
-      const [techInventory] = await tx
-        .select()
-        .from(techniciansInventory)
-        .where(eq(techniciansInventory.createdBy, transfer.technicianId));
-
-      if (techInventory) {
-        const techCurrentStock = (techInventory as any)[fieldName] || 0;
+        // Deduct from warehouse inventory entries
         await tx
-          .update(techniciansInventory)
+          .update(warehouseInventoryEntries)
           .set({
-            [fieldName]: techCurrentStock + transfer.quantity,
+            boxes: transfer.packagingType === 'box' 
+              ? warehouseEntry.boxes - transfer.quantity 
+              : warehouseEntry.boxes,
+            units: transfer.packagingType === 'unit' 
+              ? warehouseEntry.units - transfer.quantity 
+              : warehouseEntry.units,
             updatedAt: new Date(),
           })
-          .where(eq(techniciansInventory.createdBy, transfer.technicianId));
-      } else {
-        const [user] = await tx
-          .select()
-          .from(users)
-          .where(eq(users.id, transfer.technicianId));
+          .where(eq(warehouseInventoryEntries.id, warehouseEntry.id));
 
-        if (!user) {
-          throw new Error(`Technician with id ${transfer.technicianId} not found`);
+        // Add to technician moving inventory entries
+        const [techEntry] = await tx
+          .select()
+          .from(technicianMovingInventoryEntries)
+          .where(
+            and(
+              eq(technicianMovingInventoryEntries.technicianId, transfer.technicianId),
+              eq(technicianMovingInventoryEntries.itemTypeId, itemTypeId)
+            )
+          );
+
+        if (techEntry) {
+          await tx
+            .update(technicianMovingInventoryEntries)
+            .set({
+              boxes: transfer.packagingType === 'box' 
+                ? techEntry.boxes + transfer.quantity 
+                : techEntry.boxes,
+              units: transfer.packagingType === 'unit' 
+                ? techEntry.units + transfer.quantity 
+                : techEntry.units,
+              updatedAt: new Date(),
+            })
+            .where(eq(technicianMovingInventoryEntries.id, techEntry.id));
+        } else {
+          await tx
+            .insert(technicianMovingInventoryEntries)
+            .values({
+              technicianId: transfer.technicianId,
+              itemTypeId: itemTypeId,
+              boxes: transfer.packagingType === 'box' ? transfer.quantity : 0,
+              units: transfer.packagingType === 'unit' ? transfer.quantity : 0,
+            });
+        }
+      } else {
+        // ===== LEGACY SYSTEM: Fall back to warehouse_inventory table =====
+        const fieldMap: Record<string, { boxes: string; units: string }> = {
+          'n950': { boxes: 'n950Boxes', units: 'n950Units' },
+          'i9000s': { boxes: 'i9000sBoxes', units: 'i9000sUnits' },
+          'i9100': { boxes: 'i9100Boxes', units: 'i9100Units' },
+          'rollPaper': { boxes: 'rollPaperBoxes', units: 'rollPaperUnits' },
+          'stickers': { boxes: 'stickersBoxes', units: 'stickersUnits' },
+          'newBatteries': { boxes: 'newBatteriesBoxes', units: 'newBatteriesUnits' },
+          'mobilySim': { boxes: 'mobilySimBoxes', units: 'mobilySimUnits' },
+          'stcSim': { boxes: 'stcSimBoxes', units: 'stcSimUnits' },
+          'zainSim': { boxes: 'zainSimBoxes', units: 'zainSimUnits' },
+          'lebaraSim': { boxes: 'lebaraBoxes', units: 'lebaraUnits' },
+          'lebara': { boxes: 'lebaraBoxes', units: 'lebaraUnits' },
+        };
+
+        const fields = fieldMap[transfer.itemType];
+        
+        if (!fields) {
+          throw new Error(`Unknown item type and no entry found: ${transfer.itemType}`);
+        }
+
+        const fieldName = transfer.packagingType === 'box' ? fields.boxes : fields.units;
+
+        const [warehouseInv] = await tx
+          .select()
+          .from(warehouseInventory)
+          .where(eq(warehouseInventory.warehouseId, transfer.warehouseId));
+
+        if (!warehouseInv) {
+          throw new Error('Warehouse inventory not found');
+        }
+
+        const warehouseCurrentStock = (warehouseInv as any)[fieldName] || 0;
+        if (warehouseCurrentStock < transfer.quantity) {
+          throw new Error(`Insufficient stock in warehouse. Available: ${warehouseCurrentStock}, Requested: ${transfer.quantity}`);
         }
 
         await tx
-          .insert(techniciansInventory)
-          .values({
-            technicianName: user.fullName,
-            city: user.city || 'غير محدد',
-            createdBy: transfer.technicianId,
-            regionId: user.regionId,
-            [fieldName]: transfer.quantity,
-            n950Boxes: transfer.itemType === 'n950' && transfer.packagingType === 'box' ? transfer.quantity : 0,
-            n950Units: transfer.itemType === 'n950' && transfer.packagingType === 'unit' ? transfer.quantity : 0,
-            i9000sBoxes: transfer.itemType === 'i9000s' && transfer.packagingType === 'box' ? transfer.quantity : 0,
-            i9000sUnits: transfer.itemType === 'i9000s' && transfer.packagingType === 'unit' ? transfer.quantity : 0,
-            i9100Boxes: transfer.itemType === 'i9100' && transfer.packagingType === 'box' ? transfer.quantity : 0,
-            i9100Units: transfer.itemType === 'i9100' && transfer.packagingType === 'unit' ? transfer.quantity : 0,
-            rollPaperBoxes: transfer.itemType === 'rollPaper' && transfer.packagingType === 'box' ? transfer.quantity : 0,
-            rollPaperUnits: transfer.itemType === 'rollPaper' && transfer.packagingType === 'unit' ? transfer.quantity : 0,
-            stickersBoxes: transfer.itemType === 'stickers' && transfer.packagingType === 'box' ? transfer.quantity : 0,
-            stickersUnits: transfer.itemType === 'stickers' && transfer.packagingType === 'unit' ? transfer.quantity : 0,
-            newBatteriesBoxes: transfer.itemType === 'newBatteries' && transfer.packagingType === 'box' ? transfer.quantity : 0,
-            newBatteriesUnits: transfer.itemType === 'newBatteries' && transfer.packagingType === 'unit' ? transfer.quantity : 0,
-            mobilySimBoxes: transfer.itemType === 'mobilySim' && transfer.packagingType === 'box' ? transfer.quantity : 0,
-            mobilySimUnits: transfer.itemType === 'mobilySim' && transfer.packagingType === 'unit' ? transfer.quantity : 0,
-            stcSimBoxes: transfer.itemType === 'stcSim' && transfer.packagingType === 'box' ? transfer.quantity : 0,
-            stcSimUnits: transfer.itemType === 'stcSim' && transfer.packagingType === 'unit' ? transfer.quantity : 0,
-            zainSimBoxes: transfer.itemType === 'zainSim' && transfer.packagingType === 'box' ? transfer.quantity : 0,
-            zainSimUnits: transfer.itemType === 'zainSim' && transfer.packagingType === 'unit' ? transfer.quantity : 0,
-            lebaraBoxes: (transfer.itemType === 'lebaraSim' || transfer.itemType === 'lebara') && transfer.packagingType === 'box' ? transfer.quantity : 0,
-            lebaraUnits: (transfer.itemType === 'lebaraSim' || transfer.itemType === 'lebara') && transfer.packagingType === 'unit' ? transfer.quantity : 0,
-          });
+          .update(warehouseInventory)
+          .set({
+            [fieldName]: warehouseCurrentStock - transfer.quantity,
+            updatedAt: new Date(),
+          })
+          .where(eq(warehouseInventory.warehouseId, transfer.warehouseId));
+
+        const [techInventory] = await tx
+          .select()
+          .from(techniciansInventory)
+          .where(eq(techniciansInventory.createdBy, transfer.technicianId));
+
+        if (techInventory) {
+          const techCurrentStock = (techInventory as any)[fieldName] || 0;
+          await tx
+            .update(techniciansInventory)
+            .set({
+              [fieldName]: techCurrentStock + transfer.quantity,
+              updatedAt: new Date(),
+            })
+            .where(eq(techniciansInventory.createdBy, transfer.technicianId));
+        } else {
+          const [user] = await tx
+            .select()
+            .from(users)
+            .where(eq(users.id, transfer.technicianId));
+
+          if (!user) {
+            throw new Error(`Technician with id ${transfer.technicianId} not found`);
+          }
+
+          await tx
+            .insert(techniciansInventory)
+            .values({
+              technicianName: user.fullName,
+              city: user.city || 'غير محدد',
+              createdBy: transfer.technicianId,
+              regionId: user.regionId,
+              [fieldName]: transfer.quantity,
+              n950Boxes: 0, n950Units: 0,
+              i9000sBoxes: 0, i9000sUnits: 0,
+              i9100Boxes: 0, i9100Units: 0,
+              rollPaperBoxes: 0, rollPaperUnits: 0,
+              stickersBoxes: 0, stickersUnits: 0,
+              newBatteriesBoxes: 0, newBatteriesUnits: 0,
+              mobilySimBoxes: 0, mobilySimUnits: 0,
+              stcSimBoxes: 0, stcSimUnits: 0,
+              zainSimBoxes: 0, zainSimUnits: 0,
+              lebaraBoxes: 0, lebaraUnits: 0,
+            });
+        }
       }
 
+      // Update transfer status
       const [updatedTransfer] = await tx
         .update(warehouseTransfers)
         .set({

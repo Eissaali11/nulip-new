@@ -85,8 +85,42 @@ export function TransactionHistoryPage() {
   };
 
   const exportData = () => {
-    // TODO: Implement export functionality
-    console.log('Export data:', transactionData);
+    if (!transactionData || transactionData.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "لا توجد بيانات",
+        description: "لا توجد معاملات للتصدير",
+      });
+      return;
+    }
+
+    // Convert data to CSV format
+    const headers = ['التاريخ', 'النوع', 'المبلغ', 'الوصف'];
+    const csvContent = [
+      headers.join(','),
+      ...transactionData.map(tx => [
+        new Date(tx.createdAt).toLocaleString('ar-SA'),
+        tx.type === 'credit' ? 'إضافة' : 'خصم',
+        tx.amount,
+        tx.description || ''
+      ].join(','))
+    ].join('\n');
+
+    // Create and download file
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `transactions_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({
+      title: "تم التصدير بنجاح",
+      description: "تم تصدير سجل المعاملات",
+    });
   };
 
   return (

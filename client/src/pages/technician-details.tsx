@@ -137,44 +137,6 @@ export default function TechnicianDetailsPage() {
 
   const isLoading = isLoadingFixed || isLoadingMoving;
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6">
-        <div className="max-w-7xl mx-auto space-y-6">
-          <Skeleton className="h-12 w-64" />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Skeleton className="h-32" />
-            <Skeleton className="h-32" />
-            <Skeleton className="h-32" />
-          </div>
-          <Skeleton className="h-96" />
-        </div>
-      </div>
-    );
-  }
-
-  if (!fixedInventory && !movingInventory) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6">
-        <div className="max-w-7xl mx-auto">
-          <Card className="bg-white/5 border-red-500/30">
-            <CardContent className="p-12 text-center">
-              <XCircle className="h-16 w-16 text-red-400 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-white mb-2">لم يتم العثور على البيانات</h2>
-              <p className="text-gray-400 mb-6">لا توجد بيانات متاحة لهذا الفني</p>
-              <Link href="/home">
-                <Button className="bg-[#18B2B0] hover:bg-[#0ea5a3]">
-                  <ArrowLeft className="ml-2 h-4 w-4" />
-                  العودة للوحة التحكم
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
   const technicianName = fixedInventory?.technicianName || movingInventory?.technicianName || "غير معروف";
   const city = fixedInventory?.city || movingInventory?.city || "غير محدد";
 
@@ -207,6 +169,7 @@ export default function TechnicianDetailsPage() {
     other: ["#6b7280"],
   };
 
+  // useMemo must be called before any early returns to follow React hooks rules
   const products: ProductInfo[] = useMemo(() => {
     if (!itemTypes || itemTypes.length === 0) {
       return [];
@@ -293,6 +256,45 @@ export default function TechnicianDetailsPage() {
     return { level: 'good', color: 'text-green-400', bgColor: 'bg-green-500/10', borderColor: 'border-green-500/30', icon: CheckCircle };
   };
 
+  // Early returns after all hooks have been called
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <Skeleton className="h-12 w-64" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Skeleton className="h-32" />
+            <Skeleton className="h-32" />
+            <Skeleton className="h-32" />
+          </div>
+          <Skeleton className="h-96" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!fixedInventory && !movingInventory) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6">
+        <div className="max-w-7xl mx-auto">
+          <Card className="bg-white/5 border-red-500/30">
+            <CardContent className="p-12 text-center">
+              <XCircle className="h-16 w-16 text-red-400 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-white mb-2">لم يتم العثور على البيانات</h2>
+              <p className="text-gray-400 mb-6">لا توجد بيانات متاحة لهذا الفني</p>
+              <Link href="/home">
+                <Button className="bg-[#18B2B0] hover:bg-[#0ea5a3]">
+                  <ArrowLeft className="ml-2 h-4 w-4" />
+                  العودة للوحة التحكم
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -321,67 +323,71 @@ export default function TechnicianDetailsPage() {
           
           <Button
             onClick={async () => {
-              if (fixedInventory && movingInventory) {
-                try {
-                  await exportTechnicianToExcel({
-                    technicianName,
-                    city,
-                    fixedInventory: {
-                      n950Boxes: fixedInventory.n950Boxes,
-                      n950Units: fixedInventory.n950Units,
-                      i9000sBoxes: fixedInventory.i9000sBoxes,
-                      i9000sUnits: fixedInventory.i9000sUnits,
-                      i9100Boxes: fixedInventory.i9100Boxes,
-                      i9100Units: fixedInventory.i9100Units,
-                      rollPaperBoxes: fixedInventory.rollPaperBoxes,
-                      rollPaperUnits: fixedInventory.rollPaperUnits,
-                      stickersBoxes: fixedInventory.stickersBoxes,
-                      stickersUnits: fixedInventory.stickersUnits,
-                      newBatteriesBoxes: fixedInventory.newBatteriesBoxes,
-                      newBatteriesUnits: fixedInventory.newBatteriesUnits,
-                      mobilySimBoxes: fixedInventory.mobilySimBoxes,
-                      mobilySimUnits: fixedInventory.mobilySimUnits,
-                      stcSimBoxes: fixedInventory.stcSimBoxes,
-                      stcSimUnits: fixedInventory.stcSimUnits,
-                      zainSimBoxes: fixedInventory.zainSimBoxes,
-                      zainSimUnits: fixedInventory.zainSimUnits,
-                      lebaraBoxes: fixedInventory.lebaraBoxes,
-                      lebaraUnits: fixedInventory.lebaraUnits,
-                    },
-                    movingInventory: {
-                      n950Boxes: movingInventory.n950Boxes,
-                      n950Units: movingInventory.n950Units,
-                      i9000sBoxes: movingInventory.i9000sBoxes,
-                      i9000sUnits: movingInventory.i9000sUnits,
-                      i9100Boxes: movingInventory.i9100Boxes,
-                      i9100Units: movingInventory.i9100Units,
-                      rollPaperBoxes: movingInventory.rollPaperBoxes,
-                      rollPaperUnits: movingInventory.rollPaperUnits,
-                      stickersBoxes: movingInventory.stickersBoxes,
-                      stickersUnits: movingInventory.stickersUnits,
-                      newBatteriesBoxes: movingInventory.newBatteriesBoxes,
-                      newBatteriesUnits: movingInventory.newBatteriesUnits,
-                      mobilySimBoxes: movingInventory.mobilySimBoxes,
-                      mobilySimUnits: movingInventory.mobilySimUnits,
-                      stcSimBoxes: movingInventory.stcSimBoxes,
-                      stcSimUnits: movingInventory.stcSimUnits,
-                      zainSimBoxes: movingInventory.zainSimBoxes,
-                      zainSimUnits: movingInventory.zainSimUnits,
-                      lebaraBoxes: movingInventory.lebaraBoxes,
-                      lebaraUnits: movingInventory.lebaraUnits,
-                    }
-                  });
-                  toast({
-                    title: "تم التصدير بنجاح",
-                    description: "تم تصدير بيانات الفني إلى ملف Excel",
-                  });
-                } catch (error) {
-                  toast({
-                    title: "فشل التصدير",
-                    description: "حدث خطأ أثناء تصدير البيانات",
-                    variant: "destructive",
-                  });
-                }
+              try {
+                // Use dynamic item types if available, otherwise fallback to legacy
+                await exportTechnicianToExcel({
+                  technicianName,
+                  city,
+                  // Pass dynamic item types
+                  itemTypes: itemTypes?.map(it => ({ id: it.id, nameAr: it.nameAr, nameEn: it.nameEn })),
+                  fixedEntries: fixedEntries?.map(e => ({ itemTypeId: e.itemTypeId, boxes: e.boxes, units: e.units })),
+                  movingEntries: movingEntries?.map(e => ({ itemTypeId: e.itemTypeId, boxes: e.boxes, units: e.units })),
+                  // Also pass legacy fields for backward compatibility
+                  fixedInventory: fixedInventory ? {
+                    n950Boxes: fixedInventory.n950Boxes,
+                    n950Units: fixedInventory.n950Units,
+                    i9000sBoxes: fixedInventory.i9000sBoxes,
+                    i9000sUnits: fixedInventory.i9000sUnits,
+                    i9100Boxes: fixedInventory.i9100Boxes,
+                    i9100Units: fixedInventory.i9100Units,
+                    rollPaperBoxes: fixedInventory.rollPaperBoxes,
+                    rollPaperUnits: fixedInventory.rollPaperUnits,
+                    stickersBoxes: fixedInventory.stickersBoxes,
+                    stickersUnits: fixedInventory.stickersUnits,
+                    newBatteriesBoxes: fixedInventory.newBatteriesBoxes,
+                    newBatteriesUnits: fixedInventory.newBatteriesUnits,
+                    mobilySimBoxes: fixedInventory.mobilySimBoxes,
+                    mobilySimUnits: fixedInventory.mobilySimUnits,
+                    stcSimBoxes: fixedInventory.stcSimBoxes,
+                    stcSimUnits: fixedInventory.stcSimUnits,
+                    zainSimBoxes: fixedInventory.zainSimBoxes,
+                    zainSimUnits: fixedInventory.zainSimUnits,
+                    lebaraBoxes: fixedInventory.lebaraBoxes,
+                    lebaraUnits: fixedInventory.lebaraUnits,
+                  } : undefined,
+                  movingInventory: movingInventory ? {
+                    n950Boxes: movingInventory.n950Boxes,
+                    n950Units: movingInventory.n950Units,
+                    i9000sBoxes: movingInventory.i9000sBoxes,
+                    i9000sUnits: movingInventory.i9000sUnits,
+                    i9100Boxes: movingInventory.i9100Boxes,
+                    i9100Units: movingInventory.i9100Units,
+                    rollPaperBoxes: movingInventory.rollPaperBoxes,
+                    rollPaperUnits: movingInventory.rollPaperUnits,
+                    stickersBoxes: movingInventory.stickersBoxes,
+                    stickersUnits: movingInventory.stickersUnits,
+                    newBatteriesBoxes: movingInventory.newBatteriesBoxes,
+                    newBatteriesUnits: movingInventory.newBatteriesUnits,
+                    mobilySimBoxes: movingInventory.mobilySimBoxes,
+                    mobilySimUnits: movingInventory.mobilySimUnits,
+                    stcSimBoxes: movingInventory.stcSimBoxes,
+                    stcSimUnits: movingInventory.stcSimUnits,
+                    zainSimBoxes: movingInventory.zainSimBoxes,
+                    zainSimUnits: movingInventory.zainSimUnits,
+                    lebaraBoxes: movingInventory.lebaraBoxes,
+                    lebaraUnits: movingInventory.lebaraUnits,
+                  } : undefined
+                });
+                toast({
+                  title: "تم التصدير بنجاح",
+                  description: "تم تصدير بيانات الفني إلى ملف Excel",
+                });
+              } catch (error) {
+                toast({
+                  title: "فشل التصدير",
+                  description: "حدث خطأ أثناء تصدير البيانات",
+                  variant: "destructive",
+                });
               }
             }}
             disabled={!fixedInventory || !movingInventory}

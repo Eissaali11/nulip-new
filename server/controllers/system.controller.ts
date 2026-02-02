@@ -1,0 +1,113 @@
+/**
+ * System controller (logs, backup, etc.)
+ */
+
+import type { Request, Response } from "express";
+import { storage } from "../storage";
+import { asyncHandler } from "../middleware/errorHandler";
+import { z } from "zod";
+
+const systemLogsFiltersSchema = z.object({
+  page: z.string().optional().transform((val) => (val ? parseInt(val) : undefined)),
+  limit: z.string().optional().transform((val) => (val ? parseInt(val) : undefined)),
+  userId: z.string().optional(),
+  action: z.string().optional(),
+  entityType: z.string().optional(),
+  severity: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+});
+
+export class SystemController {
+  /**
+   * GET /api/system-logs
+   * Get system logs
+   */
+  getLogs = asyncHandler(async (req: Request, res: Response) => {
+    const query = systemLogsFiltersSchema.parse(req.query);
+
+    const filters: any = {
+      page: query.page,
+      limit: query.limit,
+      userId: query.userId,
+      action: query.action,
+      entityType: query.entityType,
+      severity: query.severity,
+      startDate: query.startDate,
+      endDate: query.endDate,
+    };
+
+    // Remove undefined filters
+    Object.keys(filters).forEach((key) => {
+      if (filters[key] === undefined) {
+        delete filters[key];
+      }
+    });
+
+    const result = await storage.getSystemLogs(filters);
+    res.json(result);
+  });
+
+  /**
+   * GET /api/admin/backup
+   * Create database backup
+   */
+  createBackup = asyncHandler(async (req: Request, res: Response) => {
+    const backup = await storage.exportAllData();
+    
+    // Log the backup operation
+    await storage.createSystemLog({
+      userId: req.user!.id,
+      userName: req.user!.username,
+      userRole: req.user!.role,
+      action: 'export',
+      entityType: 'backup',
+      entityId: 'system',
+      entityName: 'نسخة احتياطية كاملة',
+      description: 'تصدير نسخة احتياطية كاملة لجميع بيانات النظام',
+      severity: 'info',
+      success: true
+    });
+
+    const filename = `backup_${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+    
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.json(backup);
+  });
+
+  /**
+   * POST /api/admin/restore
+   * Restore database from backup
+   */
+  restoreBackup = asyncHandler(async (req: Request, res: Response) => {
+    const backup = req.body;
+
+    if (!backup || !backup.data) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Invalid backup file" 
+      });
+    }
+
+    await storage.importAllData(backup);
+
+    // Log the restore operation
+    await storage.createSystemLog({
+      userId: req.user!.id,
+      userName: req.user!.username,
+      userRole: req.user!.role,
+      action: 'import',
+      entityType: 'backup',
+      entityId: 'system',
+      entityName: 'استعادة نسخة احتياطية',
+      description: 'استعادة نسخة احتياطية كاملة لجميع بيانات النظام',
+      severity: 'warning',
+      success: true
+    });
+
+    res.json({ success: true, message: "Backup restored successfully" });
+  });
+}
+
+export const systemController = new SystemController();

@@ -290,17 +290,67 @@ export default function WarehouseDetailsPage() {
     const statusText = transfer.status === 'pending' ? 'معلقة' : transfer.status === 'accepted' ? 'مقبولة' : 'مرفوضة';
     const statusColor = transfer.status === 'accepted' ? '#22c55e' : transfer.status === 'rejected' ? '#ef4444' : '#eab308';
     
+    // Legacy item type mapping for Arabic names
+    const legacyItemNames: Record<string, { name: string; nameAr: string }> = {
+      'n950': { name: 'N950', nameAr: 'N950' },
+      'i9000s': { name: 'I9000s', nameAr: 'I9000s' },
+      'i9100': { name: 'I9100', nameAr: 'I9100' },
+      'rollPaper': { name: 'Roll Paper', nameAr: 'ورق رول' },
+      'stickers': { name: 'Stickers', nameAr: 'ملصقات' },
+      'newBatteries': { name: 'Batteries', nameAr: 'بطاريات' },
+      'mobilySim': { name: 'Mobily SIM', nameAr: 'شريحة موبايلي' },
+      'stcSim': { name: 'STC SIM', nameAr: 'شريحة STC' },
+      'zainSim': { name: 'Zain SIM', nameAr: 'شريحة زين' },
+      'lebaraSim': { name: 'Lebara SIM', nameAr: 'شريحة ليبارا' },
+      'lebara': { name: 'Lebara SIM', nameAr: 'شريحة ليبارا' },
+    };
+    
     const items: {name: string, nameAr: string, quantity: number, type: string}[] = [];
-    if (transfer.n950) items.push({name: 'N950', nameAr: 'N950', quantity: transfer.n950, type: transfer.n950PackagingType || 'box'});
-    if (transfer.i9000s) items.push({name: 'I9000s', nameAr: 'I9000s', quantity: transfer.i9000s, type: transfer.i9000sPackagingType || 'box'});
-    if (transfer.i9100) items.push({name: 'I9100', nameAr: 'I9100', quantity: transfer.i9100, type: transfer.i9100PackagingType || 'box'});
-    if (transfer.rollPaper) items.push({name: 'Roll Paper', nameAr: 'ورق رول', quantity: transfer.rollPaper, type: transfer.rollPaperPackagingType || 'box'});
-    if (transfer.stickers) items.push({name: 'Stickers', nameAr: 'ملصقات', quantity: transfer.stickers, type: transfer.stickersPackagingType || 'box'});
-    if (transfer.newBatteries) items.push({name: 'Batteries', nameAr: 'بطاريات', quantity: transfer.newBatteries, type: transfer.newBatteriesPackagingType || 'box'});
-    if (transfer.mobilySim) items.push({name: 'Mobily SIM', nameAr: 'شريحة موبايلي', quantity: transfer.mobilySim, type: transfer.mobilySimPackagingType || 'box'});
-    if (transfer.stcSim) items.push({name: 'STC SIM', nameAr: 'شريحة STC', quantity: transfer.stcSim, type: transfer.stcSimPackagingType || 'box'});
-    if (transfer.zainSim) items.push({name: 'Zain SIM', nameAr: 'شريحة زين', quantity: transfer.zainSim, type: transfer.zainSimPackagingType || 'box'});
-    if (transfer.lebaraSim || transfer.lebara) items.push({name: 'Lebara SIM', nameAr: 'شريحة ليبارا', quantity: transfer.lebaraSim || transfer.lebara || 0, type: transfer.lebaraSimPackagingType || transfer.lebaraPackagingType || 'box'});
+    
+    // Check all item types dynamically from transfer object
+    const transferObj = transfer as any;
+    
+    // Get all keys from transfer object (dynamic item types)
+    const transferKeys = Object.keys(transferObj).filter(
+      k => !['id', 'allIds', 'warehouseId', 'technicianId', 'technicianName', 
+             'notes', 'status', 'rejectionReason', 'respondedAt', 'createdAt'].includes(k) 
+           && !k.endsWith('PackagingType')
+    );
+    
+    // Check each key and find matching item type
+    transferKeys.forEach(key => {
+      const quantity = transferObj[key];
+      const packagingType = transferObj[`${key}PackagingType`];
+      
+      if (quantity && quantity > 0) {
+        // Try to find item type in dynamic list (case-insensitive)
+        let itemName = key;
+        let itemNameAr = key;
+        
+        if (itemTypesData) {
+          const matchedType = itemTypesData.find(
+            t => t.nameEn.toLowerCase() === key.toLowerCase() || t.id === key
+          );
+          if (matchedType) {
+            itemName = matchedType.nameEn;
+            itemNameAr = matchedType.nameAr;
+          }
+        }
+        
+        // Check legacy mapping
+        if (legacyItemNames[key]) {
+          itemName = legacyItemNames[key].name;
+          itemNameAr = legacyItemNames[key].nameAr;
+        }
+        
+        items.push({
+          name: itemName,
+          nameAr: itemNameAr,
+          quantity: quantity,
+          type: packagingType || 'box'
+        });
+      }
+    });
     
     let totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
     
@@ -471,16 +521,48 @@ export default function WarehouseDetailsPage() {
 
     const transfersData = allTransfers.map(transfer => {
       const items: string[] = [];
-      if (transfer.n950) items.push(`N950: ${transfer.n950} ${transfer.n950PackagingType === 'box' ? 'كرتون' : 'قطعة'}`);
-      if (transfer.i9000s) items.push(`I9000s: ${transfer.i9000s} ${transfer.i9000sPackagingType === 'box' ? 'كرتون' : 'قطعة'}`);
-      if (transfer.i9100) items.push(`I9100: ${transfer.i9100} ${transfer.i9100PackagingType === 'box' ? 'كرتون' : 'قطعة'}`);
-      if (transfer.rollPaper) items.push(`ورق: ${transfer.rollPaper} ${transfer.rollPaperPackagingType === 'box' ? 'كرتون' : 'قطعة'}`);
-      if (transfer.stickers) items.push(`ملصقات: ${transfer.stickers} ${transfer.stickersPackagingType === 'box' ? 'كرتون' : 'قطعة'}`);
-      if (transfer.newBatteries) items.push(`بطاريات: ${transfer.newBatteries} ${transfer.newBatteriesPackagingType === 'box' ? 'كرتون' : 'قطعة'}`);
-      if (transfer.mobilySim) items.push(`موبايلي: ${transfer.mobilySim} ${transfer.mobilySimPackagingType === 'box' ? 'كرتون' : 'قطعة'}`);
-      if (transfer.stcSim) items.push(`STC: ${transfer.stcSim} ${transfer.stcSimPackagingType === 'box' ? 'كرتون' : 'قطعة'}`);
-      if (transfer.zainSim) items.push(`زين: ${transfer.zainSim} ${transfer.zainSimPackagingType === 'box' ? 'كرتون' : 'قطعة'}`);
-      if (transfer.lebaraSim || transfer.lebara) items.push(`ليبارا: ${transfer.lebaraSim || transfer.lebara} ${(transfer.lebaraSimPackagingType || transfer.lebaraPackagingType) === 'box' ? 'كرتون' : 'قطعة'}`);
+      const transferObj = transfer as any;
+      
+      // Legacy item type mapping
+      const legacyItems: Record<string, string> = {
+        'n950': 'N950', 'i9000s': 'I9000s', 'i9100': 'I9100',
+        'rollPaper': 'ورق', 'stickers': 'ملصقات', 'newBatteries': 'بطاريات',
+        'mobilySim': 'موبايلي', 'stcSim': 'STC', 'zainSim': 'زين',
+        'lebaraSim': 'ليبارا', 'lebara': 'ليبارا'
+      };
+      
+      // Get all keys from transfer object (dynamic item types)
+      const transferKeys = Object.keys(transferObj).filter(
+        k => !['id', 'allIds', 'warehouseId', 'technicianId', 'technicianName', 
+               'notes', 'status', 'rejectionReason', 'respondedAt', 'createdAt'].includes(k) 
+             && !k.endsWith('PackagingType')
+      );
+      
+      // Check each key and find matching item type
+      transferKeys.forEach(key => {
+        const quantity = transferObj[key];
+        const packagingType = transferObj[`${key}PackagingType`];
+        
+        if (quantity && quantity > 0) {
+          // Try to find item type in dynamic list (case-insensitive)
+          let itemName = key;
+          if (itemTypesData) {
+            const matchedType = itemTypesData.find(
+              t => t.nameEn.toLowerCase() === key.toLowerCase() || t.id === key
+            );
+            if (matchedType) {
+              itemName = matchedType.nameAr;
+            }
+          }
+          
+          // Check legacy mapping
+          if (legacyItems[key]) {
+            itemName = legacyItems[key];
+          }
+          
+          items.push(`${itemName}: ${quantity} ${packagingType === 'box' ? 'كرتون' : 'قطعة'}`);
+        }
+      });
 
       const statusText = transfer.status === 'pending' ? 'معلقة' : 
                         transfer.status === 'accepted' ? 'مقبولة' : 'مرفوضة';
@@ -501,6 +583,8 @@ export default function WarehouseDetailsPage() {
         description: warehouse.description
       },
       inventory: warehouse.inventory,
+      itemTypes: itemTypesData?.filter(t => t.isActive && t.isVisible),
+      entries: inventoryEntriesData,
       transfers: transfersData
     });
 
@@ -938,17 +1022,54 @@ export default function WarehouseDetailsPage() {
                   </TableHeader>
                   <TableBody>
                     {transfers.map((transfer) => {
+                      // Build items array dynamically from itemTypesData
                       const items: Array<{name: string, quantity: number, type: string}> = [];
-                      if (transfer.n950) items.push({name: 'N950', quantity: transfer.n950, type: transfer.n950PackagingType || 'box'});
-                      if (transfer.i9000s) items.push({name: 'I9000s', quantity: transfer.i9000s, type: transfer.i9000sPackagingType || 'box'});
-                      if (transfer.i9100) items.push({name: 'I9100', quantity: transfer.i9100, type: transfer.i9100PackagingType || 'box'});
-                      if (transfer.rollPaper) items.push({name: 'ورق', quantity: transfer.rollPaper, type: transfer.rollPaperPackagingType || 'box'});
-                      if (transfer.stickers) items.push({name: 'ملصقات', quantity: transfer.stickers, type: transfer.stickersPackagingType || 'box'});
-                      if (transfer.newBatteries) items.push({name: 'بطاريات', quantity: transfer.newBatteries, type: transfer.newBatteriesPackagingType || 'box'});
-                      if (transfer.mobilySim) items.push({name: 'موبايلي', quantity: transfer.mobilySim, type: transfer.mobilySimPackagingType || 'box'});
-                      if (transfer.stcSim) items.push({name: 'STC', quantity: transfer.stcSim, type: transfer.stcSimPackagingType || 'box'});
-                      if (transfer.zainSim) items.push({name: 'زين', quantity: transfer.zainSim, type: transfer.zainSimPackagingType || 'box'});
-                      if (transfer.lebaraSim || transfer.lebara) items.push({name: 'ليبارا', quantity: transfer.lebaraSim || transfer.lebara || 0, type: transfer.lebaraSimPackagingType || transfer.lebaraPackagingType || 'box'});
+                      const transferObj = transfer as any;
+                      
+                      // Legacy item type mapping
+                      const legacyItems: Record<string, string> = {
+                        'n950': 'N950', 'i9000s': 'I9000s', 'i9100': 'I9100',
+                        'rollPaper': 'ورق', 'stickers': 'ملصقات', 'newBatteries': 'بطاريات',
+                        'mobilySim': 'موبايلي', 'stcSim': 'STC', 'zainSim': 'زين',
+                        'lebaraSim': 'ليبارا', 'lebara': 'ليبارا'
+                      };
+                      
+                      // Get all keys from transfer object (dynamic item types)
+                      const transferKeys = Object.keys(transferObj).filter(
+                        k => !['id', 'allIds', 'warehouseId', 'technicianId', 'technicianName', 
+                               'notes', 'status', 'rejectionReason', 'respondedAt', 'createdAt'].includes(k) 
+                             && !k.endsWith('PackagingType')
+                      );
+                      
+                      // Check each key and find matching item type
+                      transferKeys.forEach(key => {
+                        const quantity = transferObj[key];
+                        const packagingType = transferObj[`${key}PackagingType`];
+                        
+                        if (quantity && quantity > 0) {
+                          // Try to find item type in dynamic list (case-insensitive)
+                          let itemName = key;
+                          if (itemTypesData) {
+                            const matchedType = itemTypesData.find(
+                              t => t.nameEn.toLowerCase() === key.toLowerCase() || t.id === key
+                            );
+                            if (matchedType) {
+                              itemName = matchedType.nameAr;
+                            }
+                          }
+                          
+                          // Check legacy mapping
+                          if (legacyItems[key]) {
+                            itemName = legacyItems[key];
+                          }
+                          
+                          items.push({
+                            name: itemName,
+                            quantity: quantity,
+                            type: packagingType || 'box'
+                          });
+                        }
+                      });
 
                       return (
                         <TableRow key={transfer.id} className="border-white/10 hover:bg-white/5 transition-colors">

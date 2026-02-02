@@ -10,6 +10,7 @@ import { ar } from "date-fns/locale";
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import bannerImage from "@assets/Gemini_Generated_Image_r9bdc9r9bdc9r9bd_1762462520993.png";
+import { useActiveItemTypes } from "@/hooks/use-item-types";
 
 interface WarehouseTransfer {
   id: string;
@@ -34,11 +35,25 @@ export default function OperationDetailsPage() {
   const [, params] = useRoute("/operation-details/:groupId");
   const groupId = params?.groupId ? decodeURIComponent(params.groupId) : '';
 
+  // Fetch item types for dynamic names
+  const { data: itemTypesData } = useActiveItemTypes();
+
   const { data: transfers, isLoading } = useQuery<WarehouseTransfer[]>({
     queryKey: ["/api/warehouse-transfers"],
   });
 
   const getItemNameAr = (itemType: string) => {
+    // First check if it's in dynamic item types
+    if (itemTypesData) {
+      const dynamicItem = itemTypesData.find(
+        item => item.nameEn.toLowerCase() === itemType.toLowerCase() || item.id === itemType
+      );
+      if (dynamicItem) {
+        return dynamicItem.nameAr;
+      }
+    }
+    
+    // Fallback to legacy item names
     const itemNames: Record<string, string> = {
       n950: "N950",
       i9000s: "I9000s",

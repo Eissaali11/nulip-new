@@ -101,12 +101,12 @@ export const legacyFieldMapping: Record<string, { boxes: string; units: string }
 
 export function getInventoryValueForItemType(
   itemTypeId: string,
-  entries: InventoryEntry[] | undefined,
+  entries: InventoryEntry[] | undefined | null,
   legacyInventory: Record<string, any> | null | undefined,
   valueType: 'boxes' | 'units'
 ): number {
-  // First check entry tables
-  if (entries) {
+  // First check entry tables (ensure entries is an array)
+  if (entries && Array.isArray(entries)) {
     const entry = entries.find(e => e.itemTypeId === itemTypeId);
     if (entry) {
       return valueType === 'boxes' ? entry.boxes : entry.units;
@@ -127,10 +127,12 @@ export function getInventoryValueForItemType(
 
 export function buildInventoryDisplayItems(
   itemTypes: ItemType[],
-  entries: InventoryEntry[],
+  entries: InventoryEntry[] | undefined | null,
   legacyInventory?: Record<string, number>
 ) {
-  const entryMap = new Map(entries.map((e) => [e.itemTypeId, e]));
+  // Ensure entries is an array
+  const safeEntries = Array.isArray(entries) ? entries : [];
+  const entryMap = new Map(safeEntries.map((e) => [e.itemTypeId, e]));
 
   const visibleItems = itemTypes
     .filter((t) => t.isActive && t.isVisible)

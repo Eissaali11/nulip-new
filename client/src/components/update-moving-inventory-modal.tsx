@@ -65,7 +65,7 @@ export function UpdateMovingInventoryModal({
 
   const { data: itemTypes } = useActiveItemTypes();
   const { data: movingEntries } = useQuery<{ itemTypeId: string; boxes: number; units: number }[]>({
-    queryKey: ['/api/technician-moving-entries', technicianId],
+    queryKey: [`/api/technicians/${technicianId}/moving-inventory-entries`],
     enabled: !!technicianId,
   });
 
@@ -114,7 +114,7 @@ export function UpdateMovingInventoryModal({
         }
       }
 
-      await apiRequest("POST", `/api/technician-moving-entries/${technicianId}`, { entries });
+      await apiRequest("POST", `/api/technicians/${technicianId}/moving-inventory-entries`, { entries });
 
       return await apiRequest("PATCH", `/api/technicians/${technicianId}`, legacyFields);
     },
@@ -123,7 +123,8 @@ export function UpdateMovingInventoryModal({
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/all-technicians-inventory'] });
       queryClient.invalidateQueries({ queryKey: [`/api/technician-inventory/${technicianId}`] });
-      queryClient.invalidateQueries({ queryKey: ['/api/technician-moving-entries', technicianId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/technicians/${technicianId}/moving-inventory-entries`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/my-moving-inventory'] });
       toast({
         title: "تم التحديث بنجاح",
         description: "تم تحديث المخزون المتحرك",

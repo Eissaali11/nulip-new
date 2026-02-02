@@ -751,8 +751,8 @@ export default function AdminInventoryOverview() {
                             <InventoryItem 
                               key={itemType.id}
                               label={itemType.nameAr || itemType.nameEn} 
-                              boxes={getInventoryValue(tech.fixedInventory, itemType.id, 'boxes')} 
-                              units={getInventoryValue(tech.fixedInventory, itemType.id, 'units')}
+                              boxes={getInventoryValue(tech.fixedInventory, tech.fixedInventory?.entries, itemType.id, 'boxes')} 
+                              units={getInventoryValue(tech.fixedInventory, tech.fixedInventory?.entries, itemType.id, 'units')}
                               testId={`fixed-${itemType.id}-${index}`}
                               color="blue"
                             />
@@ -775,8 +775,8 @@ export default function AdminInventoryOverview() {
                             <InventoryItem 
                               key={itemType.id}
                               label={itemType.nameAr || itemType.nameEn}
-                              boxes={getInventoryValue(tech.movingInventory, itemType.id, 'boxes')}
-                              units={getInventoryValue(tech.movingInventory, itemType.id, 'units')}
+                              boxes={getInventoryValue(tech.movingInventory, tech.movingInventory?.entries, itemType.id, 'boxes')}
+                              units={getInventoryValue(tech.movingInventory, tech.movingInventory?.entries, itemType.id, 'units')}
                               testId={`moving-${itemType.id}-${index}`}
                               color="green"
                             />

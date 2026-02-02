@@ -1,0 +1,109 @@
+/**
+ * Devices routes (Withdrawn & Received)
+ */
+
+import type { Express } from "express";
+import { devicesController } from "../controllers/devices.controller";
+import { requireAuth, requireAdmin, requireSupervisor } from "../middleware/auth";
+import { validateBody } from "../middleware/validation";
+import {
+  insertWithdrawnDeviceSchema,
+  insertReceivedDeviceSchema,
+} from "@shared/schema";
+import { z } from "zod";
+
+const updateDeviceStatusSchema = z.object({
+  status: z.enum(["pending", "approved", "rejected"]),
+  adminNotes: z.string().optional(),
+});
+
+export function registerDevicesRoutes(app: Express): void {
+  // ===== Withdrawn Devices =====
+
+  // Get all withdrawn devices
+  app.get(
+    "/api/withdrawn-devices",
+    requireAuth,
+    devicesController.getWithdrawnDevices
+  );
+
+  // Get single withdrawn device
+  app.get(
+    "/api/withdrawn-devices/:id",
+    requireAuth,
+    devicesController.getWithdrawnDevice
+  );
+
+  // Create withdrawn device
+  app.post(
+    "/api/withdrawn-devices",
+    requireAuth,
+    validateBody(insertWithdrawnDeviceSchema),
+    devicesController.createWithdrawnDevice
+  );
+
+  // Update withdrawn device
+  app.patch(
+    "/api/withdrawn-devices/:id",
+    requireAuth,
+    validateBody(insertWithdrawnDeviceSchema.partial()),
+    devicesController.updateWithdrawnDevice
+  );
+
+  // Delete withdrawn device
+  app.delete(
+    "/api/withdrawn-devices/:id",
+    requireAuth,
+    requireAdmin,
+    devicesController.deleteWithdrawnDevice
+  );
+
+  // ===== Received Devices =====
+
+  // Get received devices
+  app.get(
+    "/api/received-devices",
+    requireAuth,
+    devicesController.getReceivedDevices
+  );
+
+  // Get pending received devices count
+  app.get(
+    "/api/received-devices/pending/count",
+    requireAuth,
+    requireSupervisor,
+    devicesController.getPendingReceivedDevicesCount
+  );
+
+  // Get single received device
+  app.get(
+    "/api/received-devices/:id",
+    requireAuth,
+    devicesController.getReceivedDevice
+  );
+
+  // Create received device
+  app.post(
+    "/api/received-devices",
+    requireAuth,
+    validateBody(insertReceivedDeviceSchema),
+    devicesController.createReceivedDevice
+  );
+
+  // Update received device status
+  app.patch(
+    "/api/received-devices/:id/status",
+    requireAuth,
+    requireSupervisor,
+    validateBody(updateDeviceStatusSchema),
+    devicesController.updateReceivedDeviceStatus
+  );
+
+  // Delete received device
+  app.delete(
+    "/api/received-devices/:id",
+    requireAuth,
+    requireAdmin,
+    devicesController.deleteReceivedDevice
+  );
+}

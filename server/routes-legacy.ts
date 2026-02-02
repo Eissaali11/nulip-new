@@ -90,103 +90,11 @@ async function initializeDefaults() {
   }
 }
 
-export async function registerRoutes(app: Express): Promise<Server> {
-  // Initialize default data on startup
-  await initializeDefaults();
-  // Authentication routes
-  app.post("/api/auth/login", async (req, res) => {
-    try {
-      const { username, password } = loginSchema.parse(req.body);
-      
-      // Find user by username (get full user data with password)
-      const user = await storage.getUserByUsername(username);
-      
-      if (!user) {
-        return res.status(401).json({ 
-          success: false, 
-          message: "اسم المستخدم أو كلمة المرور غير صحيحة" 
-        });
-      }
-      
-      if (!user.isActive) {
-        return res.status(401).json({ 
-          success: false, 
-          message: "الحساب غير نشط" 
-        });
-      }
-      
-      if (user.password !== password) {
-        return res.status(401).json({ 
-          success: false, 
-          message: "اسم المستخدم أو كلمة المرور غير صحيحة" 
-        });
-      }
-      
-      // Create session
-      const token = generateSessionToken();
-      const expiry = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
-      
-      activeSessions.set(token, {
-        userId: user.id,
-        role: user.role,
-        username: user.username,
-        regionId: user.regionId || null,
-        expiry
-      });
-      
-      // Return user without password
-      const { password: _, ...userSafe } = user;
-      
-      res.json({
-        success: true,
-        user: userSafe,
-        token,
-        message: "تم تسجيل الدخول بنجاح"
-      });
-    } catch (error) {
-      console.error("Login error:", error);
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
-          success: false, 
-          message: "بيانات غير صحيحة", 
-          errors: error.errors 
-        });
-      }
-      res.status(500).json({ 
-        success: false, 
-        message: "خطأ في الخادم",
-        error: error instanceof Error ? error.message : "Unknown error"
-      });
-    }
-  });
+export async function registerLegacyRoutes(app: Express): Promise<Server> {
+  // NOTE: Auth routes have been moved to routes/auth.routes.ts
+  // Authentication routes are now handled by the new auth module
   
-  app.post("/api/auth/logout", requireAuth, async (req, res) => {
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.substring(7);
-    
-    if (token) {
-      activeSessions.delete(token);
-    }
-    
-    res.json({ success: true, message: "تم تسجيل الخروج بنجاح" });
-  });
-  
-  app.get("/api/auth/me", requireAuth, async (req, res) => {
-    const userId = (req as any).user.id;
-    
-    try {
-      const user = await storage.getUser(userId);
-      
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-      
-      res.json({ user });
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch user info" });
-    }
-  });
-  
+  // All other routes below...
 
   // Get all inventory items
   app.get("/api/inventory", async (req, res) => {
@@ -1847,14 +1755,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const itemTypes = ['n950', 'i9000s', 'i9100', 'rollPaper', 'stickers', 'newBatteries', 'mobilySim', 'stcSim', 'zainSim', 'lebara'];
+      // Get all item types from database to map UUIDs to legacy names
+      const allItemTypes = await storage.getActiveItemTypes();
+      
+      // Create dynamic UUID to legacy name mapping
+      const uuidToLegacy: Record<string, string> = {};
+      for (const itemType of allItemTypes) {
+        // Map UUID to nameEn (which is the legacy field name like 'n950', 'i9000s', etc.)
+        uuidToLegacy[itemType.id] = itemType.nameEn.toLowerCase().replace(/\s+/g, '');
+      }
+      
+      // Legacy item types (for backward compatibility)
+      const legacyItemTypes = ['n950', 'i9000s', 'i9100', 'rollpaper', 'stickers', 'newbatteries', 'mobilysim', 'stcsim', 'zainsim', 'lebara'];
+      
+      // Also create a mapping from legacy names to standard field names
+      const legacyToField: Record<string, string> = {
+        'n950': 'n950',
+        'i9000s': 'i9000s',
+        'i9100': 'i9100',
+        'rollpaper': 'rollPaper',
+        'stickers': 'stickers',
+        'newbatteries': 'newBatteries',
+        'mobilysim': 'mobilySim',
+        'stcsim': 'stcSim',
+        'zainsim': 'zainSim',
+        'lebara': 'lebara',
+        'lebarasim': 'lebara',
+      };
+      
       const transfers: any[] = [];
 
-      for (const itemType of itemTypes) {
-        const quantity = items[itemType];
-        const packagingType = items[`${itemType}PackagingType`];
-
+      // Process all items from request body
+      for (const [key, value] of Object.entries(items)) {
+        // Skip packaging type fields
+        if (key.endsWith('PackagingType')) continue;
+        
+        const quantity = value as number;
+        const packagingType = items[`${key}PackagingType`];
+        
         if (quantity && quantity > 0 && packagingType) {
+          // Determine the item type
+          let itemType = key;
+          
+          // If it's a UUID, check if it's a legacy item or a new dynamic item
+          if (key.includes('-')) {
+            const legacyName = uuidToLegacy[key];
+            if (legacyName) {
+              const normalizedLegacy = legacyName.toLowerCase();
+              // Only use legacy field name if it exists in the mapping
+              const legacyField = legacyToField[normalizedLegacy];
+              if (legacyField) {
+                // It's a legacy item - use the field name
+                itemType = legacyField;
+              } else {
+                // It's a NEW dynamic item - keep the UUID to use warehouse_inventory_entries
+                itemType = key;
+              }
+            }
+          } else {
+            // If it's already a legacy name, normalize it
+            const normalized = key.toLowerCase();
+            itemType = legacyToField[normalized] || key;
+          }
+          
           transfers.push({
             warehouseId,
             technicianId,
@@ -1871,7 +1834,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No items to transfer" });
       }
 
+      console.log('=== Transfer Debug ===');
+      console.log('Transfers to process:', JSON.stringify(transfers, null, 2));
+
       for (const transfer of transfers) {
+        console.log(`Processing transfer: itemType=${transfer.itemType}, qty=${transfer.quantity}, packaging=${transfer.packagingType}`);
         await storage.transferFromWarehouse(transfer);
       }
       
@@ -2897,54 +2864,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Backup & Restore Routes (Admin only)
-  app.get("/api/admin/backup", requireAuth, requireAdmin, async (req, res) => {
-    try {
-      const user = (req as any).user;
-      const backup = await storage.exportAllData();
-      
-      // Log the backup operation
-      await storage.createSystemLog({
-        userId: user.id,
-        userName: user.fullName || user.username || 'Unknown',
-        userRole: user.role,
-        regionId: user.regionId,
-        action: 'export',
-        entityType: 'backup',
-        entityId: 'system',
-        entityName: 'نسخة احتياطية كاملة',
-        description: 'تصدير نسخة احتياطية كاملة لجميع بيانات النظام',
-        severity: 'info',
-        success: true,
-      });
-      
-      // Set headers for file download
-      const filename = `backup_${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
-      res.setHeader('Content-Type', 'application/json');
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-      res.json(backup);
-    } catch (error) {
-      console.error("Error creating backup:", error);
-      res.status(500).json({ message: "Failed to create backup" });
-    }
-  });
-
-  app.post("/api/admin/restore", requireAuth, requireAdmin, async (req, res) => {
-    try {
-      const backup = req.body;
-      
-      if (!backup || !backup.data) {
-        return res.status(400).json({ message: "Invalid backup file" });
-      }
-      
-      await storage.importAllData(backup);
-      
-      res.json({ success: true, message: "Backup restored successfully" });
-    } catch (error) {
-      console.error("Error restoring backup:", error);
-      res.status(500).json({ message: "Failed to restore backup" });
-    }
-  });
+  // Backup & Restore Routes moved to system.routes.ts
 
   // ===================== Item Types Management =====================
   
@@ -3190,19 +3110,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/technicians/:technicianId/moving-inventory-entries", requireAuth, async (req, res) => {
     try {
-      const schema = z.object({
-        itemTypeId: z.string(),
-        boxes: z.number().min(0),
-        units: z.number().min(0)
-      });
-      const data = schema.parse(req.body);
-      const entry = await storage.upsertTechnicianMovingInventoryEntry(
-        req.params.technicianId,
-        data.itemTypeId,
-        data.boxes,
-        data.units
-      );
-      res.json(entry);
+      const { entries } = req.body;
+      
+      // Support both single entry and array of entries
+      if (entries && Array.isArray(entries)) {
+        // Batch update multiple entries
+        const results = [];
+        for (const entry of entries) {
+          const result = await storage.upsertTechnicianMovingInventoryEntry(
+            req.params.technicianId,
+            entry.itemTypeId,
+            entry.boxes || 0,
+            entry.units || 0
+          );
+          results.push(result);
+        }
+        res.json(results);
+      } else {
+        // Single entry (backward compatible)
+        const schema = z.object({
+          itemTypeId: z.string(),
+          boxes: z.number().min(0),
+          units: z.number().min(0)
+        });
+        const data = schema.parse(req.body);
+        const entry = await storage.upsertTechnicianMovingInventoryEntry(
+          req.params.technicianId,
+          data.itemTypeId,
+          data.boxes,
+          data.units
+        );
+        res.json(entry);
+      }
     } catch (error) {
       console.error("Error upserting technician moving inventory entry:", error);
       res.status(500).json({ message: "Failed to update inventory entry" });

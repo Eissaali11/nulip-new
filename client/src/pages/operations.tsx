@@ -20,6 +20,7 @@ import { motion } from "framer-motion";
 import { Navbar } from "@/components/dashboard/Navbar";
 import { GridBackground } from "@/components/dashboard/GridBackground";
 import dashboardBg from "@assets/image_1762515061799.png";
+import { useActiveItemTypes } from "@/hooks/use-item-types";
 
 interface WarehouseTransfer {
   id: string;
@@ -46,6 +47,9 @@ export default function OperationsPage() {
   const [selectedTransferId, setSelectedTransferId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [searchTechnician, setSearchTechnician] = useState("");
+
+  // Fetch item types for dynamic names
+  const { data: itemTypesData } = useActiveItemTypes();
 
   const { data: allTransfers, isLoading } = useQuery<WarehouseTransfer[]>({
     queryKey: ["/api/warehouse-transfers"],
@@ -111,6 +115,17 @@ export default function OperationsPage() {
   };
 
   const getItemNameAr = (itemType: string) => {
+    // First check if it's in dynamic item types
+    if (itemTypesData) {
+      const dynamicItem = itemTypesData.find(
+        item => item.nameEn.toLowerCase() === itemType.toLowerCase() || item.id === itemType
+      );
+      if (dynamicItem) {
+        return dynamicItem.nameAr;
+      }
+    }
+    
+    // Fallback to legacy item names
     const itemNames: Record<string, string> = {
       n950: "N950",
       i9000s: "I9000s",
