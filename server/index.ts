@@ -6,6 +6,28 @@ import { setupSession } from "./config/session";
 
 const app = express();
 
+// Trust proxy (required behind Nginx)
+if (process.env.TRUST_PROXY === 'true' || process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', true);
+}
+
+// CORS middleware
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  // Allow requests from same origin or specific domains
+  if (!origin || origin.includes(req.get('host') || '') || origin.includes('stoc.fun')) {
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 // Setup session
 setupSession(app);
 
