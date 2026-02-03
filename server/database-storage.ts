@@ -2613,7 +2613,14 @@ export class DatabaseStorage implements IStorage {
       await db.insert(receivedDevices).values(this.convertDates(backup.data.receivedDevices));
     }
     if (backup.data.systemLogs?.length > 0) {
-      await db.insert(systemLogs).values(this.convertDates(backup.data.systemLogs));
+      // Filter out system logs that reference non-existent users
+      const existingUserIds = new Set((backup.data.users || []).map((u: any) => u.id));
+      const validLogs = backup.data.systemLogs.filter((log: any) => 
+        existingUserIds.has(log.userId)
+      );
+      if (validLogs.length > 0) {
+        await db.insert(systemLogs).values(this.convertDates(validLogs));
+      }
     }
   }
 
