@@ -68,7 +68,7 @@ export class AuthService {
       username: user.username,
       regionId: user.regionId || null,
       expiry,
-    });
+    }, expiry);
 
     logger.info("User logged in", { source: "auth", username: user.username });
 
