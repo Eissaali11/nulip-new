@@ -996,6 +996,389 @@ class StockMovement {
 
 ---
 
+# 🆕 النظام الديناميكي للأصناف (مُوصى به)
+
+## مهم جداً للـ Flutter Developer:
+النظام يدعم **أصناف ديناميكية** - أي صنف جديد يُضاف من لوحة الإدارة سيظهر تلقائياً في التطبيق **بدون تعديل الكود**
+
+---
+
+## 1️⃣ الحصول على أنواع الأصناف النشطة
+
+### GET `/api/item-types/active` (بدون مصادقة)
+
+**الوصف:** الحصول على جميع أنواع الأصناف النشطة لبناء الواجهة ديناميكياً
+
+### Response (200):
+```json
+[
+  {
+    "id": "n950",
+    "nameAr": "جهاز N950",
+    "nameEn": "N950 Device",
+    "iconName": "smartphone",
+    "colorHex": "#3B82F6",
+    "isActive": true,
+    "isVisible": true,
+    "unitsPerBox": 10,
+    "sortOrder": 1
+  },
+  {
+    "id": "new_item_xyz",
+    "nameAr": "صنف جديد",
+    "nameEn": "New Item XYZ",
+    "iconName": "box",
+    "colorHex": "#8B5CF6",
+    "isActive": true,
+    "isVisible": true,
+    "unitsPerBox": 20,
+    "sortOrder": 10
+  }
+]
+```
+
+### Dart Code:
+```dart
+Future<List<ItemType>> getActiveItemTypes() async {
+  final response = await dio.get('/api/item-types/active');
+  return (response.data as List)
+      .map((json) => ItemType.fromJson(json))
+      .toList();
+}
+```
+
+---
+
+## 2️⃣ الحصول على المخزون الثابت (ديناميكي)
+
+### GET `/api/technicians/:technicianId/fixed-inventory-entries`
+
+**الوصف:** الحصول على عناصر المخزون الثابت بشكل ديناميكي
+
+### Response (200):
+```json
+[
+  {
+    "id": "entry-uuid-1",
+    "technicianId": "user-uuid",
+    "itemTypeId": "n950",
+    "boxes": 5,
+    "units": 12,
+    "createdAt": "2025-02-03T10:00:00.000Z",
+    "updatedAt": "2025-02-03T10:00:00.000Z"
+  },
+  {
+    "id": "entry-uuid-2",
+    "technicianId": "user-uuid",
+    "itemTypeId": "new_item_xyz",
+    "boxes": 3,
+    "units": 8,
+    "createdAt": "2025-02-03T10:00:00.000Z",
+    "updatedAt": "2025-02-03T10:00:00.000Z"
+  }
+]
+```
+
+### Dart Code:
+```dart
+Future<List<DynamicInventoryEntry>> getFixedInventoryEntries(String technicianId) async {
+  final response = await dio.get('/api/technicians/$technicianId/fixed-inventory-entries');
+  return (response.data as List)
+      .map((json) => DynamicInventoryEntry.fromJson(json))
+      .toList();
+}
+```
+
+---
+
+## 3️⃣ الحصول على المخزون المتحرك (ديناميكي)
+
+### GET `/api/technicians/:technicianId/moving-inventory-entries`
+
+### Response (200):
+```json
+[
+  {
+    "id": "entry-uuid-1",
+    "technicianId": "user-uuid",
+    "itemTypeId": "n950",
+    "boxes": 2,
+    "units": 5,
+    "createdAt": "2025-02-03T10:00:00.000Z",
+    "updatedAt": "2025-02-03T10:00:00.000Z"
+  }
+]
+```
+
+### Dart Code:
+```dart
+Future<List<DynamicInventoryEntry>> getMovingInventoryEntries(String technicianId) async {
+  final response = await dio.get('/api/technicians/$technicianId/moving-inventory-entries');
+  return (response.data as List)
+      .map((json) => DynamicInventoryEntry.fromJson(json))
+      .toList();
+}
+```
+
+---
+
+## 4️⃣ إضافة/تحديث عنصر في المخزون الثابت
+
+### POST `/api/technicians/:technicianId/fixed-inventory-entries`
+
+**الوصف:** إضافة أو تحديث عنصر في المخزون الثابت
+
+### Request Body:
+```json
+{
+  "itemTypeId": "n950",
+  "boxes": 5,
+  "units": 12
+}
+```
+
+### Response (200):
+```json
+{
+  "id": "entry-uuid",
+  "technicianId": "user-uuid",
+  "itemTypeId": "n950",
+  "boxes": 5,
+  "units": 12,
+  "createdAt": "2025-02-03T10:00:00.000Z",
+  "updatedAt": "2025-02-03T10:00:00.000Z"
+}
+```
+
+### Dart Code:
+```dart
+Future<DynamicInventoryEntry> upsertFixedInventoryEntry({
+  required String technicianId,
+  required String itemTypeId,
+  required int boxes,
+  required int units,
+}) async {
+  final response = await dio.post(
+    '/api/technicians/$technicianId/fixed-inventory-entries',
+    data: {
+      'itemTypeId': itemTypeId,
+      'boxes': boxes,
+      'units': units,
+    },
+  );
+  return DynamicInventoryEntry.fromJson(response.data);
+}
+```
+
+---
+
+## 5️⃣ إضافة/تحديث عنصر في المخزون المتحرك
+
+### POST `/api/technicians/:technicianId/moving-inventory-entries`
+
+**الوصف:** إضافة أو تحديث عنصر (يدعم عنصر واحد أو مجموعة)
+
+### Request Body (عنصر واحد):
+```json
+{
+  "itemTypeId": "n950",
+  "boxes": 2,
+  "units": 5
+}
+```
+
+### Request Body (مجموعة عناصر):
+```json
+{
+  "entries": [
+    { "itemTypeId": "n950", "boxes": 2, "units": 5 },
+    { "itemTypeId": "i9000s", "boxes": 1, "units": 3 },
+    { "itemTypeId": "new_item_xyz", "boxes": 0, "units": 10 }
+  ]
+}
+```
+
+### Dart Code:
+```dart
+// إضافة عنصر واحد
+Future<DynamicInventoryEntry> upsertMovingInventoryEntry({
+  required String technicianId,
+  required String itemTypeId,
+  required int boxes,
+  required int units,
+}) async {
+  final response = await dio.post(
+    '/api/technicians/$technicianId/moving-inventory-entries',
+    data: {
+      'itemTypeId': itemTypeId,
+      'boxes': boxes,
+      'units': units,
+    },
+  );
+  return DynamicInventoryEntry.fromJson(response.data);
+}
+
+// إضافة مجموعة عناصر (Batch)
+Future<void> upsertMovingInventoryBatch({
+  required String technicianId,
+  required List<InventoryEntryInput> entries,
+}) async {
+  await dio.post(
+    '/api/technicians/$technicianId/moving-inventory-entries',
+    data: {
+      'entries': entries.map((e) => e.toJson()).toList(),
+    },
+  );
+}
+```
+
+---
+
+## 📊 Data Models للنظام الديناميكي
+
+```dart
+// نموذج عنصر المخزون الديناميكي
+class DynamicInventoryEntry {
+  final String id;
+  final String technicianId;
+  final String itemTypeId;
+  final int boxes;
+  final int units;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+
+  DynamicInventoryEntry({
+    required this.id,
+    required this.technicianId,
+    required this.itemTypeId,
+    required this.boxes,
+    required this.units,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  int get total => boxes + units;
+
+  factory DynamicInventoryEntry.fromJson(Map<String, dynamic> json) {
+    return DynamicInventoryEntry(
+      id: json['id'],
+      technicianId: json['technicianId'],
+      itemTypeId: json['itemTypeId'],
+      boxes: json['boxes'] ?? 0,
+      units: json['units'] ?? 0,
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'])
+          : null,
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'])
+          : null,
+    );
+  }
+}
+
+// نموذج الإدخال للمخزون
+class InventoryEntryInput {
+  final String itemTypeId;
+  final int boxes;
+  final int units;
+
+  InventoryEntryInput({
+    required this.itemTypeId,
+    required this.boxes,
+    required this.units,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'itemTypeId': itemTypeId,
+    'boxes': boxes,
+    'units': units,
+  };
+}
+```
+
+---
+
+## 🎯 كيفية بناء واجهة ديناميكية في Flutter
+
+```dart
+class InventoryScreen extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // 1. جلب أنواع الأصناف من الـ API
+    final itemTypesAsync = ref.watch(itemTypesProvider);
+    
+    // 2. جلب المخزون الحالي
+    final inventoryAsync = ref.watch(myInventoryEntriesProvider);
+    
+    return itemTypesAsync.when(
+      data: (itemTypes) => ListView.builder(
+        itemCount: itemTypes.length,
+        itemBuilder: (context, index) {
+          final itemType = itemTypes[index];
+          
+          // 3. العثور على الكمية الحالية لهذا الصنف
+          final entry = inventoryAsync.value?.firstWhere(
+            (e) => e.itemTypeId == itemType.id,
+            orElse: () => null,
+          );
+          
+          return InventoryItemCard(
+            itemType: itemType,
+            boxes: entry?.boxes ?? 0,
+            units: entry?.units ?? 0,
+          );
+        },
+      ),
+      loading: () => CircularProgressIndicator(),
+      error: (e, s) => Text('خطأ: $e'),
+    );
+  }
+}
+
+// بطاقة صنف ديناميكية
+class InventoryItemCard extends StatelessWidget {
+  final ItemType itemType;
+  final int boxes;
+  final int units;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Color(int.parse(itemType.colorHex!.replaceFirst('#', '0xFF'))),
+      child: ListTile(
+        leading: Icon(_getIconByName(itemType.iconName)),
+        title: Text(itemType.nameAr),
+        subtitle: Text('صناديق: $boxes | وحدات: $units'),
+      ),
+    );
+  }
+  
+  IconData _getIconByName(String? iconName) {
+    switch (iconName) {
+      case 'smartphone': return Icons.smartphone;
+      case 'file-text': return Icons.description;
+      case 'battery': return Icons.battery_full;
+      case 'sim_card': return Icons.sim_card;
+      default: return Icons.inventory_2;
+    }
+  }
+}
+```
+
+---
+
+## 📋 جدول مقارنة النظامين
+
+| الميزة | النظام القديم | النظام الديناميكي ✅ |
+|--------|--------------|---------------------|
+| دعم أصناف جديدة | ❌ يتطلب تعديل الكود | ✅ تلقائي |
+| الـ Endpoint | `/api/my-fixed-inventory` | `/api/technicians/:id/fixed-inventory-entries` |
+| هيكل البيانات | حقول ثابتة (n950Boxes, etc) | `itemTypeId` + `boxes` + `units` |
+| المرونة | ❌ محدودة | ✅ عالية |
+| التوصية | للتوافق مع القديم | ✅ الاستخدام في الجديد |
+
+---
+
 # ⚠️ رموز الحالة
 
 | الكود | المعنى |
