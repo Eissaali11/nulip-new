@@ -224,14 +224,14 @@ export default function MyMovingInventory() {
   };
 
   const exportToExcel = async () => {
-    if (!inventory) return;
+    if (displayItems.length === 0) return;
 
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('المخزون المتحرك');
 
     worksheet.views = [{ rightToLeft: true }];
 
-    worksheet.mergeCells('A1:C1');
+    worksheet.mergeCells('A1:D1');
     const titleCell = worksheet.getCell('A1');
     titleCell.value = 'تقرير المخزون المتحرك';
     titleCell.font = { size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
@@ -243,7 +243,7 @@ export default function MyMovingInventory() {
     };
     worksheet.getRow(1).height = 30;
     
-    worksheet.mergeCells('A2:C2');
+    worksheet.mergeCells('A2:D2');
     const dateCell = worksheet.getCell('A2');
     dateCell.value = `التاريخ: ${new Date().toLocaleDateString('ar-SA')}`;
     dateCell.alignment = { horizontal: 'center' };
@@ -256,7 +256,7 @@ export default function MyMovingInventory() {
     worksheet.getRow(2).height = 25;
 
     worksheet.addRow([]);
-    const headerRow = worksheet.addRow(['الصنف', 'الكمية', 'الوحدة']);
+    const headerRow = worksheet.addRow(['الصنف', 'كراتين', 'وحدات', 'الإجمالي']);
     headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
     headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
     headerRow.eachCell((cell) => {
@@ -273,31 +273,13 @@ export default function MyMovingInventory() {
       };
     });
 
-    const data = [
-      ['أجهزة N950 - كرتون', inventory.n950Boxes || 0, 'كرتون'],
-      ['أجهزة N950 - وحدات', inventory.n950Units || 0, 'جهاز'],
-      ['أجهزة I9000s - كرتون', inventory.i9000sBoxes || 0, 'كرتون'],
-      ['أجهزة I9000s - وحدات', inventory.i9000sUnits || 0, 'جهاز'],
-      ['أجهزة I9100 - كرتون', inventory.i9100Boxes || 0, 'كرتون'],
-      ['أجهزة I9100 - وحدات', inventory.i9100Units || 0, 'جهاز'],
-      ['أوراق رول - كرتون', inventory.rollPaperBoxes || 0, 'كرتون'],
-      ['أوراق رول - وحدات', inventory.rollPaperUnits || 0, 'رول'],
-      ['ملصقات مدى - كرتون', inventory.stickersBoxes || 0, 'كرتون'],
-      ['ملصقات مدى - وحدات', inventory.stickersUnits || 0, 'ملصق'],
-      ['بطاريات جديدة - كرتون', inventory.newBatteriesBoxes || 0, 'كرتون'],
-      ['بطاريات جديدة - وحدات', inventory.newBatteriesUnits || 0, 'بطارية'],
-      ['شرائح موبايلي - كرتون', inventory.mobilySimBoxes || 0, 'كرتون'],
-      ['شرائح موبايلي - وحدات', inventory.mobilySimUnits || 0, 'شريحة'],
-      ['شرائح STC - كرتون', inventory.stcSimBoxes || 0, 'كرتون'],
-      ['شرائح STC - وحدات', inventory.stcSimUnits || 0, 'شريحة'],
-      ['شرائح زين - كرتون', inventory.zainSimBoxes || 0, 'كرتون'],
-      ['شرائح زين - وحدات', inventory.zainSimUnits || 0, 'شريحة'],
-      ['شرائح ليبارا - كرتون', inventory.lebaraBoxes || 0, 'كرتون'],
-      ['شرائح ليبارا - وحدات', inventory.lebaraUnits || 0, 'شريحة'],
-    ];
-
-    data.forEach(row => {
-      const dataRow = worksheet.addRow(row);
+    displayItems.forEach(item => {
+      const dataRow = worksheet.addRow([
+        item.nameAr,
+        item.boxes,
+        item.units,
+        item.boxes + item.units
+      ]);
       dataRow.eachCell((cell) => {
         cell.border = {
           top: { style: 'thin' },
@@ -310,7 +292,9 @@ export default function MyMovingInventory() {
     });
 
     worksheet.addRow([]);
-    const totalRow = worksheet.addRow(['الإجمالي', getTotalItems(), 'قطعة']);
+    const totalBoxes = displayItems.reduce((sum, item) => sum + item.boxes, 0);
+    const totalUnits = displayItems.reduce((sum, item) => sum + item.units, 0);
+    const totalRow = worksheet.addRow(['الإجمالي', totalBoxes, totalUnits, getTotalItems()]);
     totalRow.font = { bold: true };
     totalRow.eachCell((cell) => {
       cell.fill = {
@@ -329,6 +313,7 @@ export default function MyMovingInventory() {
 
     worksheet.columns = [
       { width: 25 },
+      { width: 15 },
       { width: 15 },
       { width: 15 }
     ];
