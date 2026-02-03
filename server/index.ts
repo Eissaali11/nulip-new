@@ -14,13 +14,17 @@ if (process.env.TRUST_PROXY === 'true' || process.env.NODE_ENV === 'production')
 // CORS middleware
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  // Allow requests from same origin or specific domains
-  if (!origin || origin.includes(req.get('host') || '') || origin.includes('stoc.fun')) {
+  const host = req.get('host') || '';
+  
+  // In development, allow all origins
+  // In production, allow same-origin requests
+  if (process.env.NODE_ENV === 'development' || !origin || origin.includes(host) || origin.includes('stoc.fun')) {
     res.setHeader('Access-Control-Allow-Origin', origin || '*');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
   }
+  
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   
   if (req.method === 'OPTIONS') {
     return res.sendStatus(200);
