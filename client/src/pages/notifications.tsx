@@ -168,6 +168,12 @@ export default function Notifications() {
     enabled: user?.role === 'technician' && !!user?.id,
   });
 
+  // Technician's own inventory requests
+  const { data: myInventoryRequests = [], isLoading: myRequestsLoading } = useQuery<InventoryRequest[]>({
+    queryKey: ["/api/inventory-requests/my"],
+    enabled: user?.role === 'technician' && !!user?.id,
+  });
+
   // Admin mutations
   const approveMutation = useMutation({
     mutationFn: async ({ id, warehouseId }: { id: string; warehouseId: string }) => {
@@ -678,6 +684,89 @@ export default function Notifications() {
                     مراجعة الآن
                   </Button>
                 </div>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Technician's Own Inventory Requests Section */}
+        {!isAdminOrSupervisor && myInventoryRequests.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6"
+          >
+            <Card className="relative bg-gradient-to-br from-purple-500/10 via-violet-500/[0.07] to-fuchsia-500/[0.03] backdrop-blur-xl border-purple-500/40 overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-fuchsia-500/5" />
+              
+              <div className="relative p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-3 bg-gradient-to-br from-purple-500/20 to-violet-500/20 rounded-xl border border-purple-500/30">
+                    <Package className="h-5 w-5 text-purple-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">طلبات المخزون الخاصة بي</h3>
+                    <p className="text-sm text-gray-400">الطلبات التي أرسلتها للمشرف</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  {myInventoryRequests.slice(0, 5).map((request) => (
+                    <div
+                      key={request.id}
+                      className="p-4 bg-gradient-to-br from-white/5 via-white/[0.03] to-white/[0.01] rounded-xl border border-white/10"
+                      data-testid={`my-request-${request.id}`}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-gray-400" />
+                          <span className="text-sm text-gray-300">
+                            {formatDistanceToNow(new Date(request.createdAt), { addSuffix: true, locale: ar })}
+                          </span>
+                        </div>
+                        {getStatusBadge(request.status)}
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {getRequestedItems(request).slice(0, 4).map((item, idx) => (
+                          <Badge
+                            key={idx}
+                            className="bg-purple-500/10 text-purple-300 border border-purple-500/30 text-xs"
+                          >
+                            {item}
+                          </Badge>
+                        ))}
+                        {getRequestedItems(request).length > 4 && (
+                          <Badge className="bg-gray-500/20 text-gray-400 border border-gray-500/30 text-xs">
+                            +{getRequestedItems(request).length - 4} المزيد
+                          </Badge>
+                        )}
+                      </div>
+
+                      {request.notes && (
+                        <div className="flex items-start gap-2 mt-2 text-sm text-gray-400">
+                          <FileText className="h-4 w-4 mt-0.5 shrink-0" />
+                          <span>{request.notes}</span>
+                        </div>
+                      )}
+
+                      {request.adminNotes && request.status !== 'pending' && (
+                        <div className="flex items-start gap-2 mt-2 p-2 bg-white/5 rounded-lg">
+                          <AlertCircle className="h-4 w-4 mt-0.5 shrink-0 text-yellow-400" />
+                          <span className="text-sm text-yellow-300">رد المشرف: {request.adminNotes}</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {myInventoryRequests.length > 5 && (
+                  <div className="mt-4 text-center">
+                    <Badge className="bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                      +{myInventoryRequests.length - 5} طلبات أخرى
+                    </Badge>
+                  </div>
+                )}
               </div>
             </Card>
           </motion.div>
